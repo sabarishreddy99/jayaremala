@@ -191,21 +191,23 @@ export default function ChatInterface() {
             )}
           </div>
 
-          {/* Footer — hidden on mobile to maximise chat space */}
-          <div className="hidden sm:flex pt-3 border-t border-zinc-200 items-center justify-between flex-wrap gap-2">
-            <span className="text-[11px] text-zinc-400">
-              © {new Date().getFullYear()} Jaya Sabarish Reddy Remala
-            </span>
-            <div className="flex items-center gap-4">
-              <Link href="/blog" className="text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors">
-                Blog
-              </Link>
-              <a href={profile.github} target="_blank" rel="noopener noreferrer"
-                className="text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors">GitHub</a>
-              <a href={profile.linkedin} target="_blank" rel="noopener noreferrer"
-                className="text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors">LinkedIn</a>
-              <a href={`mailto:${profile.email}`}
-                className="text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors">Email</a>
+          {/* Footer */}
+          <div className="pt-2 sm:pt-3 border-t border-zinc-200">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] sm:text-[11px] text-zinc-400 hidden sm:block">
+                © {new Date().getFullYear()} Jaya Sabarish Reddy Remala
+              </span>
+              <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
+                <Link href="/blog" className="text-[10px] sm:text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors">Blog</Link>
+                <a href={profile.github} target="_blank" rel="noopener noreferrer"
+                  className="text-[10px] sm:text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors">GitHub</a>
+                <a href={profile.linkedin} target="_blank" rel="noopener noreferrer"
+                  className="text-[10px] sm:text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors">LinkedIn</a>
+                <a href={`mailto:${profile.email}`}
+                  className="text-[10px] sm:text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors">Email</a>
+                <a href={profile.resume} target="_blank" rel="noopener noreferrer"
+                  className="text-[10px] sm:text-[11px] text-zinc-400 hover:text-zinc-700 transition-colors">Resume</a>
+              </div>
             </div>
           </div>
 

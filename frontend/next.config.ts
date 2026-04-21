@@ -8,6 +8,9 @@ const nextConfig: NextConfig = {
   images: { unoptimized: true },
   basePath: isProd ? "/jayaremala" : "",
   assetPrefix: isProd ? "/jayaremala/" : "",
+  env: {
+    NEXT_PUBLIC_BASE_PATH: isProd ? "/jayaremala" : "",
+  },
 };
 
 export default nextConfig;

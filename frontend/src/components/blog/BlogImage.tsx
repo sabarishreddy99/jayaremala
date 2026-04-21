@@ -8,7 +8,10 @@ interface Props {
   caption?: string;
 }
 
+const BASE = process.env.NEXT_PUBLIC_BASE_PATH ?? "";
+
 export default function BlogImage({ src, alt, caption }: Props) {
+  const fullSrc = src.startsWith("http") ? src : `${BASE}${src}`;
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -29,7 +32,7 @@ export default function BlogImage({ src, alt, caption }: Props) {
           {/* zero line-height on direct parent eliminates browser baseline gap */}
           <div style={{ lineHeight: 0 }}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt={alt} className="w-full h-auto block rounded-xl" />
+            <img src={fullSrc} alt={alt} className="w-full h-auto block rounded-xl" />
           </div>
         </div>
         {caption && (
@@ -48,7 +51,7 @@ export default function BlogImage({ src, alt, caption }: Props) {
           <div className="relative max-w-4xl w-full" onClick={(e) => e.stopPropagation()}>
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={src}
+              src={fullSrc}
               alt={alt}
               className="w-full h-auto rounded-2xl shadow-2xl"
             />

@@ -9,7 +9,7 @@ import json
 import logging
 from pathlib import Path
 
-from app.rag.store import get_collection, reset_collection
+from app.rag.store import build_bm25_index, get_collection, reset_collection
 
 logger = logging.getLogger(__name__)
 
@@ -234,19 +234,24 @@ def _build_documents() -> list[tuple[str, str, str]]:
 
 
 def run_ingest(force: bool = False) -> int:
-    """Ingest knowledge base into ChromaDB. Returns number of documents upserted."""
+    """Ingest knowledge base into ChromaDB. Returns number of documents upserted.
+    BM25 index is always rebuilt from docs (in-memory, not persisted in ChromaDB).
+    """
     if force:
         logger.info("Force re-ingest: resetting ChromaDB collection...")
         reset_collection()
 
     collection = get_collection()
 
+    # Always build the document list — BM25 needs it even when ChromaDB is populated
+    docs = _build_documents()
+
     if not force and collection.count() > 0:
         count = collection.count()
-        logger.info("Knowledge base already populated (%d docs) — skipping ingest", count)
+        logger.info("ChromaDB already populated (%d docs) — skipping upsert", count)
+        build_bm25_index(docs)
         return count
 
-    docs = _build_documents()
     if not docs:
         logger.warning("No knowledge documents found in %s", DATA_DIR)
         return 0
@@ -256,6 +261,7 @@ def run_ingest(force: bool = False) -> int:
     metadatas = [{"type": d[2], "id": d[0]} for d in docs]
 
     collection.upsert(ids=ids, documents=texts, metadatas=metadatas)
+    build_bm25_index(docs)
     logger.info("Ingested %d documents into ChromaDB", len(docs))
     return len(docs)
 

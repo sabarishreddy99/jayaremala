@@ -2,16 +2,19 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import re
 from concurrent.futures import ThreadPoolExecutor
 from functools import lru_cache
 from typing import List
 
 import chromadb
 from chromadb import EmbeddingFunction, Documents, Embeddings
-from sentence_transformers import SentenceTransformer
+from rank_bm25 import BM25Okapi
+from sentence_transformers import CrossEncoder, SentenceTransformer
 
 logger = logging.getLogger(__name__)
 
+# ── ChromaDB state ─────────────────────────────────────────────────────────────
 _client: chromadb.PersistentClient | None = None
 _collection: chromadb.Collection | None = None
 _executor = ThreadPoolExecutor(max_workers=4)
@@ -19,6 +22,18 @@ _executor = ThreadPoolExecutor(max_workers=4)
 COLLECTION_NAME = "portfolio"
 EMBED_MODEL = "all-MiniLM-L6-v2"
 
+# ── BM25 state (always in-memory, rebuilt from docs on every startup) ──────────
+_bm25_index: BM25Okapi | None = None
+_bm25_corpus: list[str] = []
+_bm25_ids: list[str] = []
+_bm25_types: list[str] = []
+
+# ── Cross-encoder state ────────────────────────────────────────────────────────
+_cross_encoder: CrossEncoder | None = None
+CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+
+
+# ── Embedding function ─────────────────────────────────────────────────────────
 
 class _DirectSTEmbedding(EmbeddingFunction):
     """Wraps SentenceTransformer directly — avoids the transformers AutoProcessor
@@ -31,6 +46,8 @@ class _DirectSTEmbedding(EmbeddingFunction):
         vecs: List[List[float]] = self._model.encode(list(input)).tolist()
         return vecs
 
+
+# ── ChromaDB collection ────────────────────────────────────────────────────────
 
 def _make_client() -> chromadb.PersistentClient:
     return chromadb.PersistentClient(path="./chroma_db")
@@ -62,16 +79,64 @@ def reset_collection() -> None:
     _query_single_cached.cache_clear()
 
 
+# ── BM25 index ─────────────────────────────────────────────────────────────────
+
+def _tokenize_for_bm25(text: str) -> list[str]:
+    """Consistent tokenizer for both index build and query time.
+    Lowercases, strips punctuation, keeps numbers and proper nouns intact.
+    """
+    text = text.lower()
+    text = re.sub(r"[^\w\s]", " ", text)
+    return [tok for tok in text.split() if len(tok) > 1]
+
+
+def build_bm25_index(docs: list[tuple[str, str, str]]) -> None:
+    """Build in-memory BM25 index from (id, text, type) triples.
+    Called by ingest.py after every startup (BM25 is always in-memory, not persisted).
+    """
+    global _bm25_index, _bm25_corpus, _bm25_ids, _bm25_types
+    _bm25_ids = [d[0] for d in docs]
+    _bm25_corpus = [d[1] for d in docs]
+    _bm25_types = [d[2] for d in docs]
+    _bm25_index = BM25Okapi([_tokenize_for_bm25(t) for t in _bm25_corpus])
+    logger.info("BM25 index built: %d documents", len(docs))
+
+
+def bm25_query(text: str, n_results: int = 15) -> list[dict]:
+    """Lexical retrieval — catches exact keyword matches dense search misses
+    (specific numbers like '3000 RPS', exact company names, awards).
+    """
+    if _bm25_index is None:
+        logger.warning("BM25 index not built — skipping lexical retrieval")
+        return []
+    tokens = _tokenize_for_bm25(text)
+    if not tokens:
+        return []
+    scores = _bm25_index.get_scores(tokens)
+    top_idx = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:n_results]
+    result = []
+    for idx in top_idx:
+        if scores[idx] <= 0:
+            break
+        result.append({
+            "text": _bm25_corpus[idx],
+            "type": _bm25_types[idx],
+            "id": _bm25_ids[idx],
+            "score": float(scores[idx]),
+        })
+    return result
+
+
+# ── Dense (ChromaDB) retrieval ─────────────────────────────────────────────────
+
 def query(text: str, n_results: int = 8) -> list[dict]:
-    """Query the collection and return deduplicated chunks ranked by relevance."""
+    """Single-query dense retrieval (used by warmup and _query_single_cached)."""
     collection = get_collection()
     count = collection.count()
     if count == 0:
         return []
-
     safe_n = min(n_results, count)
     results = collection.query(query_texts=[text], n_results=safe_n)
-
     chunks = []
     seen_texts: set[str] = set()
     if results["documents"]:
@@ -99,8 +164,120 @@ def _query_single_cached(query_text: str, n_results: int) -> tuple:
     return tuple(query(query_text, n_results))
 
 
+def query_batch(query_texts: list[str], n_per_query: int = 6) -> list[dict]:
+    """Batched dense retrieval — ONE ChromaDB call for all query texts.
+    ChromaDB calls _DirectSTEmbedding.__call__(query_texts) ONCE → single
+    model.encode([q0,q1,q2,q3]) forward pass. ~160ms vs ~400ms serial.
+    """
+    collection = get_collection()
+    count = collection.count()
+    if count == 0:
+        return []
+    safe_n = min(n_per_query, count)
+    results = collection.query(query_texts=query_texts, n_results=safe_n)
+    seen: dict[str, dict] = {}
+    for docs, metas, dists in zip(
+        results["documents"],
+        results["metadatas"],
+        results["distances"],
+    ):
+        for doc, meta, dist in zip(docs, metas, dists):
+            cid = meta.get("id", "")
+            score = round(1 - dist, 4)
+            if cid not in seen or score > seen[cid]["score"]:
+                seen[cid] = {
+                    "text": doc,
+                    "type": meta.get("type", ""),
+                    "id": cid,
+                    "score": score,
+                }
+    return sorted(seen.values(), key=lambda c: c["score"], reverse=True)
+
+
+async def query_batch_async(query_texts: list[str], n_per_query: int = 6) -> list[dict]:
+    """Async wrapper — runs batched encode + ChromaDB in thread pool."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(_executor, query_batch, query_texts, n_per_query)
+
+
+# ── Hybrid merge ───────────────────────────────────────────────────────────────
+
+def rrf_merge(
+    dense_chunks: list[dict],
+    bm25_chunks: list[dict],
+    k: int = 60,
+    top_n: int = 20,
+) -> list[dict]:
+    """Reciprocal Rank Fusion: score(doc) = Σ 1/(k + rank_i).
+    k=60 from Cormack et al. 2009 (standard default).
+    Dense metadata takes precedence over BM25 when both retrieve the same doc.
+    """
+    all_chunks: dict[str, dict] = {c["id"]: c for c in bm25_chunks}
+    all_chunks.update({c["id"]: c for c in dense_chunks})
+
+    rrf: dict[str, float] = {}
+    for rank, c in enumerate(dense_chunks):
+        rrf[c["id"]] = rrf.get(c["id"], 0.0) + 1.0 / (k + rank + 1)
+    for rank, c in enumerate(bm25_chunks):
+        rrf[c["id"]] = rrf.get(c["id"], 0.0) + 1.0 / (k + rank + 1)
+
+    merged = sorted(rrf.items(), key=lambda x: x[1], reverse=True)[:top_n]
+    return [{**all_chunks[cid], "rrf_score": round(score, 6)} for cid, score in merged]
+
+
+# ── Cross-encoder reranker ─────────────────────────────────────────────────────
+
+def _get_cross_encoder() -> CrossEncoder:
+    global _cross_encoder
+    if _cross_encoder is None:
+        _cross_encoder = CrossEncoder(CROSS_ENCODER_MODEL)
+        logger.info("Cross-encoder loaded: %s", CROSS_ENCODER_MODEL)
+    return _cross_encoder
+
+
+def rerank_cross_encoder(query_text: str, chunks: list[dict], top_n: int = 5) -> list[dict]:
+    """Score (query, chunk) pairs with a cross-encoder — far more accurate than
+    asymmetric cosine similarity because the model sees both texts simultaneously.
+    ~30ms for 20 pairs on CPU (cross-encoder/ms-marco-MiniLM-L-6-v2, 22MB).
+    """
+    if not chunks:
+        return []
+    ce = _get_cross_encoder()
+    pairs = [[query_text, c["text"]] for c in chunks]
+    scores = ce.predict(pairs)
+    for c, s in zip(chunks, scores):
+        c["ce_score"] = float(s)
+    return sorted(chunks, key=lambda c: c["ce_score"], reverse=True)[:top_n]
+
+
+async def rerank_cross_encoder_async(
+    query_text: str, chunks: list[dict], top_n: int = 5
+) -> list[dict]:
+    """Async wrapper — runs cross-encoder in thread pool (CPU-bound)."""
+    loop = asyncio.get_running_loop()
+    return await loop.run_in_executor(_executor, rerank_cross_encoder, query_text, chunks, top_n)
+
+
+# ── Startup warmup ─────────────────────────────────────────────────────────────
+
+def warmup() -> None:
+    """Pre-load embedding model and cross-encoder at startup.
+    Eliminates the cold-start latency spike on the first real user request.
+    """
+    try:
+        logger.info("Pre-warming embedding model...")
+        query("warmup", n_results=1)
+        logger.info("Pre-warming cross-encoder...")
+        ce = _get_cross_encoder()
+        ce.predict([["warmup query", "warmup document"]])
+        logger.info("Models pre-warmed (embedding + cross-encoder)")
+    except Exception as exc:
+        logger.warning("Warmup failed (non-fatal): %s", exc)
+
+
+# ── Legacy helpers (kept for backward compat, not used in hot path) ───────────
+
 def query_multi(texts: list[str], n_per_query: int = 6) -> list[dict]:
-    """Synchronous multi-query with caching (used by non-streaming endpoint)."""
     seen: dict[str, dict] = {}
     for text in texts:
         for chunk in _query_single_cached(text, n_per_query):
@@ -111,14 +288,12 @@ def query_multi(texts: list[str], n_per_query: int = 6) -> list[dict]:
 
 
 async def query_multi_async(texts: list[str], n_per_query: int = 6) -> list[dict]:
-    """Async parallel multi-query — runs all ChromaDB queries concurrently in a thread pool."""
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     tasks = [
         loop.run_in_executor(_executor, _query_single_cached, text, n_per_query)
         for text in texts
     ]
     results = await asyncio.gather(*tasks)
-
     seen: dict[str, dict] = {}
     for chunks in results:
         for chunk in chunks:

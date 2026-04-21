@@ -93,7 +93,7 @@ def _rerank_chunks(chunks: list[dict], user_message: str) -> list[dict]:
 
 def _build_context(chunks: list[dict]) -> str:
     """Format retrieved chunks into a clean, structured context block."""
-    if not chunks or all(c["score"] < 0.15 for c in chunks):
+    if not chunks or all(c.get("rrf_score", c["score"]) < 0.005 for c in chunks):
         return "NO_RELEVANT_CONTEXT"
 
     # Group by type for cleaner context
@@ -175,10 +175,12 @@ class ChatResponse(BaseModel):
 @router.post("/chat", response_model=ChatResponse)
 def ai_chat(req: ChatRequest) -> ChatResponse:
     queries = _build_rag_queries(req)
-    chunks = rag_store.query_multi(queries)
-    chunks = _rerank_chunks(chunks, req.message)
-    context = _build_context(chunks)
-    sources = [f"{c['type']}:{c['id']}" for c in chunks]
+    dense = rag_store.query_batch(queries, n_per_query=6)
+    bm25 = rag_store.bm25_query(req.message, n_results=15)
+    merged = rag_store.rrf_merge(dense, bm25, k=60, top_n=20)
+    top_chunks = rag_store.rerank_cross_encoder(req.message, merged, top_n=5)
+    context = _build_context(top_chunks)
+    sources = [f"{c['type']}:{c['id']}" for c in top_chunks]
     prompt = _build_chat_prompt(req, context)
     reply = _generate("", prompt)
     return ChatResponse(reply=reply.strip(), sources=sources)
@@ -189,11 +191,16 @@ def ai_chat(req: ChatRequest) -> ChatResponse:
 @router.post("/chat/stream")
 async def ai_chat_stream(req: ChatRequest) -> StreamingResponse:
     queries = _build_rag_queries(req)
-    # Parallel async RAG — all queries run concurrently, dramatically reducing TTFT
-    chunks = await rag_store.query_multi_async(queries)
-    chunks = _rerank_chunks(chunks, req.message)
-    context = _build_context(chunks)
-    sources = [f"{c['type']}:{c['id']}" for c in chunks]
+    # 1. Batched dense retrieval — ONE encode call for all 4 queries
+    dense = await rag_store.query_batch_async(queries, n_per_query=6)
+    # 2. BM25 lexical retrieval — catches exact matches dense misses
+    bm25 = rag_store.bm25_query(req.message, n_results=15)
+    # 3. Hybrid merge via Reciprocal Rank Fusion
+    merged = rag_store.rrf_merge(dense, bm25, k=60, top_n=20)
+    # 4. Cross-encoder rerank → top 5 for context (much higher precision than cosine)
+    top_chunks = await rag_store.rerank_cross_encoder_async(req.message, merged, top_n=5)
+    context = _build_context(top_chunks)
+    sources = [f"{c['type']}:{c['id']}" for c in top_chunks]
     full_prompt = _build_chat_prompt(req, context)
 
     def event_stream():

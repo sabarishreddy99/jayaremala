@@ -9,8 +9,15 @@ from typing import List
 
 import chromadb
 from chromadb import EmbeddingFunction, Documents, Embeddings
-from rank_bm25 import BM25Okapi
 from sentence_transformers import CrossEncoder, SentenceTransformer
+
+# rank_bm25 is optional — gracefully degrade to dense-only if not installed
+try:
+    from rank_bm25 import BM25Okapi as _BM25Okapi
+    _BM25_AVAILABLE = True
+except ImportError:
+    _BM25Okapi = None  # type: ignore[assignment]
+    _BM25_AVAILABLE = False
 
 logger = logging.getLogger(__name__)
 
@@ -23,13 +30,14 @@ COLLECTION_NAME = "portfolio"
 EMBED_MODEL = "all-MiniLM-L6-v2"
 
 # ── BM25 state (always in-memory, rebuilt from docs on every startup) ──────────
-_bm25_index: BM25Okapi | None = None
+_bm25_index = None  # BM25Okapi | None
 _bm25_corpus: list[str] = []
 _bm25_ids: list[str] = []
 _bm25_types: list[str] = []
 
 # ── Cross-encoder state ────────────────────────────────────────────────────────
 _cross_encoder: CrossEncoder | None = None
+_cross_encoder_ready = False   # set True only after warmup succeeds
 CROSS_ENCODER_MODEL = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
 
@@ -95,10 +103,13 @@ def build_bm25_index(docs: list[tuple[str, str, str]]) -> None:
     Called by ingest.py after every startup (BM25 is always in-memory, not persisted).
     """
     global _bm25_index, _bm25_corpus, _bm25_ids, _bm25_types
+    if not _BM25_AVAILABLE:
+        logger.warning("rank_bm25 not installed — BM25 retrieval disabled")
+        return
     _bm25_ids = [d[0] for d in docs]
     _bm25_corpus = [d[1] for d in docs]
     _bm25_types = [d[2] for d in docs]
-    _bm25_index = BM25Okapi([_tokenize_for_bm25(t) for t in _bm25_corpus])
+    _bm25_index = _BM25Okapi([_tokenize_for_bm25(t) for t in _bm25_corpus])
     logger.info("BM25 index built: %d documents", len(docs))
 
 
@@ -236,18 +247,24 @@ def _get_cross_encoder() -> CrossEncoder:
 
 
 def rerank_cross_encoder(query_text: str, chunks: list[dict], top_n: int = 5) -> list[dict]:
-    """Score (query, chunk) pairs with a cross-encoder — far more accurate than
-    asymmetric cosine similarity because the model sees both texts simultaneously.
-    ~30ms for 20 pairs on CPU (cross-encoder/ms-marco-MiniLM-L-6-v2, 22MB).
+    """Score (query, chunk) pairs with a cross-encoder.
+    If the model isn't warmed up yet, falls back to RRF/cosine ordering instantly.
     """
     if not chunks:
         return []
-    ce = _get_cross_encoder()
-    pairs = [[query_text, c["text"]] for c in chunks]
-    scores = ce.predict(pairs)
-    for c, s in zip(chunks, scores):
-        c["ce_score"] = float(s)
-    return sorted(chunks, key=lambda c: c["ce_score"], reverse=True)[:top_n]
+    if not _cross_encoder_ready:
+        # Model not loaded yet — return best chunks by existing score, never hang
+        return sorted(chunks, key=lambda c: c.get("rrf_score", c.get("score", 0)), reverse=True)[:top_n]
+    try:
+        ce = _get_cross_encoder()
+        pairs = [[query_text, c["text"]] for c in chunks]
+        scores = ce.predict(pairs)
+        for c, s in zip(chunks, scores):
+            c["ce_score"] = float(s)
+        return sorted(chunks, key=lambda c: c["ce_score"], reverse=True)[:top_n]
+    except Exception as exc:
+        logger.warning("Cross-encoder rerank failed, using score fallback: %s", exc)
+        return sorted(chunks, key=lambda c: c.get("rrf_score", c.get("score", 0)), reverse=True)[:top_n]
 
 
 async def rerank_cross_encoder_async(
@@ -262,17 +279,25 @@ async def rerank_cross_encoder_async(
 
 def warmup() -> None:
     """Pre-load embedding model and cross-encoder at startup.
-    Eliminates the cold-start latency spike on the first real user request.
+    Embedding model is loaded first (critical — needed for every query).
+    Cross-encoder is loaded second and sets the ready flag only on success.
     """
+    global _cross_encoder_ready
     try:
         logger.info("Pre-warming embedding model...")
         query("warmup", n_results=1)
-        logger.info("Pre-warming cross-encoder...")
+        logger.info("Embedding model ready")
+    except Exception as exc:
+        logger.warning("Embedding warmup failed: %s", exc)
+
+    try:
+        logger.info("Pre-warming cross-encoder (downloading if needed)...")
         ce = _get_cross_encoder()
         ce.predict([["warmup query", "warmup document"]])
-        logger.info("Models pre-warmed (embedding + cross-encoder)")
+        _cross_encoder_ready = True
+        logger.info("Cross-encoder ready")
     except Exception as exc:
-        logger.warning("Warmup failed (non-fatal): %s", exc)
+        logger.warning("Cross-encoder warmup failed — will use RRF fallback: %s", exc)
 
 
 # ── Legacy helpers (kept for backward compat, not used in hot path) ───────────

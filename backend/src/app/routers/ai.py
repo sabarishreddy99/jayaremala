@@ -191,14 +191,18 @@ def ai_chat(req: ChatRequest) -> ChatResponse:
 @router.post("/chat/stream")
 async def ai_chat_stream(req: ChatRequest) -> StreamingResponse:
     queries = _build_rag_queries(req)
-    # 1. Batched dense retrieval — ONE encode call for all 4 queries
-    dense = await rag_store.query_batch_async(queries, n_per_query=6)
-    # 2. BM25 lexical retrieval — catches exact matches dense misses
-    bm25 = rag_store.bm25_query(req.message, n_results=15)
-    # 3. Hybrid merge via Reciprocal Rank Fusion
-    merged = rag_store.rrf_merge(dense, bm25, k=60, top_n=20)
-    # 4. Cross-encoder rerank → top 5 for context (much higher precision than cosine)
-    top_chunks = await rag_store.rerank_cross_encoder_async(req.message, merged, top_n=5)
+    try:
+        # 1. Batched dense retrieval — ONE encode call for all 4 queries
+        dense = await rag_store.query_batch_async(queries, n_per_query=6)
+        # 2. BM25 lexical retrieval — catches exact matches dense misses
+        bm25 = rag_store.bm25_query(req.message, n_results=15)
+        # 3. Hybrid merge via Reciprocal Rank Fusion
+        merged = rag_store.rrf_merge(dense, bm25, k=60, top_n=20)
+        # 4. Cross-encoder rerank → top 5 (skipped gracefully if model not ready)
+        top_chunks = await rag_store.rerank_cross_encoder_async(req.message, merged, top_n=5)
+    except Exception as exc:
+        logger.warning("Hybrid RAG pipeline failed, falling back to simple retrieval: %s", exc)
+        top_chunks = await rag_store.query_multi_async(queries)
     context = _build_context(top_chunks)
     sources = [f"{c['type']}:{c['id']}" for c in top_chunks]
     full_prompt = _build_chat_prompt(req, context)

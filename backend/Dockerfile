@@ -4,6 +4,9 @@ WORKDIR /app
 
 RUN pip install --no-cache-dir -U pip
 
+# Install CPU-only torch first — prevents sentence-transformers from pulling the 2.5 GB GPU build
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
+
 COPY pyproject.toml .
 RUN pip install --no-cache-dir -e .
 

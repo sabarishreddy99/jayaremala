@@ -1,6 +1,8 @@
 import Link from "next/link";
 import ChatInterface from "@/components/chat/ChatInterface";
 
+export const metadata = { title: "Chat with Avocado — Jaya's AI" };
+
 export default function ChatPage() {
   return (
     <div className="flex flex-col h-[100dvh] bg-[#f8f8f6]">
@@ -8,11 +10,14 @@ export default function ChatPage() {
       {/* Nav */}
       <header className="shrink-0 px-4 sm:px-12 pt-4 sm:pt-5 pb-2 sm:pb-3">
         <div className="mx-auto flex w-full max-w-2xl items-center justify-between">
-          <span className="text-sm font-black tracking-tight text-zinc-950">
-            Jaya Sabarish Reddy Remala<span className="text-indigo-600">.</span>
-          </span>
           <Link
-            href="/portfolio"
+            href="/"
+            className="text-sm font-black tracking-tight text-zinc-950 hover:opacity-70 transition-opacity"
+          >
+            Jaya<span className="text-indigo-600">.</span>
+          </Link>
+          <Link
+            href="/"
             className="inline-flex items-center gap-1 text-[11px] font-semibold text-zinc-400 hover:text-zinc-950 transition-colors tracking-wide"
           >
             View Portfolio

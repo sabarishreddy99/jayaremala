@@ -20,7 +20,7 @@ export default function Nav() {
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 sm:px-6 py-3.5">
         {/* Logo */}
         <Link
-          href="/portfolio"
+          href="/"
           className="text-sm font-bold tracking-tight text-zinc-950 hover:opacity-70 transition-opacity"
           onClick={() => setOpen(false)}
         >
@@ -54,7 +54,7 @@ export default function Nav() {
             </svg>
           </a>
           <Link
-            href="/"
+            href="/chat"
             className="ml-2 px-4 py-1.5 rounded-full bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
           >
             Chat with Avocado ✦
@@ -109,13 +109,6 @@ export default function Nav() {
                 <path d="M7 17L17 7M17 7H7M17 7v10"/>
               </svg>
             </a>
-            <Link
-              href="/"
-              onClick={() => setOpen(false)}
-              className="mt-1 px-4 py-2.5 rounded-full bg-indigo-600 text-white text-sm font-medium text-center hover:bg-indigo-700 transition-colors"
-            >
-              Chat with Avocado ✦
-            </Link>
           </nav>
         </div>
       )}

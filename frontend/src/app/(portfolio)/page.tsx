@@ -3,7 +3,7 @@ import { profile } from "@/data/profile";
 import { projects } from "@/data/projects";
 import { skills } from "@/data/skills";
 
-export const metadata = { title: "Portfolio — Jaya Sabarish Reddy Remala" };
+export const metadata = { title: "Jaya Sabarish Reddy Remala — Software Engineer" };
 
 export default function PortfolioHome() {
   const featured = projects.filter((p) => p.featured);
@@ -57,7 +57,7 @@ export default function PortfolioHome() {
             </svg>
           </a>
           <Link
-            href="/"
+            href="/chat"
             className="rounded-full bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 transition-colors shadow-sm"
           >
             Avocado ✦

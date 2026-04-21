@@ -190,7 +190,7 @@ export default function ChatInterface() {
           <div className="flex items-center justify-between px-1">
             <p className="text-[11px] text-zinc-400">
               Avocado answers from Jaya&apos;s profile.{" "}
-              <Link href="/portfolio" className="text-indigo-500 hover:text-indigo-700 font-medium">
+              <Link href="/" className="text-indigo-500 hover:text-indigo-700 font-medium">
                 View portfolio →
               </Link>
             </p>

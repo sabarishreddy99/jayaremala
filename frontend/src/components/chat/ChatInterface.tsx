@@ -7,6 +7,7 @@ import { saveMessages, loadMessages, clearSession } from "@/lib/session";
 import { profile } from "@/data/profile";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
+import LoadingGame from "./LoadingGame";
 
 export interface Message {
   role: "user" | "assistant";
@@ -147,10 +148,12 @@ export default function ChatInterface() {
             </div>
           )}
 
-          {streaming && (
+          {streaming && !streamingContent && <LoadingGame />}
+
+          {streaming && streamingContent && (
             <ChatMessage
               message={{ role: "assistant", content: streamingContent }}
-              streaming={!streamingContent}
+              streaming
             />
           )}
           <div ref={bottomRef} />

@@ -1,3 +1,5 @@
+import educationJson from "@/data/knowledge/education.json";
+
 export interface Education {
   institution: string;
   school: string;
@@ -10,43 +12,4 @@ export interface Education {
   highlights?: string[];
 }
 
-export const education: Education[] = [
-  {
-    institution: "New York University",
-    school: "Tandon School of Engineering",
-    degree: "Master of Science",
-    field: "Computer Science",
-    location: "New York, NY",
-    start: "Aug 2023",
-    end: "May 2025",
-    gpa: "3.8 / 4.0",
-    highlights: [
-      "Coursework: Design and Analysis of Algorithms, Machine Learning, Distributed Systems, Operating Systems",
-      "Teaching Assistant — Data Structures & Algorithms for Bioinformatics",
-      "Teaching Assistant — Machine Learning & Data Science for Bioinformatics",
-      "Head of Operations, NYU Graduate Indian Student Association (GISA) — Outstanding Inclusivity Initiative and Community Development awards at NYU’s Annual Student Leader Awards, with nominations in 7 distinct categories.",
-    ],
-  },
-  {
-    institution: "VIT University, Vellore",
-    school: "School of Electrical and Electronics Engineering (SELECT)",
-    degree: "Bachelor of Technology",
-    field: "Electrical and Electronics Engineering",
-    location: "Vellore, TN, India",
-    start: "Jul 2017",
-    end: "May 2021",
-    highlights: [
-      "Built gradeVITian — a PWA serving 17K+ monthly active users and 30K+ registered accounts, achieving #2 Google Search ranking",
-      "Head of Finance, VIT_Animation Club — managed events with 1,000+ attendees",
-    ],
-  },
-  {
-    institution: "Narayana Junior College",
-    school: "MPC",
-    degree: "XI & XII Standard",
-    field: "Maths, Physics & Chemistry",
-    location: "Vijayawada, Andhra Pradesh, India",
-    start: "2015",
-    end: "2017",
-  },
-];
+export const education = educationJson as Education[];

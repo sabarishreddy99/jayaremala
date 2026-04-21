@@ -1,3 +1,5 @@
+import projectsJson from "@/data/knowledge/projects.json";
+
 export interface Project {
   title: string;
   description: string;
@@ -8,46 +10,4 @@ export interface Project {
   award?: string;
 }
 
-export const projects: Project[] = [
-  {
-    title: "SnapLog – Edge AI Security Engine",
-    description:
-      "Achieved 15ms token latency on Snapdragon NPUs — a 10× improvement over cloud inference — by fine-tuning Llama 3.2 3B on security logs with QLoRA and deploying via 4-bit AWQ quantization through ONNX Runtime on-device. Guaranteed zero data loss during network partitions via an offline-first SQLite buffer with background sync workers.",
-    tags: ["Python", "FastAPI", "QLoRA", "AWQ Quantization", "ONNX Runtime", "Llama 3.2", "Snapdragon NPU"],
-    featured: true,
-    award: "Qualcomm Edge AI Hackathon Winner",
-    github: "https://github.com/sabarishreddy99/snap-log"
-  },
-  {
-    title: "CodeCollab – Real-Time Collaborative Code Editor",
-    description:
-      "Conflict-free simultaneous multi-user editing using Yjs (CRDTs) and WebSockets, scaled horizontally via Nginx load balancing across containerized instances. Increased AI auto-complete context quality by 65% with a Context-Aware Coding Agent using AST-based chunking and Voyage-Code-2 embeddings.",
-    tags: ["Claude 3.5", "Voyage AI", "Redis", "CRDTs", "WebSockets", "Nginx", "Docker"],
-    featured: true,
-    github: "https://github.com/sabarishreddy99/CodeCollab"
-  },
-  {
-    title: "Multi-Agent Research Discovery Engine",
-    description:
-      "Production LangGraph + Llama 3.1 70B system that semantically maps global researcher collaboration networks by indexing millions of papers from Elsevier's Science Direct/Scopus. Cut P99 RAG latency by 78% with Write-Through Redis caching; sustained 99.9% uptime at 3,000+ RPS on AWS ECS.",
-    tags: ["LangGraph", "Llama 3.1 70B", "BGE-M3", "FastAPI", "Redis", "AWS ECS", "Kubernetes"],
-    featured: true,
-    github: ""
-  },
-  {
-    title: "GeneCart",
-    description:
-      "AI-powered genomics discovery platform currently being built at NYU College of Arts and Science. Focused on making genomic data exploration accessible and actionable for researchers.",
-    tags: ["Python", "FastAPI", "React", "PostgreSQL", "AI"],
-    featured: false,
-  },
-  {
-    title: "gradeVITian",
-    description:
-      "High-traffic progressive web app for academic grade forecasting at VIT. Scaled to 17K+ monthly active users and 11K+ registered accounts. Achieved #2 Google Search ranking via programmatic SEO with sub-second mobile load times.",
-    tags: ["PHP", "MySQL", "JavaScript", "SEO", "PWA"],
-    url: undefined,
-    featured: false,
-    github: "https://github.com/sabarishreddy99/gv-official"
-  },
-];
+export const projects = projectsJson as Project[];

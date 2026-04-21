@@ -1,99 +1,14 @@
+import experienceJson from "@/data/knowledge/experience.json";
+
 export interface Experience {
   company: string;
   role: string;
   start: string;
-  end: string | "Present";
+  end: string;
   location: string;
   description: string;
   bullets: string[];
   tech?: string;
 }
 
-export const experience: Experience[] = [
-  {
-    company: "NYU College of Arts and Science",
-    role: "Software Engineer",
-    start: "Jun 2025",
-    end: "Present",
-    location: "New York, NY",
-    description: "Building GeneCart — AI-powered genomics tooling at NYU.",
-    tech: "Python, FastAPI, React, PostgreSQL",
-    bullets: [
-      "Building GeneCart, an AI-assisted genomics discovery platform at NYU's College of Arts and Science.",
-    ],
-  },
-  {
-    company: "NYU IT – High-Speed Research Network",
-    role: "Web Applications Lead",
-    start: "Sep 2024",
-    end: "May 2025",
-    location: "New York, NY",
-    description: "Led engineering of a production Multi-Agent research discovery platform for NYU's research department.",
-    tech: "Python, LangGraph, Llama 3.1, FastAPI, Node.js, AWS ECS, Kubernetes, Redis",
-    bullets: [
-      "Architected a production Multi-Agent Research Discovery Engine (LangGraph + Llama 3.1 70B) that semantically maps global researcher collaboration networks by indexing millions of papers from Elsevier's (Science Direct/Scopus), enabling cross-institutional discovery at a scale previously requiring manual curation.",
-      "Improved scientific query accuracy by 40% by engineering a Multi-Agent Search Router with hybrid retrieval, combining BGE-M3 dense embeddings with Reciprocal Rank Fusion (RRF) to resolve ambiguous cross-domain nomenclature lookups.",
-      "Sustained 99.9% uptime at 3,000+ RPS by building a horizontally-scaled async pipeline (Node.js + FastAPI on AWS ECS) with fault-isolated workers and circuit-breaker patterns.",
-      "Reduced P99 retrieval latency by 78% (450ms to <100ms) by designing a Write-Through Redis caching strategy for multi-hop Chain-of-Retrieval queries across chained LangGraph agent calls.",
-      "Cut deployment lead times by 65% by owning the full CI/CD lifecycle, containerizing stateful LLM workloads on Kubernetes with zero-downtime rolling deploys.",
-    ],
-  },
-  {
-    company: "NYU IT – High-Speed Research Network",
-    role: "Software Engineer Intern",
-    start: "May 2024",
-    end: "Aug 2024",
-    location: "New York, NY",
-    description: "Engineered a high-concurrency distributed search engine to federate research data from external APIs.",
-    tech: "FastAPI, AWS ECS (Fargate), AsyncIO, Redis, Docker, Kubernetes",
-    bullets: [
-      "Built a FastAPI microservice on AWS ECS (Fargate) using AsyncIO to parallelize data fetching from 5+ external APIs, slashing P99 latency from 450ms to <100ms.",
-      "Deployed a Redis Write-Through caching layer with custom TTL eviction policies, handling >3,000 RPS with sub-millisecond retrieval times.",
-      "Modernized CI/CD pipelines using Docker and Kubernetes, enabling zero-downtime blue-green deployments.",
-    ],
-  },
-  {
-    company: "NYU (Teaching Assistant)",
-    role: "TA – Data Structures & Algorithms / Machine Learning for Bioinformatics",
-    start: "Sep 2024",
-    end: "May 2025",
-    location: "New York, NY",
-    description: "TA across two graduate courses supporting 50+ students each semester.",
-    tech: "Python, Jupyter, ML pipelines",
-    bullets: [
-      "Mentored 50+ graduate students on Distributed System design patterns and algorithmic efficiency (Big O optimization); conducted code reviews for scalable ML pipeline implementations.",
-      "Collaborated with faculty to design assignments on real-world ML workflows including data preprocessing pipelines and model evaluation metrics.",
-      "Wrote Python scripts to automate grading of Jupyter notebooks, reducing feedback turnaround time by 40%.",
-    ],
-  },
-  {
-    company: "Wipro Limited (Client: Shell PLC)",
-    role: "Software Engineer",
-    start: "Jul 2021",
-    end: "Feb 2023",
-    location: "Bengaluru, India",
-    description: "Embedded at Shell PLC, building fault-tolerant data infrastructure for global maritime energy logistics.",
-    tech: "Java, Apache Kafka, Salesforce, Apex, LWC, PostgreSQL, AWS S3",
-    bullets: [
-      "Delivered zero data-loss maritime telemetry for Shell PLC by architecting a fault-tolerant Apache Kafka pipeline processing 115GB/day of extraction and shipment data across 200+ offshore crude oil stations in Brazil.",
-      "Reduced support ticket volume by 35% across 500+ vendors by launching a Self-Service Portal with automated credential lifecycle management and real-time KPI dashboards.",
-      "Increased system fault tolerance by 39% by decomposing a legacy monolithic Salesforce integration into event-driven Apex Async Micro-functions, eliminating cascading failures.",
-      "Reduced production incidents by 25% by engineering a defensive ETL validation layer that quarantines malformed payloads to an S3 Dead Letter Queue.",
-      "Engineered automated workflows for Shell's Self-Help Portal, integrating cross-platform APIs to reduce ITIL service requests by 45%.",
-    ],
-  },
-  {
-    company: "Vellore Institute of Technology",
-    role: "Full Stack Developer",
-    start: "Jan 2021",
-    end: "Jun 2021",
-    location: "Vellore, Tamil Nadu, India",
-    description: "Built and scaled gradeVITian, a high-traffic progressive web app for academic grade forecasting.",
-    tech: "PHP, MySQL, JavaScript, SEO",
-    bullets: [
-      "Engineered a PHP/MySQL backend that scaled to handle 17K+ monthly active users and 11K+ registered accounts.",
-      "Achieved a #2 Google Search ranking via advanced programmatic SEO and optimized frontend rendering for sub-second load times on mobile networks.",
-      "Designed normalized database schemas to ensure data integrity for high-volume grade calculations.",
-    ],
-  },
-];
+export const experience = experienceJson as Experience[];

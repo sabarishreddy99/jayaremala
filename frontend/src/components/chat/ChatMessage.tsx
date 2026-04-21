@@ -8,38 +8,38 @@ interface Props {
   streaming?: boolean;
 }
 
-const URL_PATTERN = /https?:\/\/[^\s]+/g;
+// Matches **bold**, *italic*, URLs, and newlines in one pass
+const INLINE = /(\*\*(.+?)\*\*|\*(.+?)\*|https?:\/\/[^\s]+|\n)/g;
 
-function renderWithLinks(text: string): React.ReactNode[] {
-  const parts: React.ReactNode[] = [];
+function renderContent(text: string): React.ReactNode[] {
+  const nodes: React.ReactNode[] = [];
   let last = 0;
   let match: RegExpExecArray | null;
-  URL_PATTERN.lastIndex = 0;
+  INLINE.lastIndex = 0;
 
-  while ((match = URL_PATTERN.exec(text)) !== null) {
-    if (match.index > last) {
-      parts.push(text.slice(last, match.index));
+  while ((match = INLINE.exec(text)) !== null) {
+    if (match.index > last) nodes.push(text.slice(last, match.index));
+
+    const raw = match[0];
+    if (raw === "\n") {
+      nodes.push(<br key={match.index} />);
+    } else if (raw.startsWith("**")) {
+      nodes.push(<strong key={match.index} className="font-semibold text-zinc-900">{match[2]}</strong>);
+    } else if (raw.startsWith("*")) {
+      nodes.push(<em key={match.index}>{match[3]}</em>);
+    } else {
+      nodes.push(
+        <a key={match.index} href={raw} target="_blank" rel="noopener noreferrer"
+          className="underline underline-offset-2 text-indigo-600 hover:text-indigo-800 break-all transition-colors">
+          {raw}
+        </a>
+      );
     }
-    const url = match[0];
-    parts.push(
-      <a
-        key={match.index}
-        href={url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="underline underline-offset-2 text-indigo-600 hover:text-indigo-800 break-all transition-colors"
-      >
-        {url}
-      </a>
-    );
-    last = match.index + url.length;
+    last = match.index + raw.length;
   }
 
-  if (last < text.length) {
-    parts.push(text.slice(last));
-  }
-
-  return parts;
+  if (last < text.length) nodes.push(text.slice(last));
+  return nodes;
 }
 
 export default function ChatMessage({ message, streaming }: Props) {
@@ -49,7 +49,7 @@ export default function ChatMessage({ message, streaming }: Props) {
     return (
       <div className="flex justify-end">
         <div className="max-w-[80%] sm:max-w-[70%] rounded-2xl rounded-tr-sm bg-zinc-950 px-4 py-2.5 text-sm leading-relaxed text-white shadow-sm">
-          {renderWithLinks(message.content)}
+          {renderContent(message.content)}
         </div>
       </div>
     );
@@ -69,7 +69,7 @@ export default function ChatMessage({ message, streaming }: Props) {
           </span>
         ) : (
           <>
-            {renderWithLinks(message.content)}
+            {renderContent(message.content)}
             {streaming && <span className="cursor-blink ml-0.5 text-zinc-400">|</span>}
           </>
         )}

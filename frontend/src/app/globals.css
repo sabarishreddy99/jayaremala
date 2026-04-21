@@ -18,6 +18,8 @@
   --color-foreground: var(--fg);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  /* Blog reading font — change NEXT_PUBLIC_BLOG_FONT in .env to swap */
+  --font-blog: var(--font-source-serif);
 }
 
 * { box-sizing: border-box; }

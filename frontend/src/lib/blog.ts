@@ -7,6 +7,7 @@ const CONTENT_DIR = path.join(process.cwd(), "src", "content", "blog");
 export interface PostFrontmatter {
   title: string;
   date: string;
+  publishedAt?: string;
   description: string;
   tags: string[];
 }
@@ -27,15 +28,18 @@ export function getAllPosts(): PostMeta[] {
       const slug = file.replace(/\.mdx$/, "");
       const raw = fs.readFileSync(path.join(CONTENT_DIR, file), "utf8");
       const { data } = matter(raw);
+      const toStr = (v: unknown) =>
+        v instanceof Date ? v.toISOString().slice(0, 10) : (v as string) ?? "";
       return {
         slug,
         title: data.title ?? slug,
-        date: data.date ?? "",
+        date: toStr(data.date),
+        publishedAt: toStr(data.publishedAt || data.date),
         description: data.description ?? "",
         tags: data.tags ?? [],
       } as PostMeta;
     })
-    .sort((a, b) => (a.date < b.date ? 1 : -1));
+    .sort((a, b) => (a.publishedAt! < b.publishedAt! ? 1 : -1));
 }
 
 export function getPostBySlug(slug: string): Post | null {

@@ -36,7 +36,7 @@ export default async function BlogPostPage({ params }: Props) {
 
       <article>
         <header className="mb-10 pb-8 border-b border-zinc-200">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-zinc-950 leading-tight mb-3">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-zinc-950 leading-tight mb-3 font-[family-name:var(--font-blog)]">
             {post.title}
           </h1>
           <div className="flex flex-wrap items-center gap-3">
@@ -49,7 +49,7 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
         </header>
 
-        <div className="prose max-w-none">
+        <div className="prose max-w-none font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
           <MDXRemote source={post.content} components={mdxComponents} />
         </div>
       </article>

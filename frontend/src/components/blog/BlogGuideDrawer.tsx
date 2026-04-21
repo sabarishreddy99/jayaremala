@@ -8,9 +8,38 @@ const SECTIONS = [
     code: `---
 title: Your Title
 date: "2026-04-21"
+publishedAt: "2026-04-21"
 description: One-line summary shown on index.
 tags: [tag1, tag2]
 ---`,
+    note: "publishedAt = immutable publish date used for sort order. date = display date (update freely). Filename becomes the URL slug: my-post.mdx → /blog/my-post",
+  },
+  {
+    heading: "Headings",
+    code: `## Section      ← large, border below
+### Sub-section ← medium, no border
+#### Label      ← uppercase small caps`,
+  },
+  {
+    heading: "Text formatting",
+    code: `**bold**        *italic*
+\`inline code\`   ~~strikethrough~~
+
+> blockquote pull quote
+
+<Divider />   ← decorative section break`,
+  },
+  {
+    heading: "Links & lists",
+    code: `[link text](https://example.com)
+[internal](/blog/my-post)
+
+- bullet item
+- another item
+  - nested item
+
+1. numbered item
+2. second item`,
   },
   {
     heading: "Images",
@@ -34,31 +63,17 @@ tags: [tag1, tag2]
 <Callout type="tip" title="Title">text</Callout>
 <Callout type="warning" title="Title">text</Callout>
 <Callout type="quote" title="Title">text</Callout>`,
-  },
-  {
-    heading: "Text formatting",
-    code: `**bold**        *italic*
-\`inline code\`   ~~strikethrough~~
-
-> blockquote pull quote
-
-<Divider />   ← decorative section break`,
+    note: "All MDX components (Callout, BlogImage, Divider) are auto-imported — no import statement needed.",
   },
   {
     heading: "Code blocks",
-    code: "```python\ndef hello(): return 'hi'\n```\n\nLanguages: python typescript\nbash json yaml sql go rust",
+    code: "```python\ndef hello(): return 'hi'\n```\n\nSupported: python typescript javascript\nbash json yaml sql go rust",
   },
   {
     heading: "Table",
     code: `| Col A | Col B |
 |---|---|
 | val   | val   |`,
-  },
-  {
-    heading: "Headings",
-    code: `## Section      ← border below
-### Sub-section ← no border
-#### Label      ← uppercase small`,
   },
 ];
 
@@ -132,10 +147,14 @@ export default function BlogGuideDrawer() {
               {[
                 ["Image",       "![alt](/blog/f.jpg)"],
                 ["Caption",     "![alt](/blog/f.jpg \"cap\")"],
+                ["Link",        "[text](https://url)"],
                 ["Bold",        "**text**"],
                 ["Italic",      "*text*"],
                 ["Code",        "`code`"],
+                ["Strike",      "~~text~~"],
                 ["Quote",       "> text"],
+                ["Bullet",      "- item"],
+                ["Numbered",    "1. item"],
                 ["Divider",     "<Divider />"],
                 ["Info box",    "<Callout type=\"info\">"],
                 ["Tip box",     "<Callout type=\"tip\">"],

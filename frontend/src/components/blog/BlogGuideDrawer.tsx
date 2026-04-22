@@ -121,10 +121,10 @@ export default function BlogGuideDrawer() {
       <button
         onClick={() => setOpen(true)}
         title="Blog writing guide"
-        className="fixed bottom-6 right-5 z-40 flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/80 backdrop-blur px-3 py-1.5 text-[10px] font-semibold text-zinc-300 shadow-sm hover:text-indigo-500 hover:border-indigo-200 transition-all duration-300 select-none"
+        className="fixed bottom-6 right-5 z-40 flex items-center gap-1.5 rounded-full border border-zinc-200 bg-white/80 backdrop-blur px-3 py-2 text-[10px] font-semibold text-zinc-300 shadow-sm hover:text-indigo-500 hover:border-indigo-200 transition-all duration-300 select-none"
       >
         <span className="text-[11px]">✦</span>
-        <span className="hidden sm:inline">Guide</span>
+        <span>Guide</span>
       </button>
 
       {/* Backdrop */}
@@ -137,7 +137,7 @@ export default function BlogGuideDrawer() {
 
       {/* Drawer */}
       <aside
-        className={`fixed top-0 right-0 z-50 h-full w-full max-w-sm bg-white shadow-2xl border-l border-zinc-200 flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed top-0 right-0 z-50 h-full w-full sm:max-w-sm bg-white shadow-2xl border-l border-zinc-200 flex flex-col transition-transform duration-300 ease-in-out ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-100">
@@ -188,7 +188,8 @@ export default function BlogGuideDrawer() {
               ) : (
                 <>
                   {/* Period table — site + blog metrics */}
-                  <table className="w-full text-[10px] border-collapse">
+                  <div className="overflow-x-auto -mx-1 px-1">
+                  <table className="w-full min-w-[260px] text-[10px] border-collapse">
                     <thead>
                       <tr className="border-b border-zinc-100">
                         <th className="text-left py-1.5 text-zinc-400 font-semibold w-[40%]">Metric</th>
@@ -233,12 +234,14 @@ export default function BlogGuideDrawer() {
                       </tr>
                     </tbody>
                   </table>
+                  </div>
 
                   {/* Per-post breakdown */}
                   {overview.blog["all"].posts.length > 0 && (
                     <div>
                       <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1.5">Per-post (all time)</p>
-                      <table className="w-full text-[10px] border-collapse">
+                      <div className="overflow-x-auto -mx-1 px-1">
+                      <table className="w-full min-w-[200px] text-[10px] border-collapse">
                         <thead>
                           <tr className="border-b border-zinc-100">
                             <th className="text-left py-1 text-zinc-400 font-semibold">Post</th>
@@ -258,6 +261,7 @@ export default function BlogGuideDrawer() {
                             ))}
                         </tbody>
                       </table>
+                      </div>
                     </div>
                   )}
                 </>

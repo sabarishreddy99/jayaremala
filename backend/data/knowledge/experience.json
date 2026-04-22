@@ -80,7 +80,7 @@
     "description": "Built and scaled gradeVITian, a high-traffic progressive web app for academic grade forecasting.",
     "tech": "PHP, MySQL, JavaScript, SEO",
     "bullets": [
-      "Engineered a PHP/MySQL backend that scaled to handle 17K+ monthly active users and 11K+ registered accounts.",
+      "Engineered a PHP/MySQL backend that scaled to handle 17K+ monthly active users and 20K+ registered accounts.",
       "Achieved a #2 Google Search ranking via advanced programmatic SEO and optimized frontend rendering for sub-second load times on mobile networks.",
       "Designed normalized database schemas to ensure data integrity for high-volume grade calculations."
     ]

@@ -140,6 +140,37 @@ After editing any JSON: run `npm run sync` from `frontend/`, or just restart `np
 
 ---
 
+## Blog engagement (views + claps)
+
+Tracked per-post in `chroma_db/analytics.db` (same Railway persistent volume as ChromaDB).
+
+| Endpoint | Behaviour |
+|---|---|
+| `POST /blog/{slug}/view` | Records unique view per IP (idempotent) |
+| `POST /blog/{slug}/clap` | Adds claps, max 50 per IP per post, body: `{ count: 1–10 }` |
+| `GET /blog/{slug}/stats` | Returns `{ views, claps, user_claps }` |
+| `GET /blog/stats/summary` | Returns `{ total_claps, total_views, posts[] }` for blog index |
+
+Frontend components:
+- `components/blog/BlogEngagement.tsx` — clap button + view count on each post page; claps batched with 1.5s debounce before sending; IPs hashed SHA-256, never stored raw
+- `components/blog/BlogIndexStats.tsx` — total claps + views in blog header; per-post stats on each index card
+
+## Avocado analytics
+
+Tracked in `chroma_db/analytics.db`:
+- Every completed stream response records the visitor's hashed IP
+- `GET /stats` returns `{ total_responses, unique_visitors }` — displayed in chatbot footer
+- Active model shown as a pill badge after first response; updates if a fallback model was used
+
+### Gemini model fallback chain
+
+| Env var | Purpose |
+|---|---|
+| `GEMINI_MODEL` | Primary model (default: `gemini-2.5-flash`) |
+| `GEMINI_FALLBACK_MODELS` | Comma-separated fallbacks tried on 503/429 (default: `gemini-2.0-flash,gemini-2.0-flash-lite,gemini-flash-latest`) |
+
+---
+
 ## Auto-sync pipeline
 
 ```

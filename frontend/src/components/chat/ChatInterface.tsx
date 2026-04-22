@@ -33,6 +33,14 @@ const SUGGESTIONS = [
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [activeModel, setActiveModel] = useState<string | null>(null);
+  const [stats, setStats] = useState<{ total_responses: number; unique_visitors: number } | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/stats`)
+      .then((r) => r.json())
+      .then(setStats)
+      .catch(() => {});
+  }, []);
 
   // Load persisted messages after hydration to avoid SSR mismatch
   useEffect(() => {
@@ -211,6 +219,25 @@ export default function ChatInterface() {
               </button>
             )}
           </div>
+
+          {/* Stats */}
+          {stats && stats.total_responses > 0 && (
+            <div className="flex items-center justify-center gap-4 py-1.5">
+              <div className="flex items-center gap-1.5">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-indigo-400"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span className="text-[10px] text-zinc-400">
+                  <span className="font-semibold text-zinc-600">{stats.total_responses.toLocaleString()}</span> responses
+                </span>
+              </div>
+              <span className="text-zinc-200">·</span>
+              <div className="flex items-center gap-1.5">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-indigo-400"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                <span className="text-[10px] text-zinc-400">
+                  <span className="font-semibold text-zinc-600">{stats.unique_visitors.toLocaleString()}</span> unique visitors
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Footer */}
           <div className="pt-2 sm:pt-3 border-t border-zinc-200">

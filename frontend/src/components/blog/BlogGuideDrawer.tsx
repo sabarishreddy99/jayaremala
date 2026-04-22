@@ -140,17 +140,28 @@ export default function BlogGuideDrawer() {
             </div>
           ))}
 
-          {/* Appendix — Data Reference */}
-          <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-4">
+          {/* Appendix — Project Maintenance */}
+          <div className="rounded-xl border border-zinc-200 bg-white p-4 space-y-6">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 mb-0.5">Appendix</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Where to edit website data</p>
-              <p className="text-[10px] text-zinc-400 mt-1">After editing any JSON file, run <span className="font-mono bg-zinc-100 px-1 rounded">npm run sync</span> from <span className="font-mono bg-zinc-100 px-1 rounded">frontend/</span></p>
+              <h3 className="text-sm font-bold text-zinc-950">Project Maintenance</h3>
+              <p className="text-[10px] text-zinc-400 mt-1 leading-relaxed">Everything you need to keep the site up to date — data, blog posts, and deployments.</p>
             </div>
+
+            {/* Section 1 — Portfolio Data */}
             <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">1 · Portfolio Data</span>
+                <div className="flex-1 h-px bg-zinc-100" />
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-relaxed">
+                Edit only in <span className="font-mono bg-zinc-100 px-1 rounded">backend/data/knowledge/</span> — these are the single source of truth for both the website UI and the Avocado chatbot knowledge base.
+                After any edit, run <span className="font-mono bg-zinc-100 px-1 rounded">npm run sync</span> from <span className="font-mono bg-zinc-100 px-1 rounded">frontend/</span> (or just restart <span className="font-mono bg-zinc-100 px-1 rounded">npm run dev</span>).
+                Never edit <span className="font-mono bg-zinc-100 px-1 rounded">frontend/src/data/knowledge/</span> directly — those files are auto-overwritten.
+              </p>
               {[
                 {
-                  what: "Name, bio, tagline, location, email, phone, GitHub, LinkedIn, resume",
+                  what: "Name, bio, tagline, location, contact",
                   file: "backend/data/knowledge/profile.json",
                   fields: "name, tagline, bio, obsession, previous, prev_domain, interested_domain, location, email, phone, github, linkedin, resume",
                 },
@@ -165,7 +176,7 @@ export default function BlogGuideDrawer() {
                   fields: "institution, school, degree, field, location, start, end, gpa, highlights[]",
                 },
                 {
-                  what: "Projects — title, description, tags, source links, notes",
+                  what: "Projects — title, description, tags, links",
                   file: "backend/data/knowledge/projects.json",
                   fields: "title, description, tags[], featured, award, sourceLinks[{label,url}], note",
                 },
@@ -179,21 +190,177 @@ export default function BlogGuideDrawer() {
                   file: "backend/data/knowledge/testimonials.json",
                   fields: "name, designation, company, linkedin, description, givenAt, source",
                 },
+              ].map(({ what, file, fields }) => (
+                <div key={file} className="border border-zinc-100 rounded-lg p-2.5 space-y-1">
+                  <p className="text-[11px] font-semibold text-zinc-700">{what}</p>
+                  <p className="font-mono text-[10px] text-indigo-600 break-all">{file}</p>
+                  <p className="text-[10px] text-zinc-400 leading-relaxed">{fields}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Section 2 — Blog Posts */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">2 · Blog Posts</span>
+                <div className="flex-1 h-px bg-zinc-100" />
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-relaxed">
+                Create a new <span className="font-mono bg-zinc-100 px-1 rounded">.mdx</span> file — the filename becomes the URL slug.
+                No sync needed; GitHub Actions auto-generates <span className="font-mono bg-zinc-100 px-1 rounded">blog.json</span> on push so the chatbot indexes the new post automatically.
+              </p>
+              {[
                 {
-                  what: "Blog posts — new article",
-                  file: "frontend/src/content/blog/[slug].mdx",
-                  fields: "title, date, publishedAt, description, tags[] (frontmatter) — no sync needed",
+                  what: "New post file",
+                  file: "frontend/src/content/blog/my-post.mdx",
+                  fields: "Filename → URL slug. Required frontmatter: title, date, publishedAt, description, tags[]",
                 },
                 {
-                  what: "Blog post images",
+                  what: "Post images",
                   file: "frontend/public/blog/",
-                  fields: "place image files here, reference as /blog/filename.jpg",
+                  fields: "Place image files here. Reference as /blog/filename.jpg in MDX.",
+                },
+                {
+                  what: "Auto-generated chatbot index",
+                  file: "backend/data/knowledge/blog.json",
+                  fields: "Do not edit — auto-generated by GH Actions on every push. Railway re-ingests on deploy.",
                 },
               ].map(({ what, file, fields }) => (
                 <div key={file} className="border border-zinc-100 rounded-lg p-2.5 space-y-1">
                   <p className="text-[11px] font-semibold text-zinc-700">{what}</p>
                   <p className="font-mono text-[10px] text-indigo-600 break-all">{file}</p>
                   <p className="text-[10px] text-zinc-400 leading-relaxed">{fields}</p>
+                </div>
+              ))}
+              <div className="border border-amber-100 bg-amber-50 rounded-lg p-2.5 space-y-1">
+                <p className="text-[11px] font-semibold text-amber-700">publishedAt vs date</p>
+                <p className="text-[10px] text-amber-600 leading-relaxed">
+                  <span className="font-mono">publishedAt</span> is the sort key — set it once and never change it.
+                  <span className="font-mono"> date</span> is the display date — update freely (e.g. after a major revision).
+                </p>
+              </div>
+            </div>
+
+            {/* Section 3 — Deploy Pipeline */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">3 · Deploy Pipeline</span>
+                <div className="flex-1 h-px bg-zinc-100" />
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-relaxed">Everything is automated — just commit and push.</p>
+              {[
+                {
+                  what: "Update portfolio data",
+                  detail: "Edit any backend/data/knowledge/*.json → commit + push → Railway redeploys → chatbot re-indexes automatically (hash-based detection).",
+                },
+                {
+                  what: "Publish a new blog post",
+                  detail: "Write MDX → commit + push → GH Actions runs sync-blog script → commits blog.json → Railway redeploys → chatbot indexes the new post.",
+                },
+                {
+                  what: "GH Actions auto-commit",
+                  detail: "Workflow has contents: write permission. Commits synced files with [skip ci] tag to prevent infinite loops.",
+                },
+                {
+                  what: "Chatbot re-ingest (hash-based)",
+                  detail: "Backend computes SHA-256 of all knowledge JSON files at startup. Re-ingests only when the hash changes — fast startup if nothing changed.",
+                },
+              ].map(({ what, detail }) => (
+                <div key={what} className="border border-zinc-100 rounded-lg p-2.5 space-y-0.5">
+                  <p className="text-[11px] font-semibold text-zinc-700">{what}</p>
+                  <p className="text-[10px] text-zinc-400 leading-relaxed">{detail}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Section 4 — Blog Engagement */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">4 · Blog Engagement</span>
+                <div className="flex-1 h-px bg-zinc-100" />
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-relaxed">Tracked automatically. No config needed for new posts — engagement starts recording as soon as a reader opens the post.</p>
+              {[
+                {
+                  what: "Views — unique per visitor per post",
+                  detail: "Auto-recorded when a reader opens a post. One view per IP address. Shown on the post page and blog index.",
+                },
+                {
+                  what: "Claps — up to 50 per visitor per post",
+                  detail: "Reader clicks the 👏 button. Clicks batch with a 1.5s debounce before saving. Total shown on index card and post page.",
+                },
+                {
+                  what: "Storage — SQLite analytics.db",
+                  detail: "Stored in chroma_db/analytics.db. IPs are SHA-256 hashed — never stored raw. On Railway: set ANALYTICS_DB_PATH=/data/analytics.db with a persistent volume so counts survive redeploys.",
+                },
+                {
+                  what: "Persistence on Railway",
+                  detail: "Without a volume, counts reset on every deploy. Add a Volume (Pro plan) mounted at /data and set ANALYTICS_DB_PATH=/data/analytics.db in backend environment variables.",
+                },
+                {
+                  what: "API endpoints",
+                  detail: "POST /blog/{slug}/view · POST /blog/{slug}/clap (body: {count}) · GET /blog/{slug}/stats · GET /blog/stats/summary",
+                },
+              ].map(({ what, detail }) => (
+                <div key={what} className="border border-zinc-100 rounded-lg p-2.5 space-y-0.5">
+                  <p className="text-[11px] font-semibold text-zinc-700">{what}</p>
+                  <p className="text-[10px] text-zinc-400 leading-relaxed">{detail}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Section 5 — Avocado Chatbot */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">5 · Avocado Chatbot</span>
+                <div className="flex-1 h-px bg-zinc-100" />
+              </div>
+              {[
+                {
+                  what: "Response count & unique visitors",
+                  detail: "Tracked on every chat response. Shown in chatbot footer. Stored in the same analytics.db — subject to same Railway persistence note above.",
+                },
+                {
+                  what: "Model indicator badge",
+                  detail: "Green pill shows which Gemini model answered (e.g. gemini-2.5-flash). Updates automatically if a fallback was used.",
+                },
+                {
+                  what: "Swap the AI model",
+                  detail: "Change GEMINI_MODEL in Railway environment variables. No code change needed.",
+                },
+                {
+                  what: "Model fallback chain",
+                  detail: "Primary: GEMINI_MODEL. Fallbacks: GEMINI_FALLBACK_MODELS (comma-separated). Auto-retries on 503/429 capacity errors in order.",
+                },
+                {
+                  what: "Knowledge base location",
+                  detail: "ChromaDB persists to chroma_db/. Also needs a Railway volume at /data if you want it to survive redeploys without re-indexing on every start.",
+                },
+              ].map(({ what, detail }) => (
+                <div key={what} className="border border-zinc-100 rounded-lg p-2.5 space-y-0.5">
+                  <p className="text-[11px] font-semibold text-zinc-700">{what}</p>
+                  <p className="text-[10px] text-zinc-400 leading-relaxed">{detail}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Section 6 — Environment Variables */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">6 · Environment Variables</span>
+                <div className="flex-1 h-px bg-zinc-100" />
+              </div>
+              <p className="text-[10px] text-zinc-400 mb-1">Set these in Railway → your backend service → Variables.</p>
+              {[
+                { key: "GOOGLE_API_KEY", detail: "Required. Google AI API key for Gemini." },
+                { key: "GEMINI_MODEL", detail: "Primary model. Default: gemini-2.5-flash" },
+                { key: "GEMINI_FALLBACK_MODELS", detail: "Comma-separated fallbacks. Default: gemini-2.0-flash,gemini-2.0-flash-lite,gemini-flash-latest" },
+                { key: "ANALYTICS_DB_PATH", detail: "Path to SQLite file. Set to /data/analytics.db when using a Railway persistent volume." },
+                { key: "FRONTEND_ORIGIN", detail: "CORS allowed origin. Set to your production frontend URL." },
+              ].map(({ key, detail }) => (
+                <div key={key} className="border border-zinc-100 rounded-lg p-2.5 space-y-0.5">
+                  <p className="font-mono text-[11px] font-semibold text-indigo-600">{key}</p>
+                  <p className="text-[10px] text-zinc-400 leading-relaxed">{detail}</p>
                 </div>
               ))}
             </div>

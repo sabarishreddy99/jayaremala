@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@keyframes float-up {
+  0%   { opacity: 1; transform: translateX(-50%) translateY(0);     }
+  100% { opacity: 0; transform: translateX(-50%) translateY(-28px); }
+}
+.animate-float-up { animation: float-up 0.8s ease-out forwards; }
+
 :root {
   --bg: #f8f8f6;
   --surface: #ffffff;

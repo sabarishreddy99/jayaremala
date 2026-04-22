@@ -4,6 +4,7 @@ import { getAllSlugs, getPostBySlug } from "@/lib/blog";
 import Link from "next/link";
 import { mdxComponents } from "@/components/blog/MDXComponents";
 import BlogGuideDrawer from "@/components/blog/BlogGuideDrawer";
+import BlogEngagement from "@/components/blog/BlogEngagement";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -52,6 +53,8 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="prose max-w-none font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
           <MDXRemote source={post.content} components={mdxComponents} />
         </div>
+
+        <BlogEngagement slug={post.slug} />
       </article>
 
       <div className="mt-16 pt-8 border-t border-zinc-200">

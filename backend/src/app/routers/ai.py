@@ -9,7 +9,10 @@ from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from fastapi import Request
+
 from app.core.settings import settings
+from app.db import analytics
 from app.rag import store as rag_store
 
 logger = logging.getLogger(__name__)
@@ -241,7 +244,7 @@ def ai_chat(req: ChatRequest) -> ChatResponse:
 # ── /ai/chat/stream (SSE streaming) ──────────────────────────────────────────
 
 @router.post("/chat/stream")
-async def ai_chat_stream(req: ChatRequest) -> StreamingResponse:
+async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingResponse:
     queries = _build_rag_queries(req)
     try:
         # 1. Batched dense retrieval — ONE encode call for all 4 queries
@@ -259,11 +262,14 @@ async def ai_chat_stream(req: ChatRequest) -> StreamingResponse:
     sources = [f"{c['type']}:{c['id']}" for c in top_chunks]
     full_prompt = _build_chat_prompt(req, context)
 
+    ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+
     def event_stream():
         used_model: list[str] = []
         try:
             for token in _stream_tokens(full_prompt, used_model):
                 yield f"data: {json.dumps({'token': token})}\n\n"
+            analytics.record(ip)
             yield f"data: {json.dumps({'done': True, 'sources': sources, 'model': used_model[0] if used_model else settings.gemini_model})}\n\n"
         except Exception as exc:
             logger.error("Streaming error: %s", exc)

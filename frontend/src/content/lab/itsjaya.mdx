@@ -3,17 +3,25 @@ title: "itsjaya — AI Portfolio"
 status: "active"
 description: "AI-powered personal portfolio with a RAG chatbot (Avocado), MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade — not a toy."
 startedAt: "2025-11-01"
-updatedAt: "2026-04-22"
+updatedAt: "2026-04-23"
 tech: [Next.js 16, FastAPI, ChromaDB, Gemini 2.5 Flash, BM25, Cross-encoder, SQLite, Railway, GitHub Pages, GitHub Actions]
 ---
 
 ## Overview
 
-Most portfolios are static pages a recruiter scrolls past in 30 seconds. This one starts a conversation.
+Most portfolios are static pages someone scrolls past in 30 seconds. This one starts a conversation.
 
 **Avocado** is an AI assistant backed by a hybrid RAG pipeline. It answers questions about experience, projects, skills, and blog posts in real time — with tokens streaming directly to the browser. Ask it *"what's your strongest AI project?"* and it retrieves the most relevant knowledge chunks, reranks them with a cross-encoder, and streams a grounded answer through Gemini.
 
 The portfolio half is a full static Next.js site — experience, education, projects, and a blog with per-post views and claps tracked in SQLite. The whole system auto-deploys on every `git push` with zero manual steps.
+
+### Why build it this way
+
+A traditional portfolio is a one-way broadcast. You decide what to highlight, the visitor reads what you chose, end of story. The problem is that the actual question someone wants answered — "does this person have experience with distributed caching?" — almost never aligns with the section you happened to emphasise.
+
+An AI-backed portfolio inverts this. The visitor asks in natural language, the system surfaces the most relevant evidence, and Gemini synthesises an answer grounded in real data. The net effect is that a 30-second scroll becomes a conversation that can go as deep as the person wants. The knowledge base is the resume — the chatbot is just the interface.
+
+The engineering goal was to make that conversational layer production-quality, not a toy demo. Streaming tokens instead of waiting for a full response, hybrid retrieval instead of pure cosine similarity, a fallback chain for model unavailability — each of these matters when someone is actually using the thing.
 
 <Status status="active" />
 
@@ -173,7 +181,11 @@ User message: "what's your strongest AI project?"
 
 ### Why this retrieval stack
 
-Dense search alone misses exact keyword matches. BM25 alone misses semantic paraphrasing. The hybrid catches both. RRF is parameter-free (k=60 is the proven default from the original paper). The cross-encoder is the most expensive step — running it on all documents would be prohibitive, but on 20 pre-filtered candidates it's fast and dramatically improves precision.
+The failure mode of pure dense search is subtle: it generalises. The embedding model learned that "high-throughput ingestion system" and "115 GB/day pipeline" are semantically similar concepts — but a recruiter who types "115 GB/day" is looking for that exact number, not a paraphrase of it. Dense search ranks semantic neighbours above the exact match. BM25 does the opposite: it rewards term frequency and document frequency, so specific numbers, project names, and company names surface immediately.
+
+The hybrid catches both failure modes. Dense handles paraphrasing ("what's your strongest AI work?" → SnapLog, Multi-Agent Research Engine). BM25 handles exact recall ("Qualcomm hackathon", "3000 RPS", "NYU", "78% accuracy"). RRF merges the two ranked lists without requiring any tuning — k=60 is the proven default from the original Cormack, Clarke, Buettcher 2009 paper and it works well here.
+
+The cross-encoder at the end addresses a different problem: cosine similarity in embedding space is a coarse relevance signal. Two chunks might score identically in cosine similarity but one actually answers the question and the other just happens to share vocabulary. The cross-encoder reads query and passage jointly — full self-attention between them — and produces a calibrated relevance score. The cost is O(n) inference per query, which is why it only runs on the 20 post-RRF candidates, not all 75+ documents. 20 pairs take about 30ms; 75 pairs would push past 100ms.
 
 ---
 
@@ -188,18 +200,32 @@ Atomic chunking: each bullet point, project, and skill category gets its own doc
 | `education` | ~10 | education.json | 1 overview per degree + 1 doc per highlight |
 | `project` | ~14 | projects.json | 1 overview + 1 tech-stack doc per project |
 | `skills` | 8 | skills.json | 1 per category + 1 aggregated |
-| `faq` | 12 | Hard-coded | Pre-answers common recruiter questions about contact, hire, strengths, resume |
+| `faq` | 12 | Hard-coded | Pre-answers common questions about contact, hire, strengths, resume |
 | `blog` | varies | blog.json (auto) | 1 per post — title + description + first 2,000 chars of body |
 
 **Total: ~70–80 documents.** ChromaDB handles this trivially; the retrieval quality comes from chunking strategy and the hybrid pipeline, not scale.
 
-### FAQ documents
+### Why atomic chunking
 
-The 12 hard-coded FAQ documents are the most impactful addition. They pre-answer questions like "what makes Jaya stand out?", "how to hire him?", "what's his resume link?" with exact numbers and facts. Without them, a question like "what's his biggest achievement?" would retrieve experience bullet points that don't directly answer the question.
+The earlier version chunked each work role into a single large document. A query about "Redis caching" would return the full NYU IT Systems role — which mentions Redis once buried among six unrelated bullets about Prometheus dashboards, CI/CD pipelines, and Docker migrations. The entire role document scored high on Redis similarity, but 80% of the returned text was noise that crowded out the Gemini context window.
 
-### Hash-based re-ingest
+Splitting each bullet point into its own document means a Redis query returns only the Redis-specific chunk. The context Gemini receives is dense signal, not diluted noise. The tradeoff is more ChromaDB documents (~75 vs ~15), but at this scale that's irrelevant — ChromaDB handles millions of documents and the retrieval cost difference is negligible.
 
-On startup, `run_ingest()` computes SHA-256 of all JSON files and compares against a stored hash file. Re-ingests only when content changed. Fast startup (~2–3s) when only code changed; full re-ingest (~15–20s) when knowledge JSON was updated.
+### FAQ documents and what they fix
+
+RAG retrieval is only as good as what is retrievable. The raw experience and project documents are factual, but they are not shaped to answer the questions a visitor actually asks. "What makes Jaya stand out?" returns experience bullet points — true, but not a direct answer. "How do I hire him?" has no document that answers it at all.
+
+The 12 hard-coded FAQ documents are pre-written answers to the highest-probability recruiter questions. They contain exact numbers, direct claims, and contact information. When a relevant FAQ is retrieved, Gemini gets a document that already says "his strongest project is SnapLog, which won the Qualcomm Edge AI Hackathon and runs at 15ms on an NPU" — not a list of bullets it has to synthesise from. These 12 documents have more impact on response quality than any retrieval pipeline improvement.
+
+### Hash-based re-ingest and what it protects
+
+On startup, `run_ingest()` computes SHA-256 of all JSON files and compares against a stored hash file. The hash protects against two failure modes that would otherwise operate silently.
+
+**Without the hash check, always re-ingest:** Every Railway deploy — even a one-line CSS fix with no knowledge changes — triggers a 15–20s ChromaDB rebuild. On Railway's free plan, cold starts are already slow. Adding an unnecessary re-ingest on every deploy would make the first response after a deploy take 30+ seconds.
+
+**Without the hash check, skip if non-empty:** If you just check `collection.count() > 0` and skip, knowledge updates never take effect. You could update `profile.json` with a new role, push, Railway redeploys — but the chatbot keeps answering with the old data because the collection is non-empty.
+
+The SHA-256 fingerprint of the entire `data/knowledge/` directory solves both: fast startup when nothing changed, automatic re-ingest when anything changed.
 
 ```arch
 startup
@@ -279,6 +305,12 @@ analytics.db
 ```
 
 `GET /stats/overview` returns all metrics for all periods in a single DB round-trip per period — called once on drawer open, not on every page load.
+
+### Why track engagement at all
+
+Blog views and claps are not vanity metrics here. The view count tells you whether a post was read. The clap count tells you whether it resonated. The combination is useful signal for deciding what to write next — a post with high views and zero claps was probably clicked but abandoned; a post with low views and high claps per reader was deeply engaging to a small audience.
+
+The period breakdown (7d / 30d / 1y / all-time) in the stats dashboard answers different questions. The 7-day window shows whether a recent share drove traffic. The all-time total shows which posts have lasting relevance. The analytics cost nothing to run, are privacy-preserving by design (SHA-256 hashed IPs, never stored raw), and give enough signal to be actionable.
 
 ### Clap batching on the frontend
 
@@ -449,43 +481,77 @@ ChatInterface (client)
 ## Key Decisions
 
 <Decision date="2026-04-22" title="Lab page — living system design docs over static write-ups">
-  Most "system design" write-ups are frozen snapshots written after the fact. A living MDX page with timeline-based Decision and Update entries can be amended in-place as the system evolves. Keeps the real reasoning visible — not just the polished post-hoc explanation.
+  The standard portfolio write-up is a polished post-hoc rationalisation. You ship the thing, then write the explanation that makes it sound planned. The real decisions — the dead-ends, the alternatives you considered, the constraints that forced your hand — disappear.
+
+  A living MDX page that gets amended as the system evolves preserves the actual reasoning. The `Decision` and `Update` timeline components make it natural to add entries in-place instead of rewriting history. The constraint that forced MDX over a database-backed CMS is meaningful: the whole frontend is a static export. There is no database write path. MDX files committed to the repo are the only durable storage available at build time.
+
+  What this means for the system: the lab section is the closest thing this project has to an architecture decision record. Future work on Avocado or the RAG pipeline should be documented here — not in a separate document that will never be found.
 </Decision>
 
 <Decision date="2026-04-15" title="Hash-based re-ingest: SHA-256 of all knowledge JSON on startup">
-  The naive approach — always re-ingest — adds 15–20s to every Railway deploy. The naive-er approach — skip if ChromaDB non-empty — never re-ingests after data changes. SHA-256 of all JSON files gives a deterministic, cheap content fingerprint. Re-ingest only when something actually changed.
+  Two simpler alternatives exist and both are wrong. Always re-ingest: adds 15–20s to every Railway deploy regardless of whether the knowledge base changed. On a free-plan Railway service, the startup time is already visible to a recruiter opening the chatbot cold — an unnecessary 20s tax is unacceptable. Skip if ChromaDB non-empty: knowledge updates never propagate. You update `experience.json` with a new role, push, Railway redeploys — but the chatbot keeps answering with stale data because the collection count is above zero.
+
+  SHA-256 of the entire `data/knowledge/` directory solves both failure modes with a single file read at startup cost. The hash file lives at `chroma_db/.ingest_hash` on the same persistent volume as ChromaDB — if the volume is wiped, the missing hash file triggers a fresh ingest, which is correct.
+
+  What this means for the system: portfolio updates — new job, new project, published blog post — automatically propagate to the chatbot's knowledge on the next Railway deploy without any manual step.
 </Decision>
 
 <Decision date="2026-04-10" title="BM25 hybrid retrieval alongside ChromaDB dense search">
-  Dense search with all-MiniLM-L6-v2 missed exact keyword matches: "3000 RPS", "SnapLog", "Qualcomm hackathon", "115 GB/day". These are the exact specifics a recruiter asks about. BM25Okapi is free to run (in-memory, no model), catches lexical matches dense search generalises away from, and RRF merges both lists cleanly.
+  When the dense retrieval results were first audited, a pattern emerged: specific identifiers scored poorly. "Qualcomm" wasn't in the vocabulary the embedding model learned to weight. "115 GB/day" gets embedded near other volume metrics but not near the exact text. "3000 RPS" retrieves documents about high-throughput systems in general, not the specific project that hit 3000 RPS.
+
+  These failures matter for a portfolio specifically because the most important queries people ask are about specifics. "Did he work at Shell?" is more common than "Tell me about his distributed systems experience." BM25 handles exact term recall with no model overhead — it's a pure in-memory frequency calculation rebuilt from the document list on every startup (~5ms).
+
+  What this means for the system: the hybrid pipeline changes what kinds of questions Avocado can answer reliably. Questions with proper nouns, numbers, company names, and specific project names now return the right chunk first. This is not a marginal improvement — it's the difference between "I don't have that information" and the correct answer.
 </Decision>
 
 <Decision date="2026-04-08" title="Cross-encoder rerank only on top 20 candidates, not all documents">
-  The cross-encoder jointly attends to query and passage — far better relevance than bi-encoder cosine. But it is O(n) — running it on all 75 docs would add ~200ms per query. Running it only on the top 20 post-RRF candidates costs ~30ms and produces materially better top-5 results. Classic recall-then-rerank pattern.
+  The bi-encoder architecture that powers ChromaDB has a structural limitation: query and passage are encoded independently, then compared by cosine similarity. The model never sees query and passage together. This means it can only retrieve documents that share embedding-space proximity with the query — it cannot reason about whether a passage actually answers the specific question asked.
+
+  The cross-encoder runs full transformer attention across the concatenated query-passage pair. It can read "does this text about Redis caching specifically answer the question about what caching strategies Jaya used?" — a richer relevance signal. The cost is O(n) per query. Running it on all 75+ documents would add 150–200ms per request. Running it on 20 post-RRF candidates adds about 30ms.
+
+  What this means for the system: the top-5 chunks fed to Gemini are the most relevant 5, not just the most similar 5. This matters most for questions where several plausible documents exist but only one actually answers the question. The reranker picks it.
 </Decision>
 
 <Decision date="2026-04-05" title="SQLite over managed Postgres for analytics">
-  Views, claps, and chat interactions are low-write, simple-schema data. A managed Postgres adds cost and latency on every write. SQLite on a Railway persistent volume is zero-cost, zero-latency (same container), and the entire DB is a single file. SQLite's INSERT OR IGNORE and ON CONFLICT DO UPDATE handle all idempotency needs.
+  The analytics workload is narrow: INSERT a view, INSERT OR UPDATE clap count, SELECT COUNT with a WHERE on timestamp. No joins. No concurrent writers (Railway is a single container). No schema migrations after initial creation. A managed Postgres would cost ~$5/month, add 1–3ms of network latency to every write, and bring a connection pool that is entirely unnecessary for a service handling at most a few hundred requests per day.
+
+  SQLite on a Railway persistent volume is zero-cost, same-process (no network), and the entire database is one file. The file can be downloaded for inspection at any time. `INSERT OR IGNORE` and `ON CONFLICT DO UPDATE` cover all idempotency requirements without transactions.
+
+  What this means for the system: analytics are fast, cost nothing to operate, and survive Railway deploys as long as the volume is mounted. The one operational risk is forgetting to set `ANALYTICS_DB_PATH` to the mounted volume path — if left at the default relative path, data is lost on every deploy. This is documented in the env vars section.
 </Decision>
 
-<Decision date="2026-03-25" title="Atomic chunking over large-blob chunking">
-  Early versions chunked experience JSON into one large document per role. A query about "Redis caching" would surface the entire NYU IT role including unrelated CI/CD details. Splitting each bullet point into its own document made retrieval dramatically more precise. ~75 small documents outperform ~15 large ones here.
+<Decision date="2026-03-20" title="Static export to GitHub Pages instead of Vercel or SSR">
+  The portfolio UI has no per-request server-side needs. Everything dynamic — chat responses, blog stats, clap counts — is client-side JavaScript calling the Railway API. Server-side rendering would add complexity and cost with no benefit here.
+
+  A fully static export (`output: "export"` in Next.js) generates HTML, CSS, and JS at build time. GitHub Pages serves it from a CDN for free with no cold starts. The one constraint this introduces is that `Link` from `next/link` must be used for all internal navigation because Next.js automatically prepends the `basePath` (`/jayaremala` in production). Plain anchor tags break production navigation silently — this has caused bugs and is worth knowing.
+
+  What this means for the system: the frontend is fast, free, and has no operational surface area. The only moving part is the Railway backend. All scaling concerns, uptime concerns, and cost concerns live there.
 </Decision>
 
-<Decision date="2026-03-20" title="Static export to GitHub Pages instead of Vercel/SSR">
-  The portfolio has no per-request server-side data needs — all dynamic behaviour is client-side API calls to the Railway backend. A fully static export avoids cold starts, is free indefinitely, and deploys in ~90 seconds via GitHub Actions.
+<Decision date="2026-03-10" title="Single source of truth: backend JSON as canonical data">
+  Before this refactor, portfolio data lived in two places: TypeScript files in `frontend/src/data/` hardcoded the UI data, and JSON files in `backend/data/knowledge/` powered the RAG knowledge base. They were maintained independently.
+
+  The drift was invisible. A new project was added to `projects.ts` for the UI but not to `projects.json` for the chatbot. Avocado answered "what are your projects?" with a list that was two projects behind the website. Anyone who looked at both and noticed would correctly conclude that the system was not being maintained.
+
+  The sync script makes the backend JSON canonical and generates everything else from it. The TypeScript data files are now thin typed wrappers over the synced JSON copies. The sync runs before every build and on every push via GitHub Actions — there is no path where the UI and chatbot knowledge are out of sync for more than one deploy.
+
+  What this means for the system: portfolio maintenance is a single edit to one JSON file. The UI, the chatbot, and the deploy pipeline all stay coherent automatically.
 </Decision>
 
-<Decision date="2026-03-10" title="Single source of truth: backend JSON to frontend via sync script">
-  Portfolio data originally lived in both frontend TypeScript files (hardcoded for UI) and backend JSON (for RAG). They silently drifted — the chatbot had outdated experience details while the UI showed the correct ones. The sync script runs before every build. One edit, both systems stay in sync.
+<Decision date="2026-02-28" title="Gemini fallback chain instead of surfacing capacity errors">
+  Gemini 2.5 Flash is the best available model for this use case — fast, capable, cheap. It also hits 503 and 429 capacity limits at peak times, particularly in the evenings. A portfolio chatbot that returns an error message on the first message is worse than no chatbot.
+
+  The fallback chain retries through gemini-2.0-flash, gemini-2.0-flash-lite, and gemini-flash-latest automatically. The frontend shows which model answered via a green pill badge — this keeps the fallback transparent without it reading as a failure. The visitor sees "gemini-2.0-flash" instead of "Service Unavailable".
+
+  What this means for the system: Avocado is available almost all of the time even when the primary model is under load. The quality difference between models is visible in the badge but not in the UX. The chain is fully configurable via env vars — no code change needed to reorder the chain or swap in a new model.
 </Decision>
 
-<Decision date="2026-02-28" title="Gemini fallback chain on 503/429 instead of surfacing errors">
-  Gemini 2.5 Flash hits capacity limits at peak times. The fallback chain retries through gemini-2.0-flash, gemini-2.0-flash-lite, gemini-flash-latest automatically. The frontend badge makes the fallback visible without it feeling like an error.
-</Decision>
+<Decision date="2026-02-15" title="12 hard-coded FAQ documents as the highest-ROI knowledge addition">
+  After the first week of real queries, the pattern was clear: the questions that matter most in the first 30 seconds are not well-served by retrieval from raw experience data. "What makes Jaya stand out?" returns experience bullet points — factually correct, but not a direct answer. "How do I hire him?" has no matching document in the knowledge base at all.
 
-<Decision date="2026-02-15" title="12 hard-coded FAQ documents in the knowledge base">
-  Retrieval alone was not enough for common recruiter questions: "what makes Jaya stand out?", "how to hire him?". The raw experience bullets answer these indirectly. Hard-coded FAQ documents pre-answer them directly with exact numbers. These 12 documents cover the questions that matter most to a recruiter in 30 seconds.
+  The FAQ documents are not retrieved from structured data — they are handwritten answers to the 12 highest-probability questions, loaded into ChromaDB as their own document type. They contain direct claims with exact numbers: "won the Qualcomm Edge AI Hackathon", "SnapLog runs at 15ms on an NPU", "gradeVITian has 17,000+ active users". When one is retrieved, Gemini gets the answer already formed — it just needs to surface it.
+
+  What this means for the system: the perceived quality of Avocado on high-value queries is determined more by the quality of these 12 documents than by any pipeline improvement. Keeping them up to date as achievements accumulate — new award, new scale milestone, new contact info — is the highest-leverage maintenance task in the entire knowledge base.
 </Decision>
 
 ---

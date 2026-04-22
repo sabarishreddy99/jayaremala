@@ -160,23 +160,48 @@ def _build_chat_prompt(req: ChatRequest, context: str) -> str:
     )
 
 
+def _is_capacity_error(exc: Exception) -> bool:
+    msg = str(exc)
+    return "503" in msg or "429" in msg or "UNAVAILABLE" in msg or "RESOURCE_EXHAUSTED" in msg
+
+
 def _generate(system: str, prompt: str) -> str:
     client = _get_client()
-    response = client.models.generate_content(
-        model=settings.gemini_model,
-        contents=f"{system}\n\n{prompt}" if system else prompt,
-    )
-    return response.text or ""
+    contents = f"{system}\n\n{prompt}" if system else prompt
+    last_exc: Exception | None = None
+    for model in settings.model_chain:
+        try:
+            response = client.models.generate_content(model=model, contents=contents)
+            if model != settings.gemini_model:
+                logger.info("Fell back to model: %s", model)
+            return response.text or ""
+        except Exception as exc:
+            if _is_capacity_error(exc):
+                logger.warning("Model %s unavailable (%s), trying next...", model, exc)
+                last_exc = exc
+            else:
+                raise
+    raise last_exc or RuntimeError("All models exhausted")
 
 
 def _stream_tokens(full_prompt: str) -> Iterator[str]:
     client = _get_client()
-    for chunk in client.models.generate_content_stream(
-        model=settings.gemini_model,
-        contents=full_prompt,
-    ):
-        if chunk.text:
-            yield chunk.text
+    last_exc: Exception | None = None
+    for model in settings.model_chain:
+        try:
+            for chunk in client.models.generate_content_stream(model=model, contents=full_prompt):
+                if chunk.text:
+                    yield chunk.text
+            if model != settings.gemini_model:
+                logger.info("Streamed via fallback model: %s", model)
+            return
+        except Exception as exc:
+            if _is_capacity_error(exc):
+                logger.warning("Model %s unavailable (%s), trying next...", model, exc)
+                last_exc = exc
+            else:
+                raise
+    raise last_exc or RuntimeError("All models exhausted")
 
 
 # ── Models ────────────────────────────────────────────────────────────────────

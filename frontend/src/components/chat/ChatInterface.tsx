@@ -23,11 +23,11 @@ const WELCOME: Message = {
 };
 
 const SUGGESTIONS = [
-  { label: "Most impressive project?", full: "What's your most impressive project?" },
-  { label: "AI & ML experience?", full: "Tell me about your AI and machine learning experience." },
-  { label: "Education background?", full: "Walk me through your educational background." },
-  { label: "Strongest tech stack?", full: "What's your strongest tech stack and languages?" },
-  { label: "Can I see your resume?", full: "Can I see your resume?" },
+  { label: "Most impressive project?", full: "What is Jaya's most impressive project?" },
+  { label: "AI & ML experience?", full: "Tell me about Jaya's AI and machine learning experience." },
+  { label: "Education background?", full: "Walk me through Jaya's educational background." },
+  { label: "Strongest tech stack?", full: "What is Jaya's strongest tech stack and languages?" },
+  { label: "Can I see his resume?", full: "Can I see Jaya's resume?" },
 ];
 
 export default function ChatInterface() {

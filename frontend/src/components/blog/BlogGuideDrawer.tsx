@@ -3,15 +3,20 @@
 import { useState, useEffect } from "react";
 import { API_BASE_URL } from "@/lib/api/client";
 
-interface SiteStats {
+interface PeriodSiteStats {
   total_responses: number;
   unique_visitors: number;
 }
 
-interface BlogSummary {
+interface PeriodBlogStats {
   total_claps: number;
   total_views: number;
   posts: { slug: string; views: number; claps: number }[];
+}
+
+interface Overview {
+  site: Record<string, PeriodSiteStats>;
+  blog: Record<string, PeriodBlogStats>;
 }
 
 const SECTIONS = [
@@ -96,12 +101,10 @@ function fmt(n: number): string {
 
 export default function BlogGuideDrawer() {
   const [open, setOpen] = useState(false);
-  const [siteStats, setSiteStats] = useState<SiteStats | null>(null);
-  const [blogSummary, setBlogSummary] = useState<BlogSummary | null>(null);
+  const [overview, setOverview] = useState<Overview | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/stats`).then(r => r.json()).then(setSiteStats).catch(() => {});
-    fetch(`${API_BASE_URL}/blog/stats/summary`).then(r => r.json()).then(setBlogSummary).catch(() => {});
+    fetch(`${API_BASE_URL}/stats/overview`).then(r => r.json()).then(setOverview).catch(() => {});
   }, []);
 
   // Close on Escape
@@ -172,84 +175,92 @@ export default function BlogGuideDrawer() {
               <p className="text-[10px] text-zinc-400 mt-1 leading-relaxed">Everything you need to keep the site up to date — data, blog posts, and deployments.</p>
             </div>
 
-            {/* Live Stats Table */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 mb-1">
+            {/* Live Stats Dashboard */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
                 <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-600">Live Stats</span>
                 <div className="flex-1 h-px bg-zinc-100" />
-                {(siteStats || blogSummary) && (
-                  <span className="text-[9px] text-zinc-300 uppercase tracking-widest">live</span>
-                )}
+                {overview && <span className="text-[9px] text-emerald-400 uppercase tracking-widest font-semibold">● live</span>}
               </div>
 
-              {!(siteStats || blogSummary) ? (
+              {!overview ? (
                 <p className="text-[10px] text-zinc-300 italic">Fetching stats…</p>
               ) : (
-                <table className="w-full text-[10px] border-collapse">
-                  <thead>
-                    <tr className="border-b border-zinc-100">
-                      <th className="text-left py-1.5 text-zinc-400 font-semibold">Metric</th>
-                      <th className="text-right py-1.5 text-zinc-400 font-semibold">Value</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-zinc-50">
-                    {siteStats && (
-                      <>
-                        <tr>
-                          <td className="py-1.5 text-zinc-600">Unique visitors (site)</td>
-                          <td className="py-1.5 text-right font-semibold text-zinc-800">{fmt(siteStats.unique_visitors)}</td>
-                        </tr>
-                        <tr>
-                          <td className="py-1.5 text-zinc-600">Avocado responses</td>
-                          <td className="py-1.5 text-right font-semibold text-zinc-800">{fmt(siteStats.total_responses)}</td>
-                        </tr>
-                      </>
-                    )}
-                    {blogSummary && (
-                      <>
-                        <tr>
-                          <td className="py-1.5 text-zinc-600">Total blog views</td>
-                          <td className="py-1.5 text-right font-semibold text-zinc-800">{fmt(blogSummary.total_views)}</td>
-                        </tr>
-                        <tr>
-                          <td className="py-1.5 text-zinc-600">Total blog claps</td>
-                          <td className="py-1.5 text-right font-semibold text-zinc-800">{fmt(blogSummary.total_claps)}</td>
-                        </tr>
-                        <tr>
-                          <td className="py-1.5 text-zinc-600">Posts published</td>
-                          <td className="py-1.5 text-right font-semibold text-zinc-800">{blogSummary.posts.length}</td>
-                        </tr>
-                      </>
-                    )}
-                  </tbody>
-                </table>
-              )}
-
-              {/* Per-post breakdown */}
-              {blogSummary && blogSummary.posts.length > 0 && (
-                <div className="mt-2">
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1.5">Per-post</p>
+                <>
+                  {/* Period table — site + blog metrics */}
                   <table className="w-full text-[10px] border-collapse">
                     <thead>
                       <tr className="border-b border-zinc-100">
-                        <th className="text-left py-1 text-zinc-400 font-semibold">Slug</th>
-                        <th className="text-right py-1 text-zinc-400 font-semibold">Views</th>
-                        <th className="text-right py-1 text-zinc-400 font-semibold">Claps</th>
+                        <th className="text-left py-1.5 text-zinc-400 font-semibold w-[40%]">Metric</th>
+                        <th className="text-right py-1.5 text-zinc-300 font-semibold">7d</th>
+                        <th className="text-right py-1.5 text-zinc-300 font-semibold">30d</th>
+                        <th className="text-right py-1.5 text-zinc-300 font-semibold">1y</th>
+                        <th className="text-right py-1.5 text-zinc-500 font-semibold">All</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-zinc-50">
-                      {[...blogSummary.posts]
-                        .sort((a, b) => b.views - a.views)
-                        .map((post) => (
-                          <tr key={post.slug}>
-                            <td className="py-1 text-zinc-500 font-mono truncate max-w-[120px]">{post.slug}</td>
-                            <td className="py-1 text-right text-zinc-700">{fmt(post.views)}</td>
-                            <td className="py-1 text-right text-zinc-700">{fmt(post.claps)}</td>
-                          </tr>
-                        ))}
+                      {[
+                        {
+                          label: "Unique visitors",
+                          values: (["week","month","year","all"] as const).map(p => fmt(overview.site[p].unique_visitors)),
+                        },
+                        {
+                          label: "Avocado responses",
+                          values: (["week","month","year","all"] as const).map(p => fmt(overview.site[p].total_responses)),
+                        },
+                        {
+                          label: "Blog views",
+                          values: (["week","month","year","all"] as const).map(p => fmt(overview.blog[p].total_views)),
+                        },
+                        {
+                          label: "Blog claps",
+                          values: (["week","month","year","all"] as const).map(p => fmt(overview.blog[p].total_claps)),
+                        },
+                      ].map(({ label, values }) => (
+                        <tr key={label}>
+                          <td className="py-1.5 text-zinc-600">{label}</td>
+                          {values.map((v, i) => (
+                            <td key={i} className={`py-1.5 text-right font-semibold ${i === 3 ? "text-zinc-800" : "text-zinc-500"}`}>{v}</td>
+                          ))}
+                        </tr>
+                      ))}
+                      <tr className="border-t border-zinc-200">
+                        <td className="py-1.5 text-zinc-400">Posts published</td>
+                        <td colSpan={3} />
+                        <td className="py-1.5 text-right font-semibold text-zinc-800">
+                          {overview.blog["all"].posts.length}
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
-                </div>
+
+                  {/* Per-post breakdown */}
+                  {overview.blog["all"].posts.length > 0 && (
+                    <div>
+                      <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400 mb-1.5">Per-post (all time)</p>
+                      <table className="w-full text-[10px] border-collapse">
+                        <thead>
+                          <tr className="border-b border-zinc-100">
+                            <th className="text-left py-1 text-zinc-400 font-semibold">Post</th>
+                            <th className="text-right py-1 text-zinc-400 font-semibold">Views</th>
+                            <th className="text-right py-1 text-zinc-400 font-semibold">Claps</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-50">
+                          {[...overview.blog["all"].posts]
+                            .sort((a, b) => b.views - a.views)
+                            .map((post) => (
+                              <tr key={post.slug}>
+                                <td className="py-1 text-zinc-500 font-mono text-[9px] truncate max-w-[130px]">{post.slug}</td>
+                                <td className="py-1 text-right text-zinc-700">{fmt(post.views)}</td>
+                                <td className="py-1 text-right text-zinc-700">{fmt(post.claps)}</td>
+                              </tr>
+                            ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

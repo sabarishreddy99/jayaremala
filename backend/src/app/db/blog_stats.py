@@ -105,20 +105,29 @@ def get_post_stats(slug: str, ip: str) -> dict[str, int]:
         return {"views": 0, "claps": 0, "user_claps": 0}
 
 
-def get_summary() -> dict:
-    """Returns total claps and per-post stats for the blog index."""
+_CUTOFFS = {
+    "week":  "datetime('now', '-7 days')",
+    "month": "datetime('now', '-30 days')",
+    "year":  "datetime('now', '-365 days')",
+}
+
+
+def get_summary(period: str = "all") -> dict:
+    """Returns total claps and per-post stats. period: week | month | year | all."""
+    view_where = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
+    clap_where = f"AND updated_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
         with sqlite3.connect(_db_path()) as conn:
             total_claps = conn.execute(
-                "SELECT COALESCE(SUM(count),0) FROM blog_claps"
+                f"SELECT COALESCE(SUM(count),0) FROM blog_claps WHERE 1=1 {clap_where}"
             ).fetchone()[0]
             total_views = conn.execute(
-                "SELECT COUNT(*) FROM blog_views"
+                f"SELECT COUNT(*) FROM blog_views WHERE 1=1 {view_where}"
             ).fetchone()[0]
-            rows = conn.execute("""
+            rows = conn.execute(f"""
                 SELECT slug,
-                       (SELECT COUNT(*) FROM blog_views v WHERE v.slug = s.slug) AS views,
-                       (SELECT COALESCE(SUM(count),0) FROM blog_claps c WHERE c.slug = s.slug) AS claps
+                       (SELECT COUNT(*) FROM blog_views v WHERE v.slug = s.slug {view_where}) AS views,
+                       (SELECT COALESCE(SUM(count),0) FROM blog_claps c WHERE c.slug = s.slug {clap_where}) AS claps
                 FROM (SELECT DISTINCT slug FROM blog_views
                       UNION SELECT DISTINCT slug FROM blog_claps) s
             """).fetchall()

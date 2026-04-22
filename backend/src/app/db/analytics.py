@@ -41,11 +41,19 @@ def record(ip: str) -> None:
         logger.warning("Analytics record failed (non-fatal): %s", exc)
 
 
-def get_stats() -> dict[str, int]:
+_CUTOFFS = {
+    "week":  "datetime('now', '-7 days')",
+    "month": "datetime('now', '-30 days')",
+    "year":  "datetime('now', '-365 days')",
+}
+
+
+def get_stats(period: str = "all") -> dict[str, int]:
+    where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
         with sqlite3.connect(_db_path()) as conn:
-            total = conn.execute("SELECT COUNT(*) FROM interactions").fetchone()[0]
-            unique = conn.execute("SELECT COUNT(DISTINCT ip_hash) FROM interactions").fetchone()[0]
+            total  = conn.execute(f"SELECT COUNT(*) FROM interactions {where}").fetchone()[0]
+            unique = conn.execute(f"SELECT COUNT(DISTINCT ip_hash) FROM interactions {where}").fetchone()[0]
         return {"total_responses": total, "unique_visitors": unique}
     except Exception as exc:
         logger.warning("Analytics query failed: %s", exc)

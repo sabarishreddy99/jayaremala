@@ -1,0 +1,547 @@
+---
+title: "itsjaya — AI Portfolio"
+status: "active"
+description: "AI-powered personal portfolio with a RAG chatbot (Avocado), MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade — not a toy."
+startedAt: "2025-11-01"
+updatedAt: "2026-04-22"
+tech: [Next.js 16, FastAPI, ChromaDB, Gemini 2.5 Flash, BM25, Cross-encoder, SQLite, Railway, GitHub Pages, GitHub Actions]
+---
+
+## Overview
+
+Most portfolios are static pages a recruiter scrolls past in 30 seconds. This one starts a conversation.
+
+**Avocado** is an AI assistant backed by a hybrid RAG pipeline. It answers questions about experience, projects, skills, and blog posts in real time — with tokens streaming directly to the browser. Ask it *"what's your strongest AI project?"* and it retrieves the most relevant knowledge chunks, reranks them with a cross-encoder, and streams a grounded answer through Gemini.
+
+The portfolio half is a full static Next.js site — experience, education, projects, and a blog with per-post views and claps tracked in SQLite. The whole system auto-deploys on every `git push` with zero manual steps.
+
+<Status status="active" />
+
+---
+
+## System Architecture
+
+```arch
+┌──────────────────────────────────────────────────────────────────────────┐
+│                            CLIENT BROWSER                                │
+│                                                                          │
+│  ┌─────────────────────────────┐   ┌──────────────────────────────────┐  │
+│  │       Avocado Chatbot       │   │      Portfolio + Blog + Lab      │  │
+│  │   /  (full-screen)          │   │  /portfolio  /experience         │  │
+│  │   /chat  (nav-accessible)   │   │  /education  /projects           │  │
+│  │                             │   │  /blog  /blog/[slug]             │  │
+│  │  ChatInterface              │   │  /lab   /lab/[slug]              │  │
+│  │  ChatMessage (md renderer)  │   │                                  │  │
+│  │  Model badge  ·  Stats      │   │  BlogPostList  BlogEngagement    │  │
+│  │  SSE ReadableStream         │   │  BlogIndexStats  BlogGuideDrawer │  │
+│  └──────────────┬──────────────┘   └──────────────────┬───────────────┘  │
+└─────────────────┼────────────────────────────────────────┼───────────────┘
+                  │  HTTPS + SSE                           │  HTTPS REST
+                  ▼                                        ▼
+┌──────────────────────────────────────────────────────────────────────────┐
+│                     FastAPI Backend  (Railway)                           │
+│                                                                          │
+│  POST /ai/chat/stream  ──►  RAG pipeline  ──►  Gemini SSE               │
+│  POST /ai/chat         ──►  RAG pipeline  ──►  Gemini sync              │
+│  POST /blog/{slug}/view  ──►  unique view per IP                        │
+│  POST /blog/{slug}/clap  ──►  cumulative claps (max 50 / user / post)   │
+│  GET  /blog/{slug}/stats                                                 │
+│  GET  /blog/stats/summary                                                │
+│  GET  /stats              total_responses · unique_visitors              │
+│  GET  /stats/overview     7d / 30d / 1y / all-time for all metrics      │
+│  GET  /health                                                            │
+│                                                                          │
+│  ┌────────────────────────────┐   ┌──────────────────────────────────┐  │
+│  │        RAG Store           │   │  SQLite  analytics.db            │  │
+│  │                            │   │  (Railway persistent volume)     │  │
+│  │  ChromaDB  PersistentClient│   │                                  │  │
+│  │  HNSW cosine similarity    │   │  interactions                    │  │
+│  │  all-MiniLM-L6-v2 embed    │   │  ├── ip_hash  TEXT              │  │
+│  │  LRU cache (256 entries)   │   │  └── created_at  TIMESTAMP      │  │
+│  │                            │   │                                  │  │
+│  │  BM25Okapi  (rank_bm25)    │   │  blog_views                     │  │
+│  │  in-memory, rebuilt every  │   │  ├── slug  TEXT                 │  │
+│  │  startup from docs         │   │  ├── ip_hash  TEXT              │  │
+│  │                            │   │  └── created_at  TIMESTAMP      │  │
+│  │  CrossEncoder              │   │  UNIQUE(slug, ip_hash)          │  │
+│  │  ms-marco-MiniLM-L-6-v2    │   │                                  │  │
+│  │  pre-warmed at startup     │   │  blog_claps                     │  │
+│  │                            │   │  ├── slug  TEXT                 │  │
+│  │  RRF merge  k=60           │   │  ├── ip_hash  TEXT              │  │
+│  └────────────────────────────┘   │  ├── count  INTEGER             │  │
+│                                   │  └── updated_at  TIMESTAMP      │  │
+│  ┌──────────────────────────────────────────────────────────────┐   │  │
+│  │  Knowledge Base  backend/data/knowledge/                     │   │  │
+│  │  profile.json · experience.json · education.json             │   │  │
+│  │  projects.json · skills.json · testimonials.json             │   │  │
+│  │  blog.json  (auto-generated from MDX on every push)          │   │  │
+│  └──────────────────────────────────────────────────────────────┘   │  │
+└──────────────────────────────────────────────────────────────────────────┘
+                  │
+                  │  Google AI API  (HTTPS)
+                  ▼
+┌─────────────────────────────────────┐
+│  Gemini 2.5 Flash  (primary)        │
+│  Gemini 2.0 Flash  (fallback 1)     │
+│  Gemini 2.0 Flash Lite  (fallback 2)│
+│  Gemini Flash Latest  (fallback 3)  │
+│  auto-retry on 503 / 429            │
+└─────────────────────────────────────┘
+```
+
+---
+
+## RAG Pipeline — Deep Dive
+
+The retrieval pipeline runs before every Gemini call. Four stages in sequence:
+
+```arch
+User message: "what's your strongest AI project?"
+        │
+        ▼
+┌───────────────────────────────────────────────────────────┐
+│  STAGE 1 — Query Expansion                               │
+│                                                           │
+│  Goal: generate multiple angles so narrow phrasing       │
+│  does not miss relevant chunks.                          │
+│                                                           │
+│  Query 1 (verbatim):                                      │
+│    "what's your strongest AI project?"                    │
+│                                                           │
+│  Query 2 (name-anchored):                                 │
+│    "what's your strongest AI project? Jaya Sabarish       │
+│     Reddy Remala"                                         │
+│                                                           │
+│  Query 3 (topic keyword — detected: project/built):       │
+│    "projects built SnapLog CodeCollab Multi-Agent         │
+│     GeneCart"                                             │
+│                                                           │
+│  Query 4 (conversation context — last user turn):         │
+│    injected only if prior message exists and differs      │
+│                                                           │
+│  Result: up to 4 query strings                            │
+└──────────────────────┬────────────────────────────────────┘
+                       │ 4 queries
+          ┌────────────┴─────────────┐
+          ▼                          ▼
+┌──────────────────────┐   ┌──────────────────────────────┐
+│  STAGE 2a — DENSE    │   │  STAGE 2b — LEXICAL (BM25)   │
+│                      │   │                              │
+│  One batched encode  │   │  BM25Okapi scoring           │
+│  call for all 4      │   │  Tokenize: lowercase,        │
+│  queries —           │   │  strip punctuation,          │
+│  single forward pass │   │  keep len > 1 tokens         │
+│  ~160ms vs ~400ms    │   │                              │
+│  for serial calls    │   │  Catches exact matches:      │
+│                      │   │  "3000 RPS", "SnapLog",      │
+│  HNSW cosine search  │   │  "Qualcomm", "78%",          │
+│  in ChromaDB         │   │  "115 GB/day"                │
+│                      │   │                              │
+│  top 6 per query     │   │  top 15 results              │
+│  = up to 24 chunks   │   │                              │
+│  (deduped by id)     │   │  In-memory, rebuilt on       │
+└──────────┬───────────┘   │  every startup from docs     │
+           └───────┬────────┘
+                   ▼
+┌───────────────────────────────────────────────────────────┐
+│  STAGE 3 — Reciprocal Rank Fusion                        │
+│                                                           │
+│  score(doc) = sum of  1 / (k + rank_i)    k = 60        │
+│  Cormack, Clarke, Buettcher 2009                         │
+│                                                           │
+│  Chunks in both dense + BM25 results get boosted.        │
+│  Dense metadata takes precedence on conflicts.           │
+│                                                           │
+│  Output: up to 20 candidates ranked by RRF score         │
+└──────────────────────┬────────────────────────────────────┘
+                       ▼
+┌───────────────────────────────────────────────────────────┐
+│  STAGE 4 — Cross-Encoder Rerank                          │
+│                                                           │
+│  Model: cross-encoder/ms-marco-MiniLM-L-6-v2             │
+│                                                           │
+│  Scores (query, passage) pairs jointly — query and       │
+│  passage attend to each other. Far better relevance      │
+│  than bi-encoder cosine, but O(n) so only runs on        │
+│  the top 20 post-RRF candidates (~30ms).                 │
+│                                                           │
+│  Falls back to RRF order instantly if not warmed up.     │
+│                                                           │
+│  Output: top 5 chunks injected into Gemini context       │
+└───────────────────────────────────────────────────────────┘
+```
+
+### Why this retrieval stack
+
+Dense search alone misses exact keyword matches. BM25 alone misses semantic paraphrasing. The hybrid catches both. RRF is parameter-free (k=60 is the proven default from the original paper). The cross-encoder is the most expensive step — running it on all documents would be prohibitive, but on 20 pre-filtered candidates it's fast and dramatically improves precision.
+
+---
+
+## Knowledge Base Design
+
+Atomic chunking: each bullet point, project, and skill category gets its own document. Large blobs hurt precision because one chunk about Shell PLC also contains irrelevant AWS details.
+
+| Document type | Count | Source | Strategy |
+|---|---|---|---|
+| `profile` | 3 | profile.json | Overview, bio, contact — separate so contact queries don't surface bio text |
+| `experience` | ~25 | experience.json | 1 overview per role + 1 doc per bullet point |
+| `education` | ~10 | education.json | 1 overview per degree + 1 doc per highlight |
+| `project` | ~14 | projects.json | 1 overview + 1 tech-stack doc per project |
+| `skills` | 8 | skills.json | 1 per category + 1 aggregated |
+| `faq` | 12 | Hard-coded | Pre-answers common recruiter questions about contact, hire, strengths, resume |
+| `blog` | varies | blog.json (auto) | 1 per post — title + description + first 2,000 chars of body |
+
+**Total: ~70–80 documents.** ChromaDB handles this trivially; the retrieval quality comes from chunking strategy and the hybrid pipeline, not scale.
+
+### FAQ documents
+
+The 12 hard-coded FAQ documents are the most impactful addition. They pre-answer questions like "what makes Jaya stand out?", "how to hire him?", "what's his resume link?" with exact numbers and facts. Without them, a question like "what's his biggest achievement?" would retrieve experience bullet points that don't directly answer the question.
+
+### Hash-based re-ingest
+
+On startup, `run_ingest()` computes SHA-256 of all JSON files and compares against a stored hash file. Re-ingests only when content changed. Fast startup (~2–3s) when only code changed; full re-ingest (~15–20s) when knowledge JSON was updated.
+
+```arch
+startup
+  │
+  ├── compute SHA256 of all *.json in data/knowledge/
+  ├── read stored hash from chroma_db/.ingest_hash
+  │
+  ├── hash unchanged AND ChromaDB not empty
+  │     └── skip ingest, rebuild BM25 in-memory, done
+  │
+  └── hash changed OR DB empty
+        ├── delete ChromaDB collection
+        ├── build_documents() — ~75 (id, text, type) tuples
+        ├── collection.upsert(ids, texts, metadatas)
+        ├── build_bm25_index(docs)
+        └── write new hash to .ingest_hash
+```
+
+---
+
+## Gemini Model Fallback Chain
+
+`gemini-2.5-flash` hits capacity limits (503 / 429) at peak times. The backend retries through a chain without surfacing errors to the user.
+
+```arch
+_stream_tokens(prompt)
+  │
+  ├── try gemini-2.5-flash
+  │     ├── success ──► stream tokens, record model name, return
+  │     └── 503 / 429 ──► log warning, try next
+  │
+  ├── try gemini-2.0-flash
+  │     ├── success ──► stream tokens, log fallback, return
+  │     └── 503 / 429 ──► log warning, try next
+  │
+  ├── try gemini-2.0-flash-lite
+  │     └── ...
+  │
+  └── try gemini-flash-latest
+        ├── success ──► return
+        └── failure ──► raise last exception
+```
+
+The frontend shows which model answered via a green pill badge. Chain is fully configurable via `GEMINI_MODEL` and `GEMINI_FALLBACK_MODELS` env vars — no code change needed to swap models.
+
+---
+
+## Analytics Architecture
+
+All engagement data lives in a single SQLite file. IPs are SHA-256 hashed before storage — never stored raw. Period-based queries use SQLite's `datetime('now', '-N days')` function.
+
+```arch
+analytics.db
+│
+├── interactions               ← chat analytics
+│   ├── ip_hash  TEXT          SHA-256 of visitor IP
+│   └── created_at  TIMESTAMP
+│   Indexed: idx_ip ON ip_hash
+│   powers: unique_visitors, total_responses
+│   period filter: WHERE created_at >= datetime('now', '-7 days')
+│
+├── blog_views                 ← unique views per post per IP
+│   ├── slug  TEXT
+│   ├── ip_hash  TEXT
+│   └── created_at  TIMESTAMP
+│   UNIQUE(slug, ip_hash)      idempotent — INSERT OR IGNORE
+│   Indexed: idx_view_slug ON slug
+│
+└── blog_claps                 ← cumulative claps per post per IP
+    ├── slug  TEXT
+    ├── ip_hash  TEXT
+    ├── count  INTEGER          capped at 50 per user per post
+    └── updated_at  TIMESTAMP
+    UNIQUE(slug, ip_hash)
+    ON CONFLICT: count = count + excluded.count
+    Indexed: idx_clap_slug ON slug
+```
+
+`GET /stats/overview` returns all metrics for all periods in a single DB round-trip per period — called once on drawer open, not on every page load.
+
+### Clap batching on the frontend
+
+Rapid clap button clicks are batched client-side with a 1.5s debounce before a single API call is sent. The backend caps the cumulative total at 50 per user per post.
+
+```arch
+click ──► increment local count
+click ──► increment local count   debounce timer resets
+click ──► increment local count   debounce timer resets
+(1.5s silence)
+  │
+  └──► POST /blog/{slug}/clap  body: count=3
+         └──► backend: min(3, 50 - current_total) ──► upsert
+```
+
+---
+
+## Deploy Pipeline
+
+```arch
+developer: git push origin main
+         │
+         ▼
+GitHub Actions (.github/workflows/deploy.yml)
+         │
+         ├── actions/checkout@v4
+         ├── actions/setup-node@v4 (Node 20)
+         ├── npm install (frontend/)
+         ├── npm run build
+         │     └── prebuild: node ../scripts/sync-knowledge.mjs
+         │           ├── reads frontend/src/content/blog/*.mdx
+         │           ├── parses frontmatter + strips MDX to plain text
+         │           ├── writes backend/data/knowledge/blog.json
+         │           └── copies backend/data/knowledge/*.json
+         │                 ──► frontend/src/data/knowledge/
+         │
+         │     └── next build ──► static export ──► frontend/out/
+         │
+         ├── git add backend/data/knowledge/blog.json
+         │         frontend/src/data/knowledge/
+         │   git diff --staged --quiet ||
+         │     git commit -m "chore: sync knowledge base [skip ci]"
+         │     git push
+         │   [skip ci] prevents infinite workflow loop
+         │
+         ├── upload-pages-artifact (path: frontend/out)
+         └── deploy-pages ──► GitHub Pages live
+         │
+         ▼
+Railway (auto-detects new commit on main)
+         │
+         ├── builds Docker image (python:3.11-slim)
+         ├── pip install -e backend[dev]
+         └── uvicorn app.main:app --app-dir backend/src
+               │
+               └── FastAPI lifespan startup:
+                     ├── analytics.init_db()   CREATE TABLE IF NOT EXISTS
+                     ├── blog_stats.init_db()  CREATE TABLE IF NOT EXISTS
+                     ├── run_ingest()          hash check ──► skip or re-ingest
+                     └── warmup()
+                           ├── pre-load all-MiniLM-L6-v2
+                           └── pre-load cross-encoder (downloads ~25MB if needed)
+```
+
+### Single source of truth
+
+```arch
+EDIT                    SYNC                     CONSUMED BY
+──────────────────────────────────────────────────────────────
+backend/data/           sync-knowledge.mjs       frontend UI
+knowledge/*.json  ──────────────────────►        (typed imports)
+                                          ──►    RAG pipeline
+                                                 (ChromaDB docs)
+
+frontend/src/           sync-knowledge.mjs
+content/blog/    ───────────────────────►  backend/data/
+*.mdx               (generates)            knowledge/blog.json
+                                          ──►    RAG pipeline
+                                                 (blog documents)
+```
+
+The TypeScript data files (`frontend/src/data/*.ts`) are thin typed re-exports from the synced JSON copies. They never hardcode values — if `profile.json` changes, the UI picks it up after the next sync.
+
+---
+
+## Frontend Architecture
+
+### Routing
+
+```arch
+/                    Avocado chatbot — full-screen, no nav/footer
+/chat                Same chatbot, accessible from portfolio nav
+/portfolio           Hero + domain chips + featured projects + skills
+                     + testimonials carousel + contact
+/experience          Work history timeline
+/education           Education cards
+/projects            Projects grid — source link pill tag buttons
+/blog                Index sorted by publishedAt (immutable sort key)
+/blog/[slug]         Post in Source Serif 4 font + engagement
+/lab                 Build log index  (this page)
+/lab/[slug]          System design entry
+```
+
+All portfolio routes share a layout via the `(portfolio)` route group — adds no URL segment. The chatbot lives outside this group — no nav, no footer, full screen.
+
+### Static export + basePath
+
+The frontend is `output: "export"` — fully static HTML/CSS/JS deployed to GitHub Pages. In production, `basePath: "/jayaremala"` is set in `next.config.ts`. Next.js `Link` prepends this automatically. Plain anchor tags break in production — always use `Link` for internal navigation.
+
+### Blog engagement components
+
+```arch
+BlogPostList (client)
+  ├── fetches /blog/stats/summary on mount
+  └── renders post cards with per-post views + claps
+
+BlogIndexStats (client)
+  └── shows total claps + views in blog header
+
+BlogEngagement (client, on each post page)
+  ├── POST /blog/{slug}/view on mount (idempotent)
+  ├── clap button: float-up +1 animation, burst scale
+  ├── 1.5s debounce ──► POST /blog/{slug}/clap
+  └── shows "You clapped Nx" running total
+
+BlogGuideDrawer (client, floating button above mobile FAB)
+  ├── MDX syntax reference for writing posts
+  ├── live stats dashboard ──► fetches /stats/overview
+  │     ├── summary table: 7d / 30d / 1y / all-time
+  │     └── per-post breakdown sorted by views
+  └── project maintenance appendix
+```
+
+### Chat streaming
+
+```arch
+ChatInterface (client)
+  │
+  ├── POST /ai/chat/stream
+  │     ReadableStream reads SSE events:
+  │     token: "..."                 streamed text chunks
+  │     done: true,
+  │       model: "gemini-2.5-flash"  which model answered
+  │       sources: [...]
+  │
+  ├── activeModel state
+  │     shown as green pill badge after first response
+  │     updates if fallback model was used
+  │
+  ├── stats state
+  │     fetches /stats on mount
+  │     shows "N responses · N visitors" in footer
+  │
+  └── ChatMessage
+        full block + inline markdown renderer
+        headings · bullets · numbered lists
+        bold · italic · inline code · links · dividers
+```
+
+---
+
+## Tech Stack
+
+<Stack items={["Next.js 16 (App Router)", "React 19", "Tailwind CSS v4", "TypeScript", "MDX + next-mdx-remote", "gray-matter", "FastAPI", "Python 3.11", "Pydantic Settings", "ChromaDB", "sentence-transformers (all-MiniLM-L6-v2)", "rank-bm25 (BM25Okapi)", "cross-encoder (ms-marco-MiniLM-L-6-v2)", "google-genai SDK", "Gemini 2.5 Flash", "SQLite3", "Railway", "GitHub Pages", "GitHub Actions"]} />
+
+---
+
+## Key Decisions
+
+<Decision date="2026-04-22" title="Lab page — living system design docs over static write-ups">
+  Most "system design" write-ups are frozen snapshots written after the fact. A living MDX page with timeline-based Decision and Update entries can be amended in-place as the system evolves. Keeps the real reasoning visible — not just the polished post-hoc explanation.
+</Decision>
+
+<Decision date="2026-04-15" title="Hash-based re-ingest: SHA-256 of all knowledge JSON on startup">
+  The naive approach — always re-ingest — adds 15–20s to every Railway deploy. The naive-er approach — skip if ChromaDB non-empty — never re-ingests after data changes. SHA-256 of all JSON files gives a deterministic, cheap content fingerprint. Re-ingest only when something actually changed.
+</Decision>
+
+<Decision date="2026-04-10" title="BM25 hybrid retrieval alongside ChromaDB dense search">
+  Dense search with all-MiniLM-L6-v2 missed exact keyword matches: "3000 RPS", "SnapLog", "Qualcomm hackathon", "115 GB/day". These are the exact specifics a recruiter asks about. BM25Okapi is free to run (in-memory, no model), catches lexical matches dense search generalises away from, and RRF merges both lists cleanly.
+</Decision>
+
+<Decision date="2026-04-08" title="Cross-encoder rerank only on top 20 candidates, not all documents">
+  The cross-encoder jointly attends to query and passage — far better relevance than bi-encoder cosine. But it is O(n) — running it on all 75 docs would add ~200ms per query. Running it only on the top 20 post-RRF candidates costs ~30ms and produces materially better top-5 results. Classic recall-then-rerank pattern.
+</Decision>
+
+<Decision date="2026-04-05" title="SQLite over managed Postgres for analytics">
+  Views, claps, and chat interactions are low-write, simple-schema data. A managed Postgres adds cost and latency on every write. SQLite on a Railway persistent volume is zero-cost, zero-latency (same container), and the entire DB is a single file. SQLite's INSERT OR IGNORE and ON CONFLICT DO UPDATE handle all idempotency needs.
+</Decision>
+
+<Decision date="2026-03-25" title="Atomic chunking over large-blob chunking">
+  Early versions chunked experience JSON into one large document per role. A query about "Redis caching" would surface the entire NYU IT role including unrelated CI/CD details. Splitting each bullet point into its own document made retrieval dramatically more precise. ~75 small documents outperform ~15 large ones here.
+</Decision>
+
+<Decision date="2026-03-20" title="Static export to GitHub Pages instead of Vercel/SSR">
+  The portfolio has no per-request server-side data needs — all dynamic behaviour is client-side API calls to the Railway backend. A fully static export avoids cold starts, is free indefinitely, and deploys in ~90 seconds via GitHub Actions.
+</Decision>
+
+<Decision date="2026-03-10" title="Single source of truth: backend JSON to frontend via sync script">
+  Portfolio data originally lived in both frontend TypeScript files (hardcoded for UI) and backend JSON (for RAG). They silently drifted — the chatbot had outdated experience details while the UI showed the correct ones. The sync script runs before every build. One edit, both systems stay in sync.
+</Decision>
+
+<Decision date="2026-02-28" title="Gemini fallback chain on 503/429 instead of surfacing errors">
+  Gemini 2.5 Flash hits capacity limits at peak times. The fallback chain retries through gemini-2.0-flash, gemini-2.0-flash-lite, gemini-flash-latest automatically. The frontend badge makes the fallback visible without it feeling like an error.
+</Decision>
+
+<Decision date="2026-02-15" title="12 hard-coded FAQ documents in the knowledge base">
+  Retrieval alone was not enough for common recruiter questions: "what makes Jaya stand out?", "how to hire him?". The raw experience bullets answer these indirectly. Hard-coded FAQ documents pre-answer them directly with exact numbers. These 12 documents cover the questions that matter most to a recruiter in 30 seconds.
+</Decision>
+
+---
+
+## Progress Log
+
+<Update date="2026-04-22">
+  Built /lab section. MDX-based living system design docs with custom components: Status, Arch, Decision, Update, Stack, Metric. Added Lab to nav. First entry: itsjaya itself.
+</Update>
+
+<Update date="2026-04-22">
+  Blog guide drawer now shows live stats dashboard — unique visitors, Avocado responses, blog views, claps with 7d / 30d / 1y / all-time breakdown. New GET /stats/overview endpoint returns all periods in one API call.
+</Update>
+
+<Update date="2026-04-18">
+  Blog engagement fully live: views (unique per IP per post), claps (max 50/user, 1.5s debounced batching), per-post stats on index cards, totals in blog header. Backed by SQLite on Railway volume.
+</Update>
+
+<Update date="2026-04-15">
+  Analytics DB path made configurable via ANALYTICS_DB_PATH env var so it resolves to the Railway persistent volume regardless of working directory changes between deploys.
+</Update>
+
+<Update date="2026-04-10">
+  BM25 hybrid retrieval added. GET /stats/overview with period filtering (7d / 30d / 1y / all-time) added to both analytics and blog stats modules.
+</Update>
+
+<Update date="2026-04-08">
+  Cross-encoder reranker added. Pre-warmed at startup so the first user request does not pay the model-load penalty. Graceful fallback to RRF order if warmup has not completed.
+</Update>
+
+<Update date="2026-04-05">
+  Chat markdown rendering rewritten — handles headings, bullets, numbered lists, bold, italic, inline code, links, dividers. Previously raw stars appeared in responses.
+</Update>
+
+<Update date="2026-04-03">
+  Gemini model fallback chain implemented. Model indicator badge added to chatbot.
+</Update>
+
+<Update date="2026-03-25">
+  Blog deployed with MDX, Source Serif 4 reading font, publishedAt-based sort. Sync script auto-generates blog.json so Avocado can answer questions about published posts.
+</Update>
+
+<Update date="2026-03-10">
+  Single source of truth refactor complete. Backend JSON is canonical — TypeScript files are typed re-exports. sync-knowledge.mjs runs before every build.
+</Update>
+
+<Update date="2025-11-01">
+  Project started. Basic FastAPI + ChromaDB + Next.js skeleton. First working Avocado response.
+</Update>
+
+---
+
+## What's next
+
+- Railway persistent volume for ChromaDB + analytics (currently re-ingests on every free-plan redeploy)
+- Reading time estimate on blog cards
+- Search within blog posts
+- Avocado voice input (Web Speech API — already prototyped)
+- A/B test shorter vs longer system prompt to measure response quality

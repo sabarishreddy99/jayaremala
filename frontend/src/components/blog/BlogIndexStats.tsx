@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api/client";
 
@@ -30,7 +31,10 @@ export function BlogIndexStats() {
     <div className="flex items-center gap-4 mt-4">
       {summary.total_claps > 0 && (
         <div className="flex items-center gap-1.5">
-          <span className="text-base">👏</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-400">
+            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/>
+            <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+          </svg>
           <span className="text-sm font-semibold text-zinc-700">{formatCount(summary.total_claps)}</span>
           <span className="text-xs text-zinc-400">total claps</span>
         </div>
@@ -69,7 +73,10 @@ export function BlogPostStats({ slug, slugMap }: { slug: string; slugMap: Summar
       )}
       {post.claps > 0 && (
         <div className="flex items-center gap-1">
-          <span className="text-[11px]">👏</span>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-400">
+            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/>
+            <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+          </svg>
           <span className="text-[10px] text-zinc-400">{formatCount(post.claps)}</span>
         </div>
       )}
@@ -101,7 +108,7 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
         const postStats = summary?.posts.find((s) => s.slug === p.slug);
         return (
           <li key={p.slug}>
-            <a
+            <Link
               href={`/blog/${p.slug}`}
               className="group block rounded-2xl border border-zinc-200 bg-white p-5 sm:p-6 hover:border-indigo-300 hover:shadow-md transition-all"
             >
@@ -123,7 +130,10 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
                       )}
                       {postStats.claps > 0 && (
                         <div className="flex items-center gap-1">
-                          <span className="text-[11px]">👏</span>
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-zinc-300">
+                            <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/>
+                            <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                          </svg>
                           <span className="text-[10px] text-zinc-400">{formatCount(postStats.claps)}</span>
                         </div>
                       )}
@@ -139,7 +149,7 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
                   </span>
                 ))}
               </div>
-            </a>
+            </Link>
           </li>
         );
       })}

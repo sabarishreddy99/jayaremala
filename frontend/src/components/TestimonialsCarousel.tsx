@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { testimonials, type Testimonial } from "@/data/testimonials";
 
 function initials(name: string) {
@@ -83,18 +83,10 @@ function TestimonialCard({ item }: { item: Testimonial }) {
 
 export default function TestimonialsCarousel() {
   const [current, setCurrent] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const total = testimonials.length;
 
   const next = useCallback(() => setCurrent((c) => (c + 1) % total), [total]);
   const prev = useCallback(() => setCurrent((c) => (c - 1 + total) % total), [total]);
-
-  useEffect(() => {
-    if (total <= 1 || paused) return;
-    timerRef.current = setInterval(next, 5000);
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
-  }, [next, paused, total]);
 
   if (total === 0) return null;
 
@@ -107,11 +99,7 @@ export default function TestimonialsCarousel() {
         )}
       </div>
 
-      <div
-        className="relative"
-        onMouseEnter={() => setPaused(true)}
-        onMouseLeave={() => setPaused(false)}
-      >
+      <div className="relative">
         {/* Card */}
         <div className="min-h-[220px]">
           <TestimonialCard item={testimonials[current]} />

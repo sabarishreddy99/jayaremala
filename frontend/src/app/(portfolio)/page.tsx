@@ -3,6 +3,7 @@ import { profile } from "@/data/profile";
 import { projects } from "@/data/projects";
 import { skills } from "@/data/skills";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
+import ContactForm from "@/components/ContactForm";
 
 export const metadata = { title: "Jaya Sabarish Reddy Remala — Software Engineer" };
 
@@ -167,41 +168,7 @@ export default function PortfolioHome() {
       <TestimonialsCarousel />
 
       {/* Contact */}
-      <section className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-8">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Get in Touch</h2>
-        <p className="text-sm text-zinc-600 mb-5 max-w-md">
-          Open to software engineering roles in AI/ML infrastructure, distributed systems, and full-stack. Healthcare, frontier research, and energy tech are my focus, but excited by any hard problem.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          <a href={`mailto:${profile.email}`}
-            className="rounded-full border-2 border-zinc-950 bg-zinc-950 px-5 py-2 text-sm font-semibold text-white hover:bg-zinc-800 transition-colors">
-            {profile.email}
-          </a>
-          {profile.linkedin && (
-            <a href={profile.linkedin} target="_blank" rel="noopener noreferrer"
-              className="rounded-full border-2 border-zinc-300 px-5 py-2 text-sm font-semibold text-zinc-700 hover:border-zinc-950 hover:text-zinc-950 transition-colors">
-              LinkedIn
-            </a>
-          )}
-          {profile.github && (
-            <a href={profile.github} target="_blank" rel="noopener noreferrer"
-              className="rounded-full border-2 border-zinc-300 px-5 py-2 text-sm font-semibold text-zinc-700 hover:border-zinc-950 hover:text-zinc-950 transition-colors">
-              GitHub
-            </a>
-          )}
-          <a
-            href={profile.resume}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-full border-2 border-indigo-200 bg-indigo-50 px-5 py-2 text-sm font-semibold text-indigo-700 hover:border-indigo-600 hover:bg-indigo-100 transition-colors inline-flex items-center gap-1.5"
-          >
-            Download Resume
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M7 17L17 7M17 7H7M17 7v10"/>
-            </svg>
-          </a>
-        </div>
-      </section>
+      <ContactForm />
     </div>
   );
 }

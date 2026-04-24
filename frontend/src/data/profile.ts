@@ -15,6 +15,10 @@ export interface Profile {
   github: string;
   linkedin: string;
   resume: string;
+  page_experience?: string;
+  page_education?: string;
+  page_projects?: string;
+  contact_description?: string;
 }
 
 export const profile = profileJson as Profile;

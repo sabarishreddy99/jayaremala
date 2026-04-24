@@ -1,4 +1,5 @@
 import { education } from "@/data/education";
+import { profile } from "@/data/profile";
 
 export const metadata = { title: "Education — Jaya Sabarish Reddy Remala" };
 
@@ -10,9 +11,7 @@ export default function EducationPage() {
       <header className="mb-12 sm:mb-16">
         <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Background</p>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-950">Education</h1>
-        <p className="mt-2 text-sm text-zinc-500 max-w-md">
-          Academic foundations that underpin the systems I build.
-        </p>
+        {profile.page_education && <p className="mt-2 text-sm text-zinc-500 max-w-md">{profile.page_education}</p>}
       </header>
 
       {/* Timeline */}

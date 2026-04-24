@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { profile } from "@/data/profile";
 
 const links = [
   { href: "/experience", label: "Experience" },
@@ -44,7 +45,7 @@ export default function Nav() {
             </Link>
           ))}
           <a
-            href="https://drive.google.com/drive/u/0/folders/1vm35z-6VQjtO9A8ZBgCvvSP_7_POPTrV"
+            href={profile.resume}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-1 px-3 py-1.5 rounded-lg text-sm text-zinc-600 hover:text-zinc-950 hover:bg-zinc-50 transition-colors inline-flex items-center gap-1"
@@ -99,7 +100,7 @@ export default function Nav() {
               </Link>
             ))}
             <a
-              href="https://drive.google.com/drive/u/0/folders/1vm35z-6VQjtO9A8ZBgCvvSP_7_POPTrV"
+              href={profile.resume}
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => setOpen(false)}

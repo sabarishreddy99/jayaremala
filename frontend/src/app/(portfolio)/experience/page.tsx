@@ -1,4 +1,5 @@
 import { experience } from "@/data/experience";
+import { profile } from "@/data/profile";
 
 export const metadata = { title: "Experience — Jaya Sabarish Reddy Remala" };
 
@@ -8,7 +9,7 @@ export default function ExperiencePage() {
       <header className="mb-12 sm:mb-16">
         <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Career</p>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-950">Experience</h1>
-        <p className="mt-2 text-sm text-zinc-500">3+ years building production AI & distributed systems.</p>
+        {profile.page_experience && <p className="mt-2 text-sm text-zinc-500">{profile.page_experience}</p>}
       </header>
 
       <ol className="relative space-y-0">

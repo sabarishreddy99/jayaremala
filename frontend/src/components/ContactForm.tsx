@@ -131,10 +131,9 @@ export default function ContactForm() {
 
       <section className="rounded-2xl border border-zinc-200 bg-white p-6 sm:p-8">
         <h2 className="text-xs font-bold uppercase tracking-widest text-zinc-400 mb-3">Get in Touch</h2>
-        <p className="text-sm text-zinc-600 mb-6 max-w-md">
-          Open to software engineering roles in AI/ML infrastructure, distributed systems, and full-stack.
-          Healthcare, frontier research, and energy tech are my focus — but excited by any hard problem.
-        </p>
+        {profile.contact_description && (
+          <p className="text-sm text-zinc-600 mb-6 max-w-md">{profile.contact_description}</p>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4 mb-6">
           <div className="grid gap-4 sm:grid-cols-2">

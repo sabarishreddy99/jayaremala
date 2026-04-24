@@ -1,4 +1,5 @@
 import { projects } from "@/data/projects";
+import { profile } from "@/data/profile";
 
 export const metadata = { title: "Projects — Jaya Sabarish Reddy Remala" };
 
@@ -8,7 +9,7 @@ export default function ProjectsPage() {
       <header className="mb-12 sm:mb-16">
         <p className="text-[11px] font-bold uppercase tracking-widest text-zinc-400 mb-2">Work</p>
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-zinc-950">Projects</h1>
-        <p className="mt-2 text-sm text-zinc-500">Things I&apos;ve built — production systems, hackathon winners, and side projects.</p>
+        {profile.page_projects && <p className="mt-2 text-sm text-zinc-500">{profile.page_projects}</p>}
       </header>
 
       <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">

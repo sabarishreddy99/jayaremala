@@ -34,12 +34,19 @@ export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [activeModel, setActiveModel] = useState<string | null>(null);
   const [stats, setStats] = useState<{ total_responses: number; unique_visitors: number } | null>(null);
+  const [backendStatus, setBackendStatus] = useState<"checking" | "ready" | "warming">("checking");
+  const [pendingRetry, setPendingRetry] = useState<string | null>(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    fetch(`${API_BASE_URL}/health`, { signal: controller.signal })
+      .then((r) => { if (r.ok) setBackendStatus("ready"); else setBackendStatus("warming"); })
+      .catch(() => setBackendStatus("warming"));
     fetch(`${API_BASE_URL}/stats`)
       .then((r) => r.json())
       .then(setStats)
       .catch(() => {});
+    return () => controller.abort();
   }, []);
 
   // Load persisted messages after hydration to avoid SSR mismatch
@@ -67,6 +74,7 @@ export default function ChatInterface() {
     setStreamingContent("");
     abortRef.current = new AbortController();
 
+    setPendingRetry(null);
     try {
       const res = await fetch(`${API_BASE_URL}/ai/chat/stream`, {
         method: "POST",
@@ -105,6 +113,7 @@ export default function ChatInterface() {
         }
       }
 
+      setBackendStatus("ready");
       const navLinks = mergeNavLinks(
         sourcesToNavLinks(ragSources),
         detectNavLinks(text, accumulated),
@@ -116,9 +125,16 @@ export default function ChatInterface() {
       saveMessages(finalMessages.filter((m) => m !== WELCOME));
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
+      setPendingRetry(text);
       setMessages((prev) => [
         ...prev,
-        { role: "assistant", content: "Sorry, something went wrong. Please try again." },
+        {
+          role: "assistant",
+          content:
+            backendStatus === "warming"
+              ? "Avocado is still warming up (usually takes ~30 seconds on first visit). Hit **Retry** below or try again in a moment."
+              : "Sorry, something went wrong. Hit **Retry** or try again.",
+        },
       ]);
     } finally {
       setStreaming(false);
@@ -135,6 +151,20 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full">
+
+      {/* Warm-up banner */}
+      {backendStatus === "warming" && (
+        <div className="shrink-0 px-3 sm:px-10 pt-2">
+          <div className="mx-auto max-w-2xl">
+            <div className="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-3 py-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
+              <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                Avocado is waking up — first response may take ~30 seconds.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-10 py-3 sm:py-4">
@@ -178,6 +208,22 @@ export default function ChatInterface() {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Retry button */}
+          {pendingRetry && !streaming && (
+            <div className="flex justify-center">
+              <button
+                onClick={() => handleSend(pendingRetry)}
+                className="flex items-center gap-1.5 rounded-full border border-border bg-surface px-4 py-1.5 text-xs text-fg-muted hover:text-fg hover:border-fg-muted transition-colors"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M1 4v6h6M23 20v-6h-6"/>
+                  <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                </svg>
+                Retry
+              </button>
             </div>
           )}
 

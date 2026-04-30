@@ -6,7 +6,7 @@
     "end": "Present",
     "location": "New York, NY",
     "description": "Building GeneCart — AI-powered genomics tooling at NYU.",
-    "tech": "Python, FastAPI, React, PostgreSQL",
+    "tech": "LangGraph, Machine Learning, PyTorch, Python, AWS, FastAPI, React, PostgreSQL",
     "bullets": [
       "Building GeneCart, an AI-assisted genomics discovery platform at NYU's College of Arts and Science."
     ]

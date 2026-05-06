@@ -1,6 +1,7 @@
 import Link from "next/link";
 import ChatInterface from "@/components/chat/ChatInterface";
 import AvocadoBg from "@/components/chat/AvocadoBg";
+import ChatCloseButton from "@/components/chat/ChatCloseButton";
 
 export const metadata = { title: "Chat with Avocado — Jaya's AI" };
 
@@ -18,15 +19,19 @@ export default function ChatPage() {
           >
             Jaya<span className="text-indigo-600 dark:text-indigo-400">.</span>
           </Link>
+          {/* Mobile: simple text link */}
           <Link
             href="/"
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-fg-faint hover:text-fg transition-colors tracking-wide"
+            className="md:hidden inline-flex items-center gap-1 text-[11px] font-semibold text-fg-faint hover:text-fg transition-colors tracking-wide"
           >
-            View Portfolio
+            Portfolio
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <path d="M5 12h14M12 5l7 7-7 7" />
             </svg>
           </Link>
+
+          {/* Desktop/iPad: animated close button with Esc shortcut */}
+          <ChatCloseButton />
         </div>
       </header>
 

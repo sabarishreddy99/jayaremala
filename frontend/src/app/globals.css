@@ -216,3 +216,23 @@ body {
 .animate-slide-right { animation: slideInRight 1s cubic-bezier(.16,1,.3,1) both; }
 .animate-slide-left  { animation: slideInLeft  1s cubic-bezier(.16,1,.3,1) both; }
 .cursor-blink { animation: blink 1s step-end infinite; }
+.animate-avo-float  { animation: avo-float 4s ease-in-out infinite; }
+
+@keyframes bubble-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+.animate-bubble-in { animation: bubble-in 0.38s cubic-bezier(.16,1,.3,1) both; }
+
+@keyframes avo-glow {
+  0%, 100% { box-shadow: 0 8px 28px rgba(34,110,20,0.35), 0 2px 8px rgba(0,0,0,0.18); }
+  50%      { box-shadow: 0 10px 38px rgba(34,110,20,0.55), 0 2px 8px rgba(0,0,0,0.18); }
+}
+.animate-avo-glow { animation: avo-glow 3s ease-in-out infinite; }
+
+@keyframes avo-3d-spin {
+  0%   { transform: perspective(320px) rotateY(0deg)   scale(1);    }
+  35%  { transform: perspective(320px) rotateY(180deg) scale(1.14); }
+  100% { transform: perspective(320px) rotateY(360deg) scale(1);    }
+}
+.avo-3d-svg { animation: avo-3d-spin 0.82s cubic-bezier(.36,.07,.19,.97) forwards; }

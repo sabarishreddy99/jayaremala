@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+import AvocadoChatButton from "@/components/AvocadoChatButton";
 
 export default function PortfolioLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -17,6 +18,9 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
         <span className="text-base leading-none">🥑</span>
         <span>✦</span>
       </Link>
+
+      {/* Animated avocado chat button — desktop/iPad only */}
+      <AvocadoChatButton />
     </>
   );
 }

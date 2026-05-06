@@ -59,12 +59,18 @@ export default function ChatInterface() {
   const [streaming, setStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const [prefill, setPrefill] = useState("");
+  const [introVisible, setIntroVisible] = useState(true);
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, streamingContent]);
+
+  /* Collapse the intro banner as soon as the first real message is sent */
+  useEffect(() => {
+    if (messages.length > 1) setIntroVisible(false);
+  }, [messages.length]);
 
   async function handleSend(text: string) {
     const userMsg: Message = { role: "user", content: text };
@@ -151,6 +157,36 @@ export default function ChatInterface() {
 
   return (
     <div className="flex flex-col h-full">
+
+      {/* Intro — collapses to zero once the first message is sent */}
+      <div
+        className="shrink-0 px-4 sm:px-6 text-center overflow-hidden transition-all duration-500 ease-in-out"
+        style={{
+          maxHeight: introVisible ? "220px" : "0px",
+          opacity: introVisible ? 1 : 0,
+          paddingTop: introVisible ? undefined : "0px",
+          paddingBottom: introVisible ? undefined : "0px",
+        }}
+      >
+        <div className="pt-1 sm:pt-3 pb-3 sm:pb-5">
+          <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-fg-faint">
+              Avocado · Live
+            </span>
+          </div>
+          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-fg">
+            Chat with Avocado 🥑
+          </h1>
+          <p className="mt-0.5 text-[11px] font-medium text-accent tracking-wide">
+            Jaya&apos;s personal AI chatbot
+          </p>
+          <p className="hidden sm:block mt-2 text-sm text-fg-subtle max-w-sm mx-auto leading-relaxed">
+            Ask anything about his work, projects, skills, or background.
+          </p>
+          <div className="mx-auto mt-3 sm:mt-5 w-8 h-px bg-border" />
+        </div>
+      </div>
 
       {/* Warm-up banner */}
       {backendStatus === "warming" && (

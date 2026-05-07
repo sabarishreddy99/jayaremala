@@ -5,6 +5,7 @@ import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { profile } from "@/data/profile";
 import BlogGuideDrawer from "@/components/blog/BlogGuideDrawer";
+import LiquidWave from "@/components/LiquidWave";
 
 function MarqueeText({
   text,
@@ -61,11 +62,12 @@ export default function Footer() {
   const showGuide = pathname.startsWith("/blog") || pathname.startsWith("/lab");
 
   return (
-    <footer className="mt-auto border-t border-border bg-surface">
+    <footer className="mt-auto border-t border-border bg-surface relative overflow-hidden">
+      <LiquidWave />
 
       {/* Scrolling name — hover pauses */}
       <div
-        className="py-6 sm:py-10 select-none overflow-hidden space-y-1 cursor-default"
+        className="relative z-10 py-6 sm:py-10 select-none overflow-hidden space-y-1 cursor-default"
         onMouseEnter={() => setPaused(true)}
         onMouseLeave={() => setPaused(false)}
       >
@@ -118,28 +120,28 @@ export default function Footer() {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-border-subtle px-4 sm:px-6 py-4">
+      <div className="relative z-10 px-4 sm:px-6 py-4">
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3">
-          <span className="text-xs text-fg-faint">
+          <span className="text-xs text-fg-subtle">
             © {new Date().getFullYear()} Jaya Sabarish Reddy Remala
-            <span className="mx-2 text-fg-faint/50">·</span>
+            <span className="mx-2 text-fg-faint">·</span>
             Updated {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
           </span>
           <div className="flex items-center gap-5">
             {profile.github && (
               <a href={profile.github} target="_blank" rel="noopener noreferrer"
-                className="text-xs font-medium text-fg-faint hover:text-fg transition-colors duration-300">
+                className="text-xs font-medium text-fg-subtle hover:text-fg transition-colors duration-300">
                 GitHub
               </a>
             )}
             {profile.linkedin && (
               <a href={profile.linkedin} target="_blank" rel="noopener noreferrer"
-                className="text-xs font-medium text-fg-faint hover:text-fg transition-colors duration-300">
+                className="text-xs font-medium text-fg-subtle hover:text-fg transition-colors duration-300">
                 LinkedIn
               </a>
             )}
             <a href={`mailto:${profile.email}`}
-              className="text-xs font-medium text-fg-faint hover:text-fg transition-colors duration-300">
+              className="text-xs font-medium text-fg-subtle hover:text-fg transition-colors duration-300">
               Email
             </a>
             {showGuide && <BlogGuideDrawer />}

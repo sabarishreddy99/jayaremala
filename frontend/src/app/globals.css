@@ -249,3 +249,16 @@ body {
   100% { transform: perspective(320px) rotateY(360deg) scale(1);    }
 }
 .avo-3d-svg { animation: avo-3d-spin 0.82s cubic-bezier(.36,.07,.19,.97) forwards; }
+
+/* ── Liquid wave — fixed bottom of every screen ───────────── */
+@keyframes lw-morph {
+  0%, 100% { d: path("M 0,95 C 240,58 480,118 720,80 C 960,42 1200,105 1440,72 L 1440,180 L 0,180 Z"); }
+  40%       { d: path("M 0,112 C 240,74 480,136 720,96 C 960,58 1200,122 1440,88 L 1440,180 L 0,180 Z"); }
+  75%       { d: path("M 0,80 C 240,44 480,102 720,65 C 960,28 1200,90 1440,58 L 1440,180 L 0,180 Z"); }
+}
+
+.lw-path {
+  opacity: 0.38;
+  animation: lw-morph 22s ease-in-out infinite;
+}
+.dark .lw-path { opacity: 0.55; }

@@ -90,6 +90,7 @@ interface PostMeta {
   date: string;
   description: string;
   tags: string[];
+  readingTime?: number;
 }
 
 export function BlogPostList({ posts }: { posts: PostMeta[] }) {
@@ -118,6 +119,9 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
                 </h2>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <span className="text-[11px] text-fg-faint">{p.date}</span>
+                  {p.readingTime && (
+                    <span className="text-[10px] text-fg-faint">{p.readingTime} min read</span>
+                  )}
                   {postStats && (postStats.views > 0 || postStats.claps > 0) && (
                     <div className="flex items-center gap-2.5">
                       {postStats.views > 0 && (

@@ -10,6 +10,7 @@ export interface PostFrontmatter {
   publishedAt?: string;
   description: string;
   tags: string[];
+  readingTime: number;
 }
 
 export interface PostMeta extends PostFrontmatter {
@@ -30,6 +31,7 @@ export function getAllPosts(): PostMeta[] {
       const { data } = matter(raw);
       const toStr = (v: unknown) =>
         v instanceof Date ? v.toISOString().slice(0, 10) : (v as string) ?? "";
+      const wordCount = raw.split(/\s+/).filter(Boolean).length;
       return {
         slug,
         title: data.title ?? slug,
@@ -37,6 +39,7 @@ export function getAllPosts(): PostMeta[] {
         publishedAt: toStr(data.publishedAt || data.date),
         description: data.description ?? "",
         tags: data.tags ?? [],
+        readingTime: Math.max(1, Math.ceil(wordCount / 200)),
       } as PostMeta;
     })
     .sort((a, b) => (a.publishedAt! < b.publishedAt! ? 1 : -1));

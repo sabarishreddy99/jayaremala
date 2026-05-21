@@ -6,6 +6,7 @@ from typing import Iterator, Literal
 
 import google.genai as genai
 from fastapi import APIRouter, HTTPException
+from app.core.limiter import limiter
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
@@ -255,6 +256,7 @@ def ai_chat(req: ChatRequest) -> ChatResponse:
 # ── /ai/chat/stream (SSE streaming) ──────────────────────────────────────────
 
 @router.post("/chat/stream")
+@limiter.limit("10/minute")
 async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingResponse:
     queries = _build_rag_queries(req)
     try:

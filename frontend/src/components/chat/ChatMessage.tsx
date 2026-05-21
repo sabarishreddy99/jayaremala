@@ -1,4 +1,6 @@
-import React from "react";
+"use client";
+
+import React, { useState } from "react";
 
 export interface Message {
   role: "user" | "assistant";
@@ -137,6 +139,14 @@ function renderMarkdown(text: string): React.ReactNode {
 
 export default function ChatMessage({ message, streaming }: Props) {
   const isUser = message.role === "user";
+  const [copied, setCopied] = useState(false);
+
+  function handleCopy() {
+    navigator.clipboard.writeText(message.content).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
 
   if (isUser) {
     return (
@@ -153,18 +163,39 @@ export default function ChatMessage({ message, streaming }: Props) {
       <div className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-base mt-0.5" title="Avocado">
         🥑
       </div>
-      <div className="max-w-[80%] sm:max-w-[75%] rounded-2xl rounded-tl-sm border border-border bg-surface px-4 py-2.5 text-sm text-fg-muted shadow-sm">
-        {streaming && !message.content ? (
-          <span className="inline-flex gap-1 items-center h-4">
-            <span className="w-1.5 h-1.5 rounded-full bg-fg-faint animate-bounce [animation-delay:0ms]" />
-            <span className="w-1.5 h-1.5 rounded-full bg-fg-faint animate-bounce [animation-delay:150ms]" />
-            <span className="w-1.5 h-1.5 rounded-full bg-fg-faint animate-bounce [animation-delay:300ms]" />
-          </span>
-        ) : (
-          <>
-            {renderMarkdown(message.content)}
-            {streaming && <span className="cursor-blink ml-0.5 text-fg-faint">|</span>}
-          </>
+      <div className="relative group/msg max-w-[80%] sm:max-w-[75%]">
+        <div className="rounded-2xl rounded-tl-sm border border-border bg-surface px-4 py-2.5 text-sm text-fg-muted shadow-sm">
+          {streaming && !message.content ? (
+            <span className="inline-flex gap-1 items-center h-4">
+              <span className="w-1.5 h-1.5 rounded-full bg-fg-faint animate-bounce [animation-delay:0ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-fg-faint animate-bounce [animation-delay:150ms]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-fg-faint animate-bounce [animation-delay:300ms]" />
+            </span>
+          ) : (
+            <>
+              {renderMarkdown(message.content)}
+              {streaming && <span className="cursor-blink ml-0.5 text-fg-faint">|</span>}
+            </>
+          )}
+        </div>
+        {!streaming && message.content && (
+          <button
+            onClick={handleCopy}
+            aria-label="Copy response"
+            className="absolute -bottom-2 right-2 opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 rounded-full border border-border bg-surface px-2 py-0.5 text-[10px] text-fg-faint hover:text-fg-muted hover:border-fg-faint shadow-sm"
+          >
+            {copied ? (
+              <>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M20 6L9 17l-5-5"/></svg>
+                Copied
+              </>
+            ) : (
+              <>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy
+              </>
+            )}
+          </button>
         )}
       </div>
     </div>

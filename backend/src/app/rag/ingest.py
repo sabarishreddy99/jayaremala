@@ -13,6 +13,7 @@ startup fast as blog/lab content grows — adding one post embeds one document.
 import hashlib
 import json
 import logging
+import re
 from pathlib import Path
 
 from app.rag.store import build_bm25_index, clear_query_cache, get_collection
@@ -73,6 +74,31 @@ def _build_blog_documents() -> list[tuple[str, str, str]]:
             f"blog_{slug}",
             f"Blog post by Jaya: '{title}' (published {date}). {desc} Tags: {tags}. {body}",
             "blog",
+        ))
+    return docs
+
+
+def _build_testimonial_documents() -> list[tuple[str, str, str]]:
+    """One document per testimonial — lets Avocado answer 'What do people say about Jaya?'
+    IDs are stable (name + date slug) so adding a new testimonial only upserts that one doc.
+    """
+    path = DATA_DIR / "testimonials.json"
+    if not path.exists():
+        return []
+    docs = []
+    for t in json.loads(path.read_text()):
+        name        = t.get("name", "")
+        designation = t.get("designation", "")
+        company     = t.get("company", "")
+        description = t.get("description", "").strip().replace("\n", " ")
+        given_at    = t.get("givenAt", "")
+        stable_key  = re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")
+        date_key    = given_at.replace("-", "")
+        docs.append((
+            f"testimonial_{stable_key}_{date_key}",
+            f'{name} ({designation} at {company}) gave this recommendation about Jaya: '
+            f'"{description}" — written on {given_at}.',
+            "testimonial",
         ))
     return docs
 
@@ -204,6 +230,9 @@ def _build_documents() -> list[tuple[str, str, str]]:
         docs.append(("skills_all", (
             f"Jaya's full technical skill set spans: {', '.join(all_items)}."
         ), "skills"))
+
+    # ── TESTIMONIALS ──────────────────────────────────────────────────────────
+    docs.extend(_build_testimonial_documents())
 
     # ── BLOG POSTS ────────────────────────────────────────────────────────────
     docs.extend(_build_blog_documents())

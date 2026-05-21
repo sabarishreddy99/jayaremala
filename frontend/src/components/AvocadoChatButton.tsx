@@ -98,6 +98,7 @@ export default function AvocadoChatButton() {
                   Hi! Ask me anything about Jaya&apos;s experience, projects, skills, education, or just say hello.
                 </p>
 
+
                 {/* CTA */}
                 <Link
                   href="/chat"

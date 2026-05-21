@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_env: str = "dev"
-    frontend_origin: str = "http://localhost:3000,https://sabarishreddy99.github.io"
+    frontend_origin: str = "http://localhost:3000,http://127.0.0.1:3000,https://jayaremala.com,https://www.jayaremala.com"
     google_api_key: str = ""
     gemini_model: str = "gemini-2.5-flash"
     # Comma-separated fallback chain tried in order when primary hits 503/429

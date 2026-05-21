@@ -41,9 +41,11 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="Portfolio API", version="0.1.0", lifespan=lifespan)
 
+_origins = [o.strip() for o in settings.frontend_origin.split(",") if o.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )

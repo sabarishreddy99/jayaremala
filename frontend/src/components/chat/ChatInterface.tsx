@@ -23,11 +23,14 @@ const WELCOME: Message = {
 };
 
 const SUGGESTIONS = [
-  { label: "Most impressive project?", full: "What is Jaya's most impressive project?" },
-  { label: "AI & ML experience?", full: "Tell me about Jaya's AI and machine learning experience." },
-  { label: "Education background?", full: "Walk me through Jaya's educational background." },
-  { label: "Strongest tech stack?", full: "What is Jaya's strongest tech stack and languages?" },
-  { label: "Can I see his resume?", full: "Can I see Jaya's resume?" },
+  { label: "Open to new roles?",       hint: "Availability & location",    full: "Is Jaya currently open to new job opportunities? Where is he based?" },
+  { label: "Most impressive project",  hint: "Standout work",              full: "What is Jaya's most impressive project and what makes it stand out?" },
+  { label: "AI & ML expertise",        hint: "RAG, LLMs, Edge AI",         full: "Tell me about Jaya's AI and machine learning expertise." },
+  { label: "Current work at NYU",      hint: "What he's building now",     full: "What is Jaya currently working on at NYU?" },
+  { label: "Distributed systems",      hint: "Scale & reliability",        full: "Tell me about Jaya's distributed systems and backend engineering experience." },
+  { label: "Experience at Shell",      hint: "Industry background",        full: "What did Jaya build at Wipro and Shell PLC?" },
+  { label: "How Avocado works",        hint: "This chatbot's tech",        full: "How does this AI portfolio chatbot work? What powers Avocado?" },
+  { label: "Resume & contact",         hint: "Get in touch",               full: "How can I contact Jaya or view his resume?" },
 ];
 
 export default function ChatInterface() {
@@ -162,29 +165,26 @@ export default function ChatInterface() {
       <div
         className="shrink-0 px-4 sm:px-6 text-center overflow-hidden transition-all duration-500 ease-in-out"
         style={{
-          maxHeight: introVisible ? "220px" : "0px",
+          maxHeight: introVisible ? "160px" : "0px",
           opacity: introVisible ? 1 : 0,
           paddingTop: introVisible ? undefined : "0px",
           paddingBottom: introVisible ? undefined : "0px",
         }}
       >
-        <div className="pt-1 sm:pt-3 pb-3 sm:pb-5">
-          <div className="flex items-center justify-center gap-2 mb-2 sm:mb-3">
+        <div className="pt-2 sm:pt-4 pb-2 sm:pb-4">
+          <div className="flex items-center justify-center gap-2 mb-1.5 sm:mb-2">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-fg-faint">
               Avocado · Live
             </span>
           </div>
-          <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-fg">
+          <h1 className="text-base sm:text-2xl font-bold tracking-tight text-fg">
             Chat with Avocado 🥑
           </h1>
           <p className="mt-0.5 text-[11px] font-medium text-accent tracking-wide">
-            Jaya&apos;s personal AI chatbot
+            Jaya&apos;s personal AI assistant — ask anything
           </p>
-          <p className="hidden sm:block mt-2 text-sm text-fg-subtle max-w-sm mx-auto leading-relaxed">
-            Ask anything about his work, projects, skills, or background.
-          </p>
-          <div className="mx-auto mt-3 sm:mt-5 w-8 h-px bg-border" />
+          <div className="mx-auto mt-2 sm:mt-4 w-8 h-px bg-border" />
         </div>
       </div>
 
@@ -203,7 +203,7 @@ export default function ChatInterface() {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-10 py-3 sm:py-4">
+      <div className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-4">
         <div className="mx-auto max-w-2xl space-y-4 sm:space-y-5">
           {messages.map((m, i) => (
             <div key={i}>
@@ -218,27 +218,23 @@ export default function ChatInterface() {
 
           {/* Suggestion chips — only on initial state */}
           {isInitial && (
-            <div className="pt-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg-faint mb-3">
-                Suggested
+            <div className="pt-1 sm:pt-2">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg-faint mb-2 sm:mb-3">
+                Ask Avocado about
               </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {SUGGESTIONS.map((s) => (
                   <button
                     key={s.full}
                     onClick={() => setPrefill(s.full)}
-                    className="group text-left rounded-xl border border-border bg-surface px-4 py-3 shadow-sm transition-all hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md"
+                    className="group text-left rounded-xl border border-border bg-surface px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm transition-all hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md active:scale-[0.98]"
                   >
-                    <span className="flex items-start gap-2">
-                      <svg
-                        className="mt-0.5 shrink-0 text-fg-faint group-hover:text-accent transition-colors"
-                        width="12" height="12" viewBox="0 0 24 24" fill="none"
-                        stroke="currentColor" strokeWidth="2.5"
-                      >
-                        <path d="M5 12h14M12 5l7 7-7 7" />
-                      </svg>
-                      <span className="text-xs text-fg-muted group-hover:text-accent transition-colors leading-relaxed">
+                    <span className="flex flex-col gap-0.5">
+                      <span className="text-[11px] sm:text-xs font-semibold text-fg-muted group-hover:text-accent transition-colors leading-tight">
                         {s.label}
+                      </span>
+                      <span className="text-[10px] text-fg-faint leading-tight hidden sm:block">
+                        {s.hint}
                       </span>
                     </span>
                   </button>
@@ -276,7 +272,7 @@ export default function ChatInterface() {
       </div>
 
       {/* Bottom — input + footer */}
-      <div className="shrink-0 px-3 sm:px-10 pt-2 pb-3 sm:pb-5">
+      <div className="shrink-0 px-3 sm:px-6 lg:px-10 pt-2 pb-3 sm:pb-5">
         <div className="mx-auto max-w-2xl space-y-2">
 
           <ChatInput
@@ -334,16 +330,17 @@ export default function ChatInterface() {
               <span className="text-[10px] sm:text-[11px] text-fg-faint hidden sm:block">
                 © {new Date().getFullYear()} Jaya Sabarish Reddy Remala
               </span>
+              {/* Mobile: show 3 key links only; sm+: show all */}
               <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                <Link href="/blog" className="text-[10px] sm:text-[11px] text-fg-faint hover:text-fg-muted transition-colors">Blog</Link>
-                <a href={profile.github} target="_blank" rel="noopener noreferrer"
-                  className="text-[10px] sm:text-[11px] text-fg-faint hover:text-fg-muted transition-colors">GitHub</a>
                 <a href={profile.linkedin} target="_blank" rel="noopener noreferrer"
                   className="text-[10px] sm:text-[11px] text-fg-faint hover:text-fg-muted transition-colors">LinkedIn</a>
                 <a href={`mailto:${profile.email}`}
                   className="text-[10px] sm:text-[11px] text-fg-faint hover:text-fg-muted transition-colors">Email</a>
                 <a href={profile.resume} target="_blank" rel="noopener noreferrer"
                   className="text-[10px] sm:text-[11px] text-fg-faint hover:text-fg-muted transition-colors">Resume</a>
+                <Link href="/blog" className="hidden sm:inline text-[11px] text-fg-faint hover:text-fg-muted transition-colors">Blog</Link>
+                <a href={profile.github} target="_blank" rel="noopener noreferrer"
+                  className="hidden sm:inline text-[11px] text-fg-faint hover:text-fg-muted transition-colors">GitHub</a>
               </div>
             </div>
           </div>

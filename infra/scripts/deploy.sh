@@ -6,6 +6,18 @@ set -euo pipefail
 ENV_FILE="/home/ubuntu/itsjaya.env"
 IMAGE="itsjaya-backend"
 DATA_DIR="/data"
+S3_BUCKET="${ITSJAYA_BACKUP_BUCKET:-itsjaya-backups-analytics}"
+
+# ── 0. Restore analytics.db from S3 if missing ───────────────────────────────
+if [ ! -f "${DATA_DIR}/analytics.db" ]; then
+  echo "[deploy] analytics.db not found — restoring from S3..."
+  mkdir -p "$DATA_DIR"
+  if aws s3 cp "s3://${S3_BUCKET}/analytics_db/latest_analytics.db" "${DATA_DIR}/analytics.db" 2>/dev/null; then
+    echo "[deploy] analytics.db restored from S3."
+  else
+    echo "[deploy] No backup found in S3 — starting with a fresh database."
+  fi
+fi
 
 # ── 1. Tag current image as :previous for rollback ───────────────────────────
 docker tag "${IMAGE}:latest" "${IMAGE}:previous" 2>/dev/null || true

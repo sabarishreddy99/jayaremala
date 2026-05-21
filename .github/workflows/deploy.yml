@@ -76,21 +76,5 @@ jobs:
 
       - name: Deploy backend via SSH
         run: |
-          ssh -i ~/.ssh/lightsail.pem ubuntu@${{ secrets.LIGHTSAIL_HOST }} << 'ENDSSH'
-            set -e
-            cd /home/ubuntu/itsjaya
-            git pull origin main
-            docker build -t itsjaya-backend:latest ./backend
-            docker stop itsjaya-backend || true
-            docker rm   itsjaya-backend || true
-            docker run -d \
-              --name itsjaya-backend \
-              --restart unless-stopped \
-              --env-file /home/ubuntu/itsjaya.env \
-              -v /data:/data \
-              -p 8000:8000 \
-              itsjaya-backend:latest
-            sleep 10
-            curl -sf http://localhost:8000/health || (echo "Health check failed" && exit 1)
-            docker image prune -f
-          ENDSSH
+          ssh -i ~/.ssh/lightsail.pem ubuntu@${{ secrets.LIGHTSAIL_HOST }} \
+            "cd /home/ubuntu/itsjaya && git pull origin main && bash infra/scripts/deploy.sh"

@@ -315,14 +315,135 @@ def _build_documents() -> list[tuple[str, str, str]]:
     ), "faq"))
 
     docs.append(("faq_blog", (
-        "Jaya writes on his blog at itsjaya.com/blog. "
+        "Jaya writes on his blog at jayaremala.com/blog. "
         "Topics include software engineering, AI, personal reflections, and career insights."
     ), "faq"))
 
     docs.append(("faq_lab", (
-        "Jaya publishes living system design documentation in the Lab section at itsjaya.com/lab. "
+        "Jaya publishes living system design documentation in the Lab section at jayaremala.com/lab. "
         "Lab entries document active projects with architecture diagrams, key technical decisions, "
         "progress logs, and the reasoning behind design choices — updated as projects evolve."
+    ), "faq"))
+
+    docs.append(("faq_portfolio_how_it_works", (
+        "How does this portfolio work? How is Avocado built? "
+        "jayaremala.com is Jaya's AI-powered portfolio. It has two parts: "
+        "(1) Avocado — a full-screen RAG-powered AI chatbot at the homepage that answers questions about Jaya in real time. "
+        "(2) A classic portfolio with experience, projects, education, blog, and a lab section. "
+        "Avocado works like this: when you type a question, the backend runs a 4-stage hybrid retrieval pipeline — "
+        "query expansion (up to 4 variants), dense search via ChromaDB (all-MiniLM-L6-v2 ONNX embeddings), "
+        "lexical search via BM25 (catches exact names, numbers, company names), "
+        "Reciprocal Rank Fusion to merge results, then the top 5 chunks are injected into Gemini's system prompt "
+        "and the response streams token-by-token back to the browser via Server-Sent Events. "
+        "The chatbot is production-grade — streaming tokens, hybrid retrieval, model fallback chain, "
+        "and a knowledge base of ~80 atomic documents covering every role, project, skill, and FAQ."
+    ), "faq"))
+
+    docs.append(("faq_services_connected", (
+        "How are the services connected in this portfolio? What is the system architecture? "
+        "The portfolio has three layers: "
+        "(1) Frontend: Next.js 16 static export hosted on GitHub Pages at jayaremala.com. "
+        "No server-side rendering — fully static HTML/CSS/JS served from GitHub's CDN for free. "
+        "(2) Backend API: FastAPI (Python) running in Docker on AWS Lightsail 2GB VPS at api.jayaremala.com. "
+        "Nginx sits in front as a reverse proxy (port 443 → Docker port 8000) with Let's Encrypt HTTPS. "
+        "(3) External AI: Google Gemini API for LLM responses. "
+        "The frontend calls the backend directly from the browser — no middleman. "
+        "The backend talks to Gemini over HTTPS and streams tokens back to the browser via SSE. "
+        "All data (blog views, claps, chat analytics) is stored in SQLite on the Lightsail SSD at /data/analytics.db, "
+        "backed up daily to Amazon S3 with 7-day retention. "
+        "ChromaDB vector database persists at /data/chroma_db and auto-rebuilds from knowledge JSON on deploy if the content hash changed."
+    ), "faq"))
+
+    docs.append(("faq_rag_pipeline", (
+        "How does Avocado retrieve information? What RAG pipeline does it use? "
+        "Avocado uses a 4-stage hybrid RAG pipeline: "
+        "Stage 1 — Query Expansion: the user message is expanded into up to 4 query variants "
+        "(verbatim, name-anchored, topic keyword, conversation context) to catch different phrasings. "
+        "Stage 2a — Dense retrieval: all 4 queries are embedded in a single batched ONNX forward pass "
+        "using all-MiniLM-L6-v2 via fastembed, then searched against ChromaDB using HNSW cosine similarity. "
+        "Stage 2b — Lexical retrieval: BM25 (rank_bm25 BM25Okapi) catches exact keyword matches — "
+        "specific numbers like '3000 RPS', company names like 'Qualcomm', project names like 'SnapLog'. "
+        "Stage 3 — Reciprocal Rank Fusion: merges dense and lexical results using RRF (k=60, Cormack 2009). "
+        "Stage 4 — Top 5 by RRF score injected into Gemini's system prompt as context. "
+        "The knowledge base has ~80 atomic documents: each bullet point, project, and skill category is its own chunk "
+        "so retrieval is precise rather than returning noisy large blobs."
+    ), "faq"))
+
+    docs.append(("faq_tech_choices_tradeoffs", (
+        "What technology choices did Jaya make for this portfolio and why? What are the trade-offs? "
+        "Key decisions and trade-offs: "
+        "(1) fastembed ONNX instead of PyTorch sentence-transformers — saves ~600MB RAM, no GPU needed, "
+        "runs on a $10/month VPS. Trade-off: slightly less flexible than full PyTorch. "
+        "(2) ChromaDB + BM25 hybrid instead of pure dense search — BM25 catches exact keyword matches "
+        "(numbers, names) that dense search misses. Trade-off: BM25 index is in-memory, rebuilt on every startup (~5ms). "
+        "(3) SQLite instead of managed Postgres for analytics — zero cost, same-process, one file to back up. "
+        "Trade-off: not suitable for concurrent writers, but the single Docker container has no concurrency issue. "
+        "(4) Static Next.js export on GitHub Pages instead of Vercel/SSR — free, CDN-served, no cold starts. "
+        "Trade-off: no server-side rendering, all dynamic data fetched client-side. "
+        "(5) AWS Lightsail $10/month instead of Railway PaaS — persistent SSD storage, full control, no trial limits. "
+        "Trade-off: more DevOps responsibility (Docker, Nginx, Certbot, backups). "
+        "(6) Gemini 2.5 Flash with fallback chain instead of a single model — high availability even at peak times. "
+        "Trade-off: response quality varies slightly across fallback models. "
+        "(7) 12 hard-coded FAQ documents — highest ROI for recruiter query quality. "
+        "Trade-off: must be manually updated as achievements change."
+    ), "faq"))
+
+    docs.append(("faq_deployment_cicd", (
+        "How is the portfolio deployed? What is the CI/CD pipeline? "
+        "Everything deploys automatically on every git push to main via GitHub Actions: "
+        "(1) Frontend: npm build runs sync-knowledge.mjs (generates blog.json from MDX posts), "
+        "then Next.js builds a static export to frontend/out/, which is uploaded to GitHub Pages at jayaremala.com. "
+        "(2) Backend: GitHub Actions SSHes into AWS Lightsail and runs infra/scripts/deploy.sh — "
+        "a zero-downtime blue-green deployment script. It builds the new Docker image, "
+        "starts it on port 8001, health-checks it for up to 120 seconds (ONNX model warmup), "
+        "then swaps to port 8000 only if the health check passes. "
+        "If the new container fails health check, the old container keeps running — zero downtime. "
+        "The previous Docker image is tagged :previous for instant rollback with one command. "
+        "Analytics data is backed up daily to S3 and auto-restored from S3 if missing on a fresh instance. "
+        "The total monthly cost is $10 for Lightsail — the frontend, CI/CD, and SSL are all free."
+    ), "faq"))
+
+    docs.append(("faq_data_persistence", (
+        "How is data stored and protected in this portfolio? "
+        "All analytics data (blog views, claps, Avocado chat stats) lives in a single SQLite file "
+        "at /data/analytics.db on the AWS Lightsail 60GB SSD. "
+        "IPs are SHA-256 hashed before storage — never stored raw, privacy-preserving by design. "
+        "The file is backed up daily at 02:00 UTC to Amazon S3 (itsjaya-backups-analytics bucket) "
+        "with 7 days of timestamped history kept automatically. "
+        "On every deploy, if /data/analytics.db is missing (e.g. fresh instance after disaster), "
+        "the deploy script automatically restores the latest backup from S3 before starting the container. "
+        "ChromaDB (the vector database) does not need backup — it is fully rebuilt from the knowledge JSON files "
+        "on every deploy when the content hash changes. Docker logs are rotated automatically: "
+        "json-file driver, 10MB max per file, 3 files kept."
+    ), "faq"))
+
+    docs.append(("faq_portfolio_vs_standard", (
+        "How is this portfolio different from a standard portfolio website? "
+        "A standard portfolio is a one-way broadcast — you decide what to highlight, the visitor reads it, done. "
+        "The visitor's actual question ('does he have Redis caching experience?') rarely aligns with what's on the page. "
+        "This portfolio inverts the model: the visitor asks in natural language, the RAG system retrieves "
+        "the most relevant evidence from Jaya's actual experience, and Gemini synthesises a grounded answer. "
+        "Every claim Avocado makes is backed by a retrieved document from the knowledge base — "
+        "not hallucinated. The knowledge base is the resume; Avocado is the interface. "
+        "Additionally, the blog has real engagement tracking (views, claps), the lab section has living "
+        "system design documentation updated as the project evolves, and the entire system auto-deploys "
+        "on every git push with zero manual steps."
+    ), "faq"))
+
+    docs.append(("faq_knowledge_base", (
+        "What is in Avocado's knowledge base? What can it answer questions about? "
+        "The knowledge base has approximately 80 atomic documents across 8 types: "
+        "Profile (3 docs): overview, bio, contact information. "
+        "Experience (~25 docs): one overview per role + one document per bullet point per job. "
+        "Education (~10 docs): one overview per degree + one per highlight. "
+        "Projects (~14 docs): one overview + one tech-stack doc per project. "
+        "Skills (8 docs): one per category + one aggregated. "
+        "FAQ (12 docs): handwritten answers to the highest-probability recruiter questions — "
+        "contact info, hiring, strengths, resume link, specific achievements with exact numbers. "
+        "Blog: one document per published blog post. "
+        "Lab: one document per lab entry. "
+        "Avocado can answer questions about work history, projects, skills, education, awards, "
+        "contact information, resume, blog posts, and how this portfolio itself is built."
     ), "faq"))
 
     return docs

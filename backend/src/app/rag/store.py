@@ -68,6 +68,11 @@ def get_collection() -> chromadb.Collection:
     return _collection
 
 
+def clear_query_cache() -> None:
+    """Clear the LRU query cache after any upsert or delete."""
+    _query_single_cached.cache_clear()
+
+
 def reset_collection() -> None:
     """Delete and recreate the collection — used before a full re-ingest."""
     global _client, _collection

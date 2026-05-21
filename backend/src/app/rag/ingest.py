@@ -4,10 +4,10 @@ Strategy: atomic chunking — each bullet point, project, and skill category get
 its own document so retrieval is precise rather than scanning large blobs.
 Also includes synthesized FAQ documents that pre-answer common recruiter questions.
 
-Hash-based smart re-ingest: on startup, SHA256 of all knowledge JSON files is
-compared against the stored hash in chroma_db/.ingest_hash. If changed (or no
-hash exists), the collection is wiped and rebuilt. This means any commit that
-updates JSON files automatically triggers a full re-ingest on the next deploy.
+Incremental upsert: on each startup, per-document SHA-256 hashes are compared
+against .doc_hashes.json. Only changed or new documents are re-embedded;
+documents removed from the source are deleted from ChromaDB. This keeps
+startup fast as blog/lab content grows — adding one post embeds one document.
 """
 
 import hashlib
@@ -15,37 +15,35 @@ import json
 import logging
 from pathlib import Path
 
-from app.rag.store import build_bm25_index, get_collection, reset_collection
+from app.rag.store import build_bm25_index, clear_query_cache, get_collection
 
 logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parents[3] / "data" / "knowledge"
 
-# ── Content hash helpers ───────────────────────────────────────────────────────
+# ── Per-document hash helpers ──────────────────────────────────────────────────
 
-def _hash_file() -> Path:
+def _doc_hashes_path() -> Path:
     from app.core.settings import settings
-    return Path(settings.chroma_db_path) / ".ingest_hash"
+    return Path(settings.chroma_db_path) / ".doc_hashes.json"
 
 
-def _compute_content_hash() -> str:
-    h = hashlib.sha256()
-    for f in sorted(DATA_DIR.glob("*.json")):   # alphabetical = deterministic
-        h.update(f.read_bytes())
-    return h.hexdigest()
+def _short_hash(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
-def _read_stored_hash() -> str:
+def _load_doc_hashes() -> dict[str, str]:
+    p = _doc_hashes_path()
     try:
-        return _hash_file().read_text().strip()
-    except FileNotFoundError:
-        return ""
+        return json.loads(p.read_text())
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
 
 
-def _write_stored_hash(digest: str) -> None:
-    p = _hash_file()
+def _save_doc_hashes(hashes: dict[str, str]) -> None:
+    p = _doc_hashes_path()
     p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(digest)
+    p.write_text(json.dumps(hashes, indent=2))
 
 
 # ── Document loaders ───────────────────────────────────────────────────────────
@@ -449,47 +447,64 @@ def _build_documents() -> list[tuple[str, str, str]]:
     return docs
 
 
-def run_ingest(force: bool = False) -> int:
-    """Ingest knowledge base into ChromaDB. Re-ingests automatically when content hash changes.
+def run_ingest(force: bool = False) -> dict:
+    """Incrementally sync knowledge base into ChromaDB.
 
-    Hash is stored at chroma_db/.ingest_hash (same persistent volume as ChromaDB on Railway).
-    Any deploy that commits new/updated JSON files will trigger a full re-ingest on startup.
+    Compares per-document SHA-256 hashes against .doc_hashes.json:
+    - New or changed documents are upserted (re-embedded).
+    - Documents removed from source are deleted from ChromaDB.
+    - Unchanged documents are skipped — no embedding call, no ChromaDB write.
+
+    Returns a summary dict: {added, updated, deleted, unchanged, total}.
     """
-    current_hash = _compute_content_hash()
-    stored_hash = _read_stored_hash()
     collection = get_collection()
-    docs = _build_documents()   # always build — BM25 needs it regardless
+    docs = _build_documents()  # always build full corpus — BM25 needs it
 
-    content_changed = current_hash != stored_hash
-    db_empty = collection.count() == 0
+    stored = {} if force else _load_doc_hashes()
+    current = {doc_id: _short_hash(text) for doc_id, text, _ in docs}
 
-    if not force and not content_changed and not db_empty:
-        logger.info("Content hash unchanged — skipping re-ingest (%d docs in DB)", collection.count())
-        build_bm25_index(docs)
-        return collection.count()
+    to_upsert = [
+        (doc_id, text, typ)
+        for doc_id, text, typ in docs
+        if force or stored.get(doc_id) != current[doc_id]
+    ]
+    to_delete = [doc_id for doc_id in stored if doc_id not in current]
 
-    reason = "forced" if force else ("hash changed" if content_changed else "empty DB")
-    logger.info("Re-ingesting knowledge base (%s, hash: %s→%s)...",
-                reason, stored_hash[:8] or "none", current_hash[:8])
-    reset_collection()
-    collection = get_collection()
+    added = sum(1 for d in to_upsert if d[0] not in stored)
+    updated = len(to_upsert) - added
 
-    if not docs:
-        logger.warning("No knowledge documents found in %s", DATA_DIR)
-        return 0
+    if to_delete:
+        collection.delete(ids=to_delete)
+        clear_query_cache()
+        logger.info("Deleted %d stale documents: %s", len(to_delete), to_delete)
 
-    ids = [d[0] for d in docs]
-    texts = [d[1] for d in docs]
-    metadatas = [{"type": d[2], "id": d[0]} for d in docs]
+    if to_upsert:
+        ids = [d[0] for d in to_upsert]
+        texts = [d[1] for d in to_upsert]
+        metadatas = [{"type": d[2], "id": d[0]} for d in to_upsert]
+        collection.upsert(ids=ids, documents=texts, metadatas=metadatas)
+        clear_query_cache()
+        logger.info("Upserted %d documents (%d new, %d updated)", len(to_upsert), added, updated)
+    else:
+        logger.info("Knowledge base up to date — nothing to embed")
 
-    collection.upsert(ids=ids, documents=texts, metadatas=metadatas)
     build_bm25_index(docs)
-    _write_stored_hash(current_hash)
-    logger.info("Ingested %d documents (hash: %s)", len(docs), current_hash[:12])
-    return len(docs)
+
+    new_hashes = {**stored, **{d[0]: current[d[0]] for d in to_upsert}}
+    for doc_id in to_delete:
+        new_hashes.pop(doc_id, None)
+    _save_doc_hashes(new_hashes)
+
+    unchanged = len(docs) - len(to_upsert)
+    total = collection.count()
+    logger.info(
+        "Ingest complete — added=%d updated=%d deleted=%d unchanged=%d total_in_db=%d",
+        added, updated, len(to_delete), unchanged, total,
+    )
+    return {"added": added, "updated": updated, "deleted": len(to_delete), "unchanged": unchanged, "total": total}
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    count = run_ingest(force=True)
-    print(f"Ingested {count} documents.")
+    result = run_ingest(force=True)
+    print(f"Ingest result: {result}")

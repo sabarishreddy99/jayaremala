@@ -14,6 +14,9 @@ class Settings(BaseSettings):
     # e.g. /data/analytics.db  (Railway volume mounted at /data)
     analytics_db_path: str = "./chroma_db/analytics.db"
     chroma_db_path: str = "./chroma_db"
+    # Set ADMIN_TOKEN env var to enable POST /admin/reingest.
+    # Empty string (default) disables the endpoint entirely.
+    admin_token: str = ""
 
     @property
     def model_chain(self) -> list[str]:

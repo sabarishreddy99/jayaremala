@@ -9,6 +9,7 @@ from app.core.settings import settings
 from app.db import analytics, blog_stats
 from app.rag.ingest import run_ingest
 from app.rag.store import warmup as rag_warmup
+from app.routers.admin import router as admin_router
 from app.routers.ai import router as ai_router
 from app.routers.blog import router as blog_router
 from app.routers.stats import router as stats_router
@@ -22,8 +23,8 @@ async def lifespan(app: FastAPI):
     blog_stats.init_db()
     logger.info("Starting up — ingesting knowledge base...")
     try:
-        count = run_ingest()
-        logger.info("Knowledge base ready: %d documents", count)
+        result = run_ingest()
+        logger.info("Knowledge base ready: %s", result)
     except Exception as exc:
         logger.warning("RAG ingest failed (non-fatal): %s", exc)
 
@@ -47,6 +48,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(admin_router)
 app.include_router(ai_router)
 app.include_router(blog_router)
 app.include_router(stats_router)

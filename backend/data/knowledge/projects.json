@@ -1,5 +1,17 @@
 [
   {
+    "title": "jayaremala.com — AI-Powered Portfolio",
+    "description": "Production AI portfolio with Avocado, a streaming RAG chatbot backed by a 4-stage hybrid retrieval pipeline: query expansion (up to 4 variants), batched dense search via ChromaDB (all-MiniLM-L6-v2 ONNX), BM25 lexical search (rank_bm25), and Reciprocal Rank Fusion (k=60) — all before Gemini 2.5 Flash sees the question. Knowledge base of ~80 atomic documents auto-syncs incrementally: new or edited documents are upserted, deleted documents are purged from ChromaDB, unchanged ones are skipped entirely. Runs as a FastAPI Docker container on AWS Lightsail with zero-downtime blue-green deployments, Nginx + Let's Encrypt HTTPS, daily S3 backup of SQLite analytics, and a Next.js 16 static frontend on GitHub Pages — total cost $10/month.",
+    "tags": ["Next.js 16", "FastAPI", "Python", "ChromaDB", "BM25", "RRF", "fastembed ONNX", "Gemini 2.5 Flash", "SQLite", "AWS Lightsail", "Nginx", "Docker", "GitHub Actions", "GitHub Pages"],
+    "featured": true,
+    "sourceLinks": [
+      { "label": "Live", "url": "https://jayaremala.com" },
+      { "label": "GitHub", "url": "https://github.com/sabarishreddy99/jayaremala" }
+    ],
+    "note": ""
+  },
+
+  {
     "title": "SnapLog – Edge AI Security Engine",
     "description": "Achieved 15ms token latency on Snapdragon NPUs — a 10× improvement over cloud inference — by fine-tuning Llama 3.2 3B on security logs with QLoRA and deploying via 4-bit AWQ quantization through ONNX Runtime on-device. Guaranteed zero data loss during network partitions via an offline-first SQLite buffer with background sync workers.",
     "tags": ["Python", "FastAPI", "QLoRA", "AWQ Quantization", "ONNX Runtime", "Llama 3.2", "Snapdragon NPU"],

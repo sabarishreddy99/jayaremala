@@ -332,10 +332,18 @@ Chatbot lives outside — no nav, no footer, full screen.
   A living MDX page that gets amended as the system evolves preserves the actual reasoning. The `Decision` and `Update` timeline components make it natural to add entries in-place instead of rewriting history. The constraint that forced MDX over a database-backed CMS is meaningful: the whole frontend is a static export. There is no database write path. MDX files committed to the repo are the only durable storage available at build time.
 </Decision>
 
+<Decision date="2026-05-21" title="Incremental per-document ingest over collection-level hash wipe">
+  The collection-level hash approach had one critical failure mode: editing a single FAQ document or publishing one blog post triggered a full re-embed of all ~80 documents — a ~30-second ChromaDB wipe-and-rebuild on every deploy with any content change. As the knowledge base grows with more blog posts and lab entries, this gets worse linearly.
+
+  The replacement tracks a SHA-256 hash per document in `.doc_hashes.json` (stored on the Lightsail SSD alongside ChromaDB). On each startup, `run_ingest()` diffs the current document set against the stored hashes: new or changed documents are upserted, documents removed from the source are deleted from ChromaDB, unchanged documents are skipped entirely. Adding one blog post now embeds one document instead of eighty.
+
+  Per-document tracking also enables precise deletion — when a post or FAQ entry is removed, its vector is deleted from ChromaDB immediately rather than lingering as stale dead weight. A forced full re-embed is available via `POST /admin/reingest?force=true` (bearer token-gated via `ADMIN_TOKEN` env var) for cases where the hash file is lost or a clean slate is needed.
+</Decision>
+
 <Decision date="2026-04-15" title="Hash-based re-ingest: SHA-256 of all knowledge JSON on startup">
   Two simpler alternatives exist and both are wrong. Always re-ingest: adds 15–20s to every deploy regardless of whether the knowledge base changed. Skip if ChromaDB non-empty: knowledge updates never propagate after the first deploy.
 
-  SHA-256 of the entire `data/knowledge/` directory solves both failure modes with a single file read at startup. If the volume is wiped, the missing hash file triggers a fresh ingest, which is correct.
+  SHA-256 of the entire `data/knowledge/` directory solves both failure modes with a single file read at startup. If the volume is wiped, the missing hash file triggers a fresh ingest, which is correct. Superseded by per-document hashing (see above) which preserves these properties while adding incremental precision.
 </Decision>
 
 <Decision date="2026-04-10" title="BM25 hybrid retrieval alongside ChromaDB dense search">
@@ -371,6 +379,10 @@ Chatbot lives outside — no nav, no footer, full screen.
 ---
 
 ## Progress Log
+
+<Update date="2026-05-21">
+  Replaced collection-level hash re-ingest with per-document incremental sync. Adding a blog post or lab entry now embeds only that one document rather than wiping and rebuilding the entire ~80-doc collection. Stale documents removed from source are deleted from ChromaDB automatically. Per-document hashes persisted in .doc_hashes.json on the Lightsail SSD. Token-gated POST /admin/reingest?force=true endpoint added for manual full re-embeds.
+</Update>
 
 <Update date="2026-05-21">
   Migrated backend from Railway to AWS Lightsail 2GB ($10/month). Set up Nginx + Let's Encrypt for HTTPS on api.jayaremala.com. Purchased jayaremala.com domain — frontend now at root domain instead of GitHub Pages subpath. Removed basePath from next.config.ts, added CNAME file to public/.

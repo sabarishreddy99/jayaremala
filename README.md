@@ -37,6 +37,7 @@ Personal AI-assisted portfolio for **Jaya Sabarish Reddy Remala**. Two entry poi
 │   GET  /stats                 total_responses, unique_visitors               │
 │   GET  /stats/overview        7d / 30d / 1y / all-time for all metrics      │
 │   GET  /health                                                               │
+│   POST /admin/reingest        force re-embed (ADMIN_TOKEN required)          │
 │                                                                              │
 │  ┌──────────────────────────┐    ┌────────────────────────────────────────┐  │
 │  │      RAG Store           │    │  SQLite  analytics.db                  │  │
@@ -127,9 +128,18 @@ User message
 | `faq` | Hard-coded in ingest.py | Pre-answers common recruiter questions |
 | `blog` | blog.json (auto-generated) | One doc per post (title + description + 2k body chars) |
 
-### Hash-based re-ingest
+### Incremental per-document ingest
 
-On every deploy, `run_ingest()` computes SHA-256 of all JSON files and compares against the stored hash in `chroma_db/.ingest_hash`. Ingests only when changed — fast startup if nothing changed.
+On every startup, `run_ingest()` diffs the current document set against `.doc_hashes.json` (per-document SHA-256 hashes stored on the Lightsail SSD alongside ChromaDB). Only what changed is re-embedded:
+
+| Change | Action |
+|---|---|
+| New document | `collection.upsert()` — embedded and added |
+| Modified document | `collection.upsert()` — re-embedded in place |
+| Removed document | `collection.delete()` — purged from ChromaDB |
+| Unchanged document | Skipped — no embedding call, no I/O |
+
+Adding one blog post embeds one document, not the entire corpus. A forced full re-embed is available via `POST /admin/reingest?force=true` (requires `ADMIN_TOKEN` bearer token).
 
 ### Gemini fallback chain
 
@@ -292,11 +302,12 @@ itsjaya/
 │   ├── src/app/
 │   │   ├── main.py                         FastAPI + lifespan
 │   │   ├── core/settings.py                Pydantic settings (incl. chroma_db_path)
+│   │   ├── routers/admin.py                POST /admin/reingest (token-gated)
 │   │   ├── routers/ai.py                   /ai/* endpoints + RAG orchestration
 │   │   ├── routers/blog.py                 /blog/* engagement endpoints
 │   │   ├── routers/stats.py                /stats  /stats/overview
 │   │   ├── rag/store.py                    ChromaDB + BM25 + RRF (fastembed ONNX)
-│   │   ├── rag/ingest.py                   Hash-based re-ingest + document builders
+│   │   ├── rag/ingest.py                   Incremental ingest — per-doc hash diff, upsert/delete
 │   │   ├── db/analytics.py                 Chat analytics (period-aware)
 │   │   └── db/blog_stats.py                Blog views + claps (period-aware)
 │   ├── data/knowledge/                     Single source of truth (edit here)
@@ -374,6 +385,7 @@ cd backend  && ruff check src && pytest
 | `CHROMA_DB_PATH` | `./chroma_db` | Set to `/data/chroma_db` on Lightsail |
 | `FRONTEND_ORIGIN` | `http://localhost:3000` | CORS allowed origins |
 | `APP_ENV` | `dev` | Set to `production` on Lightsail |
+| `ADMIN_TOKEN` | `` | Bearer token for `POST /admin/reingest`; empty = endpoint disabled |
 
 ---
 
@@ -383,7 +395,7 @@ cd backend  && ruff check src && pytest
 |---|---|---|
 | Frontend | GitHub Pages → `jayaremala.com` | Push to `main` → GH Actions builds + deploys |
 | Backend API | AWS Lightsail 2GB (`api.jayaremala.com`) | Push to `main` → SSH → zero-downtime deploy |
-| Knowledge base | Lightsail SSD (`/data/chroma_db`) | Hash change on deploy → auto re-ingest |
+| Knowledge base | Lightsail SSD (`/data/chroma_db`) | Incremental ingest on startup — only changed docs re-embedded |
 | Analytics DB | Lightsail SSD (`/data/analytics.db`) | Persists on disk, daily backup to S3 |
 | Analytics backup | S3 `itsjaya-backups-analytics` | Daily cron at 02:00 UTC, 7-day retention |
 

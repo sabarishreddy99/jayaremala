@@ -62,3 +62,35 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  deploy-backend:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/lightsail.pem
+          chmod 600 ~/.ssh/lightsail.pem
+          ssh-keyscan -H ${{ secrets.LIGHTSAIL_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy backend via SSH
+        run: |
+          ssh -i ~/.ssh/lightsail.pem ubuntu@${{ secrets.LIGHTSAIL_HOST }} << 'ENDSSH'
+            set -e
+            cd /home/ubuntu/itsjaya
+            git pull origin main
+            docker build -t itsjaya-backend:latest ./backend
+            docker stop itsjaya-backend || true
+            docker rm   itsjaya-backend || true
+            docker run -d \
+              --name itsjaya-backend \
+              --restart unless-stopped \
+              --env-file /home/ubuntu/itsjaya.env \
+              -v /data:/data \
+              -p 8000:8000 \
+              itsjaya-backend:latest
+            sleep 10
+            curl -sf http://localhost:8000/health || (echo "Health check failed" && exit 1)
+            docker image prune -f
+          ENDSSH

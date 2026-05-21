@@ -51,7 +51,8 @@ class _DirectSTEmbedding(EmbeddingFunction):
 # ── ChromaDB collection ────────────────────────────────────────────────────────
 
 def _make_client() -> chromadb.PersistentClient:
-    return chromadb.PersistentClient(path="./chroma_db")
+    from app.core.settings import settings
+    return chromadb.PersistentClient(path=settings.chroma_db_path)
 
 
 def get_collection() -> chromadb.Collection:

@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     # Persistent analytics DB — set to an absolute path on the Railway volume
     # e.g. /data/analytics.db  (Railway volume mounted at /data)
     analytics_db_path: str = "./chroma_db/analytics.db"
+    chroma_db_path: str = "./chroma_db"
 
     @property
     def model_chain(self) -> list[str]:

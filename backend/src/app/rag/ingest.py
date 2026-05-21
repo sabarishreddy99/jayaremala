@@ -20,10 +20,13 @@ from app.rag.store import build_bm25_index, get_collection, reset_collection
 logger = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parents[3] / "data" / "knowledge"
-HASH_FILE = Path("./chroma_db/.ingest_hash")
-
 
 # ── Content hash helpers ───────────────────────────────────────────────────────
+
+def _hash_file() -> Path:
+    from app.core.settings import settings
+    return Path(settings.chroma_db_path) / ".ingest_hash"
+
 
 def _compute_content_hash() -> str:
     h = hashlib.sha256()
@@ -34,14 +37,15 @@ def _compute_content_hash() -> str:
 
 def _read_stored_hash() -> str:
     try:
-        return HASH_FILE.read_text().strip()
+        return _hash_file().read_text().strip()
     except FileNotFoundError:
         return ""
 
 
 def _write_stored_hash(digest: str) -> None:
-    HASH_FILE.parent.mkdir(parents=True, exist_ok=True)
-    HASH_FILE.write_text(digest)
+    p = _hash_file()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    p.write_text(digest)
 
 
 # ── Document loaders ───────────────────────────────────────────────────────────

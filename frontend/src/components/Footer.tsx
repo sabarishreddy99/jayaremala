@@ -145,7 +145,7 @@ export default function Footer() {
               Email
             </a>
             {showGuide && <BlogGuideDrawer />}
-            <Link href="/"
+            <Link href="/chat"
               className="text-xs font-medium text-accent hover:text-accent-hover transition-colors duration-300">
               Avocado ✦
             </Link>

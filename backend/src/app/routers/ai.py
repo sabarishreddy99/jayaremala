@@ -349,6 +349,21 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
     )
 
 
+# ── /ai/feedback ──────────────────────────────────────────────────────────────
+
+class FeedbackRequest(BaseModel):
+    message_hash: str
+    rating: int  # 1 = thumbs up, -1 = thumbs down
+
+
+@router.post("/feedback")
+def ai_feedback(req: FeedbackRequest) -> dict:
+    if req.rating not in (1, -1):
+        raise HTTPException(status_code=422, detail="rating must be 1 or -1")
+    analytics.record_feedback(req.message_hash, req.rating)
+    return {"ok": True}
+
+
 # ── /ai/summarize ─────────────────────────────────────────────────────────────
 
 class SummarizeRequest(BaseModel):

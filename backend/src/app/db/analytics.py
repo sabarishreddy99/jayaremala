@@ -29,6 +29,15 @@ def init_db() -> None:
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_ip ON interactions(ip_hash)")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS feedback (
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                message_hash TEXT    NOT NULL,
+                rating       INTEGER NOT NULL CHECK(rating IN (1, -1)),
+                created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_feedback_hash ON feedback(message_hash)")
     logger.info("Analytics DB ready: %s", p.resolve())
 
 
@@ -46,6 +55,17 @@ _CUTOFFS = {
     "month": "datetime('now', '-30 days')",
     "year":  "datetime('now', '-365 days')",
 }
+
+
+def record_feedback(message_hash: str, rating: int) -> None:
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            conn.execute(
+                "INSERT INTO feedback (message_hash, rating) VALUES (?, ?)",
+                (message_hash, rating),
+            )
+    except Exception as exc:
+        logger.warning("Feedback record failed (non-fatal): %s", exc)
 
 
 def get_stats(period: str = "all") -> dict[str, int]:

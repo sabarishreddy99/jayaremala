@@ -123,8 +123,22 @@ export default function ChatInterface() {
   const [streamingContent, setStreamingContent] = useState("");
   const [prefill, setPrefill] = useState("");
   const [introVisible, setIntroVisible] = useState(true);
+  const [rateLimitUntil, setRateLimitUntil] = useState<number | null>(null);
+  const [rateLimitSecsLeft, setRateLimitSecsLeft] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (!rateLimitUntil) return;
+    const tick = () => {
+      const left = Math.ceil((rateLimitUntil - Date.now()) / 1000);
+      if (left <= 0) { setRateLimitUntil(null); setRateLimitSecsLeft(0); }
+      else setRateLimitSecsLeft(left);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [rateLimitUntil]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -158,12 +172,23 @@ export default function ChatInterface() {
         signal: abortRef.current.signal,
       });
 
+      if (res.status === 429) {
+        const retryAfter = parseInt(res.headers.get("Retry-After") ?? "60", 10);
+        setRateLimitUntil(Date.now() + retryAfter * 1000);
+        setRateLimitSecsLeft(retryAfter);
+        setMessages((prev) => [
+          ...prev,
+          { role: "assistant", content: `You've sent 10 messages this minute — that's the rate limit. The countdown below will show when you can ask again.` },
+        ]);
+        return;
+      }
       if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
       let accumulated = "";
       let ragSources: string[] = [];
+      let sseError: string | null = null;
 
       while (true) {
         const { done, value } = await reader.read();
@@ -173,6 +198,7 @@ export default function ChatInterface() {
           try {
             const data = JSON.parse(line.slice(6));
             if (data.token) { accumulated += data.token; setStreamingContent(accumulated); }
+            if (data.error) { sseError = data.error as string; break; }
             if (data.done) {
               if (data.model) setActiveModel(data.model);
               if (data.sources) ragSources = data.sources as string[];
@@ -180,6 +206,19 @@ export default function ChatInterface() {
             }
           } catch { /* partial chunk */ }
         }
+      }
+
+      if (sseError === "quota_exhausted") {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "Avocado has hit its daily Gemini API quota — all AI models are temporarily unavailable. " +
+              "Please try again later today or tomorrow, or reach Jaya directly at jr6421@nyu.edu.",
+          },
+        ]);
+        return;
       }
 
       setBackendStatus("ready");
@@ -258,6 +297,25 @@ export default function ChatInterface() {
               <p className="text-[11px] text-amber-700 dark:text-amber-400">
                 Avocado is waking up — first response may take ~30 seconds.
               </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rate-limit countdown banner */}
+      {rateLimitUntil && (
+        <div className="shrink-0 px-3 sm:px-10 pt-2">
+          <div className="mx-auto max-w-2xl">
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 px-3 py-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
+                <p className="text-[11px] text-rose-700 dark:text-rose-400 truncate">
+                  Rate limit reached · You can ask again in
+                </p>
+              </div>
+              <span className="text-[11px] font-semibold tabular-nums text-rose-700 dark:text-rose-300 shrink-0">
+                {rateLimitSecsLeft}s
+              </span>
             </div>
           </div>
         </div>
@@ -357,7 +415,7 @@ export default function ChatInterface() {
 
           <ChatInput
             onSend={handleSend}
-            disabled={streaming}
+            disabled={streaming || !!rateLimitUntil}
             prefill={prefill}
             onPrefillConsumed={() => setPrefill("")}
           />

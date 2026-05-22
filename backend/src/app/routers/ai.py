@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 from typing import Iterator, Literal
@@ -63,6 +64,42 @@ def _get_client() -> genai.Client:
             raise HTTPException(status_code=503, detail="GOOGLE_API_KEY is not configured")
         _genai_client = genai.Client(api_key=settings.google_api_key)
     return _genai_client
+
+
+_GREETINGS = frozenset({
+    "hi", "hello", "hey", "howdy", "sup", "yo", "hiya", "greetings",
+    "good morning", "good afternoon", "good evening", "morning", "afternoon", "evening",
+})
+
+_HYDE_PROMPT = (
+    "Write 2-3 sentences of factual biography text about Jaya Sabarish Reddy Remala that directly answers this question. "
+    "Third person, specific details and numbers only. Be concise.\n"
+    "Question: {question}"
+)
+
+
+async def _hyde_query(user_message: str) -> str | None:
+    """HyDE — Hypothetical Document Embeddings (Gao et al. 2022).
+    Generates a short hypothetical answer and embeds *that* for vector search.
+    Hypothetical answers sit closer in embedding space to real KB chunks than
+    the raw question does, improving retrieval precision for vague queries.
+    Skipped for greetings and very short messages. Hard timeout keeps latency bounded.
+    """
+    stripped = user_message.lower().strip()
+    if len(stripped) < 15 or stripped in _GREETINGS:
+        return None
+    prompt = _HYDE_PROMPT.format(question=user_message)
+    try:
+        loop = asyncio.get_running_loop()
+        doc = await asyncio.wait_for(
+            loop.run_in_executor(None, lambda: _generate("", prompt)),
+            timeout=4.0,
+        )
+        logger.debug("HyDE doc: %s", doc[:120] if doc else "(empty)")
+        return doc.strip() or None
+    except Exception as exc:
+        logger.debug("HyDE generation skipped: %s", exc)
+        return None
 
 
 def _build_rag_queries(req: ChatRequest) -> list[str]:
@@ -260,13 +297,29 @@ def ai_chat(req: ChatRequest) -> ChatResponse:
 async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingResponse:
     queries = _build_rag_queries(req)
     try:
-        # 1. Batched dense retrieval — ONE encode call for all 4 queries
-        dense = await rag_store.query_batch_async(queries, n_per_query=6)
-        # 2. BM25 lexical retrieval — catches exact matches dense misses
+        # 1. HyDE generation + original dense retrieval run in parallel.
+        #    HyDE generates a hypothetical answer; embedding it yields higher cosine
+        #    similarity to real KB chunks than the raw question (Gao et al. 2022).
+        hyde_task = asyncio.create_task(_hyde_query(req.message))
+        dense_task = asyncio.create_task(rag_store.query_batch_async(queries, n_per_query=6))
+        # 2. BM25 is sync and fast (~2ms) — run while async tasks are in flight
         bm25 = rag_store.bm25_query(req.message, n_results=15)
-        # 3. Hybrid merge via Reciprocal Rank Fusion
+        hyde_doc, dense_result = await asyncio.gather(hyde_task, dense_task, return_exceptions=True)
+        if isinstance(dense_result, BaseException):
+            raise dense_result
+        dense: list[dict] = list(dense_result)
+        # 3. If HyDE produced a doc, embed it and prepend results so RRF rewards
+        #    chunks retrieved by both signals (accumulated score = double rank bonus).
+        if isinstance(hyde_doc, str) and hyde_doc:
+            try:
+                hyde_chunks = await rag_store.query_batch_async([hyde_doc], n_per_query=8)
+                dense = hyde_chunks + dense
+                logger.debug("HyDE retrieved %d additional chunks", len(hyde_chunks))
+            except Exception as exc:
+                logger.debug("HyDE embedding step failed (non-fatal): %s", exc)
+        # 4. Hybrid merge via Reciprocal Rank Fusion
         merged = rag_store.rrf_merge(dense, bm25, k=60, top_n=20)
-        # 4. Cross-encoder rerank → top 5 (skipped gracefully if model not ready)
+        # 5. Cross-encoder rerank → top 5
         top_chunks = await rag_store.rerank_cross_encoder_async(req.message, merged, top_n=5)
     except Exception as exc:
         logger.warning("Hybrid RAG pipeline failed, falling back to simple retrieval: %s", exc)
@@ -286,7 +339,8 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
             yield f"data: {json.dumps({'done': True, 'sources': sources, 'model': used_model[0] if used_model else settings.gemini_model})}\n\n"
         except Exception as exc:
             logger.error("Streaming error: %s", exc)
-            yield f"data: {json.dumps({'error': str(exc)})}\n\n"
+            error_code = "quota_exhausted" if _is_capacity_error(exc) else "stream_error"
+            yield f"data: {json.dumps({'error': error_code})}\n\n"
 
     return StreamingResponse(
         event_stream(),

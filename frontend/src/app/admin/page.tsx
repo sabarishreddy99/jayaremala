@@ -413,7 +413,7 @@ function SiteGuide() {
                 { what: "Response count & unique visitors", detail: "Tracked on every chat response. Shown in chatbot footer. Stored in the same analytics.db — subject to same Railway persistence note above." },
                 { what: "Model indicator badge",            detail: "Green pill shows which Gemini model answered (e.g. gemini-2.5-flash). Updates automatically if a fallback was used." },
                 { what: "Swap the AI model",               detail: "Change GEMINI_MODEL in Railway environment variables. No code change needed." },
-                { what: "Model fallback chain",             detail: "Primary: GEMINI_MODEL. Fallbacks: GEMINI_FALLBACK_MODELS (comma-separated). Auto-retries on 503/429 capacity errors in order." },
+                { what: "Model fallback chain",             detail: "Primary: gemini-2.5-flash (250 RPD). Fallbacks: gemini-3.5-flash → gemini-3-flash → gemini-2.5-flash-lite → gemini-3.1-flash-lite. ~2,750 req/day total. Auto-retries on 429/503/404 in order." },
                 { what: "Knowledge base — ChromaDB",        detail: "ChromaDB persists to backend/chroma_db/ (git-ignored). On Railway: mount a persistent volume at /data and symlink or set the chroma path. Without a volume, the DB rebuilds on every deploy (works, just slower startup ~30–60s)." },
                 { what: "RAG pipeline",                     detail: "Hybrid: ChromaDB dense (all-MiniLM-L6-v2 embeddings) + BM25 lexical → RRF merge → cross-encoder rerank (ms-marco-MiniLM-L-6-v2). Retrieves top 5 chunks → fed as context to Gemini." },
                 { what: "Startup warmup",                   detail: "Embedding model and cross-encoder load at startup. First response may be ~1–2s slower. Models download once and cache in Railway's ephemeral storage." },
@@ -436,7 +436,7 @@ function SiteGuide() {
               {[
                 { key: "GOOGLE_API_KEY",            detail: "Required. Google AI API key for Gemini. Chat endpoints return 503 without this." },
                 { key: "GEMINI_MODEL",              detail: "Primary model. Default: gemini-2.5-flash. Change here to swap models without code changes." },
-                { key: "GEMINI_FALLBACK_MODELS",    detail: "Comma-separated fallbacks tried on 503/429. Default: gemini-2.0-flash,gemini-1.5-flash,gemini-2.0-flash-lite,gemini-1.5-flash-8b" },
+                { key: "GEMINI_FALLBACK_MODELS",    detail: "Comma-separated fallbacks tried on 503/429/404. Chain: gemini-3.5-flash (250 RPD) → gemini-3-flash (250 RPD) → gemini-2.5-flash-lite (1K RPD) → gemini-3.1-flash-lite (1K RPD). Total ~2,750 req/day." },
                 { key: "ANALYTICS_DB_PATH",         detail: "SQLite file path. Set to /data/analytics.db with a Railway persistent volume, otherwise counts reset on every deploy." },
                 { key: "FRONTEND_ORIGIN",           detail: "CORS allowed origins (comma-separated). Must include production frontend URL or browser requests will be blocked." },
                 { key: "APP_ENV",                   detail: "dev or prod. Default: dev. Controls logging and debug behavior." },

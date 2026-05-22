@@ -214,8 +214,13 @@ def _build_chat_prompt(req: ChatRequest, context: str) -> str:
 
 def _is_capacity_error(exc: Exception) -> bool:
     msg = str(exc)
-    return ("503" in msg or "429" in msg or "UNAVAILABLE" in msg
-            or "RESOURCE_EXHAUSTED" in msg or "exhausted" in msg.lower())
+    return (
+        "503" in msg or "429" in msg
+        or "UNAVAILABLE" in msg or "RESOURCE_EXHAUSTED" in msg
+        or "exhausted" in msg.lower()
+        # 404 means this model name is deprecated/removed — skip to next, not a code bug
+        or ("404" in msg and "NOT_FOUND" in msg)
+    )
 
 
 def _generate(system: str, prompt: str) -> str:

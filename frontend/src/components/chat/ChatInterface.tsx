@@ -62,22 +62,31 @@ const FOLLOW_UP_POOL: Record<string, string[]> = {
   ],
 };
 
-function getGeminiResetTime(): string {
+function getGeminiResetInfo(): { time: string; countdown: string } {
   // Gemini free-tier daily quota resets at midnight Pacific Time.
-  // Strategy: parse the current PT time string as "fake local", compute next PT midnight,
-  // then express the diff from now — giving the real UTC reset instant in the user's TZ.
   const now = new Date();
   const ptStr = now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
-  const ptNow = new Date(ptStr); // same numeric values as PT, treated as local by JS
+  const ptNow = new Date(ptStr);
   const ptMidnight = new Date(ptNow);
   ptMidnight.setDate(ptMidnight.getDate() + 1);
   ptMidnight.setHours(0, 0, 0, 0);
   const resetAt = new Date(now.getTime() + (ptMidnight.getTime() - ptNow.getTime()));
-  return resetAt.toLocaleTimeString(undefined, {
+
+  const time = resetAt.toLocaleTimeString(undefined, {
     hour: "numeric",
     minute: "2-digit",
     timeZoneName: "short",
   });
+
+  const diffMs = resetAt.getTime() - now.getTime();
+  const diffMins = Math.ceil(diffMs / 60000);
+  const h = Math.floor(diffMins / 60);
+  const m = diffMins % 60;
+  const countdown = h > 0
+    ? `${h}h ${m > 0 ? `${m}m` : ""}`.trim()
+    : `${m}m`;
+
+  return { time, countdown };
 }
 
 function deriveFollowUps(sources: string[]): string[] {
@@ -215,6 +224,7 @@ export default function ChatInterface() {
           if (!line.startsWith("data: ")) continue;
           try {
             const data = JSON.parse(line.slice(6));
+            if (data.reset) { accumulated = ""; setStreamingContent(""); }
             if (data.token) { accumulated += data.token; setStreamingContent(accumulated); }
             if (data.error) { sseError = data.error as string; break outer; }
             if (data.done) {
@@ -226,16 +236,18 @@ export default function ChatInterface() {
         }
       }
 
-      if (sseError === "quota_exhausted") {
-        const resetTime = getGeminiResetTime();
+      if (sseError) {
+        const { time, countdown } = getGeminiResetInfo();
+        const isQuota = sseError === "quota_exhausted";
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
-            content:
-              "Avocado has hit its daily Gemini API quota — all AI models are temporarily unavailable. " +
-              `Quota resets at **${resetTime}** (midnight Pacific Time). ` +
-              "Or reach Jaya directly at jr6421@nyu.edu.",
+            content: isQuota
+              ? "Avocado has exhausted all available Gemini AI models for today — the daily quota across the entire fallback chain has been reached.\n\n" +
+                `**Quota resets at ${time}** (in ~${countdown}). After that, everything will be back to normal automatically.\n\n` +
+                "In the meantime, feel free to reach Jaya directly at **jr6421@nyu.edu**."
+              : "Sorry, I ran into an issue generating a response. Please try again or reach Jaya directly at **jr6421@nyu.edu**.",
           },
         ]);
         return;

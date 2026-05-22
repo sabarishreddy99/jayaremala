@@ -214,7 +214,8 @@ def _build_chat_prompt(req: ChatRequest, context: str) -> str:
 
 def _is_capacity_error(exc: Exception) -> bool:
     msg = str(exc)
-    return "503" in msg or "429" in msg or "UNAVAILABLE" in msg or "RESOURCE_EXHAUSTED" in msg
+    return ("503" in msg or "429" in msg or "UNAVAILABLE" in msg
+            or "RESOURCE_EXHAUSTED" in msg or "exhausted" in msg.lower())
 
 
 def _generate(system: str, prompt: str) -> str:
@@ -236,21 +237,30 @@ def _generate(system: str, prompt: str) -> str:
     raise last_exc or RuntimeError("All models exhausted")
 
 
-def _stream_tokens(full_prompt: str, used_model: list[str]) -> Iterator[str]:
+_RESET_SENTINEL = object()  # yielded to signal "discard partial output, retrying next model"
+
+
+def _stream_tokens(full_prompt: str, used_model: list[str]) -> Iterator:
+    """Yields str tokens, or _RESET_SENTINEL when switching models mid-stream."""
     client = _get_client()
     last_exc: Exception | None = None
     for model in settings.model_chain:
+        yielded_any = False
         try:
             for chunk in client.models.generate_content_stream(model=model, contents=full_prompt):
                 if chunk.text:
                     yield chunk.text
+                    yielded_any = True
             used_model.append(model)
             if model != settings.gemini_model:
                 logger.info("Streamed via fallback model: %s", model)
             return
         except Exception as exc:
             if _is_capacity_error(exc):
-                logger.warning("Model %s unavailable (%s), trying next...", model, exc)
+                logger.warning("Model %s capacity error (%s), trying next...", model, exc)
+                if yielded_any:
+                    # Partial tokens already sent — tell the frontend to discard them
+                    yield _RESET_SENTINEL
                 last_exc = exc
             else:
                 raise
@@ -334,8 +344,11 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
     def event_stream():
         used_model: list[str] = []
         try:
-            for token in _stream_tokens(full_prompt, used_model):
-                yield f"data: {json.dumps({'token': token})}\n\n"
+            for item in _stream_tokens(full_prompt, used_model):
+                if item is _RESET_SENTINEL:
+                    yield f"data: {json.dumps({'reset': True})}\n\n"
+                else:
+                    yield f"data: {json.dumps({'token': item})}\n\n"
             analytics.record(ip)
             yield f"data: {json.dumps({'done': True, 'sources': sources, 'model': used_model[0] if used_model else settings.gemini_model})}\n\n"
         except Exception as exc:

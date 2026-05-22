@@ -491,7 +491,7 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
           </div>
           <div className="flex items-center gap-2">
             <Link
-              href="/portfolio"
+              href="/"
               className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

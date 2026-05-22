@@ -50,12 +50,17 @@ export function getPostBySlug(slug: string): Post | null {
   if (!fs.existsSync(filePath)) return null;
   const raw = fs.readFileSync(filePath, "utf8");
   const { data, content } = matter(raw);
+  const toStr = (v: unknown) =>
+    v instanceof Date ? v.toISOString().slice(0, 10) : (v as string) ?? "";
+  const wordCount = raw.split(/\s+/).filter(Boolean).length;
   return {
     slug,
     title: data.title ?? slug,
-    date: data.date ?? "",
+    date: toStr(data.date),
+    publishedAt: toStr(data.publishedAt || data.date),
     description: data.description ?? "",
     tags: data.tags ?? [],
+    readingTime: Math.max(1, Math.ceil(wordCount / 200)),
     content,
   };
 }

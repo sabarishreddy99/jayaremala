@@ -14,6 +14,66 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   navLinks?: NavLink[];
+  followUps?: string[];
+}
+
+const FOLLOW_UP_POOL: Record<string, string[]> = {
+  experience: [
+    "What companies has Jaya worked at?",
+    "What were Jaya's key responsibilities at each role?",
+    "How long has Jaya been working in the industry?",
+  ],
+  project: [
+    "What's the most technically challenging project Jaya built?",
+    "What tech stack did Jaya use across his projects?",
+    "Does Jaya have any open-source or side projects?",
+  ],
+  faq: [
+    "What sets Jaya apart from other candidates?",
+    "What kind of problems does Jaya enjoy solving?",
+    "What are Jaya's biggest career achievements?",
+  ],
+  profile: [
+    "What is Jaya currently working on?",
+    "What domains is Jaya most passionate about?",
+    "Is Jaya open to new roles and where is he based?",
+  ],
+  education: [
+    "What did Jaya study at NYU?",
+    "What was Jaya's undergraduate background?",
+    "Did Jaya do any research or coursework in AI?",
+  ],
+  skills: [
+    "What AI and ML frameworks does Jaya know?",
+    "What cloud platforms has Jaya worked with?",
+    "What databases and data systems has Jaya used?",
+  ],
+  testimonial: [
+    "What do colleagues say about working with Jaya?",
+    "How does Jaya collaborate with engineering teams?",
+  ],
+  blog: [
+    "Has Jaya written about AI or system design?",
+    "What technical topics does Jaya write about?",
+  ],
+  lab: [
+    "Does Jaya have system design deep-dives I can read?",
+    "What architectural problems has Jaya documented?",
+  ],
+};
+
+function deriveFollowUps(sources: string[]): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+  for (const src of sources) {
+    const type = src.split(":")[0];
+    if (seen.has(type) || !FOLLOW_UP_POOL[type]) continue;
+    seen.add(type);
+    const pool = FOLLOW_UP_POOL[type];
+    result.push(pool[Math.floor(Math.random() * pool.length)]);
+    if (result.length >= 3) break;
+  }
+  return result;
 }
 
 const WELCOME: Message = {
@@ -127,8 +187,9 @@ export default function ChatInterface() {
         sourcesToNavLinks(ragSources),
         detectNavLinks(text, accumulated),
       );
+      const followUps = deriveFollowUps(ragSources);
       const content = accumulated.trim() || "Sorry, I couldn't generate a response. Please try again or reach Jaya directly at jr6421@nyu.edu.";
-      const assistantMsg: Message = { role: "assistant", content, navLinks };
+      const assistantMsg: Message = { role: "assistant", content, navLinks, followUps };
       const finalMessages = [...nextMessages, assistantMsg];
       setMessages(finalMessages);
       saveMessages(finalMessages.filter((m) => m !== WELCOME));
@@ -211,6 +272,25 @@ export default function ChatInterface() {
               {m.role === "assistant" && m.navLinks && m.navLinks.length > 0 && m !== WELCOME && (
                 <div className="ml-10">
                   <NavSuggestions links={m.navLinks} />
+                </div>
+              )}
+              {m.role === "assistant" && m.followUps && m.followUps.length > 0 &&
+               i === messages.length - 1 && !streaming && (
+                <div className="ml-10 mt-2.5">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-fg-faint mb-1.5">
+                    Ask next
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {m.followUps.map((q) => (
+                      <button
+                        key={q}
+                        onClick={() => setPrefill(q)}
+                        className="rounded-full border border-border bg-surface px-3 py-1 text-[11px] text-fg-muted hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-accent transition-colors"
+                      >
+                        {q}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
             </div>

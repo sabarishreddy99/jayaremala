@@ -38,10 +38,10 @@ function StatCard({
     indigo: "text-indigo-600 dark:text-indigo-400",
   }[color];
   return (
-    <div className="rounded-2xl border border-border bg-surface p-5 flex flex-col gap-1">
-      <p className="text-[11px] font-semibold uppercase tracking-widest text-fg-faint">{label}</p>
-      <p className={`text-3xl font-bold tabular-nums ${accent}`}>{typeof value === "number" ? fmt(value) : value}</p>
-      {sub && <p className="text-[11px] text-fg-faint">{sub}</p>}
+    <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5 flex flex-col gap-1">
+      <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-fg-faint">{label}</p>
+      <p className={`text-2xl sm:text-3xl font-bold tabular-nums ${accent}`}>{typeof value === "number" ? fmt(value) : value}</p>
+      {sub && <p className="text-[10px] sm:text-[11px] text-fg-faint leading-snug">{sub}</p>}
     </div>
   );
 }
@@ -554,7 +554,7 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
         <div className="grid lg:grid-cols-2 gap-6">
 
           {/* Top questions */}
-          <div className="rounded-2xl border border-border bg-surface p-5">
+          <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-4">Top Questions</h2>
             {stats.top_questions.length === 0 ? (
               <p className="text-sm text-fg-faint">No questions logged yet.</p>
@@ -576,7 +576,7 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
           </div>
 
           {/* Feedback breakdown */}
-          <div className="rounded-2xl border border-border bg-surface p-5 space-y-5">
+          <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5 space-y-4 sm:space-y-5">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Response Feedback</h2>
             <div className="grid grid-cols-3 gap-2">
               <div className="rounded-xl bg-surface-raised border border-border p-2.5 text-center">
@@ -602,7 +602,7 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
                 const maxVal = stats.conversations.all.total_responses || 1;
                 return (
                   <div key={p} className="flex items-center gap-3">
-                    <span className="text-[10px] text-fg-faint w-16 shrink-0">{PERIOD_LABELS[p]}</span>
+                    <span className="text-[10px] text-fg-faint w-20 shrink-0">{PERIOD_LABELS[p]}</span>
                     <div className="flex-1 h-1.5 bg-surface-raised rounded-full overflow-hidden">
                       <div
                         className="h-full bg-accent rounded-full"
@@ -621,11 +621,11 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
 
         {/* Blog table */}
         <div className="rounded-2xl border border-border bg-surface overflow-hidden">
-          <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+          <div className="px-4 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Blog Performance</h2>
-            <div className="flex items-center gap-4 text-[11px] text-fg-faint">
-              <span><strong className="text-fg-muted">{fmt(stats.blog.total_views)}</strong> total views</span>
-              <span><strong className="text-fg-muted">{fmt(stats.blog.total_claps)}</strong> total claps</span>
+            <div className="flex items-center gap-3 text-[11px] text-fg-faint">
+              <span><strong className="text-fg-muted">{fmt(stats.blog.total_views)}</strong> views</span>
+              <span><strong className="text-fg-muted">{fmt(stats.blog.total_claps)}</strong> claps</span>
             </div>
           </div>
           {topPosts.length === 0 ? (
@@ -635,15 +635,15 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Post</th>
-                  <th className="text-right px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Views</th>
-                  <th className="text-right px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Claps</th>
+                  <th className="text-left px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Post</th>
+                  <th className="text-right px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Views</th>
+                  <th className="text-right px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Claps</th>
                 </tr>
               </thead>
               <tbody>
                 {topPosts.map((p, i) => (
                   <tr key={p.slug} className={i < topPosts.length - 1 ? "border-b border-border" : ""}>
-                    <td className="px-5 py-3 text-fg-muted font-medium max-w-[160px] sm:max-w-xs">
+                    <td className="px-3 sm:px-5 py-3 text-fg-muted font-medium max-w-[140px] sm:max-w-xs">
                       <a
                         href={`/blog/${p.slug}`}
                         target="_blank"
@@ -653,8 +653,8 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
                         {p.slug}
                       </a>
                     </td>
-                    <td className="px-5 py-3 text-right tabular-nums text-fg-muted font-semibold">{fmt(p.views)}</td>
-                    <td className="px-5 py-3 text-right tabular-nums text-fg-muted">{fmt(p.claps)}</td>
+                    <td className="px-3 sm:px-5 py-3 text-right tabular-nums text-fg-muted font-semibold">{fmt(p.views)}</td>
+                    <td className="px-3 sm:px-5 py-3 text-right tabular-nums text-fg-muted">{fmt(p.claps)}</td>
                   </tr>
                 ))}
               </tbody>

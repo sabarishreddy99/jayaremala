@@ -82,6 +82,20 @@ export default function Nav() {
         {/* Mobile controls */}
         <div className="md:hidden flex items-center gap-1">
           <ThemeToggle />
+          <Link
+            href="/admin"
+            title="Admin"
+            onClick={() => setOpen(false)}
+            className={`p-2 rounded-lg transition-colors ${
+              pathname === "/admin"
+                ? "text-fg bg-surface-raised"
+                : "text-fg-faint hover:text-fg-subtle hover:bg-surface-raised"
+            }`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </Link>
           <button
             className="p-2 rounded-lg text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
             onClick={() => setOpen(!open)}

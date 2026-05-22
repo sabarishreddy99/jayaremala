@@ -118,7 +118,7 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
             {loading ? "Verifying…" : "Sign in"}
           </button>
           <Link
-            href="/portfolio"
+            href="/"
             className="flex items-center justify-center gap-1.5 text-xs text-fg-faint hover:text-fg-muted transition-colors pt-1"
           >
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -129,6 +129,339 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
           </Link>
         </form>
       </div>
+    </div>
+  );
+}
+
+// ── Site Guide ────────────────────────────────────────────────────────────────
+
+const GUIDE_SECTIONS = [
+  {
+    heading: "New post frontmatter",
+    code: `---\ntitle: Your Title\ndate: "2026-04-21"\npublishedAt: "2026-04-21"\ndescription: One-line summary shown on index.\ntags: [tag1, tag2]\n---`,
+    note: "publishedAt = immutable publish date used for sort order. date = display date (update freely). Filename becomes the URL slug: my-post.mdx → /blog/my-post",
+  },
+  {
+    heading: "Headings",
+    code: `## Section      ← large, border below\n### Sub-section ← medium, no border\n#### Label      ← uppercase small caps`,
+  },
+  {
+    heading: "Text formatting",
+    code: "**bold**        *italic*\n`inline code`   ~~strikethrough~~\n\n> blockquote pull quote\n\n<Divider />   ← decorative section break",
+  },
+  {
+    heading: "Links & lists",
+    code: `[link text](https://example.com)\n[internal](/blog/my-post)\n\n- bullet item\n- another item\n  - nested item\n\n1. numbered item\n2. second item`,
+  },
+  {
+    heading: "Images",
+    code: `<!-- basic -->\n![alt text](/blog/file.jpg)\n\n<!-- with caption -->\n![alt text](/blog/file.jpg "Caption text")\n\n<!-- component -->\n<BlogImage\n  src="/blog/file.jpg"\n  alt="description"\n  caption="optional caption"\n/>`,
+    note: "Put image files in frontend/public/blog/",
+  },
+  {
+    heading: "Callout boxes",
+    code: `<Callout type="info" title="Title">text</Callout>\n<Callout type="tip" title="Title">text</Callout>\n<Callout type="warning" title="Title">text</Callout>\n<Callout type="quote" title="Title">text</Callout>`,
+    note: "All MDX components (Callout, BlogImage, Divider) are auto-imported — no import statement needed.",
+  },
+  {
+    heading: "Code blocks",
+    code: "```python\ndef hello(): return 'hi'\n```\n\nSupported: python typescript javascript\nbash json yaml sql go rust",
+  },
+  {
+    heading: "Table",
+    code: `| Col A | Col B |\n|---|---|\n| val   | val   |`,
+  },
+];
+
+function SiteGuide() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+      <button
+        onClick={() => setOpen(!open)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-surface-raised transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+          </svg>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Site Guide &amp; Maintenance</h2>
+        </div>
+        <svg
+          width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+          className={`text-fg-faint transition-transform ${open ? "rotate-180" : ""}`}
+        >
+          <polyline points="6 9 12 15 18 9"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div className="border-t border-border px-5 py-6 space-y-8">
+
+          {/* MDX Syntax Reference */}
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-4">MDX Syntax Reference</p>
+            <div className="space-y-5">
+              {GUIDE_SECTIONS.map((s) => (
+                <div key={s.heading}>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-accent mb-1.5">{s.heading}</p>
+                  {s.note && <p className="text-[11px] text-fg-faint mb-1.5 italic">{s.note}</p>}
+                  <pre className="bg-zinc-950 text-zinc-300 text-[11px] leading-relaxed rounded-xl p-3.5 overflow-x-auto font-mono whitespace-pre-wrap break-words">
+                    {s.code}
+                  </pre>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick card */}
+          <div className="rounded-xl border border-border bg-surface-raised p-4">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-fg-faint mb-3">Quick card</p>
+            <div className="space-y-1.5 font-mono text-[10px] text-fg-muted">
+              {[
+                ["Image",     "![alt](/blog/f.jpg)"],
+                ["Caption",   '![alt](/blog/f.jpg "cap")'],
+                ["Link",      "[text](https://url)"],
+                ["Bold",      "**text**"],
+                ["Italic",    "*text*"],
+                ["Code",      "`code`"],
+                ["Strike",    "~~text~~"],
+                ["Quote",     "> text"],
+                ["Bullet",    "- item"],
+                ["Numbered",  "1. item"],
+                ["Divider",   "<Divider />"],
+                ["Info box",  '<Callout type="info">'],
+                ["Tip box",   '<Callout type="tip">'],
+                ["Warn box",  '<Callout type="warning">'],
+                ["Quote box", '<Callout type="quote">'],
+              ].map(([label, syntax]) => (
+                <div key={label} className="flex gap-2">
+                  <span className="text-fg-faint w-20 shrink-0">{label}</span>
+                  <span className="text-fg-muted">{syntax}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Appendix */}
+          <div className="rounded-xl border border-border bg-surface p-5 space-y-8">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-wider text-fg-faint mb-0.5">Appendix</p>
+              <h3 className="text-sm font-bold text-fg">Project Maintenance</h3>
+              <p className="text-[10px] text-fg-faint mt-1 leading-relaxed">Everything you need to keep the site up to date — data, blog posts, and deployments.</p>
+            </div>
+
+            {/* 1 · Portfolio Data */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent">1 · Portfolio Data</span>
+                <div className="flex-1 h-px bg-border-subtle" />
+              </div>
+              <p className="text-[10px] text-fg-faint leading-relaxed">
+                Edit only in <span className="font-mono bg-surface-raised px-1 rounded">backend/data/knowledge/</span> — these are the single source of truth for both the website UI and the Avocado chatbot knowledge base.
+                After any edit, run <span className="font-mono bg-surface-raised px-1 rounded">npm run sync</span> from <span className="font-mono bg-surface-raised px-1 rounded">frontend/</span> (or just restart <span className="font-mono bg-surface-raised px-1 rounded">npm run dev</span>).
+                Never edit <span className="font-mono bg-surface-raised px-1 rounded">frontend/src/data/knowledge/</span> directly — those files are auto-overwritten.
+              </p>
+              {[
+                { what: "Name, bio, tagline, location, contact",             file: "backend/data/knowledge/profile.json",      fields: "name, tagline, bio, summary, obsession, previous, prev_domain, interested_domain, location, email, phone, github, linkedin, resume" },
+                { what: "Work experience — roles, companies, bullet points", file: "backend/data/knowledge/experience.json",    fields: "role, company, location, start, end, description, bullets[]" },
+                { what: "Education — degrees, institutions, highlights",     file: "backend/data/knowledge/education.json",    fields: "institution, school, degree, field, location, start, end, gpa, highlights[]" },
+                { what: "Projects — title, description, tags, links",        file: "backend/data/knowledge/projects.json",     fields: "title, description, tags[], featured, award, sourceLinks[{label,url}], note" },
+                { what: "Skills & tools — categories and items",             file: "backend/data/knowledge/skills.json",       fields: "category, items[]" },
+                { what: "Testimonials — name, role, company, quote",         file: "backend/data/knowledge/testimonials.json", fields: "name, designation, company, linkedin, description, givenAt, source" },
+              ].map(({ what, file, fields }) => (
+                <div key={file} className="border border-border-subtle rounded-lg p-2.5 space-y-1">
+                  <p className="text-[11px] font-semibold text-fg-muted">{what}</p>
+                  <p className="font-mono text-[10px] text-accent break-all">{file}</p>
+                  <p className="text-[10px] text-fg-faint leading-relaxed">{fields}</p>
+                </div>
+              ))}
+              <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded-lg p-2.5 space-y-1">
+                <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">⚠ Resume link is hardcoded in Nav.tsx</p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed">
+                  The resume Google Drive URL in <span className="font-mono">profile.json</span> powers the chatbot and home page, but <span className="font-mono">components/Nav.tsx</span> has a separate hardcoded copy in both desktop and mobile nav. Update both when the resume changes.
+                </p>
+              </div>
+            </div>
+
+            {/* 2 · Blog Posts */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent">2 · Blog Posts</span>
+                <div className="flex-1 h-px bg-border-subtle" />
+              </div>
+              <p className="text-[10px] text-fg-faint leading-relaxed">
+                Create a new <span className="font-mono bg-surface-raised px-1 rounded">.mdx</span> file — the filename becomes the URL slug.
+                No sync needed; GitHub Actions auto-generates <span className="font-mono bg-surface-raised px-1 rounded">blog.json</span> on push so the chatbot indexes the new post automatically.
+              </p>
+              {[
+                { what: "New post file",                   file: "frontend/src/content/blog/my-post.mdx",       fields: "Filename → URL slug. Required frontmatter: title, date, publishedAt, description, tags[]" },
+                { what: "Post images",                     file: "frontend/public/blog/",                       fields: "Place image files here. Reference as /blog/filename.jpg in MDX." },
+                { what: "Auto-generated chatbot index",    file: "backend/data/knowledge/blog.json",            fields: "Do not edit — auto-generated by scripts/sync-knowledge.mjs. GH Actions commits it on push; Railway re-ingests on deploy." },
+              ].map(({ what, file, fields }) => (
+                <div key={file} className="border border-border-subtle rounded-lg p-2.5 space-y-1">
+                  <p className="text-[11px] font-semibold text-fg-muted">{what}</p>
+                  <p className="font-mono text-[10px] text-accent break-all">{file}</p>
+                  <p className="text-[10px] text-fg-faint leading-relaxed">{fields}</p>
+                </div>
+              ))}
+              <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded-lg p-2.5 space-y-1">
+                <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">publishedAt vs date</p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed">
+                  <span className="font-mono">publishedAt</span> is the sort key — set it once and never change it.{" "}
+                  <span className="font-mono">date</span> is the display date — update freely (e.g. after a major revision).
+                </p>
+              </div>
+            </div>
+
+            {/* 2b · Lab */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent">2b · Lab — Living System Docs</span>
+                <div className="flex-1 h-px bg-border-subtle" />
+              </div>
+              <p className="text-[10px] text-fg-faint leading-relaxed">
+                Lab is for living, in-progress project documentation — architecture, decisions, and progress logs updated as the project evolves. Files live at <span className="font-mono bg-surface-raised px-1 rounded">frontend/src/content/lab/[slug].mdx</span>. Filename = URL slug.
+              </p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-2">Frontmatter (required)</p>
+              <pre className="bg-zinc-950 text-zinc-300 text-[11px] leading-relaxed rounded-xl p-3.5 overflow-x-auto font-mono whitespace-pre-wrap break-words">{`---\ntitle: "My Project"\nstatus: "active"        # active | paused | shipped\ndescription: "One-line summary shown on lab index card."\nstartedAt: "2026-01-01"\nupdatedAt: "2026-04-22"  # ← update this every time you edit\ntech: [Next.js, FastAPI, PostgreSQL]\n---`}</pre>
+              {[
+                { what: "status: active",  detail: "Green badge with pulse animation. Sorted to top of lab index. Use while actively building." },
+                { what: "status: paused",  detail: "Amber badge. Sorted second. Use when work is on hold." },
+                { what: "status: shipped", detail: "Indigo badge. Sorted last. Use when the project is complete and deployed." },
+              ].map(({ what, detail }) => (
+                <div key={what} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                  <p className="font-mono text-[11px] font-semibold text-fg-muted">{what}</p>
+                  <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
+                </div>
+              ))}
+              <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded-lg p-2.5">
+                <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">Always update updatedAt</p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed mt-0.5">The lab index card shows &quot;last updated [date]&quot;. Set it to today&apos;s date every time you make changes or the card will show a stale date.</p>
+              </div>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-3">Lab MDX components</p>
+              {[
+                { what: '<Status status="active" />',                           detail: "Inline status badge — same colors as the index card. Put it near the top of the document." },
+                { what: '<Stack items={["Next.js", "Python"]} />',              detail: "Renders a row of monospace tech tags. For a full tech stack listing inside the document body." },
+                { what: '<Metric value="99%" label="uptime" />',                detail: "Highlighted stat box. Use for key numbers — latency, users, accuracy, uptime." },
+                { what: '<Decision date="2026-01-10" title="Why X over Y">…</Decision>', detail: "Timeline entry with indigo dot. Use for architectural decisions and technology choices." },
+                { what: '<Update date="2026-04-22">…</Update>',                 detail: "Lighter timeline entry with zinc dot. Use for progress notes and milestone completions." },
+              ].map(({ what, detail }) => (
+                <div key={what} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                  <p className="font-mono text-[10px] font-semibold text-accent break-all">{what}</p>
+                  <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
+                </div>
+              ))}
+              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-2">Architecture diagrams</p>
+              <pre className="bg-zinc-950 text-zinc-300 text-[11px] leading-relaxed rounded-xl p-3.5 overflow-x-auto font-mono whitespace-pre-wrap break-words">{`\`\`\`arch\n┌─────────────┐     ┌─────────────┐\n│  Frontend   │────▶│   Backend   │\n└─────────────┘     └─────────────┘\n\`\`\``}</pre>
+              <p className="text-[10px] text-fg-faint italic leading-relaxed">
+                Always use fenced <span className="font-mono bg-surface-raised px-1 rounded">```arch</span> blocks for diagrams — never a JSX component. Characters like <span className="font-mono bg-surface-raised px-1 rounded">&lt;</span>, <span className="font-mono bg-surface-raised px-1 rounded">&gt;</span>, and <span className="font-mono bg-surface-raised px-1 rounded">{"{}"}</span> inside JSX children cause an MDX acorn parse error.
+              </p>
+            </div>
+
+            {/* 3 · Deploy Pipeline */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent">3 · Deploy Pipeline (auto)</span>
+                <div className="flex-1 h-px bg-border-subtle" />
+              </div>
+              <p className="text-[10px] text-fg-faint leading-relaxed">Everything is automated — just commit and push.</p>
+              {[
+                { what: "Update portfolio data",         detail: "Edit any backend/data/knowledge/*.json → commit + push → GH Actions runs sync-knowledge.mjs (copies all JSON to frontend/src/data/knowledge/) → Railway redeploys → chatbot re-indexes (hash changed)." },
+                { what: "Publish a new blog post",       detail: "Write MDX → commit + push → GH Actions runs sync-knowledge.mjs → generates blog.json + copies all JSON → auto-commits with [skip ci] → Railway redeploys → chatbot indexes the new post." },
+                { what: "What sync-knowledge.mjs does",  detail: "1) Reads all *.mdx from frontend/src/content/blog/, strips MDX, writes blog.json. 2) Copies ALL backend/data/knowledge/*.json → frontend/src/data/knowledge/. Run: node scripts/sync-knowledge.mjs from repo root." },
+                { what: "GH Actions auto-commit",        detail: "Workflow (deploy.yml) needs contents: write, pages: write, id-token: write permissions. Auto-commits synced files with [skip ci] tag to prevent infinite loops." },
+                { what: "Chatbot re-ingest (hash-based)", detail: "Backend computes SHA-256 of all knowledge JSON files at startup. Re-ingests only when the hash changes — fast startup if nothing changed. Hash stored at chroma_db/.ingest_hash." },
+                { what: "Static site deployment",        detail: "Frontend builds as a static export and deploys to GitHub Pages (sabarishreddy99.github.io). Backend deploys to Railway. Both trigger on push to main." },
+              ].map(({ what, detail }) => (
+                <div key={what} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                  <p className="text-[11px] font-semibold text-fg-muted">{what}</p>
+                  <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* 4 · Blog Engagement */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent">4 · Blog Engagement</span>
+                <div className="flex-1 h-px bg-border-subtle" />
+              </div>
+              <p className="text-[10px] text-fg-faint leading-relaxed">Tracked automatically. No config needed for new posts — engagement starts recording as soon as a reader opens the post.</p>
+              {[
+                { what: "Views — unique per visitor per post",   detail: "Auto-recorded when a reader opens a post. One view per IP address. Shown on the post page and blog index." },
+                { what: "Claps — up to 50 per visitor per post", detail: "Reader clicks the clap icon button. Clicks batch with a 1.5s debounce before saving. Total shown on index card and post page." },
+                { what: "Storage — SQLite analytics.db",         detail: "Stored in chroma_db/analytics.db. IPs are SHA-256 hashed — never stored raw. On Railway: set ANALYTICS_DB_PATH=/data/analytics.db with a persistent volume so counts survive redeploys." },
+                { what: "Persistence on Railway",                detail: "Without a volume, counts reset on every deploy. Add a Volume (Pro plan) mounted at /data and set ANALYTICS_DB_PATH=/data/analytics.db in backend environment variables." },
+                { what: "API endpoints",                         detail: "POST /blog/{slug}/view · POST /blog/{slug}/clap (body: {count}) · GET /blog/{slug}/stats · GET /blog/stats/summary" },
+              ].map(({ what, detail }) => (
+                <div key={what} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                  <p className="text-[11px] font-semibold text-fg-muted">{what}</p>
+                  <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* 5 · Avocado Chatbot */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent">5 · Avocado Chatbot</span>
+                <div className="flex-1 h-px bg-border-subtle" />
+              </div>
+              {[
+                { what: "Response count & unique visitors", detail: "Tracked on every chat response. Shown in chatbot footer. Stored in the same analytics.db — subject to same Railway persistence note above." },
+                { what: "Model indicator badge",            detail: "Green pill shows which Gemini model answered (e.g. gemini-2.5-flash). Updates automatically if a fallback was used." },
+                { what: "Swap the AI model",               detail: "Change GEMINI_MODEL in Railway environment variables. No code change needed." },
+                { what: "Model fallback chain",             detail: "Primary: GEMINI_MODEL. Fallbacks: GEMINI_FALLBACK_MODELS (comma-separated). Auto-retries on 503/429 capacity errors in order." },
+                { what: "Knowledge base — ChromaDB",        detail: "ChromaDB persists to backend/chroma_db/ (git-ignored). On Railway: mount a persistent volume at /data and symlink or set the chroma path. Without a volume, the DB rebuilds on every deploy (works, just slower startup ~30–60s)." },
+                { what: "RAG pipeline",                     detail: "Hybrid: ChromaDB dense (all-MiniLM-L6-v2 embeddings) + BM25 lexical → RRF merge → cross-encoder rerank (ms-marco-MiniLM-L-6-v2). Retrieves top 5 chunks → fed as context to Gemini." },
+                { what: "Startup warmup",                   detail: "Embedding model and cross-encoder load at startup. First response may be ~1–2s slower. Models download once and cache in Railway's ephemeral storage." },
+              ].map(({ what, detail }) => (
+                <div key={what} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                  <p className="text-[11px] font-semibold text-fg-muted">{what}</p>
+                  <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* 6 · Environment Variables */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent">6 · Environment Variables</span>
+                <div className="flex-1 h-px bg-border-subtle" />
+              </div>
+              <p className="text-[10px] text-fg-faint mb-1">Backend vars → Railway → your backend service → Variables. Frontend vars → GitHub Actions secrets (used at build time).</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-2 mb-1">Backend (Railway)</p>
+              {[
+                { key: "GOOGLE_API_KEY",            detail: "Required. Google AI API key for Gemini. Chat endpoints return 503 without this." },
+                { key: "GEMINI_MODEL",              detail: "Primary model. Default: gemini-2.5-flash. Change here to swap models without code changes." },
+                { key: "GEMINI_FALLBACK_MODELS",    detail: "Comma-separated fallbacks tried on 503/429. Default: gemini-2.0-flash,gemini-1.5-flash,gemini-2.0-flash-lite,gemini-1.5-flash-8b" },
+                { key: "ANALYTICS_DB_PATH",         detail: "SQLite file path. Set to /data/analytics.db with a Railway persistent volume, otherwise counts reset on every deploy." },
+                { key: "FRONTEND_ORIGIN",           detail: "CORS allowed origins (comma-separated). Must include production frontend URL or browser requests will be blocked." },
+                { key: "APP_ENV",                   detail: "dev or prod. Default: dev. Controls logging and debug behavior." },
+                { key: "ADMIN_TOKEN",               detail: "Bearer token for the /stats/admin endpoint. Generate with: openssl rand -hex 32. Required to access this dashboard." },
+              ].map(({ key, detail }) => (
+                <div key={key} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                  <p className="font-mono text-[11px] font-semibold text-accent">{key}</p>
+                  <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
+                </div>
+              ))}
+              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-3 mb-1">Frontend (GitHub Actions secrets / .env.local)</p>
+              {[
+                { key: "NEXT_PUBLIC_API_BASE_URL", detail: "Backend URL the browser calls. Set to your Railway backend URL in production. Required — chat and blog stats break without it." },
+                { key: "NEXT_PUBLIC_BLOG_FONT",    detail: "Blog reading font. Default: Source_Serif_4. Must match the font statically imported in frontend/src/app/layout.tsx." },
+              ].map(({ key, detail }) => (
+                <div key={key} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                  <p className="font-mono text-[11px] font-semibold text-accent">{key}</p>
+                  <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+      )}
     </div>
   );
 }
@@ -148,7 +481,7 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
       <div className="mx-auto max-w-5xl space-y-8">
 
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <span className="text-xl">🥑</span>
             <div>
@@ -177,12 +510,12 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
         </div>
 
         {/* Period tabs */}
-        <div className="flex items-center gap-1 bg-surface-raised rounded-xl p-1 w-fit border border-border">
+        <div className="grid grid-cols-3 gap-1 bg-surface-raised rounded-xl p-1 border border-border sm:w-fit sm:flex sm:grid-cols-none">
           {(["week", "month", "all"] as Period[]).map((p) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-colors text-center ${
                 period === p ? "bg-fg text-bg shadow-sm" : "text-fg-muted hover:text-fg"
               }`}
             >
@@ -245,18 +578,18 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
           {/* Feedback breakdown */}
           <div className="rounded-2xl border border-border bg-surface p-5 space-y-5">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Response Feedback</h2>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="rounded-xl bg-surface-raised border border-border p-3 text-center">
-                <p className="text-2xl font-bold text-fg">{stats.feedback.total}</p>
-                <p className="text-[10px] text-fg-faint mt-0.5">Total rated</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div className="rounded-xl bg-surface-raised border border-border p-2.5 text-center">
+                <p className="text-xl sm:text-2xl font-bold text-fg">{stats.feedback.total}</p>
+                <p className="text-[9px] sm:text-[10px] text-fg-faint mt-0.5">Total rated</p>
               </div>
-              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-3 text-center">
-                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.feedback.positive}</p>
-                <p className="text-[10px] text-emerald-700 dark:text-emerald-500 mt-0.5">👍 Positive</p>
+              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2.5 text-center">
+                <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.feedback.positive}</p>
+                <p className="text-[9px] sm:text-[10px] text-emerald-700 dark:text-emerald-500 mt-0.5">👍 Positive</p>
               </div>
-              <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-3 text-center">
-                <p className="text-2xl font-bold text-rose-600 dark:text-rose-400">{stats.feedback.negative}</p>
-                <p className="text-[10px] text-rose-700 dark:text-rose-500 mt-0.5">👎 Negative</p>
+              <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2.5 text-center">
+                <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">{stats.feedback.negative}</p>
+                <p className="text-[9px] sm:text-[10px] text-rose-700 dark:text-rose-500 mt-0.5">👎 Negative</p>
               </div>
             </div>
             <SatisfactionBar positive={stats.feedback.positive} negative={stats.feedback.negative} />
@@ -298,6 +631,7 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
           {topPosts.length === 0 ? (
             <p className="px-5 py-6 text-sm text-fg-faint">No blog data yet.</p>
           ) : (
+            <div className="overflow-x-auto">
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-border">
@@ -309,7 +643,7 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
               <tbody>
                 {topPosts.map((p, i) => (
                   <tr key={p.slug} className={i < topPosts.length - 1 ? "border-b border-border" : ""}>
-                    <td className="px-5 py-3 text-fg-muted font-medium max-w-xs">
+                    <td className="px-5 py-3 text-fg-muted font-medium max-w-[160px] sm:max-w-xs">
                       <a
                         href={`/blog/${p.slug}`}
                         target="_blank"
@@ -325,8 +659,12 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
+
+        {/* Site Guide */}
+        <SiteGuide />
 
         <p className="text-center text-[10px] text-fg-faint pb-4">
           Avocado Admin · {new Date().getFullYear()} · Data from analytics.db on Lightsail

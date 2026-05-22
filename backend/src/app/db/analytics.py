@@ -52,6 +52,14 @@ def init_db() -> None:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS site_visits (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                ip_hash    TEXT    NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_site_visit_ip ON site_visits(ip_hash)")
     logger.info("Analytics DB ready: %s", p.resolve())
 
 
@@ -147,6 +155,27 @@ def get_experience_rating_summary() -> dict:
     except Exception as exc:
         logger.warning("get_experience_rating_summary failed: %s", exc)
         return {"total": 0, "average": 0, "distribution": {i: 0 for i in range(1, 6)}}
+
+
+def record_site_visit(ip: str) -> None:
+    ip_hash = hashlib.sha256(ip.encode()).hexdigest()
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            conn.execute("INSERT INTO site_visits (ip_hash) VALUES (?)", (ip_hash,))
+    except Exception as exc:
+        logger.warning("record_site_visit failed (non-fatal): %s", exc)
+
+
+def get_site_visitor_stats(period: str = "all") -> dict[str, int]:
+    where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            total  = conn.execute(f"SELECT COUNT(*) FROM site_visits {where}").fetchone()[0]
+            unique = conn.execute(f"SELECT COUNT(DISTINCT ip_hash) FROM site_visits {where}").fetchone()[0]
+        return {"total_visits": total, "unique_visitors": unique}
+    except Exception as exc:
+        logger.warning("get_site_visitor_stats failed: %s", exc)
+        return {"total_visits": 0, "unique_visitors": 0}
 
 
 def get_stats(period: str = "all") -> dict[str, int]:

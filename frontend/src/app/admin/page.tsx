@@ -7,6 +7,7 @@ import { API_BASE_URL } from "@/lib/api/client";
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface PeriodStats { total_responses: number; unique_visitors: number }
+interface SiteVisitStats { total_visits: number; unique_visitors: number }
 interface Feedback { total: number; positive: number; negative: number; satisfaction_pct: number }
 interface Question { text: string; count: number }
 interface BlogPost { slug: string; views: number; claps: number }
@@ -20,6 +21,7 @@ interface AdminStats {
   top_questions: Question[];
   blog: BlogSummary;
   experience: ExperienceSummary;
+  site_visitors: { week: SiteVisitStats; month: SiteVisitStats; all: SiteVisitStats };
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -477,6 +479,7 @@ const PERIOD_LABELS: Record<Period, string> = { week: "This week", month: "This 
 function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => void }) {
   const [period, setPeriod] = useState<Period>("all");
   const conv = stats.conversations[period];
+  const site = stats.site_visitors[period];
   const topPosts = [...stats.blog.posts].sort((a, b) => b.views - a.views).slice(0, 8);
 
   return (
@@ -528,17 +531,22 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
         </div>
 
         {/* Top stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+          <StatCard
+            label="Site Visitors"
+            value={site.unique_visitors}
+            sub={`${fmt(site.total_visits)} total page loads`}
+            color="indigo"
+          />
+          <StatCard
+            label="Chat Users"
+            value={conv.unique_visitors}
+            sub={`${conv.total_responses} conversations`}
+          />
           <StatCard
             label="Conversations"
             value={conv.total_responses}
             sub={period === "all" ? "total" : `in the last ${period === "week" ? "7" : "30"} days`}
-            color="indigo"
-          />
-          <StatCard
-            label="Unique Visitors"
-            value={conv.unique_visitors}
-            sub={`${conv.total_responses > 0 ? Math.round((conv.total_responses / Math.max(conv.unique_visitors, 1) * 10) / 10) : 0} avg msgs/visitor`}
           />
           <StatCard
             label="Satisfaction"
@@ -666,6 +674,41 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
               })}
             </div>
           )}
+        </div>
+
+        {/* Site visitors breakdown */}
+        <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Site Visitors</h2>
+            <span className="text-[11px] text-fg-faint">all unique IPs, hashed — every page load</span>
+          </div>
+          <div className="grid grid-cols-3 gap-3 mb-5">
+            {(["week", "month", "all"] as Period[]).map((p) => {
+              const sv = stats.site_visitors[p];
+              return (
+                <div key={p} className={`rounded-xl border p-3 text-center ${p === period ? "border-accent bg-accent/5" : "border-border bg-surface-raised"}`}>
+                  <p className="text-xl sm:text-2xl font-bold tabular-nums text-fg">{fmt(sv.unique_visitors)}</p>
+                  <p className="text-[9px] sm:text-[10px] text-fg-faint mt-0.5">{PERIOD_LABELS[p]}</p>
+                  <p className="text-[9px] text-fg-faint">{fmt(sv.total_visits)} loads</p>
+                </div>
+              );
+            })}
+          </div>
+          <div className="space-y-2">
+            {(["week", "month", "all"] as Period[]).map((p) => {
+              const sv = stats.site_visitors[p];
+              const maxVal = stats.site_visitors.all.unique_visitors || 1;
+              return (
+                <div key={p} className="flex items-center gap-3">
+                  <span className="text-[10px] text-fg-faint w-20 shrink-0">{PERIOD_LABELS[p]}</span>
+                  <div className="flex-1 h-1.5 bg-surface-raised rounded-full overflow-hidden">
+                    <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.round((sv.unique_visitors / maxVal) * 100)}%` }} />
+                  </div>
+                  <span className="text-[10px] font-semibold tabular-nums text-fg-muted w-8 text-right shrink-0">{fmt(sv.unique_visitors)}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         {/* Blog table */}

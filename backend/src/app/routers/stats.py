@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Header, HTTPException
+from fastapi import APIRouter, Header, HTTPException, Request
 from pydantic import BaseModel
 from app.db import analytics, blog_stats
 from app.core.settings import settings
@@ -25,6 +25,12 @@ def get_overview() -> dict:
     }
 
 
+@router.post("/visit", status_code=204)
+def record_visit(request: Request) -> None:
+    ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+    analytics.record_site_visit(ip)
+
+
 @router.post("/experience-rating", status_code=204)
 def post_experience_rating(body: ExperienceRatingIn) -> None:
     if not 1 <= body.rating <= 5:
@@ -45,4 +51,5 @@ def get_admin_stats(authorization: str = Header(default="")) -> dict:
         "top_questions": analytics.get_top_questions(15),
         "blog": blog_stats.get_summary(),
         "experience": analytics.get_experience_rating_summary(),
+        "site_visitors": {p: analytics.get_site_visitor_stats(p) for p in ["week", "month", "all"]},
     }

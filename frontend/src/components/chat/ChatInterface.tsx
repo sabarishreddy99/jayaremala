@@ -123,6 +123,7 @@ const SUGGESTIONS = [
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [activeModel, setActiveModel] = useState<string | null>(null);
+  const [totalResponses, setTotalResponses] = useState<number | null>(null);
   const [backendStatus, setBackendStatus] = useState<"checking" | "ready" | "warming">("checking");
   const [experienceRating, setExperienceRating] = useState<number | null>(null);
   const [ratingDismissed, setRatingDismissed] = useState(false);
@@ -134,6 +135,10 @@ export default function ChatInterface() {
     fetch(`${API_BASE_URL}/health`, { signal: controller.signal })
       .then((r) => { if (r.ok) setBackendStatus("ready"); else setBackendStatus("warming"); })
       .catch(() => setBackendStatus("warming"));
+    fetch(`${API_BASE_URL}/stats`)
+      .then((r) => r.json())
+      .then((d) => { if (d.total_responses > 0) setTotalResponses(d.total_responses); })
+      .catch(() => {});
     return () => controller.abort();
   }, []);
 
@@ -495,48 +500,62 @@ export default function ChatInterface() {
             )}
           </div>
 
-          {/* Experience rating — appears after first full exchange */}
-          {messages.length >= 3 && !streaming && (
-            <div className="flex items-center justify-center py-1">
-              {experienceRating !== null ? (
+          {/* Stats + Experience rating */}
+          <div className="flex items-center justify-center gap-3 py-0.5 flex-wrap">
+            {totalResponses !== null && (
+              <>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] text-fg-faint">Thanks for rating!</span>
-                  <span className="text-sm leading-none">
-                    {[1,2,3,4,5].map((s) => (
-                      <span key={s} className={s <= experienceRating ? "text-amber-400" : "text-border"}>★</span>
-                    ))}
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                  </svg>
+                  <span className="text-[10px] text-fg-faint">
+                    <span className="font-semibold text-fg-muted">{totalResponses.toLocaleString()}</span> responses
                   </span>
                 </div>
-              ) : ratingDismissed ? null : (
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-fg-faint">Rate your experience</span>
-                  <div className="flex items-center gap-0.5">
-                    {[1,2,3,4,5].map((star) => (
-                      <button
-                        key={star}
-                        onClick={() => handleRate(star)}
-                        onMouseEnter={() => setRatingHover(star)}
-                        onMouseLeave={() => setRatingHover(0)}
-                        aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                        className={`text-base leading-none transition-colors ${
-                          star <= (ratingHover || 0) ? "text-amber-400" : "text-border hover:text-amber-300"
-                        }`}
-                      >
-                        ★
-                      </button>
-                    ))}
-                  </div>
-                  <button
-                    onClick={handleRatingDismiss}
-                    aria-label="Dismiss"
-                    className="text-fg-faint hover:text-fg-muted transition-colors text-xs leading-none ml-0.5"
-                  >
-                    ×
-                  </button>
+                <span className="text-border text-[10px]">·</span>
+              </>
+            )}
+
+            {experienceRating !== null ? (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-fg-faint">Thanks for rating!</span>
+                <span className="text-sm leading-none">
+                  {[1,2,3,4,5].map((s) => (
+                    <span key={s} className={s <= experienceRating ? "text-amber-400" : "text-border"}>★</span>
+                  ))}
+                </span>
+              </div>
+            ) : ratingDismissed ? (
+              <span className="text-[10px] text-fg-faint italic">Rate your experience next time!</span>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-fg-faint">Rate experience</span>
+                <div className="flex items-center gap-0.5">
+                  {[1,2,3,4,5].map((star) => (
+                    <button
+                      key={star}
+                      onClick={() => handleRate(star)}
+                      onMouseEnter={() => setRatingHover(star)}
+                      onMouseLeave={() => setRatingHover(0)}
+                      aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                      className={`text-base leading-none transition-colors ${
+                        star <= (ratingHover || 0) ? "text-amber-400" : "text-border hover:text-amber-300"
+                      }`}
+                    >
+                      ★
+                    </button>
+                  ))}
                 </div>
-              )}
-            </div>
-          )}
+                <button
+                  onClick={handleRatingDismiss}
+                  aria-label="Dismiss"
+                  className="text-[11px] text-fg-faint hover:text-fg-muted transition-colors leading-none"
+                >
+                  ×
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Footer */}
           <div className="pt-2 sm:pt-3 border-t border-border">

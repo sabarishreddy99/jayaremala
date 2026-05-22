@@ -41,16 +41,16 @@ docker run -d \
   --log-opt max-file=3 \
   "${IMAGE}:latest"
 
-# ── 4. Health check — up to 120s for ONNX model warmup ───────────────────────
+# ── 4. Health check — up to 180s for ingest + ONNX model warmup ──────────────
 echo "[deploy] Waiting for new container to pass health check..."
 HEALTHY=0
-for i in $(seq 1 24); do
+for i in $(seq 1 36); do
   if curl -sf http://localhost:8001/health > /dev/null 2>&1; then
     HEALTHY=1
     echo "[deploy] Health check passed after $((i * 5))s."
     break
   fi
-  echo "[deploy] Attempt $i/24 — not ready, waiting 5s..."
+  echo "[deploy] Attempt $i/36 — not ready, waiting 5s..."
   sleep 5
 done
 

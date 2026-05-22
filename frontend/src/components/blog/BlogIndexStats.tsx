@@ -95,6 +95,7 @@ interface PostMeta {
 
 export function BlogPostList({ posts }: { posts: PostMeta[] }) {
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/blog/stats/summary`)
@@ -103,9 +104,40 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
       .catch(() => {});
   }, []);
 
+  const allTags = Array.from(new Set(posts.flatMap((p) => p.tags))).sort();
+  const filtered = activeTag ? posts.filter((p) => p.tags.includes(activeTag)) : posts;
+
   return (
+    <div>
+      {allTags.length > 1 && (
+        <div className="flex flex-wrap gap-2 mb-8">
+          <button
+            onClick={() => setActiveTag(null)}
+            className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
+              !activeTag
+                ? "bg-fg text-bg"
+                : "border border-border bg-surface text-fg-muted hover:border-fg-muted hover:text-fg"
+            }`}
+          >
+            All
+          </button>
+          {allTags.map((tag) => (
+            <button
+              key={tag}
+              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+              className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
+                activeTag === tag
+                  ? "bg-accent text-white border border-accent"
+                  : "border border-border bg-surface text-fg-muted hover:border-accent hover:text-accent"
+              }`}
+            >
+              #{tag}
+            </button>
+          ))}
+        </div>
+      )}
     <ol className="space-y-4">
-      {posts.map((p) => {
+      {filtered.map((p) => {
         const postStats = summary?.posts.find((s) => s.slug === p.slug);
         return (
           <li key={p.slug}>
@@ -158,5 +190,6 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
         );
       })}
     </ol>
+    </div>
   );
 }

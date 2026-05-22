@@ -12,12 +12,28 @@ const sourceSerif = Source_Serif_4({
   style: ["normal", "italic"],
 });
 
+const SITE_URL = "https://jayaremala.com";
+const SITE_TITLE = "Jaya Sabarish Reddy Remala — Software Engineer";
+const SITE_DESC =
+  "Software Engineer specializing in Agentic AI, distributed systems, and production ML infrastructure. Qualcomm Edge AI Hackathon Winner. NYU Tandon CS.";
+
 export const metadata: Metadata = {
-  title: "Jaya Sabarish Reddy Remala — Software Engineer",
-  description:
-    "Software Engineer specializing in Agentic AI, distributed systems, and production ML infrastructure. Qualcomm Edge AI Hackathon Winner. NYU Tandon CS.",
+  title: SITE_TITLE,
+  description: SITE_DESC,
   authors: [{ name: "Jaya Sabarish Reddy Remala" }],
   keywords: ["Software Engineer", "AI", "Distributed Systems", "LangGraph", "FastAPI", "NYU"],
+  openGraph: {
+    type: "website",
+    url: SITE_URL,
+    title: SITE_TITLE,
+    description: SITE_DESC,
+    siteName: "Jaya Sabarish Reddy Remala",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESC,
+  },
 };
 
 export const viewport: Viewport = {

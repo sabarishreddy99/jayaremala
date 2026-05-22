@@ -7,11 +7,35 @@ import ContactForm from "@/components/ContactForm";
 
 export const metadata = { title: "Jaya Sabarish Reddy Remala — Software Engineer" };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Jaya Sabarish Reddy Remala",
+  url: "https://jayaremala.com",
+  jobTitle: "Software Engineer",
+  description:
+    "Software Engineer specializing in Agentic AI, distributed systems, and production ML infrastructure. Qualcomm Edge AI Hackathon Winner. NYU Tandon CS.",
+  email: "jr6421@nyu.edu",
+  sameAs: [
+    "https://linkedin.com/in/jayasabarishreddyr",
+    "https://github.com/sabarishreddy99",
+  ],
+  alumniOf: {
+    "@type": "EducationalOrganization",
+    name: "New York University Tandon School of Engineering",
+  },
+  knowsAbout: ["Agentic AI", "Distributed Systems", "Machine Learning", "RAG", "FastAPI"],
+};
+
 export default function PortfolioHome() {
   const featured = projects.filter((p) => p.featured);
 
   return (
     <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 pb-24 pt-10 sm:pt-16 space-y-20">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
 
       {/* Hero */}
       <section className="grid gap-5 border-b border-border pb-16">

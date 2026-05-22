@@ -5,6 +5,7 @@ set -euo pipefail
 
 ENV_FILE="/home/ubuntu/itsjaya.env"
 IMAGE="itsjaya-backend"
+GHCR_IMAGE="ghcr.io/sabarishreddy99/itsjaya-backend"
 DATA_DIR="/data"
 S3_BUCKET="${ITSJAYA_BACKUP_BUCKET:-itsjaya-backups-analytics}"
 
@@ -22,10 +23,14 @@ fi
 # ── 1. Tag current image as :previous for rollback ───────────────────────────
 docker tag "${IMAGE}:latest" "${IMAGE}:previous" 2>/dev/null || true
 
-# ── 2. Build new image ────────────────────────────────────────────────────────
-echo "[deploy] Building new image..."
-docker build -t "${IMAGE}:latest" ./backend
-echo "[deploy] Build complete."
+# ── 2. Pull pre-built image from GHCR (built on GitHub Actions, not here) ────
+echo "[deploy] Pulling image from GHCR..."
+if [ -n "${GHCR_TOKEN:-}" ] && [ -n "${GHCR_USER:-}" ]; then
+  echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+fi
+docker pull "${GHCR_IMAGE}:latest"
+docker tag  "${GHCR_IMAGE}:latest" "${IMAGE}:latest"
+echo "[deploy] Pull complete."
 
 # ── 3. Start new container on staging port 8001 ───────────────────────────────
 docker rm -f itsjaya-backend-new 2>/dev/null || true

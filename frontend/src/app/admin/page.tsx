@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { API_BASE_URL } from "@/lib/api/client";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -145,12 +146,24 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
               <p className="text-[11px] text-fg-faint">Internal dashboard — not public</p>
             </div>
           </div>
-          <button
-            onClick={onLogout}
-            className="text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors"
-          >
-            Sign out
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/portfolio"
+              className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              Home
+            </Link>
+            <button
+              onClick={onLogout}
+              className="text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
         </div>
 
         {/* Period tabs */}

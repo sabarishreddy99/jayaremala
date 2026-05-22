@@ -5,7 +5,6 @@ import Link from "next/link";
 import { mdxComponents } from "@/components/blog/MDXComponents";
 import BlogEngagement from "@/components/blog/BlogEngagement";
 import ShareButtons from "@/components/blog/ShareButtons";
-import ReadingProgress from "@/components/blog/ReadingProgress";
 
 const SITE_URL = "https://jayaremala.com";
 
@@ -46,9 +45,7 @@ export default async function BlogPostPage({ params }: Props) {
   if (!post) notFound();
 
   return (
-    <>
-      <ReadingProgress />
-      <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-12 sm:py-16">
+    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-12 sm:py-16">
         <Link
           href="/blog"
           className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover transition-colors mb-10"
@@ -93,7 +90,6 @@ export default async function BlogPostPage({ params }: Props) {
             Back to all posts
           </Link>
         </div>
-      </div>
-    </>
+    </div>
   );
 }

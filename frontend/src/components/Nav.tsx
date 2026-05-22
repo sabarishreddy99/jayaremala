@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { profile } from "@/data/profile";
 import ThemeToggle from "@/components/ThemeToggle";
+import ReadingProgress from "@/components/blog/ReadingProgress";
 
 const links = [
   { href: "/experience", label: "Experience" },
@@ -19,7 +20,7 @@ export default function Nav() {
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-border">
+    <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-border relative">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 sm:px-6 py-3.5">
         {/* Logo */}
         <Link
@@ -119,6 +120,9 @@ export default function Nav() {
           </nav>
         </div>
       )}
+
+      {/* Reading progress — only on individual blog/lab posts */}
+      {/^\/(blog|lab)\/.+/.test(pathname) && <ReadingProgress />}
     </header>
   );
 }

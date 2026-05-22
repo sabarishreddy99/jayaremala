@@ -62,6 +62,24 @@ const FOLLOW_UP_POOL: Record<string, string[]> = {
   ],
 };
 
+function getGeminiResetTime(): string {
+  // Gemini free-tier daily quota resets at midnight Pacific Time.
+  // Strategy: parse the current PT time string as "fake local", compute next PT midnight,
+  // then express the diff from now — giving the real UTC reset instant in the user's TZ.
+  const now = new Date();
+  const ptStr = now.toLocaleString("en-US", { timeZone: "America/Los_Angeles" });
+  const ptNow = new Date(ptStr); // same numeric values as PT, treated as local by JS
+  const ptMidnight = new Date(ptNow);
+  ptMidnight.setDate(ptMidnight.getDate() + 1);
+  ptMidnight.setHours(0, 0, 0, 0);
+  const resetAt = new Date(now.getTime() + (ptMidnight.getTime() - ptNow.getTime()));
+  return resetAt.toLocaleTimeString(undefined, {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZoneName: "short",
+  });
+}
+
 function deriveFollowUps(sources: string[]): string[] {
   const seen = new Set<string>();
   const result: string[] = [];
@@ -209,13 +227,15 @@ export default function ChatInterface() {
       }
 
       if (sseError === "quota_exhausted") {
+        const resetTime = getGeminiResetTime();
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
             content:
               "Avocado has hit its daily Gemini API quota — all AI models are temporarily unavailable. " +
-              "Please try again later today or tomorrow, or reach Jaya directly at jr6421@nyu.edu.",
+              `Quota resets at **${resetTime}** (midnight Pacific Time). ` +
+              "Or reach Jaya directly at jr6421@nyu.edu.",
           },
         ]);
         return;

@@ -1,25 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef } from "react";
 
 export default function ReadingProgress() {
-  const [progress, setProgress] = useState(0);
+  const barRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    const bar = barRef.current;
+    if (!bar) return;
+
     const update = () => {
       const docHeight = document.documentElement.scrollHeight - window.innerHeight;
-      setProgress(docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0);
+      const pct = docHeight > 0 ? window.scrollY / docHeight : 0;
+      bar.style.transform = `scaleX(${pct})`;
     };
+
     window.addEventListener("scroll", update, { passive: true });
     update();
     return () => window.removeEventListener("scroll", update);
   }, []);
 
   return (
-    <div className="absolute bottom-0 left-0 right-0 h-0.5 pointer-events-none">
+    <div className="absolute bottom-0 left-0 right-0 h-0.5 pointer-events-none overflow-hidden">
       <div
-        className="h-full bg-accent transition-[width] duration-75 ease-out"
-        style={{ width: `${progress}%` }}
+        ref={barRef}
+        className="h-full w-full bg-accent origin-left will-change-transform"
+        style={{ transform: "scaleX(0)", transition: "transform 80ms linear" }}
       />
     </div>
   );

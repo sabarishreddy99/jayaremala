@@ -43,9 +43,9 @@ Personal AI-assisted portfolio for **Jaya Sabarish Reddy Remala**. Two entry poi
 │  │      RAG Store           │    │  SQLite  analytics.db                  │  │
 │  │  ChromaDB (persistent)   │    │  /data/analytics.db (Lightsail SSD)   │  │
 │  │  fastembed ONNX embed    │    │   ├─ interactions  (chat analytics)   │  │
-│  │  all-MiniLM-L6-v2        │    │   ├─ blog_views   (unique/IP/post)    │  │
+│  │  bge-base-en-v1.5 (768d) │    │   ├─ blog_views   (unique/IP/post)    │  │
 │  │  BM25 (rank_bm25)        │    │   └─ blog_claps   (≤50/user/post)    │  │
-│  │  RRF merge               │    │  Daily backup ──► S3 (7-day retain)   │  │
+│  │  RRF merge + graph       │    │  Daily backup ──► S3 (7-day retain)   │  │
 │  └──────────────────────────┘    └────────────────────────────────────────┘  │
 │                                                                              │
 │  ┌────────────────────────────────────────────────────────────────────────┐  │
@@ -67,7 +67,7 @@ Personal AI-assisted portfolio for **Jaya Sabarish Reddy Remala**. Two entry poi
 
 ## RAG Pipeline
 
-Every `/ai/chat/stream` request runs a 4-stage hybrid retrieval pipeline before Gemini sees the message.
+Every `/ai/chat/stream` request runs a 5-stage hybrid retrieval pipeline before Gemini sees the message.
 
 ```
 User message
@@ -88,8 +88,8 @@ User message
 ┌─────────────────┐    ┌──────────────────────────┐
 │ Stage 2a DENSE  │    │ Stage 2b LEXICAL          │
 │ ChromaDB query  │    │ BM25 (rank_bm25 Okapi)    │
-│ all-MiniLM-L6   │    │ Catches exact keyword     │
-│ fastembed ONNX  │    │ matches: "3000 RPS",      │
+│ bge-base-en-v1.5│    │ Catches exact keyword     │
+│ 768-dim ONNX    │    │ matches: "3000 RPS",      │
 │ HNSW cosine     │    │ "Qualcomm", "SnapLog",    │
 │ Batched encode  │    │ company names, numbers    │
 │ top-6 / query   │    │ top-15 results            │
@@ -104,12 +104,21 @@ User message
 └────────────────────┬───────────────────────────┘
                      ▼
 ┌────────────────────────────────────────────────┐
-│  Stage 4 — TOP-N BY RRF SCORE                  │
+│  Stage 4 — TOP-5 BY RRF SCORE                  │
 │  Returns top 5 chunks ordered by RRF score     │
-│  (fastembed ONNX replaces PyTorch/torch)        │
 └────────────────────┬───────────────────────────┘
                      ▼
-         Chunks injected into Gemini
+┌────────────────────────────────────────────────┐
+│  Stage 5 — KNOWLEDGE GRAPH EXPANSION           │
+│  1-hop traversal from retrieved doc IDs:       │
+│  • project doc  → skill category docs          │
+│  • experience doc → project docs               │
+│  • project doc  → experience doc               │
+│  Up to +2 related docs from the RRF-20 pool    │
+│  (no extra ChromaDB call — zero latency)       │
+└────────────────────┬───────────────────────────┘
+                     ▼
+         Up to 7 chunks injected into Gemini
          system prompt as context
                      │
                      ▼
@@ -128,6 +137,8 @@ User message
 | `faq` | Hard-coded in ingest.py | Pre-answers common recruiter questions |
 | `blog` | blog.json (auto-generated) | One doc per post (title + description + 2k body chars) |
 
+All documents store a fine-grained `entity_type` metadata field (`experience_overview`, `experience_bullet`, `project_tech`, `education_highlight`, etc.) enabling the graph expansion and future metadata-filtered queries.
+
 ### Incremental per-document ingest
 
 On every startup, `run_ingest()` diffs the current document set against `.doc_hashes.json` (per-document SHA-256 hashes stored on the Lightsail SSD alongside ChromaDB). Only what changed is re-embedded:
@@ -140,6 +151,8 @@ On every startup, `run_ingest()` diffs the current document set against `.doc_ha
 | Unchanged document | Skipped — no embedding call, no I/O |
 
 Adding one blog post embeds one document, not the entire corpus. A forced full re-embed is available via `POST /admin/reingest?force=true` (requires `ADMIN_TOKEN` bearer token).
+
+**Embedding model change detection**: The current `EMBED_MODEL` name is stored in `.doc_hashes.json` under `__embed_model__`. On startup, if the stored name differs from the current constant (or is absent — first run after model upgrade), `reset_collection()` wipes the ChromaDB collection and a full reingest runs automatically with the new model. No manual ChromaDB deletion needed when switching embedding models.
 
 ### Gemini fallback chain
 
@@ -306,8 +319,9 @@ itsjaya/
 │   │   ├── routers/ai.py                   /ai/* endpoints + RAG orchestration
 │   │   ├── routers/blog.py                 /blog/* engagement endpoints
 │   │   ├── routers/stats.py                /stats  /stats/overview
-│   │   ├── rag/store.py                    ChromaDB + BM25 + RRF (fastembed ONNX)
-│   │   ├── rag/ingest.py                   Incremental ingest — per-doc hash diff, upsert/delete
+│   │   ├── rag/store.py                    ChromaDB + BM25 + RRF (fastembed ONNX, bge-base-en-v1.5 768-dim)
+│   │   ├── rag/ingest.py                   Incremental ingest — per-doc hash diff, auto-wipe on model change
+│   │   ├── rag/graph.py                    Static knowledge graph — build_graph() + expand_context()
 │   │   ├── db/analytics.py                 Chat analytics (period-aware)
 │   │   └── db/blog_stats.py                Blog views + claps (period-aware)
 │   ├── data/knowledge/                     Single source of truth (edit here)

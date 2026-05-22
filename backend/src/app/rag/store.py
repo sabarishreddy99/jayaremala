@@ -26,7 +26,7 @@ _collection: chromadb.Collection | None = None
 _executor = ThreadPoolExecutor(max_workers=4)
 
 COLLECTION_NAME = "portfolio"
-EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+EMBED_MODEL = "BAAI/bge-base-en-v1.5"
 
 # ── BM25 state (always in-memory, rebuilt from docs on every startup) ──────────
 _bm25_index = None  # BM25Okapi | None
@@ -38,8 +38,8 @@ _bm25_types: list[str] = []
 # ── Embedding function ─────────────────────────────────────────────────────────
 
 class _DirectSTEmbedding(EmbeddingFunction):
-    """Wraps fastembed TextEmbedding (ONNX runtime) — same model weights as
-    sentence-transformers but without the PyTorch dependency (~600MB RAM savings)."""
+    """Wraps fastembed TextEmbedding (ONNX runtime) — no PyTorch dependency (~600MB RAM savings).
+    Model: BAAI/bge-base-en-v1.5 (768-dim, 12-layer BERT, retrieval-optimised)."""
 
     def __init__(self, model_name: str) -> None:
         self._model = TextEmbedding(model_name)

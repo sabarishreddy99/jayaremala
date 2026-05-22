@@ -11,6 +11,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.core.limiter import limiter
 from app.core.settings import settings
 from app.db import analytics, blog_stats
+from app.rag import graph as rag_graph
 from app.rag.ingest import run_ingest
 from app.rag.store import warmup as rag_warmup
 from app.routers.admin import router as admin_router
@@ -29,6 +30,7 @@ async def lifespan(app: FastAPI):
     try:
         result = run_ingest()
         logger.info("Knowledge base ready: %s", result)
+        rag_graph.build_graph()
     except Exception as exc:
         logger.warning("RAG ingest failed (non-fatal): %s", exc)
 

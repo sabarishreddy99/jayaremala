@@ -3,8 +3,8 @@ title: "itsjaya — AI Portfolio"
 status: "active"
 description: "AI-powered personal portfolio with a RAG chatbot (Avocado), MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade — not a toy."
 startedAt: "2025-11-01"
-updatedAt: "2026-05-21"
-tech: [Next.js 16, FastAPI, ChromaDB, Gemini 2.5 Flash, BM25, SQLite, AWS Lightsail, Nginx, S3, GitHub Pages, GitHub Actions]
+updatedAt: "2026-05-22"
+tech: [Next.js 16, FastAPI, ChromaDB, Gemini 2.5 Flash, BAAI/bge-base-en-v1.5, BM25, Knowledge Graph, SQLite, AWS Lightsail, Nginx, S3, GitHub Pages, GitHub Actions]
 ---
 
 ## Overview
@@ -63,9 +63,9 @@ An AI-backed portfolio inverts this. The visitor asks in natural language, the s
 │  │                            │   │  /data/analytics.db              │  │
 │  │  ChromaDB  PersistentClient│   │  (Lightsail SSD  60 GB)          │  │
 │  │  HNSW cosine similarity    │   │                                  │  │
-│  │  all-MiniLM-L6-v2 embed    │   │  interactions                    │  │
+│  │  bge-base-en-v1.5 (768-dim)│   │  interactions                    │  │
 │  │  LRU cache (256 entries)   │   │  ├── ip_hash  TEXT              │  │
-│  │                            │   │  └── created_at  TIMESTAMP      │  │
+│  │  Knowledge Graph (static)  │   │  └── created_at  TIMESTAMP      │  │
 │  │  BM25Okapi  (rank_bm25)    │   │                                  │  │
 │  │  in-memory, rebuilt on     │   │  blog_views                     │  │
 │  │  every startup             │   │  ├── slug  TEXT                 │  │
@@ -150,9 +150,9 @@ User message: "what's your strongest AI project?"
 │  ~160ms vs ~400ms    │   │                              │
 │  for serial calls    │   │  Catches exact matches:      │
 │                      │   │  "3000 RPS", "SnapLog",      │
-│  HNSW cosine search  │   │  "Qualcomm", "78%",          │
-│  in ChromaDB         │   │  "115 GB/day"                │
-│                      │   │                              │
+│  bge-base-en-v1.5    │   │  "Qualcomm", "78%",          │
+│  768-dim ONNX        │   │  "115 GB/day"                │
+│  HNSW cosine         │   │                              │
 │  top 6 per query     │   │  top 15 results              │
 │  (deduped by id)     │   │  in-memory, rebuilt on       │
 └──────────┬───────────┘   │  every startup from docs     │
@@ -169,10 +169,22 @@ User message: "what's your strongest AI project?"
 └──────────────────────┬────────────────────────────────────┘
                        ▼
 ┌───────────────────────────────────────────────────────────┐
-│  STAGE 4 — Top-N by RRF Score                            │
+│  STAGE 4 — Top-5 by RRF Score                            │
 │                                                           │
 │  Returns top 5 chunks ordered by RRF score               │
-│  Injected into Gemini system prompt as context           │
+└──────────────────────┬────────────────────────────────────┘
+                       ▼
+┌───────────────────────────────────────────────────────────┐
+│  STAGE 5 — Knowledge Graph Expansion                     │
+│                                                           │
+│  1-hop traversal from retrieved doc IDs:                 │
+│  • project doc → skill category docs                     │
+│  • experience doc → related project docs                 │
+│  • project doc → related experience doc                  │
+│                                                           │
+│  Pulls ≤2 related docs from RRF-20 pool                  │
+│  No extra ChromaDB call — zero latency                   │
+│  Injected into Gemini alongside top-5                    │
 └───────────────────────────────────────────────────────────┘
 ```
 
@@ -288,7 +300,7 @@ Chatbot lives outside — no nav, no footer, full screen.
 
 ## Tech Stack
 
-<Stack items={["Next.js 16 (App Router)", "React 19", "Tailwind CSS v4", "TypeScript", "MDX + next-mdx-remote", "gray-matter", "FastAPI", "Python 3.11", "Pydantic Settings", "ChromaDB", "fastembed (all-MiniLM-L6-v2 ONNX)", "rank-bm25 (BM25Okapi)", "google-genai SDK", "Gemini 2.5 Flash", "SQLite3", "AWS Lightsail 2GB", "Nginx + Let's Encrypt", "Amazon S3", "Docker", "GitHub Pages", "GitHub Actions"]} />
+<Stack items={["Next.js 16 (App Router)", "React 19", "Tailwind CSS v4", "TypeScript", "MDX + next-mdx-remote", "gray-matter", "FastAPI", "Python 3.11", "Pydantic Settings", "ChromaDB", "fastembed (BAAI/bge-base-en-v1.5 ONNX, 768-dim)", "rank-bm25 (BM25Okapi)", "Knowledge Graph (static, in-memory)", "google-genai SDK", "Gemini 2.5 Flash", "SQLite3", "AWS Lightsail 2GB", "Nginx + Let's Encrypt", "Amazon S3", "Docker", "GitHub Pages", "GitHub Actions"]} />
 
 ---
 
@@ -376,9 +388,51 @@ Chatbot lives outside — no nav, no footer, full screen.
   The questions that matter most in the first 30 seconds — "What makes Jaya stand out?", "How do I hire him?" — are not well-served by retrieval from raw experience data. The 12 FAQ documents are handwritten answers to the highest-probability recruiter questions, loaded into ChromaDB as their own document type. When one is retrieved, Gemini gets the answer already formed. These 12 documents have more impact on response quality than any pipeline improvement.
 </Decision>
 
+<Decision date="2026-05-22" title="BAAI/bge-base-en-v1.5 over all-MiniLM-L6-v2 — better retrieval, same ONNX runtime">
+  The original embedding model was `all-MiniLM-L6-v2` — a 6-layer distilled model producing 384-dim vectors. It was chosen for speed and the ~45MB ONNX binary size. The problem: distilled models sacrifice retrieval quality for size. On BEIR benchmarks, `BAAI/bge-base-en-v1.5` outperforms MiniLM by 8–12 recall points across task types. For a portfolio chatbot, missed recall means a recruiter asks "does he have Redis caching experience?" and the retrieval returns a profile doc instead of the exact 78% latency reduction bullet.
+
+  The switch stays fully ONNX via fastembed — no PyTorch dependency, no RAM regression beyond ~30–50MB for the larger 768-dim model. The ONNX binary is ~90MB vs 45MB, a one-time download. Critically, switching embedding models requires wiping ChromaDB and rebuilding from scratch because stored 384-dim vectors are incompatible with 768-dim queries. The auto-wipe mechanism (see next decision) handles this transparently on deploy.
+
+  PyTorch was explicitly evaluated and rejected: PyTorch and ONNX produce byte-identical embeddings for the same model weights. Switching runtimes without upgrading the model changes nothing except adding ~600MB RAM and a PyTorch dependency. What matters is the model, not the runtime.
+</Decision>
+
+<Decision date="2026-05-22" title="Auto-wipe ChromaDB on embedding model change — zero manual steps on deploy">
+  Changing the embedding model from 384-dim to 768-dim makes every stored vector incompatible. A naive deploy would start up, try to query with 768-dim vectors against a 384-dim collection, and crash with `InvalidArgumentError: Collection expecting dimension of 384, got 768`. The fallback kicks in but every query fails.
+
+  The fix: `run_ingest()` stores the current `EMBED_MODEL` string under `__embed_model__` in `.doc_hashes.json`. On startup, if the stored model name differs from the constant in `store.py` (or is absent — which happens when hashes exist from before tracking was added), `reset_collection()` is called first and `force=True` is set. ChromaDB wipes cleanly and all 87 documents are re-embedded with the new model before the app starts serving traffic. No environment variable, no manual SSH, no pre-deploy migration step required.
+
+  The absence case (`stored_model is None`) deliberately triggers a wipe rather than assuming the existing collection is compatible. On a fresh instance with no hashes file, the collection is also empty so the wipe is a no-op. On an existing instance with an old hashes file, the wipe is exactly what's needed.
+</Decision>
+
+<Decision date="2026-05-22" title="Static knowledge graph for context expansion — no graph library, no LLM extraction">
+  After retrieval, Avocado sometimes has all the pieces but not the connections. A user asks "what did he build at NYU IT?" — the experience doc is retrieved, but the Multi-Agent project doc sits at rank 12 in the RRF pool. Without graph expansion, Gemini gets the job description but not the specific system built there.
+
+  Full GraphRAG (Microsoft's approach using community detection and LLM-extracted entities) was evaluated and rejected. It's designed for corpora with millions of nodes. For 87 documents with completely known structure, the extraction step is pure overhead — we already know the relationships from the JSON files.
+
+  The implementation is a static in-memory graph built at startup from the knowledge JSON. Three relationship maps: `project → skill category docs` (from `projects.json tags[]`), `experience → project docs` (hard-coded temporal co-occurrence for the 5–6 known links), `project → experience doc` (reverse). After the RRF top-5 is selected, `expand_context()` follows 1-hop edges and pulls in at most 2 related docs from the RRF-20 pool — no extra ChromaDB call, zero added latency. The expanded docs go through the same `_build_context()` grouping as the retrieved ones.
+
+  The hard-coded experience→project links are a deliberate choice over dynamic temporal overlap detection. The temporal heuristic produces false positives (the portfolio project spans all NYU time, so it incorrectly maps to every NYU experience). A 6-line dict with the real mappings is correct, readable, and maintainable.
+</Decision>
+
 ---
 
 ## Progress Log
+
+<Update date="2026-05-22">
+  Upgraded embedding model from all-MiniLM-L6-v2 (384-dim, 6-layer) to BAAI/bge-base-en-v1.5 (768-dim, 12-layer BERT) via fastembed ONNX. Same runtime, significantly better retrieval recall on BEIR benchmarks (+8–12 points). No PyTorch dependency added.
+</Update>
+
+<Update date="2026-05-22">
+  Added auto-wipe on embedding model change. run_ingest() now stores the current EMBED_MODEL in .doc_hashes.json. If the stored model name differs on startup, reset_collection() is called automatically and all 87 docs are re-ingested with the new model. Handles both explicit model changes and the first-startup case where no model was previously tracked.
+</Update>
+
+<Update date="2026-05-22">
+  Added static knowledge graph (graph.py). build_graph() constructs three relationship maps from knowledge JSON at startup: project→skills, experience→projects, project→experience. expand_context() does 1-hop traversal after RRF top-5 rerank, pulling up to 2 related docs from the RRF-20 pool into the Gemini context window. Zero extra ChromaDB calls, zero latency penalty. Both /ai/chat and /ai/chat/stream updated.
+</Update>
+
+<Update date="2026-05-22">
+  Added entity_type metadata field to all ChromaDB documents (experience_overview, experience_bullet, project_tech, education_highlight, etc.) via new _entity_type() helper in ingest.py. Enables future metadata-filtered queries without requiring a full reingest.
+</Update>
 
 <Update date="2026-05-21">
   Replaced collection-level hash re-ingest with per-document incremental sync. Adding a blog post or lab entry now embeds only that one document rather than wiping and rebuilding the entire ~80-doc collection. Stale documents removed from source are deleted from ChromaDB automatically. Per-document hashes persisted in .doc_hashes.json on the Lightsail SSD. Token-gated POST /admin/reingest?force=true endpoint added for manual full re-embeds.
@@ -436,8 +490,9 @@ Chatbot lives outside — no nav, no footer, full screen.
 
 ## What's next
 
+- Cross-encoder reranking (`cross-encoder/ms-marco-MiniLM-L-6-v2`) — already scaffolded in `rerank_cross_encoder()`, gated on Lightsail upgrade to 4GB ($20/month) for the ~250MB RAM headroom
+- Entity-aware ChromaDB pre-filtering using the metadata fields added this session (entity_type, future company_key, project_key)
 - Reading time estimate on blog cards
 - Search within blog posts
 - Avocado voice input (Web Speech API — already prototyped)
-- A/B test shorter vs longer system prompt to measure response quality
 - Monitoring dashboard (uptime + response time over time)

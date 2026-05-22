@@ -16,7 +16,7 @@ import logging
 import re
 from pathlib import Path
 
-from app.rag.store import build_bm25_index, clear_query_cache, get_collection
+from app.rag.store import EMBED_MODEL, build_bm25_index, clear_query_cache, get_collection, reset_collection
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,27 @@ def _save_doc_hashes(hashes: dict[str, str]) -> None:
     p = _doc_hashes_path()
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(hashes, indent=2))
+
+
+# ── Entity type helper ────────────────────────────────────────────────────────
+
+def _entity_type(doc_id: str, doc_type: str) -> str:
+    """Return a fine-grained entity type stored in ChromaDB metadata."""
+    if "_bullet_" in doc_id:
+        return "experience_bullet"
+    if "_highlight_" in doc_id:
+        return "education_highlight"
+    if doc_id.endswith("_overview"):
+        return f"{doc_type}_overview"
+    if doc_id.endswith("_tech"):
+        return "project_tech"
+    if doc_id == "skills_all":
+        return "skills_all"
+    if doc_id == "profile_bio":
+        return "profile_bio"
+    if doc_id == "profile_contact":
+        return "profile_contact"
+    return doc_type
 
 
 # ── Document loaders ───────────────────────────────────────────────────────────
@@ -358,7 +379,7 @@ def _build_documents() -> list[tuple[str, str, str]]:
         "(1) Avocado — a full-screen RAG-powered AI chatbot at the homepage that answers questions about Jaya in real time. "
         "(2) A classic portfolio with experience, projects, education, blog, and a lab section. "
         "Avocado works like this: when you type a question, the backend runs a 4-stage hybrid retrieval pipeline — "
-        "query expansion (up to 4 variants), dense search via ChromaDB (all-MiniLM-L6-v2 ONNX embeddings), "
+        "query expansion (up to 4 variants), dense search via ChromaDB (BAAI/bge-base-en-v1.5 ONNX embeddings, 768-dim), "
         "lexical search via BM25 (catches exact names, numbers, company names), "
         "Reciprocal Rank Fusion to merge results, then the top 5 chunks are injected into Gemini's system prompt "
         "and the response streams token-by-token back to the browser via Server-Sent Events. "
@@ -387,7 +408,7 @@ def _build_documents() -> list[tuple[str, str, str]]:
         "Stage 1 — Query Expansion: the user message is expanded into up to 4 query variants "
         "(verbatim, name-anchored, topic keyword, conversation context) to catch different phrasings. "
         "Stage 2a — Dense retrieval: all 4 queries are embedded in a single batched ONNX forward pass "
-        "using all-MiniLM-L6-v2 via fastembed, then searched against ChromaDB using HNSW cosine similarity. "
+        "using BAAI/bge-base-en-v1.5 (768-dim) via fastembed, then searched against ChromaDB using HNSW cosine similarity. "
         "Stage 2b — Lexical retrieval: BM25 (rank_bm25 BM25Okapi) catches exact keyword matches — "
         "specific numbers like '3000 RPS', company names like 'Qualcomm', project names like 'SnapLog'. "
         "Stage 3 — Reciprocal Rank Fusion: merges dense and lexical results using RRF (k=60, Cormack 2009). "
@@ -399,8 +420,8 @@ def _build_documents() -> list[tuple[str, str, str]]:
     docs.append(("faq_tech_choices_tradeoffs", (
         "What technology choices did Jaya make for this portfolio and why? What are the trade-offs? "
         "Key decisions and trade-offs: "
-        "(1) fastembed ONNX instead of PyTorch sentence-transformers — saves ~600MB RAM, no GPU needed, "
-        "runs on a $10/month VPS. Trade-off: slightly less flexible than full PyTorch. "
+        "(1) BAAI/bge-base-en-v1.5 via fastembed ONNX (768-dim, 12-layer BERT) instead of PyTorch — saves ~600MB RAM, no GPU needed, "
+        "runs on a $10/month VPS with better retrieval quality than smaller distilled models. Trade-off: ~90MB model download vs 45MB. "
         "(2) ChromaDB + BM25 hybrid instead of pure dense search — BM25 catches exact keyword matches "
         "(numbers, names) that dense search misses. Trade-off: BM25 index is in-memory, rebuilt on every startup (~5ms). "
         "(3) SQLite instead of managed Postgres for analytics — zero cost, same-process, one file to back up. "
@@ -484,12 +505,27 @@ def run_ingest(force: bool = False) -> dict:
     - Documents removed from source are deleted from ChromaDB.
     - Unchanged documents are skipped — no embedding call, no ChromaDB write.
 
+    Auto-detects embedding model changes: if the stored model differs from
+    EMBED_MODEL, the ChromaDB collection is wiped and a full reingest runs
+    (dimension mismatch would otherwise cause ChromaDB errors).
+
     Returns a summary dict: {added, updated, deleted, unchanged, total}.
     """
-    collection = get_collection()
     docs = _build_documents()  # always build full corpus — BM25 needs it
 
-    stored = {} if force else _load_doc_hashes()
+    # ── Embedding model version check ─────────────────────────────────────────
+    stored_raw = {} if force else _load_doc_hashes()
+    stored_model = stored_raw.pop("__embed_model__", None)
+    if not force and stored_model != EMBED_MODEL:
+        logger.info(
+            "Embedding model changed (%s → %s) — resetting ChromaDB collection for full reingest",
+            stored_model, EMBED_MODEL,
+        )
+        reset_collection()
+        force = True
+    stored = {} if force else stored_raw
+
+    collection = get_collection()
     current = {doc_id: _short_hash(text) for doc_id, text, _ in docs}
 
     to_upsert = [
@@ -510,7 +546,10 @@ def run_ingest(force: bool = False) -> dict:
     if to_upsert:
         ids = [d[0] for d in to_upsert]
         texts = [d[1] for d in to_upsert]
-        metadatas = [{"type": d[2], "id": d[0]} for d in to_upsert]
+        metadatas = [
+            {"type": d[2], "id": d[0], "entity_type": _entity_type(d[0], d[2])}
+            for d in to_upsert
+        ]
         collection.upsert(ids=ids, documents=texts, metadatas=metadatas)
         clear_query_cache()
         logger.info("Upserted %d documents (%d new, %d updated)", len(to_upsert), added, updated)
@@ -522,6 +561,7 @@ def run_ingest(force: bool = False) -> dict:
     new_hashes = {**stored, **{d[0]: current[d[0]] for d in to_upsert}}
     for doc_id in to_delete:
         new_hashes.pop(doc_id, None)
+    new_hashes["__embed_model__"] = EMBED_MODEL
     _save_doc_hashes(new_hashes)
 
     unchanged = len(docs) - len(to_upsert)

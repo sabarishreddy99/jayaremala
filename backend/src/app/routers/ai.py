@@ -15,6 +15,7 @@ from fastapi import Request
 
 from app.core.settings import settings
 from app.db import analytics
+from app.rag import graph as rag_graph
 from app.rag import store as rag_store
 
 logger = logging.getLogger(__name__)
@@ -34,6 +35,7 @@ Key highlights:
 - Built zero-data-loss maritime telemetry pipeline for Shell PLC (115 GB/day, 200+ offshore stations)
 - MS Computer Science, NYU Tandon School of Engineering (GPA 3.8/4.0)
 - Contact: jr6421@nyu.edu | +1 (516) 907-8727 | linkedin.com/in/jayasabarishreddyr | github.com/sabarishreddy99
+- Avocado uses BAAI/bge-base-en-v1.5 (768-dim ONNX) for dense retrieval + BM25 + RRF + knowledge graph expansion
 
 RESPONSE RULES:
 - ALWAYS answer questions about Jaya's background, experience, projects, education, and skills
@@ -298,6 +300,13 @@ def ai_chat(req: ChatRequest) -> ChatResponse:
     bm25 = rag_store.bm25_query(req.message, n_results=15)
     merged = rag_store.rrf_merge(dense, bm25, k=60, top_n=20)
     top_chunks = rag_store.rerank_cross_encoder(req.message, merged, top_n=5)
+    graph_extras = rag_graph.expand_context(
+        retrieved_ids=[c["id"] for c in top_chunks],
+        rrf_pool=merged,
+        max_expansion=2,
+    )
+    if graph_extras:
+        top_chunks = top_chunks + graph_extras
     context = _build_context(top_chunks)
     sources = [f"{c['type']}:{c['id']}" for c in top_chunks]
     prompt = _build_chat_prompt(req, context)
@@ -336,6 +345,14 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
         merged = rag_store.rrf_merge(dense, bm25, k=60, top_n=20)
         # 5. Cross-encoder rerank → top 5
         top_chunks = await rag_store.rerank_cross_encoder_async(req.message, merged, top_n=5)
+        # 6. Graph expansion — pull in up to 2 related docs from the merged pool
+        graph_extras = rag_graph.expand_context(
+            retrieved_ids=[c["id"] for c in top_chunks],
+            rrf_pool=merged,
+            max_expansion=2,
+        )
+        if graph_extras:
+            top_chunks = top_chunks + graph_extras
     except Exception as exc:
         logger.warning("Hybrid RAG pipeline failed, falling back to simple retrieval: %s", exc)
         top_chunks = await rag_store.query_multi_async(queries)

@@ -181,7 +181,7 @@ export default function ChatMessage({ message, streaming }: Props) {
       <div className="flex-shrink-0 w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-base mt-0.5" title="Avocado">
         🥑
       </div>
-      <div className="relative group/msg max-w-[80%] sm:max-w-[75%]">
+      <div className="relative max-w-[80%] sm:max-w-[75%]">
         <div className="rounded-2xl rounded-tl-sm border border-border bg-surface px-4 py-2.5 text-sm text-fg-muted shadow-sm">
           {streaming && !message.content ? (
             <span className="inline-flex gap-1 items-center h-4">
@@ -197,7 +197,7 @@ export default function ChatMessage({ message, streaming }: Props) {
           )}
         </div>
         {!streaming && message.content && (
-          <div className={`absolute -bottom-3 right-2 flex items-center gap-1 transition-opacity ${rated !== null ? "opacity-100" : "opacity-0 group-hover/msg:opacity-100"}`}>
+          <div className="absolute -bottom-3 right-2 flex items-center gap-1">
             {/* Thumbs up */}
             {rated !== -1 && (
               <button

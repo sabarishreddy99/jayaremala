@@ -45,6 +45,13 @@ def init_db() -> None:
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS experience_ratings (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                rating     INTEGER NOT NULL CHECK(rating BETWEEN 1 AND 5),
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
     logger.info("Analytics DB ready: %s", p.resolve())
 
 
@@ -113,6 +120,33 @@ def get_feedback_summary() -> dict:
     except Exception as exc:
         logger.warning("get_feedback_summary failed: %s", exc)
         return {"total": 0, "positive": 0, "negative": 0, "satisfaction_pct": 0}
+
+
+def record_experience_rating(rating: int) -> None:
+    if not 1 <= rating <= 5:
+        return
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            conn.execute("INSERT INTO experience_ratings (rating) VALUES (?)", (rating,))
+    except Exception as exc:
+        logger.warning("record_experience_rating failed (non-fatal): %s", exc)
+
+
+def get_experience_rating_summary() -> dict:
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            rows = conn.execute(
+                "SELECT rating, COUNT(*) FROM experience_ratings GROUP BY rating"
+            ).fetchall()
+        dist = {i: 0 for i in range(1, 6)}
+        for r, c in rows:
+            dist[int(r)] = c
+        total = sum(dist.values())
+        avg = round(sum(r * c for r, c in dist.items()) / total, 1) if total > 0 else 0
+        return {"total": total, "average": avg, "distribution": dist}
+    except Exception as exc:
+        logger.warning("get_experience_rating_summary failed: %s", exc)
+        return {"total": 0, "average": 0, "distribution": {i: 0 for i in range(1, 6)}}
 
 
 def get_stats(period: str = "all") -> dict[str, int]:

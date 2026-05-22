@@ -123,8 +123,10 @@ const SUGGESTIONS = [
 export default function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
   const [activeModel, setActiveModel] = useState<string | null>(null);
-  const [stats, setStats] = useState<{ total_responses: number; unique_visitors: number } | null>(null);
   const [backendStatus, setBackendStatus] = useState<"checking" | "ready" | "warming">("checking");
+  const [experienceRating, setExperienceRating] = useState<number | null>(null);
+  const [ratingDismissed, setRatingDismissed] = useState(false);
+  const [ratingHover, setRatingHover] = useState(0);
   const [pendingRetry, setPendingRetry] = useState<string | null>(null);
 
   useEffect(() => {
@@ -132,11 +134,14 @@ export default function ChatInterface() {
     fetch(`${API_BASE_URL}/health`, { signal: controller.signal })
       .then((r) => { if (r.ok) setBackendStatus("ready"); else setBackendStatus("warming"); })
       .catch(() => setBackendStatus("warming"));
-    fetch(`${API_BASE_URL}/stats`)
-      .then((r) => r.json())
-      .then(setStats)
-      .catch(() => {});
     return () => controller.abort();
+  }, []);
+
+  // Restore rating state from sessionStorage after hydration
+  useEffect(() => {
+    const saved = sessionStorage.getItem("avocado_experience_rating");
+    if (saved) setExperienceRating(Number(saved));
+    if (sessionStorage.getItem("avocado_rating_dismissed") === "1") setRatingDismissed(true);
   }, []);
 
   // Load persisted messages after hydration to avoid SSR mismatch
@@ -286,6 +291,21 @@ export default function ChatInterface() {
   function handleClear() {
     clearSession();
     setMessages([WELCOME]);
+  }
+
+  function handleRate(star: number) {
+    setExperienceRating(star);
+    sessionStorage.setItem("avocado_experience_rating", String(star));
+    fetch(`${API_BASE_URL}/stats/experience-rating`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rating: star }),
+    }).catch(() => {});
+  }
+
+  function handleRatingDismiss() {
+    setRatingDismissed(true);
+    sessionStorage.setItem("avocado_rating_dismissed", "1");
   }
 
   const isInitial = messages.length === 1 && !streaming;
@@ -475,22 +495,46 @@ export default function ChatInterface() {
             )}
           </div>
 
-          {/* Stats */}
-          {stats && stats.total_responses > 0 && (
-            <div className="flex items-center justify-center gap-4 py-1.5">
-              <div className="flex items-center gap-1.5">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                <span className="text-[10px] text-fg-faint">
-                  <span className="font-semibold text-fg-muted">{stats.total_responses.toLocaleString()}</span> responses
-                </span>
-              </div>
-              <span className="text-border">·</span>
-              <div className="flex items-center gap-1.5">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                <span className="text-[10px] text-fg-faint">
-                  <span className="font-semibold text-fg-muted">{stats.unique_visitors.toLocaleString()}</span> unique visitors
-                </span>
-              </div>
+          {/* Experience rating — appears after first full exchange */}
+          {messages.length >= 3 && !streaming && (
+            <div className="flex items-center justify-center py-1">
+              {experienceRating !== null ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] text-fg-faint">Thanks for rating!</span>
+                  <span className="text-sm leading-none">
+                    {[1,2,3,4,5].map((s) => (
+                      <span key={s} className={s <= experienceRating ? "text-amber-400" : "text-border"}>★</span>
+                    ))}
+                  </span>
+                </div>
+              ) : ratingDismissed ? null : (
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] text-fg-faint">Rate your experience</span>
+                  <div className="flex items-center gap-0.5">
+                    {[1,2,3,4,5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => handleRate(star)}
+                        onMouseEnter={() => setRatingHover(star)}
+                        onMouseLeave={() => setRatingHover(0)}
+                        aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                        className={`text-base leading-none transition-colors ${
+                          star <= (ratingHover || 0) ? "text-amber-400" : "text-border hover:text-amber-300"
+                        }`}
+                      >
+                        ★
+                      </button>
+                    ))}
+                  </div>
+                  <button
+                    onClick={handleRatingDismiss}
+                    aria-label="Dismiss"
+                    className="text-fg-faint hover:text-fg-muted transition-colors text-xs leading-none ml-0.5"
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

@@ -12,11 +12,14 @@ interface Question { text: string; count: number }
 interface BlogPost { slug: string; views: number; claps: number }
 interface BlogSummary { total_views: number; total_claps: number; posts: BlogPost[] }
 
+interface ExperienceSummary { total: number; average: number; distribution: Record<string, number> }
+
 interface AdminStats {
   conversations: { week: PeriodStats; month: PeriodStats; all: PeriodStats };
   feedback: Feedback;
   top_questions: Question[];
   blog: BlogSummary;
+  experience: ExperienceSummary;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -525,7 +528,7 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
         </div>
 
         {/* Top stat cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
           <StatCard
             label="Conversations"
             value={conv.total_responses}
@@ -542,6 +545,12 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
             value={stats.feedback.total > 0 ? `${stats.feedback.satisfaction_pct}%` : "—"}
             sub={`from ${stats.feedback.total} rated responses`}
             color={stats.feedback.satisfaction_pct >= 70 ? "emerald" : stats.feedback.satisfaction_pct > 0 ? "rose" : "default"}
+          />
+          <StatCard
+            label="Avg Experience"
+            value={stats.experience.total > 0 ? `${stats.experience.average} ★` : "—"}
+            sub={`from ${stats.experience.total} visitor rating${stats.experience.total !== 1 ? "s" : ""}`}
+            color={stats.experience.average >= 4 ? "emerald" : stats.experience.average >= 3 ? "default" : stats.experience.total > 0 ? "rose" : "default"}
           />
           <StatCard
             label="Blog Views"
@@ -617,6 +626,46 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
               })}
             </div>
           </div>
+        </div>
+
+        {/* Visitor Experience Ratings */}
+        <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Visitor Experience</h2>
+            {stats.experience.total > 0 && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-amber-400 text-base leading-none">
+                  {"★".repeat(Math.round(stats.experience.average))}
+                  {"☆".repeat(5 - Math.round(stats.experience.average))}
+                </span>
+                <span className="text-sm font-bold text-fg">{stats.experience.average}</span>
+                <span className="text-[10px] text-fg-faint">/ 5 from {stats.experience.total} rating{stats.experience.total !== 1 ? "s" : ""}</span>
+              </div>
+            )}
+          </div>
+          {stats.experience.total === 0 ? (
+            <p className="text-xs text-fg-faint">No ratings yet — visitors will see the rating widget after their first chat exchange.</p>
+          ) : (
+            <div className="space-y-2">
+              {[5,4,3,2,1].map((star) => {
+                const count = stats.experience.distribution[star] ?? 0;
+                const pct = stats.experience.total > 0 ? Math.round((count / stats.experience.total) * 100) : 0;
+                return (
+                  <div key={star} className="flex items-center gap-3">
+                    <span className="text-[11px] text-fg-faint w-4 shrink-0 text-right">{star}</span>
+                    <span className="text-amber-400 text-xs leading-none shrink-0">★</span>
+                    <div className="flex-1 h-2 bg-surface-raised rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-amber-400 rounded-full transition-all"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                    <span className="text-[10px] tabular-nums text-fg-faint w-6 text-right shrink-0">{count}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Blog table */}

@@ -59,6 +59,19 @@ export default function Nav() {
           </a>
           <ThemeToggle />
           <Link
+            href="/admin"
+            title="Admin"
+            className={`p-2 rounded-lg transition-colors ${
+              pathname === "/admin"
+                ? "text-fg bg-surface-raised"
+                : "text-fg-faint hover:text-fg-subtle hover:bg-surface-raised"
+            }`}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </Link>
+          <Link
             href="/chat"
             className="ml-2 px-4 py-1.5 rounded-full bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
           >
@@ -117,6 +130,16 @@ export default function Nav() {
                 <path d="M7 17L17 7M17 7H7M17 7v10"/>
               </svg>
             </a>
+            <Link
+              href="/admin"
+              onClick={() => setOpen(false)}
+              className="px-3 py-2.5 rounded-lg text-sm text-fg-faint hover:bg-surface-raised transition-colors flex items-center gap-2"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              Admin
+            </Link>
           </nav>
         </div>
       )}

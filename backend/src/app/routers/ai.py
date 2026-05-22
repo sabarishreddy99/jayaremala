@@ -329,6 +329,7 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
     full_prompt = _build_chat_prompt(req, context)
 
     ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+    analytics.record_question(req.message)
 
     def event_stream():
         used_model: list[str] = []

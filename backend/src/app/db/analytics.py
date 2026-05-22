@@ -38,6 +38,13 @@ def init_db() -> None:
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_feedback_hash ON feedback(message_hash)")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS questions (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                text       TEXT    NOT NULL,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
     logger.info("Analytics DB ready: %s", p.resolve())
 
 
@@ -66,6 +73,46 @@ def record_feedback(message_hash: str, rating: int) -> None:
             )
     except Exception as exc:
         logger.warning("Feedback record failed (non-fatal): %s", exc)
+
+
+def record_question(text: str) -> None:
+    normalized = text.strip()[:500]
+    if not normalized:
+        return
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            conn.execute("INSERT INTO questions (text) VALUES (?)", (normalized,))
+    except Exception as exc:
+        logger.warning("record_question failed (non-fatal): %s", exc)
+
+
+def get_top_questions(n: int = 15) -> list[dict]:
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            rows = conn.execute("""
+                SELECT text, COUNT(*) AS cnt
+                FROM questions
+                GROUP BY lower(trim(text))
+                ORDER BY cnt DESC
+                LIMIT ?
+            """, (n,)).fetchall()
+        return [{"text": r[0], "count": r[1]} for r in rows]
+    except Exception as exc:
+        logger.warning("get_top_questions failed: %s", exc)
+        return []
+
+
+def get_feedback_summary() -> dict:
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            total    = conn.execute("SELECT COUNT(*) FROM feedback").fetchone()[0]
+            positive = conn.execute("SELECT COUNT(*) FROM feedback WHERE rating=1").fetchone()[0]
+            negative = conn.execute("SELECT COUNT(*) FROM feedback WHERE rating=-1").fetchone()[0]
+        satisfaction = round(positive / total * 100) if total > 0 else 0
+        return {"total": total, "positive": positive, "negative": negative, "satisfaction_pct": satisfaction}
+    except Exception as exc:
+        logger.warning("get_feedback_summary failed: %s", exc)
+        return {"total": 0, "positive": 0, "negative": 0, "satisfaction_pct": 0}
 
 
 def get_stats(period: str = "all") -> dict[str, int]:

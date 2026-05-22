@@ -341,6 +341,13 @@ export default function ChatInterface() {
           <p className="mt-0.5 text-[11px] font-medium text-accent tracking-wide">
             Jaya&apos;s personal AI assistant — ask anything
           </p>
+          {totalResponses !== null && (
+            <p className="mt-1.5 text-[10px] text-fg-faint">
+              Answered{" "}
+              <span className="font-semibold text-fg-muted">{totalResponses.toLocaleString()}</span>
+              {" "}questions from recruiters &amp; visitors
+            </p>
+          )}
           <div className="mx-auto mt-2 sm:mt-4 w-8 h-px bg-border" />
         </div>
       </div>

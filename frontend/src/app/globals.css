@@ -84,9 +84,55 @@ body {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 2px; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-strong); }
+
+/* ── Scroll reveal ─────────────────────────────────────────── */
+.sr-reveal {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: opacity, transform;
+}
+.sr-reveal.sr-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sr-reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
+}
+
+/* ── Card depth + lift ─────────────────────────────────────── */
+.card-lift {
+  box-shadow:
+    0 1px 2px 0 rgb(0 0 0 / 0.04),
+    0 1px 4px 0 rgb(0 0 0 / 0.04);
+  transition:
+    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    transform   0.22s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.22s ease;
+}
+.dark .card-lift {
+  box-shadow:
+    0 1px 3px 0 rgb(0 0 0 / 0.24),
+    0 1px 2px -1px rgb(0 0 0 / 0.18);
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 4px 12px -2px rgb(0 0 0 / 0.08),
+    0 8px 28px -4px rgb(0 0 0 / 0.07),
+    0 1px 3px 0 rgb(0 0 0 / 0.04);
+}
+.dark .card-lift:hover {
+  box-shadow:
+    0 4px 16px -2px rgb(0 0 0 / 0.44),
+    0 8px 32px -4px rgb(0 0 0 / 0.36),
+    0 1px 3px 0 rgb(0 0 0 / 0.20);
+}
 
 /* ── Blog prose ───────────────────────────────────────── */
 .prose { color: var(--fg-muted); max-width: 68ch; font-size: 1rem; line-height: 1.8; }

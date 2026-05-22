@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ScrollReveal from "@/components/ScrollReveal";
 
 interface SourceLink { label: string; url: string }
 interface Project {
@@ -109,9 +110,9 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
       {filtered.length > 0 && (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((p, i) => (
+            <ScrollReveal key={i} delay={Math.min((i % 3) * 80, 160)} className="flex">
             <div
-              key={i}
-              className="group flex flex-col rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all"
+              className="group flex flex-col flex-1 rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 card-lift"
             >
               <div className="flex items-start justify-between gap-2 mb-3">
                 <h2 className="font-bold text-fg text-sm leading-snug">{p.title}</h2>
@@ -174,6 +175,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                 )}
               </div>
             </div>
+            </ScrollReveal>
           ))}
         </div>
       )}

@@ -4,6 +4,7 @@ import { projects } from "@/data/projects";
 import { skills } from "@/data/skills";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import ContactForm from "@/components/ContactForm";
+import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata = { title: "Jaya Sabarish Reddy Remala — Software Engineer" };
 
@@ -126,10 +127,10 @@ export default function PortfolioHome() {
             </Link>
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {featured.map((p) => (
+            {featured.map((p, i) => (
+              <ScrollReveal key={p.title} delay={i * 80} className="flex">
               <div
-                key={p.title}
-                className="group rounded-2xl border border-border bg-surface p-5 space-y-3 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all"
+                className="group flex-1 rounded-2xl border border-border bg-surface p-5 space-y-3 hover:border-indigo-300 dark:hover:border-indigo-700 card-lift"
               >
                 <div className="flex items-start justify-between gap-2">
                   <h3 className="font-semibold text-fg text-sm leading-snug">{p.title}</h3>
@@ -164,6 +165,7 @@ export default function PortfolioHome() {
                   ) : null}
                 </div>
               </div>
+              </ScrollReveal>
             ))}
           </div>
         </section>
@@ -173,17 +175,19 @@ export default function PortfolioHome() {
       <section>
         <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-6">Skills & Tools</h2>
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {skills.map((group) => (
-            <div key={group.category} className="rounded-2xl border border-border bg-surface p-5">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-accent mb-3">{group.category}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {group.items.map((item) => (
-                  <span key={item} className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-xs text-fg-muted">
-                    {item}
-                  </span>
-                ))}
+          {skills.map((group, i) => (
+            <ScrollReveal key={group.category} delay={i * 55}>
+              <div className="rounded-2xl border border-border bg-surface p-5 card-lift h-full">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-accent mb-3">{group.category}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {group.items.map((item) => (
+                    <span key={item} className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-xs text-fg-muted transition-colors hover:border-border-strong hover:text-fg">
+                      {item}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
+            </ScrollReveal>
           ))}
         </div>
       </section>

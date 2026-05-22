@@ -1,5 +1,6 @@
 import { experience } from "@/data/experience";
 import { profile } from "@/data/profile";
+import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata = { title: "Experience — Jaya Sabarish Reddy Remala" };
 
@@ -22,7 +23,8 @@ export default function ExperiencePage() {
             {/* Timeline dot */}
             <div className="absolute left-0 top-1 h-[22px] w-[22px] rounded-full border-2 border-bg bg-indigo-600 shadow-sm ring-2 ring-border" />
 
-            <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-border-strong hover:shadow-sm transition-all">
+            <ScrollReveal delay={Math.min(i * 70, 280)} className="w-full">
+            <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-border-strong card-lift">
               {/* Header row */}
               <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                 <div>
@@ -56,6 +58,7 @@ export default function ExperiencePage() {
                 ))}
               </ul>
             </div>
+            </ScrollReveal>
           </li>
         ))}
       </ol>

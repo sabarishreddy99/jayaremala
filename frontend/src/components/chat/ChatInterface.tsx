@@ -190,7 +190,7 @@ export default function ChatInterface() {
       let ragSources: string[] = [];
       let sseError: string | null = null;
 
-      while (true) {
+      outer: while (true) {
         const { done, value } = await reader.read();
         if (done) break;
         for (const line of decoder.decode(value, { stream: true }).split("\n")) {
@@ -198,11 +198,11 @@ export default function ChatInterface() {
           try {
             const data = JSON.parse(line.slice(6));
             if (data.token) { accumulated += data.token; setStreamingContent(accumulated); }
-            if (data.error) { sseError = data.error as string; break; }
+            if (data.error) { sseError = data.error as string; break outer; }
             if (data.done) {
               if (data.model) setActiveModel(data.model);
               if (data.sources) ragSources = data.sources as string[];
-              break;
+              break outer;
             }
           } catch { /* partial chunk */ }
         }

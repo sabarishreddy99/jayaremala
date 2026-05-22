@@ -31,11 +31,11 @@ def record_clap(slug: str, body: ClapRequest, request: Request) -> dict:
     return blog_stats.record_clap(slug, _get_ip(request), body.count)
 
 
-@router.get("/{slug}/stats")
-def get_post_stats(slug: str, request: Request) -> dict:
-    return blog_stats.get_post_stats(slug, _get_ip(request))
-
-
 @router.get("/stats/summary")
 def get_summary() -> dict:
     return blog_stats.get_summary()
+
+
+@router.get("/{slug}/stats")
+def get_post_stats(slug: str, request: Request) -> dict:
+    return blog_stats.get_post_stats(slug, _get_ip(request))

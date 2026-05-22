@@ -1,5 +1,5 @@
-import asyncio
 import logging
+import threading
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
@@ -22,10 +22,7 @@ from app.routers.stats import router as stats_router
 logger = logging.getLogger(__name__)
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    analytics.init_db()
-    blog_stats.init_db()
+def _background_startup() -> None:
     logger.info("Starting up — ingesting knowledge base...")
     try:
         result = run_ingest()
@@ -33,15 +30,17 @@ async def lifespan(app: FastAPI):
         rag_graph.build_graph()
     except Exception as exc:
         logger.warning("RAG ingest failed (non-fatal): %s", exc)
-
-    # Pre-warm embedding model + cross-encoder so the first user request doesn't
-    # pay the model-load latency penalty
-    loop = asyncio.get_running_loop()
     try:
-        await asyncio.wait_for(loop.run_in_executor(None, rag_warmup), timeout=120.0)
+        rag_warmup()
     except Exception as exc:
         logger.warning("Model warmup failed (non-fatal): %s", exc)
 
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    analytics.init_db()
+    blog_stats.init_db()
+    threading.Thread(target=_background_startup, daemon=True).start()
     yield
 
 

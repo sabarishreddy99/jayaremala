@@ -129,7 +129,7 @@ export default function ContactForm() {
         ))}
       </div>
 
-      <section className="rounded-2xl border border-border bg-surface p-6 sm:p-8">
+      <section className="rounded-2xl border border-border bg-surface-raised p-6 sm:p-8">
         <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-3">Get in Touch</h2>
         {profile.contact_description && (
           <p className="text-sm text-fg-subtle mb-6 max-w-md">{profile.contact_description}</p>

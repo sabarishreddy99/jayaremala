@@ -318,6 +318,16 @@ body {
   100% { transform: translateY(200%);  opacity: 0; }
 }
 
+/* ── Section stacking — desktop only ───────────────────── */
+@media (min-width: 640px) {
+  .stack-sect {
+    box-shadow: 0 -10px 40px -6px rgb(0 0 0 / 0.08);
+  }
+  .dark .stack-sect {
+    box-shadow: 0 -10px 40px -6px rgb(0 0 0 / 0.32);
+  }
+}
+
 /* ── Avocado hero blobs ─────────────────────────────────── */
 @keyframes blob {
   0%, 100% { transform: translate(0px, 0px) scale(1); }

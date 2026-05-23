@@ -50,8 +50,8 @@ function Sect({
 }) {
   return (
     <section
-      className={`sticky top-[50px] bg-bg overflow-y-auto ${className}`}
-      style={{ zIndex: z, height: "calc(100dvh - 50px)" }}
+      className={`sm:sticky sm:top-[50px] bg-bg stack-sect ${className}`}
+      style={{ zIndex: z, minHeight: "calc(100dvh - 50px)" }}
     >
       {children}
     </section>

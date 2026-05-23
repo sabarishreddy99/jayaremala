@@ -39,25 +39,19 @@ function Inner({ children, className = "" }: { children: React.ReactNode; classN
   );
 }
 
-/**
- * Stacking card — sticky below the nav, slides on top of previous card.
- * Each card must have a higher z-index than the previous one.
- */
-function StackCard({
+function Sect({
   children,
   z,
-  bg = "",
   className = "",
 }: {
   children: React.ReactNode;
   z: number;
-  bg?: string;
   className?: string;
 }) {
   return (
     <section
-      className={`sticky top-[50px] ${bg} ${className}`}
-      style={{ zIndex: z }}
+      className={`sticky top-[50px] bg-bg overflow-y-auto ${className}`}
+      style={{ zIndex: z, height: "calc(100dvh - 50px)" }}
     >
       {children}
     </section>
@@ -123,7 +117,7 @@ export default function PortfolioHome() {
       </section>
 
       {/* ── 2 · At a Glance ── z-[2] ───────────────────────────── */}
-      <StackCard z={2} bg="bg-surface">
+      <Sect z={2}>
         <Inner className="py-16 sm:py-20">
           <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-8">At a Glance</h2>
 
@@ -167,11 +161,11 @@ export default function PortfolioHome() {
             </div>
           </div>
         </Inner>
-      </StackCard>
+      </Sect>
 
       {/* ── 3 · Featured Projects ── z-[3] ─────────────────────── */}
       {featured.length > 0 && (
-        <StackCard z={3} bg="bg-bg">
+        <Sect z={3}>
           <Inner className="py-16 sm:py-20">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Featured Projects</h2>
@@ -231,11 +225,11 @@ export default function PortfolioHome() {
               ))}
             </div>
           </Inner>
-        </StackCard>
+        </Sect>
       )}
 
       {/* ── 4 · Skills ── z-[4] ────────────────────────────────── */}
-      <StackCard z={4} bg="bg-surface">
+      <Sect z={4}>
         <Inner className="py-16 sm:py-20">
           <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-6">Skills & Tools</h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -255,21 +249,21 @@ export default function PortfolioHome() {
             ))}
           </div>
         </Inner>
-      </StackCard>
+      </Sect>
 
       {/* ── 5 · Testimonials ── z-[5] ──────────────────────────── */}
-      <StackCard z={5} bg="bg-bg">
+      <Sect z={5}>
         <Inner className="py-16 sm:py-20">
           <TestimonialsCarousel />
         </Inner>
-      </StackCard>
+      </Sect>
 
       {/* ── 6 · Contact ── z-[6] ───────────────────────────────── */}
-      <StackCard z={6} bg="bg-surface" className="pb-16 sm:pb-24">
+      <Sect z={6} className="pb-16 sm:pb-24">
         <Inner className="py-16 sm:py-20">
           <ContactForm />
         </Inner>
-      </StackCard>
+      </Sect>
     </div>
   );
 }

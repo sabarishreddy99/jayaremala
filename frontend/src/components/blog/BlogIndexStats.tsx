@@ -133,7 +133,7 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
           placeholder="Search posts…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-xl border border-border bg-surface pl-9 pr-9 py-2.5 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
+          className="w-full rounded-xl border border-border bg-surface pl-9 pr-9 py-2.5 text-base sm:text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
         />
         {query && (
           <button

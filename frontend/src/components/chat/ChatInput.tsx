@@ -92,7 +92,7 @@ export default function ChatInput({ onSend, disabled, prefill, onPrefillConsumed
         ref={textareaRef}
         rows={1}
         placeholder={isListening ? "Listening…" : "Ask about experience, projects, skills…"}
-        className="flex-1 resize-none bg-transparent text-sm leading-relaxed text-fg placeholder:text-fg-faint focus:outline-none"
+        className="flex-1 resize-none bg-transparent text-base sm:text-sm leading-relaxed text-fg placeholder:text-fg-faint focus:outline-none"
         onKeyDown={handleKeyDown}
         disabled={disabled}
         style={{ maxHeight: "120px" }}

@@ -175,7 +175,7 @@ export default function HeroAvocado() {
           onChange={(e) => setInput(e.target.value)}
           placeholder={hasReply ? "Ask another question…" : "Ask anything about Jaya…"}
           disabled={streaming}
-          className="min-w-0 flex-1 bg-transparent py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none disabled:opacity-60"
+          className="min-w-0 flex-1 bg-transparent py-2 text-base sm:text-sm text-fg placeholder:text-fg-faint focus:outline-none disabled:opacity-60"
         />
         <button
           type="submit"

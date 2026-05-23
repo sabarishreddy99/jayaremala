@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 
 const THOUGHTS = [
-  "Slicing through the knowledge base…",
-  "Mashing in Jaya's experience…",
-  "Squeezing out the best context…",
-  "Layering the freshest insights…",
-  "Almost ready to serve…",
+  "Retrieving context from knowledge base…",
+  "Running HyDE query expansion…",
+  "Fusing vector + BM25 results…",
+  "Expanding via entity graph…",
+  "Generating response with Gemini…",
 ];
 
 export default function LoadingGame() {

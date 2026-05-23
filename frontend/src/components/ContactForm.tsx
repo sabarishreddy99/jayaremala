@@ -146,7 +146,7 @@ export default function ContactForm() {
                   placeholder="Your name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full bg-transparent text-sm text-fg placeholder:text-fg-faint focus:outline-none"
+                  className="w-full bg-transparent text-base sm:text-sm text-fg placeholder:text-fg-faint focus:outline-none"
                 />
               </div>
             </div>
@@ -159,7 +159,7 @@ export default function ContactForm() {
                   placeholder="you@company.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full bg-transparent text-sm text-fg placeholder:text-fg-faint focus:outline-none"
+                  className="w-full bg-transparent text-base sm:text-sm text-fg placeholder:text-fg-faint focus:outline-none"
                 />
               </div>
             </div>
@@ -174,7 +174,7 @@ export default function ContactForm() {
                 placeholder="What's on your mind?"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                className="w-full resize-none bg-transparent text-sm text-fg placeholder:text-fg-faint focus:outline-none leading-relaxed"
+                className="w-full resize-none bg-transparent text-base sm:text-sm text-fg placeholder:text-fg-faint focus:outline-none leading-relaxed"
               />
             </div>
           </div>

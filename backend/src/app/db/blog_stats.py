@@ -113,13 +113,18 @@ _CUTOFFS = {
 
 
 def get_summary(period: str = "all") -> dict:
-    """Returns total claps and per-post stats. period: week | month | year | all."""
+    """Returns blog stats. period filters views only.
+
+    Claps are stored as a cumulative total per (slug, ip_hash) row — there is no
+    per-event timestamp, so filtering by updated_at would sum the entire stored total
+    for any row touched in that window, not the actual claps given in that period.
+    Clap totals are therefore always all-time; only view counts respect the period.
+    """
     view_where = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
-    clap_where = f"AND updated_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
         with sqlite3.connect(_db_path()) as conn:
             total_claps = conn.execute(
-                f"SELECT COALESCE(SUM(count),0) FROM blog_claps WHERE 1=1 {clap_where}"
+                "SELECT COALESCE(SUM(count),0) FROM blog_claps"
             ).fetchone()[0]
             total_views = conn.execute(
                 f"SELECT COUNT(*) FROM blog_views WHERE 1=1 {view_where}"
@@ -127,7 +132,7 @@ def get_summary(period: str = "all") -> dict:
             rows = conn.execute(f"""
                 SELECT slug,
                        (SELECT COUNT(*) FROM blog_views v WHERE v.slug = s.slug {view_where}) AS views,
-                       (SELECT COALESCE(SUM(count),0) FROM blog_claps c WHERE c.slug = s.slug {clap_where}) AS claps
+                       (SELECT COALESCE(SUM(count),0) FROM blog_claps c WHERE c.slug = s.slug) AS claps
                 FROM (SELECT DISTINCT slug FROM blog_views
                       UNION SELECT DISTINCT slug FROM blog_claps) s
             """).fetchall()

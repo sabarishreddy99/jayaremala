@@ -45,11 +45,12 @@ def get_admin_stats(authorization: str = Header(default="")) -> dict:
     token = authorization.removeprefix("Bearer ").strip()
     if token != settings.admin_token:
         raise HTTPException(status_code=403, detail="Invalid token")
+    periods = ["week", "month", "all"]
     return {
-        "conversations": {p: analytics.get_stats(p) for p in ["week", "month", "all"]},
-        "feedback": analytics.get_feedback_summary(),
-        "top_questions": analytics.get_top_questions(15),
-        "blog": blog_stats.get_summary(),
-        "experience": analytics.get_experience_rating_summary(),
-        "site_visitors": {p: analytics.get_site_visitor_stats(p) for p in ["week", "month", "all"]},
+        "conversations":  {p: analytics.get_stats(p) for p in periods},
+        "feedback":       {p: analytics.get_feedback_summary(p) for p in periods},
+        "top_questions":  {p: analytics.get_top_questions(15, p) for p in periods},
+        "experience":     {p: analytics.get_experience_rating_summary(p) for p in periods},
+        "blog":           blog_stats.get_summary(),
+        "site_visitors":  {p: analytics.get_site_visitor_stats(p) for p in periods},
     }

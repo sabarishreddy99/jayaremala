@@ -101,12 +101,14 @@ def record_question(text: str) -> None:
         logger.warning("record_question failed (non-fatal): %s", exc)
 
 
-def get_top_questions(n: int = 15) -> list[dict]:
+def get_top_questions(n: int = 15, period: str = "all") -> list[dict]:
+    and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
         with sqlite3.connect(_db_path()) as conn:
-            rows = conn.execute("""
+            rows = conn.execute(f"""
                 SELECT text, COUNT(*) AS cnt
                 FROM questions
+                WHERE 1=1 {and_clause}
                 GROUP BY lower(trim(text))
                 ORDER BY cnt DESC
                 LIMIT ?
@@ -117,12 +119,18 @@ def get_top_questions(n: int = 15) -> list[dict]:
         return []
 
 
-def get_feedback_summary() -> dict:
+def get_feedback_summary(period: str = "all") -> dict:
+    and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
         with sqlite3.connect(_db_path()) as conn:
-            total    = conn.execute("SELECT COUNT(*) FROM feedback").fetchone()[0]
-            positive = conn.execute("SELECT COUNT(*) FROM feedback WHERE rating=1").fetchone()[0]
-            negative = conn.execute("SELECT COUNT(*) FROM feedback WHERE rating=-1").fetchone()[0]
+            row = conn.execute(f"""
+                SELECT
+                    COUNT(*) AS total,
+                    SUM(CASE WHEN rating=1  THEN 1 ELSE 0 END) AS positive,
+                    SUM(CASE WHEN rating=-1 THEN 1 ELSE 0 END) AS negative
+                FROM feedback WHERE 1=1 {and_clause}
+            """).fetchone()
+        total, positive, negative = row[0], row[1] or 0, row[2] or 0
         satisfaction = round(positive / total * 100) if total > 0 else 0
         return {"total": total, "positive": positive, "negative": negative, "satisfaction_pct": satisfaction}
     except Exception as exc:
@@ -140,11 +148,12 @@ def record_experience_rating(rating: int) -> None:
         logger.warning("record_experience_rating failed (non-fatal): %s", exc)
 
 
-def get_experience_rating_summary() -> dict:
+def get_experience_rating_summary(period: str = "all") -> dict:
+    where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
         with sqlite3.connect(_db_path()) as conn:
             rows = conn.execute(
-                "SELECT rating, COUNT(*) FROM experience_ratings GROUP BY rating"
+                f"SELECT rating, COUNT(*) FROM experience_ratings {where} GROUP BY rating"
             ).fetchall()
         dist = {i: 0 for i in range(1, 6)}
         for r, c in rows:

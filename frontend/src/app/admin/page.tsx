@@ -15,13 +15,15 @@ interface BlogSummary { total_views: number; total_claps: number; posts: BlogPos
 
 interface ExperienceSummary { total: number; average: number; distribution: Record<string, number> }
 
+type ByPeriod<T> = { week: T; month: T; all: T };
+
 interface AdminStats {
-  conversations: { week: PeriodStats; month: PeriodStats; all: PeriodStats };
-  feedback: Feedback;
-  top_questions: Question[];
-  blog: BlogSummary;
-  experience: ExperienceSummary;
-  site_visitors: { week: SiteVisitStats; month: SiteVisitStats; all: SiteVisitStats };
+  conversations:  ByPeriod<PeriodStats>;
+  feedback:       ByPeriod<Feedback>;
+  top_questions:  ByPeriod<Question[]>;
+  experience:     ByPeriod<ExperienceSummary>;
+  blog:           BlogSummary;
+  site_visitors:  ByPeriod<SiteVisitStats>;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -487,8 +489,11 @@ function Dashboard({
   lastUpdated: Date | null;
 }) {
   const [period, setPeriod] = useState<Period>("all");
-  const conv = stats.conversations[period];
-  const site = stats.site_visitors[period];
+  const conv     = stats.conversations[period];
+  const site     = stats.site_visitors[period];
+  const feedback = stats.feedback[period];
+  const topQs    = stats.top_questions[period];
+  const exp      = stats.experience[period];
   const topPosts = [...stats.blog.posts].sort((a, b) => b.views - a.views).slice(0, 8);
 
   return (
@@ -569,24 +574,24 @@ function Dashboard({
           <StatCard
             label="Chat Users"
             value={conv.unique_visitors}
-            sub={`${conv.total_responses} conversations`}
+            sub={`${(Math.round(conv.total_responses / Math.max(conv.unique_visitors, 1) * 10) / 10).toFixed(1)} avg msgs/visitor`}
           />
           <StatCard
             label="Conversations"
             value={conv.total_responses}
-            sub={period === "all" ? "total" : `in the last ${period === "week" ? "7" : "30"} days`}
+            sub={period === "all" ? "total chat responses" : `last ${period === "week" ? "7" : "30"} days`}
           />
           <StatCard
             label="Satisfaction"
-            value={stats.feedback.total > 0 ? `${stats.feedback.satisfaction_pct}%` : "—"}
-            sub={`from ${stats.feedback.total} rated responses`}
-            color={stats.feedback.satisfaction_pct >= 70 ? "emerald" : stats.feedback.satisfaction_pct > 0 ? "rose" : "default"}
+            value={feedback.total > 0 ? `${feedback.satisfaction_pct}%` : "—"}
+            sub={`from ${feedback.total} rated responses`}
+            color={feedback.satisfaction_pct >= 70 ? "emerald" : feedback.satisfaction_pct > 0 ? "rose" : "default"}
           />
           <StatCard
             label="Avg Experience"
-            value={stats.experience.total > 0 ? `${stats.experience.average} ★` : "—"}
-            sub={`from ${stats.experience.total} visitor rating${stats.experience.total !== 1 ? "s" : ""}`}
-            color={stats.experience.average >= 4 ? "emerald" : stats.experience.average >= 3 ? "default" : stats.experience.total > 0 ? "rose" : "default"}
+            value={exp.total > 0 ? `${exp.average} ★` : "—"}
+            sub={`from ${exp.total} visitor rating${exp.total !== 1 ? "s" : ""}`}
+            color={exp.average >= 4 ? "emerald" : exp.average >= 3 ? "default" : exp.total > 0 ? "rose" : "default"}
           />
           <StatCard
             label="Blog Views"
@@ -601,11 +606,11 @@ function Dashboard({
           {/* Top questions */}
           <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-4">Top Questions</h2>
-            {stats.top_questions.length === 0 ? (
+            {topQs.length === 0 ? (
               <p className="text-sm text-fg-faint">No questions logged yet.</p>
             ) : (
               <ol className="space-y-2">
-                {stats.top_questions.map((q, i) => (
+                {topQs.map((q, i) => (
                   <li key={i} className="flex items-start gap-3">
                     <span className="text-[10px] font-mono text-fg-faint mt-0.5 w-4 shrink-0">{i + 1}.</span>
                     <span className="text-xs text-fg-muted leading-relaxed flex-1 min-w-0 truncate" title={q.text}>
@@ -625,19 +630,19 @@ function Dashboard({
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Response Feedback</h2>
             <div className="grid grid-cols-3 gap-2">
               <div className="rounded-xl bg-surface-raised border border-border p-2.5 text-center">
-                <p className="text-xl sm:text-2xl font-bold text-fg">{stats.feedback.total}</p>
+                <p className="text-xl sm:text-2xl font-bold text-fg">{feedback.total}</p>
                 <p className="text-[9px] sm:text-[10px] text-fg-faint mt-0.5">Total rated</p>
               </div>
               <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2.5 text-center">
-                <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">{stats.feedback.positive}</p>
+                <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">{feedback.positive}</p>
                 <p className="text-[9px] sm:text-[10px] text-emerald-700 dark:text-emerald-500 mt-0.5">👍 Positive</p>
               </div>
               <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2.5 text-center">
-                <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">{stats.feedback.negative}</p>
+                <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">{feedback.negative}</p>
                 <p className="text-[9px] sm:text-[10px] text-rose-700 dark:text-rose-500 mt-0.5">👎 Negative</p>
               </div>
             </div>
-            <SatisfactionBar positive={stats.feedback.positive} negative={stats.feedback.negative} />
+            <SatisfactionBar positive={feedback.positive} negative={feedback.negative} />
 
             {/* All-time conversation comparison */}
             <div className="pt-3 border-t border-border space-y-2">
@@ -668,24 +673,24 @@ function Dashboard({
         <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Visitor Experience</h2>
-            {stats.experience.total > 0 && (
+            {exp.total > 0 && (
               <div className="flex items-center gap-1.5">
                 <span className="text-amber-400 text-base leading-none">
-                  {"★".repeat(Math.round(stats.experience.average))}
-                  {"☆".repeat(5 - Math.round(stats.experience.average))}
+                  {"★".repeat(Math.round(exp.average))}
+                  {"☆".repeat(5 - Math.round(exp.average))}
                 </span>
-                <span className="text-sm font-bold text-fg">{stats.experience.average}</span>
-                <span className="text-[10px] text-fg-faint">/ 5 from {stats.experience.total} rating{stats.experience.total !== 1 ? "s" : ""}</span>
+                <span className="text-sm font-bold text-fg">{exp.average}</span>
+                <span className="text-[10px] text-fg-faint">/ 5 from {exp.total} rating{exp.total !== 1 ? "s" : ""}</span>
               </div>
             )}
           </div>
-          {stats.experience.total === 0 ? (
+          {exp.total === 0 ? (
             <p className="text-xs text-fg-faint">No ratings yet — visitors will see the rating widget after their first chat exchange.</p>
           ) : (
             <div className="space-y-2">
               {[5,4,3,2,1].map((star) => {
-                const count = stats.experience.distribution[star] ?? 0;
-                const pct = stats.experience.total > 0 ? Math.round((count / stats.experience.total) * 100) : 0;
+                const count = exp.distribution[star] ?? 0;
+                const pct = exp.total > 0 ? Math.round((count / exp.total) * 100) : 0;
                 return (
                   <div key={star} className="flex items-center gap-3">
                     <span className="text-[11px] text-fg-faint w-4 shrink-0 text-right">{star}</span>

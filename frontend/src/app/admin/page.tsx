@@ -476,7 +476,16 @@ function SiteGuide() {
 type Period = "week" | "month" | "all";
 const PERIOD_LABELS: Record<Period, string> = { week: "This week", month: "This month", all: "All time" };
 
-function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => void }) {
+function Dashboard({
+  stats, onLogout, onRefresh, refreshing, secondsAgo, lastUpdated,
+}: {
+  stats: AdminStats;
+  onLogout: () => void;
+  onRefresh: () => void;
+  refreshing: boolean;
+  secondsAgo: number;
+  lastUpdated: Date | null;
+}) {
   const [period, setPeriod] = useState<Period>("all");
   const conv = stats.conversations[period];
   const site = stats.site_visitors[period];
@@ -495,7 +504,26 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
               <p className="text-[11px] text-fg-faint">Internal dashboard — not public</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            {lastUpdated && (
+              <span className="text-[10px] text-fg-faint tabular-nums">
+                {refreshing ? "Refreshing…" : secondsAgo < 10 ? "Just updated" : `Updated ${secondsAgo}s ago`}
+              </span>
+            )}
+            <button
+              onClick={onRefresh}
+              disabled={refreshing}
+              className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors disabled:opacity-40"
+              title="Refresh stats"
+            >
+              <svg
+                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                className={refreshing ? "animate-spin" : ""}
+              >
+                <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+              </svg>
+              Refresh
+            </button>
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors"
@@ -759,7 +787,7 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
         <SiteGuide />
 
         <p className="text-center text-[10px] text-fg-faint pb-4">
-          Avocado Admin · {new Date().getFullYear()} · Data from analytics.db on Lightsail
+          Avocado Admin · {new Date().getFullYear()} · Auto-refreshes every 60s · Data from analytics.db on Lightsail
         </p>
 
       </div>
@@ -769,10 +797,15 @@ function Dashboard({ stats, onLogout }: { stats: AdminStats; onLogout: () => voi
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+const AUTO_REFRESH_MS = 60_000;
+
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState("");
+  const [refreshing, setRefreshing] = useState(false);
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
+  const [secondsAgo, setSecondsAgo] = useState(0);
 
   // Restore token from localStorage after hydration
   useEffect(() => {
@@ -780,16 +813,37 @@ export default function AdminPage() {
     if (saved) setToken(saved);
   }, []);
 
-  // Fetch stats whenever token is set
-  useEffect(() => {
-    if (!token) return;
-    fetch(`${API_BASE_URL}/stats/admin`, { headers: { Authorization: `Bearer ${token}` } })
+  const fetchStats = (t: string, silent = false) => {
+    if (!silent) setRefreshing(true);
+    return fetch(`${API_BASE_URL}/stats/admin`, { headers: { Authorization: `Bearer ${t}` } })
       .then(async (res) => {
         if (!res.ok) { setToken(null); localStorage.removeItem("avocado_admin_token"); return; }
         setStats(await res.json());
+        setLastUpdated(new Date());
+        setSecondsAgo(0);
+        setError("");
       })
-      .catch(() => setError("Failed to load stats — is the backend reachable?"));
+      .catch(() => setError("Failed to load stats — is the backend reachable?"))
+      .finally(() => setRefreshing(false));
+  };
+
+  // Initial fetch + auto-refresh every 60s
+  useEffect(() => {
+    if (!token) return;
+    fetchStats(token);
+    const interval = setInterval(() => fetchStats(token, true), AUTO_REFRESH_MS);
+    return () => clearInterval(interval);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  // "X seconds ago" ticker
+  useEffect(() => {
+    if (!lastUpdated) return;
+    const tick = setInterval(() => {
+      setSecondsAgo(Math.round((Date.now() - lastUpdated.getTime()) / 1000));
+    }, 5000);
+    return () => clearInterval(tick);
+  }, [lastUpdated]);
 
   function handleAuth(t: string) {
     localStorage.setItem("avocado_admin_token", t);
@@ -800,11 +854,12 @@ export default function AdminPage() {
     localStorage.removeItem("avocado_admin_token");
     setToken(null);
     setStats(null);
+    setLastUpdated(null);
   }
 
   if (!token) return <LoginForm onAuth={handleAuth} />;
 
-  if (error) return (
+  if (error && !stats) return (
     <div className="min-h-screen flex items-center justify-center">
       <p className="text-sm text-rose-600">{error}</p>
     </div>
@@ -816,5 +871,14 @@ export default function AdminPage() {
     </div>
   );
 
-  return <Dashboard stats={stats} onLogout={handleLogout} />;
+  return (
+    <Dashboard
+      stats={stats}
+      onLogout={handleLogout}
+      onRefresh={() => token && fetchStats(token)}
+      refreshing={refreshing}
+      secondsAgo={secondsAgo}
+      lastUpdated={lastUpdated}
+    />
+  );
 }

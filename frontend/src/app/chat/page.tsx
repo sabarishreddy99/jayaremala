@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import ChatInterface from "@/components/chat/ChatInterface";
 import AvocadoBg from "@/components/chat/AvocadoBg";
@@ -37,7 +38,9 @@ export default function ChatPage() {
 
       {/* Chat — fills remaining height; intro is now inside ChatInterface and collapses on first message */}
       <div className="relative z-10 flex-1 overflow-hidden">
-        <ChatInterface />
+        <Suspense>
+          <ChatInterface />
+        </Suspense>
       </div>
 
     </div>

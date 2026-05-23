@@ -7,7 +7,7 @@ interface Props {
   title: string;
   description: string;
   tags: string[];
-  award?: boolean;
+  award?: string;
   note?: string;
   sourceLinks?: SourceLink[];
 }
@@ -94,7 +94,7 @@ export default function RagPipelineCard({ title, description, tags, award, note,
         <h3 className="font-semibold text-fg text-sm leading-snug">{title}</h3>
         {award && (
           <span className="text-[10px] font-semibold rounded-full bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-2 py-0.5 whitespace-nowrap flex-shrink-0">
-            🏆 Winner
+            🏆 {award}
           </span>
         )}
       </div>

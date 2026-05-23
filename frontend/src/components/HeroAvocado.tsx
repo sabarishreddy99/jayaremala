@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api/client";
 import { saveMessages, loadMessages } from "@/lib/session";
 
@@ -29,6 +30,7 @@ function Prose({ text }: { text: string }) {
 }
 
 export default function HeroAvocado() {
+  const router = useRouter();
   const [input, setInput]         = useState("");
   const [asked, setAsked]         = useState("");
   const [reply, setReply]         = useState("");
@@ -39,6 +41,12 @@ export default function HeroAvocado() {
   async function submit(q: string) {
     q = q.trim();
     if (!q || streaming) return;
+
+    // Second question — hand off to full chat with history already in localStorage
+    if (asked !== "") {
+      router.push(`/chat?q=${encodeURIComponent(q)}`);
+      return;
+    }
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;

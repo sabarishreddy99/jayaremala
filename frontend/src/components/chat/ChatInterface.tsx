@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, startTransition } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api/client";
 import { saveMessages, loadMessages, clearSession } from "@/lib/session";
 import { profile } from "@/data/profile";
@@ -121,7 +122,11 @@ const SUGGESTIONS = [
 ];
 
 export default function ChatInterface() {
+  const searchParams = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
+  // Always-current ref so handleSend reads the right messages even from stale closures
+  const messagesRef = useRef<Message[]>([WELCOME]);
+  messagesRef.current = messages;
   const [activeModel, setActiveModel] = useState<string | null>(null);
   const [totalResponses, setTotalResponses] = useState<number | null>(null);
   const [backendStatus, setBackendStatus] = useState<"checking" | "ready" | "warming">("checking");
@@ -149,12 +154,20 @@ export default function ChatInterface() {
     if (sessionStorage.getItem("avocado_rating_dismissed") === "1") setRatingDismissed(true);
   }, []);
 
-  // Load persisted messages after hydration to avoid SSR mismatch
+  // Load persisted messages after hydration, then auto-send ?q= if present
+  const autoSentRef = useRef(false);
   useEffect(() => {
     const saved = loadMessages();
-    if (saved && saved.length > 0) {
-      startTransition(() => setMessages([WELCOME, ...saved]));
+    const restored: Message[] = saved && saved.length > 0 ? [WELCOME, ...saved] : [WELCOME];
+    messagesRef.current = restored; // update ref immediately so handleSend reads it
+    startTransition(() => setMessages(restored));
+
+    const q = searchParams.get("q");
+    if (q && !autoSentRef.current) {
+      autoSentRef.current = true;
+      handleSend(decodeURIComponent(q));
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [streaming, setStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
@@ -188,7 +201,7 @@ export default function ChatInterface() {
 
   async function handleSend(text: string) {
     const userMsg: Message = { role: "user", content: text };
-    const nextMessages = [...messages, userMsg];
+    const nextMessages = [...messagesRef.current, userMsg];
     setMessages(nextMessages);
     setStreaming(true);
     setStreamingContent("");

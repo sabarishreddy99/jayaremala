@@ -72,9 +72,10 @@ def init_db() -> None:
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_site_visit_ip ON site_visits(ip_hash)")
-        conn.execute("CREATE INDEX IF NOT EXISTS idx_site_visit_page ON site_visits(page)")
-        # Migrate existing tables (safe: ignores already-existing columns)
+        # Migrate existing tables first (adds page/country/city if missing),
+        # then create the page index — order matters: column must exist before index.
         _migrate(conn)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_site_visit_page ON site_visits(page)")
     logger.info("Analytics DB ready: %s", p.resolve())
 
 

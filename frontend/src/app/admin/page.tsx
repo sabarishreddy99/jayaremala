@@ -6,24 +6,33 @@ import { API_BASE_URL } from "@/lib/api/client";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface PeriodStats { total_responses: number; unique_visitors: number }
+interface PeriodStats    { total_responses: number; unique_visitors: number; sessions: number }
 interface SiteVisitStats { total_visits: number; unique_visitors: number }
-interface Feedback { total: number; positive: number; negative: number; satisfaction_pct: number }
-interface Question { text: string; count: number }
-interface BlogPost { slug: string; views: number; claps: number }
-interface BlogSummary { total_views: number; total_claps: number; posts: BlogPost[] }
-
-interface ExperienceSummary { total: number; average: number; distribution: Record<string, number> }
+interface Feedback        { total: number; positive: number; negative: number; satisfaction_pct: number }
+interface Question        { text: string; count: number }
+interface BlogPost         { slug: string; views: number; claps: number }
+interface BlogSummary      { total_views: number; total_claps: number; posts: BlogPost[] }
+interface ExperienceSummary{ total: number; average: number; distribution: Record<string, number> }
+interface LocationStat     { country: string; visits: number; unique_visitors: number }
+interface PageStat         { page: string; sessions: number; unique_visitors: number }
+interface BlogEngPost      { slug: string; unique_readers: number; total_opens: number; revisiting_readers: number; revisit_rate: number }
+interface BlogEngagement   { total_opens: number; posts: BlogEngPost[] }
 
 type ByPeriod<T> = { week: T; month: T; all: T };
 
 interface AdminStats {
-  conversations:  ByPeriod<PeriodStats>;
-  feedback:       ByPeriod<Feedback>;
-  top_questions:  ByPeriod<Question[]>;
-  experience:     ByPeriod<ExperienceSummary>;
-  blog:           BlogSummary;
-  site_visitors:  ByPeriod<SiteVisitStats>;
+  conversations:   ByPeriod<PeriodStats>;
+  feedback:        ByPeriod<Feedback>;
+  top_questions:   ByPeriod<Question[]>;
+  experience:      ByPeriod<ExperienceSummary>;
+  blog:            BlogSummary;
+  site_visitors:   ByPeriod<SiteVisitStats>;
+  blog_engagement: ByPeriod<BlogEngagement>;
+  location: {
+    site: ByPeriod<LocationStat[]>;
+    chat: ByPeriod<LocationStat[]>;
+  };
+  pages: ByPeriod<PageStat[]>;
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -489,12 +498,16 @@ function Dashboard({
   lastUpdated: Date | null;
 }) {
   const [period, setPeriod] = useState<Period>("all");
-  const conv     = stats.conversations[period];
-  const site     = stats.site_visitors[period];
-  const feedback = stats.feedback[period];
-  const topQs    = stats.top_questions[period];
-  const exp      = stats.experience[period];
-  const topPosts = [...stats.blog.posts].sort((a, b) => b.views - a.views).slice(0, 8);
+  const conv        = stats.conversations[period];
+  const site        = stats.site_visitors[period];
+  const feedback    = stats.feedback[period];
+  const topQs       = stats.top_questions[period];
+  const exp         = stats.experience[period];
+  const blogEng     = stats.blog_engagement[period];
+  const siteLocations = stats.location.site[period];
+  const chatLocations = stats.location.chat[period];
+  const pages       = stats.pages[period];
+  const topPosts    = [...stats.blog.posts].sort((a, b) => b.views - a.views).slice(0, 8);
 
   return (
     <div className="min-h-screen bg-bg px-4 sm:px-6 py-8">
@@ -579,7 +592,7 @@ function Dashboard({
           <StatCard
             label="Conversations"
             value={conv.total_responses}
-            sub={period === "all" ? "total chat responses" : `last ${period === "week" ? "7" : "30"} days`}
+            sub={`${fmt(conv.sessions)} session${conv.sessions !== 1 ? "s" : ""}`}
           />
           <StatCard
             label="Satisfaction"
@@ -784,6 +797,106 @@ function Dashboard({
                 ))}
               </tbody>
             </table>
+            </div>
+          )}
+        </div>
+
+        {/* Location breakdown */}
+        <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-4">Visitor Locations</h2>
+          <div className="grid lg:grid-cols-2 gap-6">
+            {([["Site Visitors", siteLocations], ["Chat Users", chatLocations]] as [string, LocationStat[]][]).map(([label, locs]) => (
+              <div key={label}>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-2">{label}</p>
+                {locs.length === 0 ? (
+                  <p className="text-xs text-fg-faint">No geo data yet — populates as visitors arrive.</p>
+                ) : (
+                  <div className="space-y-1.5">
+                    {locs.map((l) => {
+                      const maxV = locs[0]?.unique_visitors || 1;
+                      const pct = Math.round((l.unique_visitors / maxV) * 100);
+                      return (
+                        <div key={l.country} className="flex items-center gap-2">
+                          <span className="text-[11px] text-fg-muted w-28 shrink-0 truncate">{l.country}</span>
+                          <div className="flex-1 h-1.5 bg-surface-raised rounded-full overflow-hidden">
+                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
+                          </div>
+                          <span className="text-[10px] tabular-nums text-fg-faint w-6 text-right shrink-0">{fmt(l.unique_visitors)}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Page visits */}
+        <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-4">Top Pages</h2>
+          {pages.length === 0 ? (
+            <p className="text-xs text-fg-faint">No page data yet.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {pages.map((p) => {
+                const maxS = pages[0]?.sessions || 1;
+                const pct = Math.round((p.sessions / maxS) * 100);
+                return (
+                  <div key={p.page} className="flex items-center gap-3">
+                    <span className="font-mono text-[10px] text-fg-muted w-36 shrink-0 truncate" title={p.page}>{p.page}</span>
+                    <div className="flex-1 h-1.5 bg-surface-raised rounded-full overflow-hidden">
+                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
+                    </div>
+                    <span className="text-[10px] tabular-nums text-fg-faint shrink-0">{fmt(p.sessions)} sessions</span>
+                    <span className="text-[10px] tabular-nums text-fg-faint shrink-0 hidden sm:inline">{fmt(p.unique_visitors)} uniq</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Blog engagement — session-based opens + revisits */}
+        <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+          <div className="px-4 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Blog Engagement</h2>
+            <div className="flex items-center gap-3 text-[11px] text-fg-faint">
+              <span><strong className="text-fg-muted">{fmt(blogEng.total_opens)}</strong> total opens</span>
+              <span className="text-[9px]">· 10-min session dedup · revisit = same IP opens again after 10 min</span>
+            </div>
+          </div>
+          {blogEng.posts.length === 0 ? (
+            <p className="px-5 py-6 text-sm text-fg-faint">No blog session data yet — populates as readers open posts.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Post</th>
+                    <th className="text-right px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Opens</th>
+                    <th className="text-right px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Readers</th>
+                    <th className="text-right px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Revisit %</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {blogEng.posts.map((p, i) => (
+                    <tr key={p.slug} className={i < blogEng.posts.length - 1 ? "border-b border-border" : ""}>
+                      <td className="px-3 sm:px-5 py-3 text-fg-muted font-medium max-w-[140px] sm:max-w-xs">
+                        <a href={`/blog/${p.slug}`} target="_blank" rel="noopener noreferrer"
+                           className="hover:text-accent transition-colors truncate block">{p.slug}</a>
+                      </td>
+                      <td className="px-3 sm:px-5 py-3 text-right tabular-nums text-fg-muted font-semibold">{fmt(p.total_opens)}</td>
+                      <td className="px-3 sm:px-5 py-3 text-right tabular-nums text-fg-muted">{fmt(p.unique_readers)}</td>
+                      <td className="px-3 sm:px-5 py-3 text-right tabular-nums">
+                        <span className={`font-semibold ${p.revisit_rate >= 30 ? "text-emerald-600 dark:text-emerald-400" : "text-fg-muted"}`}>
+                          {p.revisit_rate}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

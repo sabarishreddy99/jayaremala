@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import threading
 from typing import Iterator, Literal
 
 import google.genai as genai
@@ -371,8 +372,14 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
                     yield f"data: {json.dumps({'reset': True})}\n\n"
                 else:
                     yield f"data: {json.dumps({'token': item})}\n\n"
-            analytics.record(ip)
+            row_id = analytics.record(ip)
             yield f"data: {json.dumps({'done': True, 'sources': sources, 'model': used_model[0] if used_model else settings.gemini_model})}\n\n"
+            if row_id:
+                threading.Thread(
+                    target=analytics.geo_update_sync,
+                    args=("interactions", row_id, ip),
+                    daemon=True,
+                ).start()
         except Exception as exc:
             logger.error("Streaming error: %s", exc)
             error_code = "quota_exhausted" if _is_capacity_error(exc) else "stream_error"

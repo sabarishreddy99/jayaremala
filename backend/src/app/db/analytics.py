@@ -1,15 +1,22 @@
 """SQLite-backed analytics — tracks unique visitors (hashed IPs) and total responses.
 DB path is controlled by ANALYTICS_DB_PATH env var so it always resolves to the
-Railway persistent volume regardless of working directory changes between deploys.
+persistent volume regardless of working directory changes between deploys.
 """
 from __future__ import annotations
 
 import hashlib
+import json
 import logging
 import sqlite3
 from pathlib import Path
+from urllib.request import urlopen
 
 logger = logging.getLogger(__name__)
+
+_PRIVATE_IP_PREFIXES = ("127.", "10.", "192.168.", "172.16.", "172.17.", "172.18.",
+                        "172.19.", "172.20.", "172.21.", "172.22.", "172.23.",
+                        "172.24.", "172.25.", "172.26.", "172.27.", "172.28.",
+                        "172.29.", "172.30.", "172.31.", "::1")
 
 
 def _db_path() -> Path:
@@ -25,6 +32,8 @@ def init_db() -> None:
             CREATE TABLE IF NOT EXISTS interactions (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 ip_hash    TEXT    NOT NULL,
+                country    TEXT    DEFAULT '',
+                city       TEXT    DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
@@ -56,27 +65,116 @@ def init_db() -> None:
             CREATE TABLE IF NOT EXISTS site_visits (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 ip_hash    TEXT    NOT NULL,
+                page       TEXT    DEFAULT '/',
+                country    TEXT    DEFAULT '',
+                city       TEXT    DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_site_visit_ip ON site_visits(ip_hash)")
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_site_visit_page ON site_visits(page)")
+        # Migrate existing tables (safe: ignores already-existing columns)
+        _migrate(conn)
     logger.info("Analytics DB ready: %s", p.resolve())
 
 
-def record(ip: str) -> None:
-    ip_hash = hashlib.sha256(ip.encode()).hexdigest()
+def _migrate(conn: sqlite3.Connection) -> None:
+    """Add new columns to tables that may have been created before these columns existed."""
+    for table, col_def in [
+        ("interactions", "country TEXT DEFAULT ''"),
+        ("interactions", "city TEXT DEFAULT ''"),
+        ("site_visits",  "page TEXT DEFAULT '/'"),
+        ("site_visits",  "country TEXT DEFAULT ''"),
+        ("site_visits",  "city TEXT DEFAULT ''"),
+    ]:
+        try:
+            conn.execute(f"ALTER TABLE {table} ADD COLUMN {col_def}")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
+
+# ── Geo lookup ────────────────────────────────────────────────────────────────
+
+def _geo_lookup(ip: str) -> tuple[str, str]:
+    """Returns (country, city). Empty strings for private IPs or on any failure."""
+    if not ip or ip in ("unknown", "localhost") or any(ip.startswith(p) for p in _PRIVATE_IP_PREFIXES):
+        return "", ""
+    try:
+        url = f"http://ip-api.com/json/{ip}?fields=status,country,city"
+        with urlopen(url, timeout=2) as resp:  # noqa: S310
+            data = json.loads(resp.read())
+        if data.get("status") == "success":
+            return data.get("country", ""), data.get("city", "")
+    except Exception:
+        pass
+    return "", ""
+
+
+def update_visit_geo(table: str, row_id: int, country: str, city: str) -> None:
+    if not country and not city:
+        return
     try:
         with sqlite3.connect(_db_path()) as conn:
-            conn.execute("INSERT INTO interactions (ip_hash) VALUES (?)", (ip_hash,))
+            conn.execute(
+                f"UPDATE {table} SET country=?, city=? WHERE id=?",  # noqa: S608
+                (country, city, row_id),
+            )
     except Exception as exc:
-        logger.warning("Analytics record failed (non-fatal): %s", exc)
+        logger.warning("update_visit_geo failed: %s", exc)
 
+
+def geo_update_sync(table: str, row_id: int, ip: str) -> None:
+    """Resolve geo for an already-inserted row. Designed to run in a daemon thread."""
+    country, city = _geo_lookup(ip)
+    update_visit_geo(table, row_id, country, city)
+
+
+# ── Record helpers ────────────────────────────────────────────────────────────
 
 _CUTOFFS = {
     "week":  "datetime('now', '-7 days')",
     "month": "datetime('now', '-30 days')",
     "year":  "datetime('now', '-365 days')",
 }
+
+SESSION_GAP_SECONDS = 600  # 10 minutes
+
+
+def record(ip: str) -> int | None:
+    """Record a chat response. Returns the new row id (for geo back-fill)."""
+    ip_hash = hashlib.sha256(ip.encode()).hexdigest()
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            cur = conn.execute("INSERT INTO interactions (ip_hash) VALUES (?)", (ip_hash,))
+            return cur.lastrowid
+    except Exception as exc:
+        logger.warning("Analytics record failed (non-fatal): %s", exc)
+        return None
+
+
+def record_site_visit(ip: str, page: str = "/") -> int | None:
+    """Insert a site-visit session row and return its id, or None if within the
+    10-minute window (same session — don't double-count).
+    """
+    ip_hash = hashlib.sha256(ip.encode()).hexdigest()
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            last = conn.execute(
+                "SELECT MAX(created_at) FROM site_visits WHERE ip_hash=?", (ip_hash,)
+            ).fetchone()[0]
+            if last is not None:
+                seconds_ago = conn.execute(
+                    "SELECT strftime('%s','now') - strftime('%s',?)", (last,)
+                ).fetchone()[0]
+                if (seconds_ago or 0) < SESSION_GAP_SECONDS:
+                    return None  # Same session — skip
+            cur = conn.execute(
+                "INSERT INTO site_visits (ip_hash, page) VALUES (?, ?)", (ip_hash, page)
+            )
+            return cur.lastrowid
+    except Exception as exc:
+        logger.warning("record_site_visit failed (non-fatal): %s", exc)
+        return None
 
 
 def record_feedback(message_hash: str, rating: int) -> None:
@@ -100,6 +198,18 @@ def record_question(text: str) -> None:
     except Exception as exc:
         logger.warning("record_question failed (non-fatal): %s", exc)
 
+
+def record_experience_rating(rating: int) -> None:
+    if not 1 <= rating <= 5:
+        return
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            conn.execute("INSERT INTO experience_ratings (rating) VALUES (?)", (rating,))
+    except Exception as exc:
+        logger.warning("record_experience_rating failed (non-fatal): %s", exc)
+
+
+# ── Query helpers ─────────────────────────────────────────────────────────────
 
 def get_top_questions(n: int = 15, period: str = "all") -> list[dict]:
     and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
@@ -138,16 +248,6 @@ def get_feedback_summary(period: str = "all") -> dict:
         return {"total": 0, "positive": 0, "negative": 0, "satisfaction_pct": 0}
 
 
-def record_experience_rating(rating: int) -> None:
-    if not 1 <= rating <= 5:
-        return
-    try:
-        with sqlite3.connect(_db_path()) as conn:
-            conn.execute("INSERT INTO experience_ratings (rating) VALUES (?)", (rating,))
-    except Exception as exc:
-        logger.warning("record_experience_rating failed (non-fatal): %s", exc)
-
-
 def get_experience_rating_summary(period: str = "all") -> dict:
     where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
@@ -166,16 +266,30 @@ def get_experience_rating_summary(period: str = "all") -> dict:
         return {"total": 0, "average": 0, "distribution": {i: 0 for i in range(1, 6)}}
 
 
-def record_site_visit(ip: str) -> None:
-    ip_hash = hashlib.sha256(ip.encode()).hexdigest()
+def get_stats(period: str = "all") -> dict[str, int]:
+    """Chat interaction stats. sessions = distinct 10-min windows (via SQL LAG)."""
+    where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
         with sqlite3.connect(_db_path()) as conn:
-            conn.execute("INSERT INTO site_visits (ip_hash) VALUES (?)", (ip_hash,))
+            total  = conn.execute(f"SELECT COUNT(*) FROM interactions {where}").fetchone()[0]
+            unique = conn.execute(f"SELECT COUNT(DISTINCT ip_hash) FROM interactions {where}").fetchone()[0]
+            # A new session starts when: first row for this IP, OR 10+ min gap since previous row
+            sessions = conn.execute(f"""
+                SELECT COUNT(*) FROM (
+                    SELECT ip_hash, created_at,
+                           LAG(created_at) OVER (PARTITION BY ip_hash ORDER BY created_at) AS prev
+                    FROM interactions {where}
+                ) WHERE prev IS NULL
+                   OR (strftime('%s', created_at) - strftime('%s', prev)) >= {SESSION_GAP_SECONDS}
+            """).fetchone()[0]
+        return {"total_responses": total, "unique_visitors": unique, "sessions": sessions}
     except Exception as exc:
-        logger.warning("record_site_visit failed (non-fatal): %s", exc)
+        logger.warning("Analytics query failed: %s", exc)
+        return {"total_responses": 0, "unique_visitors": 0, "sessions": 0}
 
 
 def get_site_visitor_stats(period: str = "all") -> dict[str, int]:
+    """Each row in site_visits already represents a session (10-min dedup on insert)."""
     where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
         with sqlite3.connect(_db_path()) as conn:
@@ -187,13 +301,39 @@ def get_site_visitor_stats(period: str = "all") -> dict[str, int]:
         return {"total_visits": 0, "unique_visitors": 0}
 
 
-def get_stats(period: str = "all") -> dict[str, int]:
-    where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
+def get_location_stats(table: str, period: str = "all") -> list[dict]:
+    """Top countries for a given table (site_visits or interactions)."""
+    and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
         with sqlite3.connect(_db_path()) as conn:
-            total  = conn.execute(f"SELECT COUNT(*) FROM interactions {where}").fetchone()[0]
-            unique = conn.execute(f"SELECT COUNT(DISTINCT ip_hash) FROM interactions {where}").fetchone()[0]
-        return {"total_responses": total, "unique_visitors": unique}
+            rows = conn.execute(f"""
+                SELECT country, COUNT(*) AS visits, COUNT(DISTINCT ip_hash) AS unique_v
+                FROM {table}
+                WHERE country != '' {and_clause}
+                GROUP BY country
+                ORDER BY unique_v DESC
+                LIMIT 8
+            """).fetchall()
+        return [{"country": r[0], "visits": r[1], "unique_visitors": r[2]} for r in rows]
     except Exception as exc:
-        logger.warning("Analytics query failed: %s", exc)
-        return {"total_responses": 0, "unique_visitors": 0}
+        logger.warning("get_location_stats(%s) failed: %s", table, exc)
+        return []
+
+
+def get_page_stats(period: str = "all") -> list[dict]:
+    """Top visited pages by session count."""
+    and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
+    try:
+        with sqlite3.connect(_db_path()) as conn:
+            rows = conn.execute(f"""
+                SELECT page, COUNT(*) AS sessions, COUNT(DISTINCT ip_hash) AS unique_v
+                FROM site_visits
+                WHERE 1=1 {and_clause}
+                GROUP BY page
+                ORDER BY sessions DESC
+                LIMIT 10
+            """).fetchall()
+        return [{"page": r[0], "sessions": r[1], "unique_visitors": r[2]} for r in rows]
+    except Exception as exc:
+        logger.warning("get_page_stats failed: %s", exc)
+        return []

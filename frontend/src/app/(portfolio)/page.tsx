@@ -5,6 +5,7 @@ import { skills } from "@/data/skills";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import ContactForm from "@/components/ContactForm";
 import ScrollReveal from "@/components/ScrollReveal";
+import HeroAvocado from "@/components/HeroAvocado";
 
 export const metadata = { title: "Jaya Sabarish Reddy Remala — Software Engineer" };
 
@@ -115,6 +116,9 @@ export default function PortfolioHome() {
             Avocado ✦
           </Link>
         </div>
+
+        {/* Live Avocado demo — embedded hero chatbot */}
+        <HeroAvocado />
       </section>
 
       {/* Featured Projects */}

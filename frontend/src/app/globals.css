@@ -308,3 +308,13 @@ body {
   animation: lw-morph 22s ease-in-out infinite;
 }
 .dark .lw-path { opacity: 0.55; }
+
+/* ── Avocado hero blobs ─────────────────────────────────── */
+@keyframes blob {
+  0%, 100% { transform: translate(0px, 0px) scale(1); }
+  33%       { transform: translate(18px, -22px) scale(1.07); }
+  66%       { transform: translate(-14px, 14px) scale(0.95); }
+}
+.animate-blob { animation: blob 8s ease-in-out infinite; }
+.animation-delay-2000 { animation-delay: 2s; }
+.animation-delay-4000 { animation-delay: 4s; }

@@ -3,15 +3,15 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import { API_BASE_URL } from "@/lib/api/client";
+import { saveMessages, loadMessages } from "@/lib/session";
 
 const CHIPS = [
-  "How did Jaya cut RAG latency by 78%?",
-  "Tell me about the Qualcomm hackathon win",
-  "What's Jaya's production AI stack?",
-  "What would Jaya bring to my team?",
+  "Is Jaya open to new opportunities?",
+  "What's his background and expertise?",
+  "What are his biggest career wins?",
+  "What kind of teams does Jaya thrive in?",
 ];
 
-/** Minimal inline renderer: **bold**, newlines. No extra deps. */
 function Prose({ text }: { text: string }) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return (
@@ -29,27 +29,26 @@ function Prose({ text }: { text: string }) {
 }
 
 export default function HeroAvocado() {
-  const [input, setInput]       = useState("");
-  const [asked, setAsked]       = useState("");
-  const [reply, setReply]       = useState("");
+  const [input, setInput]         = useState("");
+  const [asked, setAsked]         = useState("");
+  const [reply, setReply]         = useState("");
   const [streaming, setStreaming] = useState(false);
-  const [error, setError]       = useState(false);
+  const [error, setError]         = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   async function submit(q: string) {
     q = q.trim();
     if (!q || streaming) return;
-
     abortRef.current?.abort();
     const ctrl = new AbortController();
     abortRef.current = ctrl;
-
     setAsked(q);
     setInput("");
     setReply("");
     setError(false);
     setStreaming(true);
-
+    let fullReply = "";
+    let hadError = false;
     try {
       const res = await fetch(`${API_BASE_URL}/ai/chat/stream`, {
         method: "POST",
@@ -57,13 +56,10 @@ export default function HeroAvocado() {
         body: JSON.stringify({ message: q, messages: [] }),
         signal: ctrl.signal,
       });
-
       if (!res.ok || !res.body) throw new Error("stream failed");
-
       const reader  = res.body.getReader();
       const decoder = new TextDecoder();
       let buf = "";
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
@@ -74,10 +70,19 @@ export default function HeroAvocado() {
           if (!line.startsWith("data: ")) continue;
           try {
             const msg = JSON.parse(line.slice(6));
-            if (msg.token) setReply((p) => p + msg.token);
-            if (msg.done || msg.error) { setStreaming(false); if (msg.error) setError(true); }
+            if (msg.token) { fullReply += msg.token; setReply((p) => p + msg.token); }
+            if (msg.done || msg.error) { setStreaming(false); if (msg.error) { hadError = true; setError(true); } }
           } catch { /* skip */ }
         }
+      }
+      // Persist this Q&A so the full chat page shows it on load
+      if (fullReply && !hadError) {
+        const existing = loadMessages() ?? [];
+        saveMessages([
+          ...existing,
+          { role: "user",      content: q         },
+          { role: "assistant", content: fullReply  },
+        ]);
       }
     } catch (e: unknown) {
       if ((e as Error).name !== "AbortError") setError(true);
@@ -94,112 +99,116 @@ export default function HeroAvocado() {
   const hasReply = asked !== "";
 
   return (
-    <div className="max-w-xl w-full rounded-2xl border border-border overflow-hidden shadow-sm bg-surface">
+    <div className="w-full max-w-xl">
 
-      {/* Terminal title bar */}
-      <div className="flex items-center gap-2 px-4 py-2.5 bg-surface-raised border-b border-border select-none">
-        <span className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-        <span className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-        <span className="w-3 h-3 rounded-full bg-zinc-300 dark:bg-zinc-600" />
-        <span className="mx-auto text-[11px] font-semibold uppercase tracking-widest text-fg-faint">
-          🥑 avocado · live demo
-        </span>
-        <span className="flex items-center gap-1">
-          <span className={`w-1.5 h-1.5 rounded-full transition-colors ${streaming ? "bg-green-400 animate-pulse" : "bg-green-500"}`} />
+      {/* Header row */}
+      <div className="mb-3 flex items-center gap-2.5">
+        <span className="text-[11px] font-bold uppercase tracking-widest text-fg-faint">Ask Avocado</span>
+        <span className="text-sm leading-none">🥑</span>
+        <div className="h-px flex-1 bg-border" />
+        <span className="flex items-center gap-1.5">
+          <span className={`h-1.5 w-1.5 rounded-full transition-colors ${streaming ? "animate-pulse bg-green-400" : "bg-green-500"}`} />
           <span className="text-[10px] text-fg-faint">{streaming ? "thinking…" : "online"}</span>
         </span>
       </div>
+      <p className="mb-4 text-[12px] text-fg-faint leading-relaxed">
+        Ask anything about my work, projects, or experience — powered by RAG + Gemini.
+      </p>
 
-      <div className="p-4 space-y-3">
+      {/* Sample chips — hidden once a question is asked */}
+      {!hasReply && (
+        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+          {CHIPS.map((q, i) => (
+            <button
+              key={q}
+              onClick={() => setInput(q)}
+              disabled={streaming}
+              className="animate-fade-up w-full rounded-full border border-border bg-surface-raised/70 px-3 py-2 text-left text-[11px] text-fg-muted/70 backdrop-blur-sm transition-all hover:border-indigo-400 hover:text-indigo-600 hover:opacity-100 disabled:opacity-40 sm:w-auto sm:py-1.5 dark:hover:border-indigo-600 dark:hover:text-indigo-400"
+              style={{ animationDelay: `${i * 100}ms` }}
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      )}
 
-        {/* Sample question chips — hide once a question is asked */}
-        {!hasReply && (
-          <div className="space-y-1.5">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-fg-faint">Try asking</p>
-            <div className="flex flex-wrap gap-1.5">
-              {CHIPS.map((q) => (
-                <button
-                  key={q}
-                  onClick={() => submit(q)}
-                  disabled={streaming}
-                  className="rounded-full border border-border bg-surface-raised px-3 py-1 text-[11px] text-fg-muted hover:border-indigo-400 dark:hover:border-indigo-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors disabled:opacity-40 text-left"
-                >
-                  {q}
-                </button>
-              ))}
-            </div>
+      {/* Chat window — question bubble + answer */}
+      {hasReply && (
+        <div className="mb-3 overflow-hidden rounded-2xl border border-zinc-800/70 bg-zinc-950/90 text-[12px] font-mono backdrop-blur-sm">
+          {/* User question */}
+          <div className="flex gap-3 border-b border-zinc-800/50 px-4 py-3">
+            <span className="mt-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-indigo-400">You</span>
+            <span className="text-zinc-300 leading-relaxed">{asked}</span>
           </div>
-        )}
-
-        {/* Response terminal block */}
-        {hasReply && (
-          <div className="rounded-xl bg-zinc-950 border border-zinc-800 text-[12px] font-mono overflow-hidden">
-            {/* prompt line */}
-            <div className="px-4 pt-3 pb-1.5 border-b border-zinc-800/60">
-              <span className="text-indigo-400">›</span>
-              <span className="text-zinc-300 ml-2">{asked}</span>
-            </div>
-            {/* response */}
-            <div className="px-4 py-3 text-zinc-300 leading-relaxed max-h-52 overflow-y-auto">
+          {/* Avocado answer */}
+          <div className="flex gap-3 px-4 py-3">
+            <span className="mt-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">🥑</span>
+            <div className="max-h-52 overflow-y-auto text-zinc-300 leading-relaxed">
               {error ? (
-                <span className="text-rose-400">Connection error — <Link href="/chat" className="underline">try full chat</Link></span>
+                <span className="text-rose-400">
+                  Connection error —{" "}
+                  <Link href="/chat" className="underline">try full chat</Link>
+                </span>
               ) : reply ? (
                 <>
                   <Prose text={reply} />
                   {streaming && (
-                    <span className="inline-block w-1.5 h-[13px] bg-indigo-400 ml-0.5 align-text-bottom animate-pulse" />
+                    <span className="ml-0.5 inline-block h-[13px] w-1.5 animate-pulse align-text-bottom bg-indigo-400" />
                   )}
                 </>
               ) : (
-                <span className="inline-block w-1.5 h-[13px] bg-indigo-400 animate-pulse align-text-bottom" />
+                <span className="inline-block h-[13px] w-1.5 animate-pulse align-text-bottom bg-indigo-400" />
               )}
             </div>
           </div>
-        )}
-
-        {/* Input */}
-        <form onSubmit={handleForm} className="flex items-center gap-2">
-          <input
-            type="text"
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder={hasReply ? "Ask another question…" : "e.g. How did Jaya optimize the LangGraph system?"}
-            disabled={streaming}
-            className="flex-1 min-w-0 rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 transition-colors disabled:opacity-60"
-          />
-          <button
-            type="submit"
-            disabled={streaming || !input.trim()}
-            aria-label="Ask"
-            className="shrink-0 w-9 h-9 rounded-xl bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-700 disabled:opacity-40 transition-colors"
-          >
-            {streaming ? (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin">
-                <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
-              </svg>
-            ) : (
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            )}
-          </button>
-        </form>
-
-        {/* Footer */}
-        <div className="flex items-center justify-between pt-0.5">
-          <p className="text-[10px] text-fg-faint">Gemini · BGE-base · BM25 · RRF · knowledge graph</p>
-          <Link
-            href="/chat"
-            className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline inline-flex items-center gap-0.5"
-          >
-            Full chat
-            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M7 17L17 7M17 7H7M17 7v10"/>
-            </svg>
-          </Link>
         </div>
+      )}
 
+      {/* Input — button lives inside the rounded border */}
+      <form
+        onSubmit={handleForm}
+        className="flex items-center rounded-full border border-border bg-bg/80 backdrop-blur-sm pl-4 pr-1 py-1 transition-all focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-400/20"
+      >
+        <input
+          type="text"
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder={hasReply ? "Ask another question…" : "Ask anything about Jaya…"}
+          disabled={streaming}
+          className="min-w-0 flex-1 bg-transparent py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none disabled:opacity-60"
+        />
+        <button
+          type="submit"
+          disabled={streaming || !input.trim()}
+          aria-label="Ask"
+          className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white transition-colors hover:bg-indigo-700 disabled:opacity-40"
+        >
+          {streaming ? (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin">
+              <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+            </svg>
+          ) : (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7"/>
+            </svg>
+          )}
+        </button>
+      </form>
+
+      {/* Footer */}
+      <div className="mt-2 flex items-center justify-between">
+        <p className="text-[10px] text-fg-faint">Gemini · BGE-base · BM25 · RRF · knowledge graph</p>
+        <Link
+          href="/chat"
+          className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+        >
+          Full chat
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M7 17L17 7M17 7H7M17 7v10"/>
+          </svg>
+        </Link>
       </div>
+
     </div>
   );
 }

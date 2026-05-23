@@ -38,8 +38,14 @@ def _background_startup() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    analytics.init_db()
-    blog_stats.init_db()
+    try:
+        analytics.init_db()
+    except Exception as exc:
+        logger.error("analytics.init_db failed (non-fatal): %s", exc)
+    try:
+        blog_stats.init_db()
+    except Exception as exc:
+        logger.error("blog_stats.init_db failed (non-fatal): %s", exc)
     threading.Thread(target=_background_startup, daemon=True).start()
     yield
 

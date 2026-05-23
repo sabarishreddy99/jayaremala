@@ -87,7 +87,7 @@ export default function ChatInput({ onSend, disabled, prefill, onPrefillConsumed
   }
 
   return (
-    <div className="flex items-end gap-2 rounded-2xl border border-border bg-surface px-4 py-3 shadow-sm transition-shadow focus-within:shadow-md focus-within:border-indigo-400">
+    <div className="flex items-end gap-2 rounded-full border border-border bg-surface px-4 py-3 shadow-sm transition-shadow focus-within:shadow-md focus-within:border-indigo-400">
       <textarea
         ref={textareaRef}
         rows={1}

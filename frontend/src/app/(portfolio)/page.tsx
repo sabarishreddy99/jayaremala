@@ -47,11 +47,25 @@ export default function PortfolioHome() {
             Open to opportunities · {profile.location}
           </span>
         </div>
+
         <h1 className="text-3xl sm:text-5xl font-bold leading-tight tracking-tight text-fg max-w-2xl">
           {profile.name}
         </h1>
+
         <p className="text-base sm:text-lg font-medium text-accent">{profile.tagline}</p>
+
         <p className="max-w-xl text-sm sm:text-base leading-7 text-fg">Prev @ {profile.previous}</p>
+
+        {/* Ask Avocado — localized ambient glow, no box clipping */}
+        <div className="relative isolate max-w-xl">
+          <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
+            <div className="animate-blob absolute -top-16 -left-12 h-72 w-72 rounded-full bg-indigo-500/22 blur-[90px] dark:bg-indigo-500/15" />
+            <div className="animate-blob animation-delay-2000 absolute -bottom-12 -right-8 h-64 w-64 rounded-full bg-violet-500/20 blur-[80px] dark:bg-violet-500/12" />
+            <div className="animate-blob animation-delay-4000 absolute top-1/2 left-1/3 h-52 w-52 -translate-y-1/2 rounded-full bg-blue-400/15 blur-[70px] dark:bg-blue-400/10" />
+          </div>
+          <HeroAvocado />
+        </div>
+
         <p className="max-w-xl text-sm sm:text-base leading-7 text-fg-muted">{profile.bio}</p>
 
         {/* Domain focus */}
@@ -79,6 +93,7 @@ export default function PortfolioHome() {
         </div>
 
         <p className="max-w-xl text-sm sm:text-base leading-7 text-fg-muted">{profile.obsession}</p>
+
         <div className="flex flex-wrap gap-3 pt-1">
           <Link
             href="/experience"
@@ -116,9 +131,6 @@ export default function PortfolioHome() {
             Avocado ✦
           </Link>
         </div>
-
-        {/* Live Avocado demo — embedded hero chatbot */}
-        <HeroAvocado />
       </section>
 
       {/* Featured Projects */}

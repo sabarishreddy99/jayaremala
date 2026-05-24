@@ -42,7 +42,6 @@ export default function HeroAvocado() {
     q = q.trim();
     if (!q || streaming) return;
 
-    // Second question — hand off to full chat with history already in localStorage
     if (asked !== "") {
       router.push(`/chat?q=${encodeURIComponent(q)}`);
       return;
@@ -83,7 +82,6 @@ export default function HeroAvocado() {
           } catch { /* skip */ }
         }
       }
-      // Persist this Q&A so the full chat page shows it on load
       if (fullReply && !hadError) {
         const existing = loadMessages() ?? [];
         saveMessages([
@@ -109,8 +107,8 @@ export default function HeroAvocado() {
   return (
     <div className="w-full max-w-xl">
 
-      {/* Header row */}
-      <div className="mb-3 flex items-center gap-2.5">
+      {/* ── Desktop header — hidden on mobile ── */}
+      <div className="hidden sm:flex mb-3 items-center gap-2.5">
         <span className="text-[11px] font-bold uppercase tracking-widest text-fg-faint">Ask Avocado</span>
         <span className="text-sm leading-none">🥑</span>
         <div className="h-px flex-1 bg-border" />
@@ -119,19 +117,21 @@ export default function HeroAvocado() {
           <span className="text-[10px] text-fg-faint">{streaming ? "thinking…" : "online"}</span>
         </span>
       </div>
-      <p className="mb-4 text-[12px] text-fg-faint leading-relaxed">
+
+      {/* ── Desktop description — hidden on mobile ── */}
+      <p className="hidden sm:block mb-4 text-[12px] text-fg-faint leading-relaxed">
         Ask anything about my work, projects, or experience — powered by RAG + Gemini.
       </p>
 
-      {/* Sample chips — hidden once a question is asked */}
+      {/* ── Chips — desktop only ── */}
       {!hasReply && (
-        <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+        <div className="hidden sm:flex mb-4 flex-row flex-wrap gap-2">
           {CHIPS.map((q, i) => (
             <button
               key={q}
               onClick={() => setInput(q)}
               disabled={streaming}
-              className="animate-fade-up w-full rounded-full border border-border bg-surface-raised/70 px-3 py-2 text-left text-[11px] text-fg-muted/70 backdrop-blur-sm transition-all hover:border-indigo-400 hover:text-indigo-600 hover:opacity-100 disabled:opacity-40 sm:w-auto sm:py-1.5 dark:hover:border-indigo-600 dark:hover:text-indigo-400"
+              className="animate-fade-up rounded-full border border-border bg-surface-raised/70 px-3 py-1.5 text-left text-[11px] text-fg-muted/70 backdrop-blur-sm transition-all hover:border-indigo-400 hover:text-indigo-600 hover:opacity-100 disabled:opacity-40 dark:hover:border-indigo-600 dark:hover:text-indigo-400"
               style={{ animationDelay: `${i * 100}ms` }}
             >
               {q}
@@ -140,15 +140,13 @@ export default function HeroAvocado() {
         </div>
       )}
 
-      {/* Chat window — question bubble + answer */}
+      {/* ── Chat window — question + reply ── */}
       {hasReply && (
         <div className="mb-3 overflow-hidden rounded-2xl border border-zinc-800/70 bg-zinc-950/90 text-[12px] font-mono backdrop-blur-sm">
-          {/* User question */}
           <div className="flex gap-3 border-b border-zinc-800/50 px-4 py-3">
             <span className="mt-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-indigo-400">You</span>
             <span className="text-zinc-300 leading-relaxed">{asked}</span>
           </div>
-          {/* Avocado answer */}
           <div className="flex gap-3 px-4 py-3">
             <span className="mt-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">🥑</span>
             <div className="max-h-52 overflow-y-auto text-zinc-300 leading-relaxed">
@@ -172,11 +170,19 @@ export default function HeroAvocado() {
         </div>
       )}
 
-      {/* Input — button lives inside the rounded border */}
+      {/* ── Input form ── */}
       <form
         onSubmit={handleForm}
-        className="flex items-center rounded-full border border-border bg-bg/80 backdrop-blur-sm pl-4 pr-1 py-1 transition-all focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-400/20"
+        className="flex items-center rounded-full border border-border bg-bg/80 backdrop-blur-sm pr-1 py-1 transition-all focus-within:border-indigo-400 focus-within:ring-2 focus-within:ring-indigo-400/20
+                   pl-3 sm:pl-4"
       >
+        {/* Mobile-only inline label with live status — hidden on desktop */}
+        <span className="sm:hidden flex items-center gap-1.5 shrink-0 pr-2.5 mr-1 border-r border-border">
+          <span className="text-base leading-none">🥑</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-fg-faint">Ask</span>
+          <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${streaming ? "animate-pulse bg-amber-400" : "bg-green-500"}`} />
+        </span>
+
         <input
           type="text"
           value={input}
@@ -203,12 +209,25 @@ export default function HeroAvocado() {
         </button>
       </form>
 
-      {/* Footer */}
-      <div className="mt-2 flex items-center justify-between">
+      {/* ── Footer ── */}
+      {/* Desktop: tech stack + full chat link */}
+      <div className="hidden sm:flex mt-2 items-center justify-between">
         <p className="text-[10px] text-fg-faint">Gemini · BGE-base · BM25 · RRF · knowledge graph</p>
         <Link
           href="/chat"
           className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+        >
+          Full chat
+          <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M7 17L17 7M17 7H7M17 7v10"/>
+          </svg>
+        </Link>
+      </div>
+      {/* Mobile: just full chat link, right-aligned */}
+      <div className="sm:hidden mt-2 flex justify-end">
+        <Link
+          href="/chat"
+          className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-indigo-500 dark:text-indigo-400"
         >
           Full chat
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

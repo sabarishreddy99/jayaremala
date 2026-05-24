@@ -118,7 +118,7 @@ export default function PortfolioHome() {
               </div>
             </div>
 
-            <div className="flex flex-col gap-6 lg:pt-1">
+            <div className="hidden sm:flex flex-col gap-6 lg:pt-1">
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Previously</p>
                 <div className="flex flex-wrap gap-2">

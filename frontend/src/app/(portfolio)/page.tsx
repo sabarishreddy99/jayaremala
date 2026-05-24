@@ -77,7 +77,7 @@ export default function PortfolioHome() {
 
       {/* ── 1 · Hero — not sticky, scrolls away naturally ──────── */}
       <section className="bg-bg overflow-x-clip">
-        <Inner className="grid gap-5 pt-10 sm:pt-16 pb-16">
+        <Inner className="grid gap-5 pt-10 sm:pt-16 pb-36 sm:pb-16">
           <div className="flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="text-[11px] font-semibold uppercase tracking-widest text-fg-faint">
@@ -125,7 +125,7 @@ export default function PortfolioHome() {
 
       {/* ── 2 · At a Glance ── z-[2] ───────────────────────────── */}
       <StackSection z={2} seamless>
-        <Inner className="py-16 sm:py-20">
+<Inner className="py-16 sm:py-20">
           <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-8">At a Glance</h2>
 
           <div className="grid gap-8 lg:grid-cols-[1fr_260px]">

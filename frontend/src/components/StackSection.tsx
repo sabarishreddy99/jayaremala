@@ -5,16 +5,17 @@ import { useEffect, useRef } from "react";
 const NAV_H = 50;
 
 /*
- * Architecture:
- *   <sentinel h-0>          — non-sticky, tracks scroll position in page
- *   <section sticky z-N>    — sticky relative to PAGE (not a wrapper), stacks correctly
- *     <div ref=content>     — translates up via JS as user scrolls overflow
- *   <div ref=spacer>        — height = content overflow, gives scroll distance
+ * Sticky card-stacking scroll with content scrubbing.
  *
- * Why no outer wrapper: wrapping the sticky element makes the wrapper its containing block,
- * which constrains the sticky range to wrapper height ≈ 0 scroll. The sentinel + spacer
- * siblings keep the section's containing block as the page root, so sticking works across
- * the full page height.
+ * Structure (siblings in page root — no wrapper so page is the containing block):
+ *   <div h-0 sentinel>   — non-sticky, tracks true page scroll offset
+ *   <section sticky>     — stacks via z-index; height = viewport - nav
+ *     <div content>      — translateY driven by scroll (GPU, no reflow)
+ *   <div spacer>         — height = content overflow; updated only on resize, not scroll
+ *
+ * Scroll handler only writes transform (paint-only, no layout).
+ * Spacer height (layout) only updates on ResizeObserver / window resize.
+ * Debounced resize prevents iOS address-bar height changes from causing layout jank.
  */
 export default function StackSection({
   children,
@@ -28,6 +29,7 @@ export default function StackSection({
   const sentinelRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const spacerRef = useRef<HTMLDivElement>(null);
+  const overflowRef = useRef(0);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -35,50 +37,62 @@ export default function StackSection({
     const spacer = spacerRef.current;
     if (!sentinel || !content || !spacer) return;
 
-    function sync() {
+    // ── Layout pass — only runs when content or window size changes ────────
+    function measure() {
       const viewH = window.innerHeight - NAV_H;
-      const overflow = Math.max(0, content!.scrollHeight - viewH);
+      overflowRef.current = Math.max(0, content!.scrollHeight - viewH);
+      spacer!.style.height = `${overflowRef.current}px`;
+      updateTransform();
+    }
 
-      // Give the page enough scroll distance to scrub through all content
-      spacer!.style.height = `${overflow}px`;
-
-      // sentinel.top decreases as user scrolls past the sticky point
-      // scrolledPast = how many px we've scrolled past where this section sticks
+    // ── Paint pass — runs on every scroll tick, zero layout reflow ─────────
+    function updateTransform() {
       const scrolledPast = NAV_H - sentinel!.getBoundingClientRect().top;
-      const translateY =
-        overflow > 0 ? -Math.min(Math.max(0, scrolledPast), overflow) : 0;
-
+      const ov = overflowRef.current;
+      const translateY = ov > 0 ? -Math.min(Math.max(0, scrolledPast), ov) : 0;
       content!.style.transform =
         translateY !== 0 ? `translateY(${translateY}px)` : "";
     }
 
-    sync();
+    // Debounce resize so iOS address-bar height animation doesn't thrash layout
+    let resizeTimer: ReturnType<typeof setTimeout>;
+    function onResize() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(measure, 120);
+    }
 
-    const ro = new ResizeObserver(sync);
+    measure();
+
+    const ro = new ResizeObserver(measure);
     ro.observe(content);
-    window.addEventListener("scroll", sync, { passive: true });
-    window.addEventListener("resize", sync, { passive: true });
+    window.addEventListener("scroll", updateTransform, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
 
     return () => {
+      clearTimeout(resizeTimer);
       ro.disconnect();
-      window.removeEventListener("scroll", sync);
-      window.removeEventListener("resize", sync);
+      window.removeEventListener("scroll", updateTransform);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
 
   return (
     <>
-      {/* zero-height sentinel — not sticky, tracks true page scroll position */}
+      {/* sentinel — plain div, never sticks, gives us the true scroll offset */}
       <div ref={sentinelRef} className="h-0" aria-hidden />
       <section
-        className={`sticky top-[50px] overflow-hidden bg-bg stack-sect`}
+        className="sticky top-[50px] overflow-hidden bg-bg stack-sect"
         style={{ height: "calc(100dvh - 50px)", zIndex: z }}
       >
-        <div ref={contentRef} className={className} style={{ willChange: "transform" }}>
+        <div
+          ref={contentRef}
+          className={className}
+          style={{ willChange: "transform" }}
+        >
           {children}
         </div>
       </section>
-      {/* spacer grows to fill overflow, creating page scroll distance */}
+      {/* spacer — grows to fill overflow, creating the scroll distance for content scrubbing */}
       <div ref={spacerRef} />
     </>
   );

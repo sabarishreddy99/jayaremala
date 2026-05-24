@@ -74,6 +74,8 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: clip; /* clip at html level so iOS Safari doesn't widen the scroll area */
+  width: 100%;
 }
 
 body {
@@ -83,6 +85,8 @@ body {
   min-height: 100dvh;
   transition: background-color 0.2s ease, color 0.2s ease;
   overflow-x: clip; /* prevent horizontal bleed from blobs / marquee without breaking position:sticky */
+  width: 100%;
+  max-width: 100%;
 }
 
 ::-webkit-scrollbar { width: 5px; height: 5px; }

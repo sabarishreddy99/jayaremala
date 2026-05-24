@@ -52,7 +52,7 @@ export default function PortfolioHome() {
       />
 
       {/* ── 1 · Hero — not sticky, scrolls away naturally ──────── */}
-      <section className="bg-bg">
+      <section className="bg-bg overflow-x-clip">
         <Inner className="grid gap-5 pt-10 sm:pt-16 pb-16">
           <div className="flex items-center gap-2">
             <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />

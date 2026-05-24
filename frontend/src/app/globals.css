@@ -318,14 +318,12 @@ body {
   100% { transform: translateY(200%);  opacity: 0; }
 }
 
-/* ── Section stacking — desktop only ───────────────────── */
-@media (min-width: 640px) {
-  .stack-sect {
-    box-shadow: 0 -10px 40px -6px rgb(0 0 0 / 0.08);
-  }
-  .dark .stack-sect {
-    box-shadow: 0 -10px 40px -6px rgb(0 0 0 / 0.32);
-  }
+/* ── Section stacking depth shadow ─────────────────────── */
+.stack-sect {
+  box-shadow: 0 -10px 40px -6px rgb(0 0 0 / 0.08);
+}
+.dark .stack-sect {
+  box-shadow: 0 -10px 40px -6px rgb(0 0 0 / 0.30);
 }
 
 /* ── Avocado hero blobs ─────────────────────────────────── */

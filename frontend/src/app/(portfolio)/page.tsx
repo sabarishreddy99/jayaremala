@@ -7,6 +7,7 @@ import ContactForm from "@/components/ContactForm";
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroAvocado from "@/components/HeroAvocado";
 import RagPipelineCard from "@/components/RagPipelineCard";
+import StackSection from "@/components/StackSection";
 
 export const metadata = { title: "Jaya Sabarish Reddy Remala — Software Engineer" };
 
@@ -39,24 +40,6 @@ function Inner({ children, className = "" }: { children: React.ReactNode; classN
   );
 }
 
-function Sect({
-  children,
-  z,
-  className = "",
-}: {
-  children: React.ReactNode;
-  z: number;
-  className?: string;
-}) {
-  return (
-    <section
-      className={`sm:sticky sm:top-[50px] bg-bg stack-sect ${className}`}
-      style={{ zIndex: z, minHeight: "calc(100dvh - 50px)" }}
-    >
-      {children}
-    </section>
-  );
-}
 
 export default function PortfolioHome() {
   const featured = projects.filter((p) => p.featured);
@@ -117,7 +100,7 @@ export default function PortfolioHome() {
       </section>
 
       {/* ── 2 · At a Glance ── z-[2] ───────────────────────────── */}
-      <Sect z={2}>
+      <StackSection z={2}>
         <Inner className="py-16 sm:py-20">
           <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-8">At a Glance</h2>
 
@@ -161,11 +144,11 @@ export default function PortfolioHome() {
             </div>
           </div>
         </Inner>
-      </Sect>
+      </StackSection>
 
       {/* ── 3 · Featured Projects ── z-[3] ─────────────────────── */}
       {featured.length > 0 && (
-        <Sect z={3}>
+        <StackSection z={3}>
           <Inner className="py-16 sm:py-20">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Featured Projects</h2>
@@ -225,11 +208,11 @@ export default function PortfolioHome() {
               ))}
             </div>
           </Inner>
-        </Sect>
+        </StackSection>
       )}
 
       {/* ── 4 · Skills ── z-[4] ────────────────────────────────── */}
-      <Sect z={4}>
+      <StackSection z={4}>
         <Inner className="py-16 sm:py-20">
           <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-6">Skills & Tools</h2>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -249,21 +232,21 @@ export default function PortfolioHome() {
             ))}
           </div>
         </Inner>
-      </Sect>
+      </StackSection>
 
       {/* ── 5 · Testimonials ── z-[5] ──────────────────────────── */}
-      <Sect z={5}>
+      <StackSection z={5}>
         <Inner className="py-16 sm:py-20">
           <TestimonialsCarousel />
         </Inner>
-      </Sect>
+      </StackSection>
 
       {/* ── 6 · Contact ── z-[6] ───────────────────────────────── */}
-      <Sect z={6} className="pb-16 sm:pb-24">
+      <StackSection z={6} className="pb-16 sm:pb-24">
         <Inner className="py-16 sm:py-20">
           <ContactForm />
         </Inner>
-      </Sect>
+      </StackSection>
     </div>
   );
 }

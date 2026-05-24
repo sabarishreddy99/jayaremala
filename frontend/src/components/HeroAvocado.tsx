@@ -13,6 +13,7 @@ const CHIPS = [
   "What kind of teams does Jaya thrive in?",
 ];
 
+
 function Prose({ text }: { text: string }) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return (

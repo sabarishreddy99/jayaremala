@@ -77,23 +77,33 @@ export default function PortfolioHome() {
 
       {/* ── 1 · Hero — not sticky, scrolls away naturally ──────── */}
       <section className="bg-bg overflow-x-clip">
-        <Inner className="grid gap-5 pt-10 sm:pt-16 pb-36 sm:pb-16">
-          <div className="flex items-center gap-2">
-            <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+        <Inner className="grid gap-7 sm:gap-5 pt-14 sm:pt-16 pb-16">
+
+          {/* Status badge */}
+          <div className="w-fit flex items-center gap-2 rounded-full bg-green-500/8 dark:bg-green-500/10 border border-green-500/20 px-3 py-1.5 sm:bg-transparent sm:border-transparent sm:px-0 sm:py-0">
+            <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
             <span className="text-[11px] font-semibold uppercase tracking-widest text-fg-faint">
               Open to opportunities · {profile.location}
             </span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-bold leading-tight tracking-tight text-fg max-w-2xl">
+          {/* Name */}
+          <h1 className="text-4xl sm:text-5xl font-bold leading-[1.15] tracking-tight text-fg max-w-2xl">
             {profile.name}
           </h1>
 
-          <p className="text-base sm:text-lg font-medium text-accent">{profile.tagline}</p>
+          {/* Tagline */}
+          <p className="text-base sm:text-lg font-medium text-accent leading-relaxed">{profile.tagline}</p>
 
-          <p className="max-w-xl text-sm sm:text-base leading-7 text-fg">
-            Prev @ {profile.previous}
-          </p>
+          {/* Prev @ — pill chips on mobile */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-sm text-fg-faint">Prev @</span>
+            {profile.previous.split(",").map((co) => (
+              <span key={co} className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-xs font-medium text-fg-subtle">
+                {co.trim()}
+              </span>
+            ))}
+          </div>
 
           {/* Ask Avocado — localized ambient glow */}
           <div className="relative isolate max-w-xl">
@@ -105,17 +115,18 @@ export default function PortfolioHome() {
             <HeroAvocado />
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 pt-2">
+          {/* CTAs — stacked full-width on mobile, inline on desktop */}
+          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
             <Link
               href="/chat"
-              className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:shadow-xl hover:-translate-y-px transition-all duration-200"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3.5 sm:py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:shadow-xl hover:-translate-y-px transition-all duration-200"
             >
               Chat with Avocado
               <span className="opacity-80">✦</span>
             </Link>
             <Link
               href="/projects"
-              className="inline-flex items-center gap-1.5 rounded-full border-2 border-border px-6 py-2.5 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-border px-6 py-3.5 sm:py-2.5 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
             >
               View Projects
             </Link>

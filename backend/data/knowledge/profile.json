@@ -4,6 +4,7 @@
   "bio": "I build AI systems that work under real production pressure. At NYU, I cut RAG query latency by 78% on a Multi-Agent research engine serving 3K+ RPS, and pushed LLM inference to 15ms on Snapdragon NPUs via QLoRA + AWQ quantization. Before that, I kept Shell's maritime telemetry alive 115GB/day, 200+ offshore stations, zero data loss.",
   "summary": "Software Engineer with 3+ years of experience building production-grade AI infrastructure at the intersection of Distributed Systems and Agentic AI. Designed high-throughput microservices sustaining 3K+ RPS at 99.9% uptime, cut P99 RAG latency by 78% on enterprise research pipelines, and pushed LLM inference to 15ms on Edge NPUs. Proven across Fortune 500 energy infrastructure (Shell PLC) and research-scale AI systems (NYU IT). Qualcomm Edge AI Hackathon Winner.",
   "obsession": "Currently, I'm obsessed with recommendation systems and the search technology at scale, where it powers the way humans think and behave with intention and responsibility.",
+  "currently": "recommendation systems and search at scale — how they shape the way people discover information",
   "previous": "NYU IT High-Speed Research Network, Shell, Wipro",
   "prev_domain": "Energy, Bioinformatics, Scientific Research",
   "interested_domain": "Health Care, Finance, Consumer Space (Entertainment and Retail)",

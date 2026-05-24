@@ -2,6 +2,7 @@ import Link from "next/link";
 import { profile } from "@/data/profile";
 import { projects } from "@/data/projects";
 import { skills } from "@/data/skills";
+import { getAllPosts } from "@/lib/blog";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import ContactForm from "@/components/ContactForm";
 import ScrollReveal from "@/components/ScrollReveal";
@@ -67,6 +68,7 @@ function Inner({ children, className = "" }: { children: React.ReactNode; classN
 
 export default function PortfolioHome() {
   const featured = projects.filter((p) => p.featured);
+  const latestPost = getAllPosts()[0] ?? null;
 
   return (
     <div className="w-full">
@@ -105,6 +107,17 @@ export default function PortfolioHome() {
             ))}
           </div>
 
+          {/* Currently thinking about */}
+          {profile.currently && (
+            <div className="flex items-start gap-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 px-3.5 py-2.5 max-w-xl">
+              <span className="text-sm shrink-0 select-none">💭</span>
+              <p className="text-xs text-fg-muted leading-relaxed">
+                <span className="font-semibold text-fg-subtle">Currently deep in</span>
+                {" — "}{profile.currently}
+              </p>
+            </div>
+          )}
+
           {/* Ask Avocado — localized ambient glow */}
           <div className="relative isolate max-w-xl">
             <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
@@ -131,6 +144,16 @@ export default function PortfolioHome() {
               View Projects
             </Link>
           </div>
+
+          {/* Latest blog teaser */}
+          {latestPost && (
+            <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 w-fit">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Latest</span>
+              <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1">
+                {latestPost.title} →
+              </span>
+            </Link>
+          )}
         </Inner>
       </section>
 

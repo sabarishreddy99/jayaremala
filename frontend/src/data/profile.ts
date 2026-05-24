@@ -19,6 +19,7 @@ export interface Profile {
   page_education?: string;
   page_projects?: string;
   contact_description?: string;
+  currently?: string;
 }
 
 export const profile = profileJson as Profile;

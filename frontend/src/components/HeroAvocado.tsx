@@ -1,10 +1,18 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api/client";
 import { saveMessages, loadMessages } from "@/lib/session";
+
+const ROTATE_PLACEHOLDERS = [
+  "How did he cut RAG latency by 78%?",
+  "What did he build at Shell?",
+  "How did he win the Qualcomm hackathon?",
+  "What is he excited about right now?",
+  "What AI stack does he work with?",
+];
 
 const CHIPS = [
   "Is Jaya open to new opportunities?",
@@ -32,12 +40,27 @@ function Prose({ text }: { text: string }) {
 
 export default function HeroAvocado() {
   const router = useRouter();
-  const [input, setInput]         = useState("");
-  const [asked, setAsked]         = useState("");
-  const [reply, setReply]         = useState("");
-  const [streaming, setStreaming] = useState(false);
-  const [error, setError]         = useState(false);
+  const [input, setInput]               = useState("");
+  const [asked, setAsked]               = useState("");
+  const [reply, setReply]               = useState("");
+  const [streaming, setStreaming]       = useState(false);
+  const [error, setError]               = useState(false);
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const [totalResponses, setTotalResponses] = useState<number | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    if (asked !== "") return;
+    const id = setInterval(() => setPlaceholderIdx((i) => (i + 1) % ROTATE_PLACEHOLDERS.length), 3000);
+    return () => clearInterval(id);
+  }, [asked]);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/stats`)
+      .then((r) => r.json())
+      .then((d) => { if (d.total_responses > 0) setTotalResponses(d.total_responses); })
+      .catch(() => {});
+  }, []);
 
   async function submit(q: string) {
     q = q.trim();
@@ -188,7 +211,7 @@ export default function HeroAvocado() {
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder={hasReply ? "Ask another question…" : "Ask anything about Jaya…"}
+          placeholder={hasReply ? "Ask another question…" : ROTATE_PLACEHOLDERS[placeholderIdx]}
           disabled={streaming}
           className="min-w-0 flex-1 bg-transparent py-2 text-base sm:text-sm text-fg placeholder:text-fg-faint focus:outline-none disabled:opacity-60"
         />
@@ -211,12 +234,18 @@ export default function HeroAvocado() {
       </form>
 
       {/* ── Footer ── */}
-      {/* Desktop: tech stack + full chat link */}
-      <div className="hidden sm:flex mt-2 items-center justify-between">
-        <p className="text-[10px] text-fg-faint">Gemini · BGE-base · BM25 · RRF · knowledge graph</p>
+      {/* Desktop: response count + full chat link */}
+      <div className="hidden sm:flex mt-2 items-center justify-between gap-3">
+        {totalResponses !== null ? (
+          <p className="text-[10px] text-fg-faint">
+            <span className="font-semibold text-fg-muted">✦ {totalResponses.toLocaleString()}</span>{" "}questions answered from visitors
+          </p>
+        ) : (
+          <p className="text-[10px] text-fg-faint">Gemini · BGE-base · BM25 · RRF · knowledge graph</p>
+        )}
         <Link
           href="/chat"
-          className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400"
+          className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-indigo-600 hover:underline dark:text-indigo-400 shrink-0"
         >
           Full chat
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -224,11 +253,16 @@ export default function HeroAvocado() {
           </svg>
         </Link>
       </div>
-      {/* Mobile: just full chat link, right-aligned */}
-      <div className="sm:hidden mt-2 flex justify-end">
+      {/* Mobile: response count left, full chat right */}
+      <div className="sm:hidden mt-2 flex items-center justify-between gap-2">
+        {totalResponses !== null && (
+          <p className="text-[10px] text-fg-faint">
+            <span className="font-semibold text-fg-muted">✦ {totalResponses.toLocaleString()}</span>{" "}answered
+          </p>
+        )}
         <Link
           href="/chat"
-          className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-indigo-500 dark:text-indigo-400"
+          className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 ml-auto"
         >
           Full chat
           <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

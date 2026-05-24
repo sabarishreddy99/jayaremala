@@ -17,23 +17,44 @@ const SITE_URL = "https://jayaremala.com";
 const SITE_TITLE = "Jaya Sabarish Reddy Remala — Software Engineer";
 const SITE_DESC =
   "Software Engineer specializing in Agentic AI, distributed systems, and production ML infrastructure. Qualcomm Edge AI Hackathon Winner. NYU Tandon CS.";
+const OG_IMAGE = `${SITE_URL}/og-image.png`;
 
 export const metadata: Metadata = {
-  title: SITE_TITLE,
+  metadataBase: new URL(SITE_URL),
+  title: {
+    default: SITE_TITLE,
+    template: "%s — Jaya Sabarish Reddy Remala",
+  },
   description: SITE_DESC,
-  authors: [{ name: "Jaya Sabarish Reddy Remala" }],
-  keywords: ["Software Engineer", "AI", "Distributed Systems", "LangGraph", "FastAPI", "NYU"],
+  authors: [{ name: "Jaya Sabarish Reddy Remala", url: SITE_URL }],
+  creator: "Jaya Sabarish Reddy Remala",
+  keywords: [
+    "Software Engineer", "Jaya Sabarish Reddy Remala", "Jaya Remala",
+    "Agentic AI", "RAG", "LangGraph", "FastAPI", "Distributed Systems",
+    "Machine Learning", "LLM", "NYU", "Qualcomm Hackathon", "Python",
+    "Edge AI", "Production ML", "AI Infrastructure",
+  ],
+  alternates: { canonical: SITE_URL },
   openGraph: {
     type: "website",
     url: SITE_URL,
     title: SITE_TITLE,
     description: SITE_DESC,
     siteName: "Jaya Sabarish Reddy Remala",
+    locale: "en_US",
+    images: [{ url: OG_IMAGE, width: 1200, height: 630, alt: SITE_TITLE }],
   },
   twitter: {
     card: "summary_large_image",
     title: SITE_TITLE,
     description: SITE_DESC,
+    images: [OG_IMAGE],
+    creator: "@jayaremala",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 },
   },
 };
 

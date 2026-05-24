@@ -2,7 +2,18 @@ import { projects } from "@/data/projects";
 import { profile } from "@/data/profile";
 import ProjectsGrid from "@/components/ProjectsGrid";
 
-export const metadata = { title: "Projects — Jaya Sabarish Reddy Remala" };
+export const metadata = {
+  title: "Projects",
+  description:
+    "Portfolio of AI systems, distributed infrastructure, and hackathon-winning projects — RAG pipelines, Edge AI inference on Snapdragon NPUs, and more.",
+  alternates: { canonical: "https://jayaremala.com/projects" },
+  openGraph: {
+    type: "website" as const,
+    url: "https://jayaremala.com/projects",
+    title: "Projects — Jaya Sabarish Reddy Remala",
+    description: "AI systems, distributed infrastructure, and hackathon-winning projects — RAG, Edge AI, LangGraph, FastAPI.",
+  },
+};
 
 export default function ProjectsPage() {
   return (

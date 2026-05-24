@@ -4,7 +4,11 @@ import ChatInterface from "@/components/chat/ChatInterface";
 import AvocadoBg from "@/components/chat/AvocadoBg";
 import ChatCloseButton from "@/components/chat/ChatCloseButton";
 
-export const metadata = { title: "Chat with Avocado — Jaya's AI" };
+export const metadata = {
+  title: "Chat with Avocado — Jaya's AI",
+  description: "Ask Avocado anything about Jaya's work, projects, and experience. Powered by RAG + Gemini.",
+  robots: { index: false, follow: false },
+};
 
 export default function ChatPage() {
   return (

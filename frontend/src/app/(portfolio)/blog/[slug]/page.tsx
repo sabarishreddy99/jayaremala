@@ -18,23 +18,29 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const post = getPostBySlug(slug);
   if (!post) return {};
-  const title = `${post.title} — Jaya Sabarish Reddy Remala`;
   const url = `${SITE_URL}/blog/${slug}`;
+  const publishedAt = post.publishedAt ?? post.date;
   return {
-    title,
+    title: post.title,
     description: post.description,
+    keywords: post.tags,
+    alternates: { canonical: url },
     openGraph: {
-      type: "article",
+      type: "article" as const,
       url,
       title: post.title,
       description: post.description,
       siteName: "Jaya Sabarish Reddy Remala",
+      publishedTime: publishedAt,
       authors: ["Jaya Sabarish Reddy Remala"],
+      tags: post.tags,
+      images: [{ url: `${SITE_URL}/og-image.png`, width: 1200, height: 630, alt: post.title }],
     },
     twitter: {
-      card: "summary_large_image",
+      card: "summary_large_image" as const,
       title: post.title,
       description: post.description,
+      images: [`${SITE_URL}/og-image.png`],
     },
   };
 }
@@ -44,8 +50,24 @@ export default async function BlogPostPage({ params }: Props) {
   const post = getPostBySlug(slug);
   if (!post) notFound();
 
+  const publishedAt = post.publishedAt ?? post.date;
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    url: `${SITE_URL}/blog/${slug}`,
+    datePublished: publishedAt,
+    dateModified: post.date ?? publishedAt,
+    author: { "@type": "Person", name: "Jaya Sabarish Reddy Remala", url: SITE_URL },
+    publisher: { "@type": "Person", name: "Jaya Sabarish Reddy Remala", url: SITE_URL },
+    keywords: post.tags?.join(", "),
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}/blog/${slug}` },
+  };
+
   return (
     <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-12 sm:py-16">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
         <Link
           href="/blog"
           className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover transition-colors mb-10"

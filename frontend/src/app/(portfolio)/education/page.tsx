@@ -1,7 +1,18 @@
 import { education } from "@/data/education";
 import { profile } from "@/data/profile";
 
-export const metadata = { title: "Education — Jaya Sabarish Reddy Remala" };
+export const metadata = {
+  title: "Education",
+  description:
+    "B.S. Computer Science, NYU Tandon School of Engineering. Academic foundation in distributed systems, machine learning, and software engineering.",
+  alternates: { canonical: "https://jayaremala.com/education" },
+  openGraph: {
+    type: "website" as const,
+    url: "https://jayaremala.com/education",
+    title: "Education — Jaya Sabarish Reddy Remala",
+    description: "NYU Tandon School of Engineering — Computer Science. Academic foundation in AI and distributed systems.",
+  },
+};
 
 export default function EducationPage() {
   return (

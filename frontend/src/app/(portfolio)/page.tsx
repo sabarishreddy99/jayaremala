@@ -9,12 +9,25 @@ import HeroAvocado from "@/components/HeroAvocado";
 import RagPipelineCard from "@/components/RagPipelineCard";
 import StackSection from "@/components/StackSection";
 
-export const metadata = { title: "Jaya Sabarish Reddy Remala — Software Engineer" };
+export const metadata = {
+  title: "Jaya Sabarish Reddy Remala — Software Engineer",
+  description:
+    "Software Engineer specializing in Agentic AI, distributed systems, and production ML infrastructure. Qualcomm Edge AI Hackathon Winner. NYU Tandon CS. Previously at Shell, Wipro, NYU IT.",
+  alternates: { canonical: "https://jayaremala.com/" },
+  openGraph: {
+    type: "website",
+    url: "https://jayaremala.com/",
+    title: "Jaya Sabarish Reddy Remala — Software Engineer",
+    description:
+      "Software Engineer specializing in Agentic AI, distributed systems, and production ML infrastructure. Qualcomm Edge AI Hackathon Winner. NYU Tandon CS.",
+  },
+};
 
 const jsonLd = {
   "@context": "https://schema.org",
   "@type": "Person",
   name: "Jaya Sabarish Reddy Remala",
+  alternateName: "Jaya Remala",
   url: "https://jayaremala.com",
   jobTitle: "Software Engineer",
   description:
@@ -23,12 +36,23 @@ const jsonLd = {
   sameAs: [
     "https://linkedin.com/in/jayasabarishreddyr",
     "https://github.com/sabarishreddy99",
+    "https://jayaremala.com",
   ],
   alumniOf: {
     "@type": "EducationalOrganization",
     name: "New York University Tandon School of Engineering",
+    url: "https://engineering.nyu.edu",
   },
-  knowsAbout: ["Agentic AI", "Distributed Systems", "Machine Learning", "RAG", "FastAPI"],
+  worksFor: {
+    "@type": "Organization",
+    name: "New York University",
+  },
+  knowsAbout: [
+    "Agentic AI", "Distributed Systems", "Machine Learning", "RAG",
+    "FastAPI", "LangGraph", "Edge AI", "LLM Inference", "Python",
+  ],
+  award: "Qualcomm Edge AI Hackathon Winner",
+  address: { "@type": "PostalAddress", addressLocality: "New York", addressRegion: "NY", addressCountry: "US" },
 };
 
 /** Shared inner-content constraint */
@@ -100,7 +124,7 @@ export default function PortfolioHome() {
       </section>
 
       {/* ── 2 · At a Glance ── z-[2] ───────────────────────────── */}
-      <StackSection z={2}>
+      <StackSection z={2} seamless>
         <Inner className="py-16 sm:py-20">
           <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-8">At a Glance</h2>
 

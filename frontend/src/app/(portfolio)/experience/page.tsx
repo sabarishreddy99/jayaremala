@@ -2,7 +2,18 @@ import { experience } from "@/data/experience";
 import { profile } from "@/data/profile";
 import ScrollReveal from "@/components/ScrollReveal";
 
-export const metadata = { title: "Experience — Jaya Sabarish Reddy Remala" };
+export const metadata = {
+  title: "Experience",
+  description:
+    "3+ years building production AI and distributed systems — NYU High-Speed Research Network, Shell PLC, Wipro. From maritime telemetry at 115 GB/day to 3 K+ RPS RAG pipelines.",
+  alternates: { canonical: "https://jayaremala.com/experience" },
+  openGraph: {
+    type: "website" as const,
+    url: "https://jayaremala.com/experience",
+    title: "Experience — Jaya Sabarish Reddy Remala",
+    description: "Career timeline: NYU IT, Shell PLC, Wipro — production AI and distributed systems at scale.",
+  },
+};
 
 export default function ExperiencePage() {
   return (

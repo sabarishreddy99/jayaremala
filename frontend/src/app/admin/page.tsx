@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { API_BASE_URL } from "@/lib/api/client";
 
@@ -482,6 +482,740 @@ function SiteGuide() {
   );
 }
 
+// ── Blog Editor ───────────────────────────────────────────────────────────────
+
+function inlineFmt(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+    .replace(/\*(.+?)\*/g, "<em>$1</em>")
+    .replace(/`([^`]+)`/g, '<code style="background:#27272a;color:#e879f9;padding:0.1em 0.35em;border-radius:4px;font-size:0.85em">$1</code>')
+    .replace(/\[(.+?)\]\((.+?)\)/g, '<a href="$2" style="color:#818cf8;text-decoration:underline">$1</a>');
+}
+
+function mdxToHTML(md: string): string {
+  const lines = md.split("\n");
+  let html = "";
+  let i = 0;
+  while (i < lines.length) {
+    const line = lines[i];
+    if (line.startsWith("```")) {
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].startsWith("```")) {
+        codeLines.push(lines[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"));
+        i++;
+      }
+      html += `<pre style="background:#18181b;color:#e4e4e7;padding:1em 1.2em;border-radius:0.75rem;overflow-x:auto;font-size:0.82em;line-height:1.6;border:1px solid #27272a;margin:1em 0">${codeLines.join("\n")}</pre>`;
+      i++; continue;
+    }
+    if (line.startsWith("#### ")) { html += `<h4 style="font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#71717a;margin:1.4em 0 0.3em">${inlineFmt(line.slice(5))}</h4>`; i++; continue; }
+    if (line.startsWith("### "))  { html += `<h3 style="font-size:1.05rem;font-weight:700;margin:1.5em 0 0.4em">${inlineFmt(line.slice(4))}</h3>`; i++; continue; }
+    if (line.startsWith("## "))   { html += `<h2 style="font-size:1.3rem;font-weight:700;margin:2em 0 0.5em;padding-bottom:0.3em;border-bottom:1px solid #3f3f46">${inlineFmt(line.slice(3))}</h2>`; i++; continue; }
+    if (line.startsWith("# "))    { html += `<h1 style="font-size:1.75rem;font-weight:800;margin:0 0 0.5em">${inlineFmt(line.slice(2))}</h1>`; i++; continue; }
+    if (line.startsWith("> "))    { html += `<blockquote style="border-left:3px solid #4f46e5;padding:0.5em 1em;margin:1em 0;background:#eef2ff;border-radius:0 0.5rem 0.5rem 0;font-style:italic"><p style="margin:0">${inlineFmt(line.slice(2))}</p></blockquote>`; i++; continue; }
+    if (line === "---" || line.trim() === "<Divider />") { html += `<hr style="border:none;border-top:1px solid #3f3f46;margin:2em 0" />`; i++; continue; }
+    if (/^[-*] /.test(line)) {
+      let items = "";
+      while (i < lines.length && /^[-*] /.test(lines[i])) { items += `<li style="margin-bottom:0.35em">${inlineFmt(lines[i].slice(2))}</li>`; i++; }
+      html += `<ul style="padding-left:1.4em;margin:0.8em 0;list-style-type:disc">${items}</ul>`; continue;
+    }
+    if (/^\d+\. /.test(line)) {
+      let items = "";
+      while (i < lines.length && /^\d+\. /.test(lines[i])) { items += `<li style="margin-bottom:0.35em">${inlineFmt(lines[i].replace(/^\d+\. /, ""))}</li>`; i++; }
+      html += `<ol style="padding-left:1.4em;margin:0.8em 0;list-style-type:decimal">${items}</ol>`; continue;
+    }
+    if (line.trim() === "") { html += `<div style="height:0.6em"></div>`; i++; continue; }
+    if (/^<\w/.test(line.trim()) && line.trim().endsWith("/>")) {
+      html += `<code style="display:inline-block;background:#1e1b4b;color:#818cf8;padding:0.2em 0.5em;border-radius:4px;font-size:0.8em;margin:0.4em 0">${line.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code><br />`;
+      i++; continue;
+    }
+    html += `<p style="margin:0 0 0.8em;line-height:1.75;color:#71717a">${inlineFmt(line)}</p>`;
+    i++;
+  }
+  return html;
+}
+
+function todayISO(): string { return new Date().toISOString().slice(0, 10); }
+
+function slugify(title: string): string {
+  return title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");
+}
+
+// ── Format guide data ─────────────────────────────────────────────────────────
+
+const FORMAT_GUIDE: { heading: string; items: { label: string; syntax: string; note?: string }[] }[] = [
+  {
+    heading: "Headings",
+    items: [
+      { label: "Section (H2)",        syntax: "## My Section",              note: "Large, underlined with border. Use for major sections." },
+      { label: "Sub-section (H3)",    syntax: "### Sub-section",            note: "Medium weight. No border. Use inside an H2 section." },
+      { label: "Label (H4)",          syntax: "#### Label",                 note: "Rendered uppercase small-caps in muted color. Use for field labels." },
+    ],
+  },
+  {
+    heading: "Text Formatting",
+    items: [
+      { label: "Bold",         syntax: "**bold text**" },
+      { label: "Italic",       syntax: "*italic text*" },
+      { label: "Strikethrough",syntax: "~~crossed out~~" },
+      { label: "Inline code",  syntax: "`code snippet`",  note: "Renders with pink monospace styling." },
+      { label: "Link",         syntax: "[link text](https://url.com)" },
+      { label: "Internal link",syntax: "[anchor text](/blog/slug)",  note: "No domain needed for same-site links." },
+    ],
+  },
+  {
+    heading: "Lists",
+    items: [
+      { label: "Bullet list",  syntax: "- First item\n- Second item\n  - Nested item",  note: "Indent 2 spaces to nest." },
+      { label: "Numbered list",syntax: "1. First\n2. Second\n3. Third",                 note: "Numbers auto-increment — you can use 1. 1. 1. too." },
+    ],
+  },
+  {
+    heading: "Blockquote",
+    items: [
+      { label: "Quote",        syntax: "> This is a pull quote or highlighted note.",  note: "Renders with indigo left border and background." },
+    ],
+  },
+  {
+    heading: "Code Blocks",
+    items: [
+      { label: "Python",     syntax: "```python\ndef hello():\n    return 'hi'\n```" },
+      { label: "TypeScript", syntax: "```typescript\nconst greet = (name: string) => `Hi ${name}`\n```" },
+      { label: "JavaScript", syntax: "```javascript\nconst x = 42\n```" },
+      { label: "Bash / Shell",syntax: "```bash\nnpm install && npm run dev\n```" },
+      { label: "JSON",       syntax: "```json\n{ \"key\": \"value\" }\n```" },
+      { label: "SQL",        syntax: "```sql\nSELECT * FROM users WHERE id = 1;\n```" },
+      { label: "YAML",       syntax: "```yaml\nname: Jaya\nrole: engineer\n```" },
+      { label: "Go",         syntax: "```go\nfunc main() { fmt.Println(\"hi\") }\n```" },
+      { label: "Rust",       syntax: "```rust\nfn main() { println!(\"hi\"); }\n```" },
+      { label: "No language",syntax: "```\nPlain text / pseudocode block\n```",  note: "Use when no language matches — still renders in dark code style." },
+    ],
+  },
+  {
+    heading: "Table",
+    items: [
+      { label: "Basic table", syntax: "| Column A | Column B | Column C |\n|----------|----------|----------|\n| Cell 1   | Cell 2   | Cell 3   |\n| Cell 4   | Cell 5   | Cell 6   |",
+        note: "Pipe-separated. Header row required. Align separators don't need to be equal width." },
+      { label: "Right-align col", syntax: "| Name   | Score |\n|--------|------:|\n| Alice  |    98 |\n| Bob    |    87 |",
+        note: "Append : to the right of the separator line to right-align that column." },
+    ],
+  },
+  {
+    heading: "Divider",
+    items: [
+      { label: "Section break",  syntax: "<Divider />",  note: "Renders a decorative horizontal rule with spacing. Prefer this over --- inside MDX." },
+    ],
+  },
+  {
+    heading: "Callout Boxes",
+    items: [
+      { label: "Info",    syntax: '<Callout type="info" title="Good to know">\nYour informational note here.\n</Callout>',
+        note: "Blue. Use for helpful context or background info." },
+      { label: "Tip",     syntax: '<Callout type="tip" title="Pro tip">\nA shortcut or best practice.\n</Callout>',
+        note: "Green. Use for actionable advice." },
+      { label: "Warning", syntax: '<Callout type="warning" title="Watch out">\nSomething important not to miss.\n</Callout>',
+        note: "Amber. Use for gotchas, caveats, or breaking changes." },
+      { label: "Quote",   syntax: '<Callout type="quote" title="Quote">\nA memorable quote or key takeaway.\n</Callout>',
+        note: "Indigo. Use for pull-quotes or highlighted conclusions." },
+    ],
+  },
+  {
+    heading: "Images",
+    items: [
+      { label: "Basic",             syntax: "![Alt text](/blog/filename.jpg)",
+        note: "Put images in frontend/public/blog/ — reference with /blog/ prefix." },
+      { label: "With caption",      syntax: '![Alt text](/blog/filename.jpg "Caption shown below")',
+        note: "Title attribute becomes the caption text rendered below the image." },
+      { label: "BlogImage (full control)", syntax: '<BlogImage\n  src="/blog/filename.jpg"\n  alt="Descriptive alt text"\n  caption="Optional caption text"\n/>',
+        note: "Use when you need precise alt + caption. Renders with rounded border and subtle shadow." },
+      { label: "Placement — after heading",  syntax: "## Section Title\n\n![Alt](/blog/img.jpg)\n\nFirst paragraph…",
+        note: "Images placed right after a heading get extra top margin automatically." },
+      { label: "Placement — between paragraphs", syntax: "First paragraph text.\n\n![Alt](/blog/img.jpg)\n\nSecond paragraph continues here.",
+        note: "Always separate images from paragraphs with blank lines." },
+    ],
+  },
+  {
+    heading: "MDX Gotchas",
+    items: [
+      { label: "Curly braces in text",  syntax: "Use &#123; and &#125; instead of { }",
+        note: "Raw { } inside paragraph text will cause MDX parse errors — use HTML entities." },
+      { label: "Angle brackets in text",syntax: "Use &lt; and &gt; instead of < >",
+        note: "In body text (not code blocks), < > are treated as JSX and may fail to parse." },
+      { label: "Arch diagrams",         syntax: "```arch\n┌──────────┐\n│ Frontend │\n└──────────┘\n```",
+        note: "Always use ```arch fenced blocks for ASCII diagrams — never a JSX component." },
+      { label: "JSX components — spacing", syntax: "<Callout type=\"info\">\nContent here.\n</Callout>",
+        note: "Always put a blank line before and after JSX block components. Inline text next to them can break parsing." },
+      { label: "Escaping in titles",   syntax: "title: \"It's a great post\"",
+        note: "Use double-quoted YAML strings for titles containing apostrophes — no escaping needed." },
+    ],
+  },
+];
+
+// ── BlogEditor ─────────────────────────────────────────────────────────────────
+
+function BlogEditor() {
+  const [title, setTitle]                   = useState("");
+  const [slug, setSlug]                     = useState("");
+  const [slugEdited, setSlugEdited]         = useState(false);
+  const [date, setDate]                     = useState(todayISO);
+  const [publishedAt]                       = useState(todayISO);
+  const [description, setDescription]       = useState("");
+  const [tags, setTags]                     = useState("");
+  const [content, setContent]               = useState("## Introduction\n\nWrite your post content here…");
+  const [githubPat, setGithubPat]           = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("avocado_github_pat") ?? "" : ""
+  );
+  const [patVisible, setPatVisible]         = useState(false);
+  const [patSaved, setPatSaved]             = useState(false);
+  const [activePanel, setActivePanel]       = useState<"write" | "preview" | "images">("write");
+  const [publishing, setPublishing]         = useState(false);
+  const [result, setResult]                 = useState<{ ok: boolean; message: string } | null>(null);
+  const [uploadedImages, setUploadedImages] = useState<{ name: string; url: string }[]>([]);
+  const [uploadingImg, setUploadingImg]     = useState(false);
+  const [imgResult, setImgResult]           = useState<{ ok: boolean; message: string } | null>(null);
+  const [showGuide, setShowGuide]           = useState(false);
+  const [copiedSnippet, setCopiedSnippet]   = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (!slugEdited) setSlug(slugify(title));
+  }, [title, slugEdited]);
+
+  // ── Insertion helpers ──────────────────────────────────────────────────────
+
+  function insertInline(before: string, after: string, placeholder: string) {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const start = ta.selectionStart;
+    const end   = ta.selectionEnd;
+    const sel   = content.slice(start, end) || placeholder;
+    const next  = content.slice(0, start) + before + sel + after + content.slice(end);
+    setContent(next);
+    requestAnimationFrame(() => {
+      ta.selectionStart = start + before.length;
+      ta.selectionEnd   = start + before.length + sel.length;
+      ta.focus();
+    });
+  }
+
+  function insertBlock(template: string, caretOffset?: number) {
+    const ta     = textareaRef.current;
+    if (!ta) return;
+    const pos    = ta.selectionStart;
+    const before = content.slice(0, pos);
+    const suffix = content.slice(pos);
+    const pad    = before.length === 0 ? "" : before.endsWith("\n\n") ? "" : before.endsWith("\n") ? "\n" : "\n\n";
+    const next   = before + pad + template + "\n\n" + suffix;
+    setContent(next);
+    const caret = pos + pad.length + (caretOffset ?? template.length);
+    requestAnimationFrame(() => {
+      ta.selectionStart = caret;
+      ta.selectionEnd   = caret;
+      ta.focus();
+    });
+  }
+
+  function insertImageBlock(url: string, format: "basic" | "caption" | "component") {
+    const name = url.split("/").pop() ?? "image";
+    let snippet = "";
+    if (format === "basic")     snippet = `![${name}](${url})`;
+    if (format === "caption")   snippet = `![${name}](${url} "Your caption here")`;
+    if (format === "component") snippet = `<BlogImage\n  src="${url}"\n  alt="${name}"\n  caption="Optional caption"\n/>`;
+    insertBlock(snippet);
+    setActivePanel("write");
+  }
+
+  function copySnippet(text: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedSnippet(text);
+      setTimeout(() => setCopiedSnippet(""), 1500);
+    });
+  }
+
+  // ── PAT helpers ────────────────────────────────────────────────────────────
+
+  function savePat() {
+    localStorage.setItem("avocado_github_pat", githubPat.trim());
+    setPatSaved(true);
+    setTimeout(() => setPatSaved(false), 2000);
+  }
+
+  // ── Image upload ───────────────────────────────────────────────────────────
+
+  async function uploadImage(file: File) {
+    if (!githubPat.trim()) { setImgResult({ ok: false, message: "GitHub PAT required — save it in the token section above." }); return; }
+    setUploadingImg(true);
+    setImgResult(null);
+    try {
+      const reader = new FileReader();
+      const b64 = await new Promise<string>((resolve, reject) => {
+        reader.onload  = () => resolve((reader.result as string).split(",")[1]);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
+      const filename = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const apiURL   = `https://api.github.com/repos/sabarishreddy99/itsjaya/contents/frontend/public/blog/${filename}`;
+      const headers  = { Authorization: `Bearer ${githubPat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
+      const getRes   = await fetch(apiURL, { headers });
+      const body: Record<string, string> = { message: `blog: upload image ${filename}`, content: b64, branch: "main" };
+      if (getRes.ok) body.sha = (await getRes.json()).sha;
+      const putRes = await fetch(apiURL, { method: "PUT", headers, body: JSON.stringify(body) });
+      if (putRes.ok) {
+        const imgUrl = `/blog/${filename}`;
+        setUploadedImages((prev) => [{ name: filename, url: imgUrl }, ...prev.filter((i) => i.url !== imgUrl)]);
+        setImgResult({ ok: true, message: `Uploaded → ${imgUrl}` });
+      } else {
+        const err = await putRes.json().catch(() => ({ message: putRes.statusText }));
+        setImgResult({ ok: false, message: `GitHub: ${(err as { message?: string }).message ?? putRes.statusText}` });
+      }
+    } catch (e: unknown) {
+      setImgResult({ ok: false, message: `Error: ${(e as Error).message}` });
+    } finally {
+      setUploadingImg(false);
+    }
+  }
+
+  // ── MDX build ─────────────────────────────────────────────────────────────
+
+  function buildFrontmatter(): string {
+    const tagArr  = tags.split(",").map((t) => t.trim()).filter(Boolean);
+    const tagsStr = tagArr.length > 0 ? `[${tagArr.map((t) => `"${t}"`).join(", ")}]` : "[]";
+    return ["---", `title: "${title}"`, `date: "${date}"`, `publishedAt: "${publishedAt}"`, `description: "${description}"`, `tags: ${tagsStr}`, "---", ""].join("\n");
+  }
+
+  function buildFrontmatterPreview(): string {
+    const tagArr  = tags.split(",").map((t) => t.trim()).filter(Boolean);
+    const tagsStr = tagArr.length > 0 ? `[${tagArr.map((t) => `"${t}"`).join(", ")}]` : "[]";
+    return ["---", `title: "${title || "(untitled)"}"`, `date: "${date}"`, `publishedAt: "${publishedAt}"`, `description: "${description || "(none)"}"`, `tags: ${tagsStr}`, "---"].join("\n");
+  }
+
+  // ── Publish ────────────────────────────────────────────────────────────────
+
+  async function publish() {
+    if (!title.trim())     { setResult({ ok: false, message: "Title is required." }); return; }
+    if (!slug.trim())      { setResult({ ok: false, message: "Slug is required." }); return; }
+    if (!githubPat.trim()) { setResult({ ok: false, message: "GitHub PAT is required." }); return; }
+    setPublishing(true);
+    setResult(null);
+    const filePath = `frontend/src/content/blog/${slug}.mdx`;
+    const apiURL   = `https://api.github.com/repos/sabarishreddy99/itsjaya/contents/${filePath}`;
+    const headers  = { Authorization: `Bearer ${githubPat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
+    const fullMDX  = buildFrontmatter() + content;
+    try {
+      const getRes = await fetch(apiURL, { headers });
+      let sha: string | undefined;
+      if (getRes.ok)                  { sha = (await getRes.json()).sha; }
+      else if (getRes.status !== 404) { setResult({ ok: false, message: `GitHub: ${getRes.status} ${getRes.statusText}` }); setPublishing(false); return; }
+      const body: Record<string, string> = { message: `blog: ${sha ? "update" : "publish"} ${slug}`, content: btoa(unescape(encodeURIComponent(fullMDX))), branch: "main" };
+      if (sha) body.sha = sha;
+      const putRes = await fetch(apiURL, { method: "PUT", headers, body: JSON.stringify(body) });
+      if (putRes.ok) {
+        setResult({ ok: true, message: `${sha ? "Updated" : "Published"}! GH Actions is building — /blog/${slug} will be live in ~2 min.` });
+      } else {
+        const err = await putRes.json().catch(() => ({ message: putRes.statusText }));
+        setResult({ ok: false, message: `GitHub: ${(err as { message?: string }).message ?? putRes.statusText}` });
+      }
+    } catch (e: unknown) {
+      setResult({ ok: false, message: `Network error: ${(e as Error).message}` });
+    } finally {
+      setPublishing(false);
+    }
+  }
+
+  // ── Toolbar definition ─────────────────────────────────────────────────────
+
+  const toolbar: { group: string; btns: { label: string; title: string; action: () => void; mono?: boolean }[] }[] = [
+    { group: "heading", btns: [
+      { label: "H2",  title: "Heading 2",   action: () => insertBlock("## "),   mono: true },
+      { label: "H3",  title: "Heading 3",   action: () => insertBlock("### "),  mono: true },
+      { label: "H4",  title: "Heading 4 (label)", action: () => insertBlock("#### "), mono: true },
+    ]},
+    { group: "inline", btns: [
+      { label: "B",   title: "Bold",        action: () => insertInline("**", "**", "bold"), mono: true },
+      { label: "I",   title: "Italic",      action: () => insertInline("*", "*", "italic"), mono: true },
+      { label: "`",   title: "Inline code", action: () => insertInline("`", "`", "code"),   mono: true },
+      { label: "~~",  title: "Strikethrough", action: () => insertInline("~~", "~~", "text"), mono: true },
+      { label: "🔗",  title: "Link",        action: () => insertInline("[", "](url)", "link text") },
+    ]},
+    { group: "block", btns: [
+      { label: ">",   title: "Blockquote",  action: () => insertBlock("> Your quote here"), mono: true },
+      { label: "•",   title: "Bullet list", action: () => insertBlock("- Item 1\n- Item 2\n- Item 3"), mono: true },
+      { label: "1.",  title: "Numbered list", action: () => insertBlock("1. First\n2. Second\n3. Third"), mono: true },
+      { label: "—",   title: "Divider (<Divider />)", action: () => insertBlock("<Divider />"), mono: true },
+    ]},
+    { group: "code", btns: [
+      { label: "```py", title: "Python block",     action: () => insertBlock("```python\n# code here\n```", 10), mono: true },
+      { label: "```ts", title: "TypeScript block", action: () => insertBlock("```typescript\n// code here\n```", 14), mono: true },
+      { label: "```sh", title: "Bash block",       action: () => insertBlock("```bash\n# command\n```", 7), mono: true },
+      { label: "```",   title: "Generic block",    action: () => insertBlock("```\n\n```", 4), mono: true },
+    ]},
+    { group: "callout", btns: [
+      { label: "ℹ Info",  title: "Info callout",    action: () => insertBlock('<Callout type="info" title="Info">\nYour note here\n</Callout>') },
+      { label: "💡 Tip",  title: "Tip callout",     action: () => insertBlock('<Callout type="tip" title="Tip">\nYour tip here\n</Callout>') },
+      { label: "⚠ Warn",  title: "Warning callout", action: () => insertBlock('<Callout type="warning" title="Warning">\nYour warning here\n</Callout>') },
+      { label: "❝ Quote", title: "Quote callout",   action: () => insertBlock('<Callout type="quote" title="Quote">\nYour quote here\n</Callout>') },
+    ]},
+    { group: "misc", btns: [
+      { label: "▦ Table", title: "Insert table", action: () => insertBlock("| Column A | Column B | Column C |\n|----------|----------|----------|\n| Cell     | Cell     | Cell     |") },
+      { label: "🖼 Image",  title: "Switch to Images tab to upload/insert", action: () => setActivePanel("images") },
+    ]},
+  ];
+
+  return (
+    <div className="space-y-5 pb-8">
+
+      {/* ── GitHub PAT ─────────────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">GitHub Access Token</p>
+          {githubPat && <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">● Token set</span>}
+        </div>
+        <div className="flex gap-2">
+          <input
+            type={patVisible ? "text" : "password"}
+            value={githubPat}
+            onChange={(e) => { setGithubPat(e.target.value); setPatSaved(false); }}
+            placeholder="ghp_… (needs repo write scope)"
+            className="flex-1 min-w-0 rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
+          />
+          <button onClick={() => setPatVisible(!patVisible)}
+            className="shrink-0 px-3 rounded-xl border border-border text-fg-faint hover:text-fg text-xs transition-colors">
+            {patVisible ? "Hide" : "Show"}
+          </button>
+          <button onClick={savePat}
+            className="shrink-0 px-4 rounded-xl bg-fg text-bg text-xs font-semibold hover:opacity-80 transition-opacity">
+            {patSaved ? "Saved ✓" : "Save"}
+          </button>
+        </div>
+        <p className="text-[10px] text-fg-faint mt-2">
+          Stored in localStorage only. Generate at{" "}
+          <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-accent underline">github.com/settings/tokens</a>{" "}
+          — needs <code className="bg-surface-raised px-1 rounded text-[10px]">repo</code> write scope (or fine-grained: Contents write).
+        </p>
+      </div>
+
+      {/* ── Metadata ───────────────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5 space-y-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Post Metadata</p>
+        <div>
+          <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">Title *</label>
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
+            placeholder="My Awesome Post"
+            className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">Slug * (URL)</label>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] text-fg-faint font-mono shrink-0">/blog/</span>
+              <input type="text" value={slug}
+                onChange={(e) => { setSlug(e.target.value); setSlugEdited(true); }}
+                placeholder="my-awesome-post"
+                className="flex-1 min-w-0 rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
+            </div>
+          </div>
+          <div>
+            <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">Display Date</label>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
+              className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg focus:outline-none focus:border-accent transition-colors" />
+          </div>
+        </div>
+        <div>
+          <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">Description</label>
+          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)}
+            placeholder="One-line summary shown on blog index"
+            className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
+        </div>
+        <div>
+          <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">Tags (comma-separated)</label>
+          <input type="text" value={tags} onChange={(e) => setTags(e.target.value)}
+            placeholder="AI, Machine Learning, Python"
+            className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
+        </div>
+        <p className="text-[10px] text-fg-faint flex items-center gap-1.5">
+          <span>publishedAt:</span>
+          <code className="bg-surface-raised px-1.5 rounded font-mono">{publishedAt}</code>
+          <span className="italic">(sort key — set once, never changes)</span>
+        </p>
+      </div>
+
+      {/* ── Editor panel ───────────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+
+        {/* Toolbar */}
+        <div className="border-b border-border bg-surface-raised px-3 py-2 flex flex-wrap gap-y-1.5 gap-x-1 items-center">
+          {toolbar.map((group, gi) => (
+            <span key={group.group} className="contents">
+              {gi > 0 && <span className="w-px h-4 bg-border shrink-0 mx-0.5" />}
+              {group.btns.map((btn) => (
+                <button key={btn.label} onClick={btn.action} title={btn.title}
+                  className={`px-2 py-0.5 rounded-md text-[11px] text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors whitespace-nowrap ${btn.mono ? "font-mono" : ""}`}>
+                  {btn.label}
+                </button>
+              ))}
+            </span>
+          ))}
+        </div>
+
+        {/* Tab bar */}
+        <div className="flex items-center justify-between border-b border-border px-4 py-2.5 bg-surface-raised">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Content (MDX)</p>
+          <div className="flex gap-0.5 bg-surface rounded-lg p-0.5 border border-border">
+            {(["write", "preview", "images"] as const).map((panel) => (
+              <button key={panel} onClick={() => setActivePanel(panel)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
+                  activePanel === panel ? "bg-fg text-bg shadow-sm" : "text-fg-muted hover:text-fg"
+                }`}>
+                {panel === "write" ? "✏ Write" : panel === "preview" ? "👁 Preview" : "🖼 Images"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Write */}
+        {activePanel === "write" && (
+          <textarea
+            ref={textareaRef}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            rows={26}
+            spellCheck
+            className="w-full bg-bg px-5 py-4 text-sm text-fg font-mono leading-relaxed placeholder:text-fg-faint focus:outline-none resize-y"
+            placeholder="Write your MDX content here…"
+          />
+        )}
+
+        {/* Preview */}
+        {activePanel === "preview" && (
+          <div className="px-5 sm:px-8 py-6 min-h-96 bg-bg">
+            <pre className="mb-5 text-[10px] font-mono leading-relaxed text-fg-faint bg-surface rounded-xl border border-border px-4 py-3 whitespace-pre-wrap overflow-x-auto">
+              {buildFrontmatterPreview()}
+            </pre>
+            <div
+              style={{ fontFamily: "var(--font-blog, Georgia, serif)", lineHeight: 1.8 }}
+              dangerouslySetInnerHTML={{ __html: mdxToHTML(content) }}
+            />
+          </div>
+        )}
+
+        {/* Images */}
+        {activePanel === "images" && (
+          <div className="p-5 space-y-4 bg-bg min-h-64">
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-semibold text-fg-muted mb-0.5">Upload images</p>
+                <p className="text-[10px] text-fg-faint">
+                  Files go to <code className="bg-surface-raised px-1 rounded">frontend/public/blog/</code> — reference as{" "}
+                  <code className="bg-surface-raised px-1 rounded">/blog/filename.jpg</code> in content.
+                </p>
+              </div>
+              <label className={`inline-flex items-center gap-2 cursor-pointer rounded-xl border px-4 py-2 text-xs font-semibold transition-colors shrink-0 ${
+                uploadingImg
+                  ? "border-border text-fg-faint opacity-50 cursor-not-allowed"
+                  : "border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
+              }`}>
+                {uploadingImg ? (
+                  <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Uploading…</>
+                ) : (
+                  <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload image</>
+                )}
+                <input type="file" accept="image/*" className="hidden" disabled={uploadingImg}
+                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); e.target.value = ""; }} />
+              </label>
+            </div>
+
+            {imgResult && (
+              <div className={`rounded-xl border px-3 py-2 text-xs flex items-center gap-2 ${
+                imgResult.ok
+                  ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
+                  : "border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300"
+              }`}>
+                {imgResult.ok ? "✓" : "✗"} {imgResult.message}
+              </div>
+            )}
+
+            {/* Placement guide */}
+            <div className="rounded-xl border border-border bg-surface p-3 space-y-1.5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Placement tips</p>
+              {[
+                ["After a heading",         "## Section\n\n![alt](/blog/img.jpg)\n\nParagraph…",    "Image right after heading — extra top margin added automatically."],
+                ["Between paragraphs",      "Para one text.\n\n![alt](/blog/img.jpg)\n\nPara two.", "Always wrap with blank lines top and bottom."],
+                ["With caption",            '![alt](/blog/img.jpg "Caption text")',                  "Title attribute becomes caption text below the image."],
+                ["Full-control component",  '<BlogImage src="/blog/img.jpg" alt="…" caption="…" />', "Use when you need alt + caption independently styled."],
+              ].map(([label, syntax, note]) => (
+                <div key={label as string} className="rounded-lg border border-border-subtle bg-bg p-2 space-y-0.5">
+                  <p className="text-[10px] font-semibold text-fg-muted">{label}</p>
+                  <p className="text-[10px] text-fg-faint italic">{note}</p>
+                  <code className="block text-[10px] font-mono text-accent bg-surface-raised rounded px-2 py-1 whitespace-pre">{syntax}</code>
+                </div>
+              ))}
+            </div>
+
+            {uploadedImages.length > 0 ? (
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Uploaded this session</p>
+                {uploadedImages.map((img) => (
+                  <div key={img.url} className="rounded-xl border border-border bg-surface p-3 space-y-2">
+                    <div className="flex items-center gap-2">
+                      <code className="flex-1 text-[11px] text-accent font-mono truncate">{img.url}</code>
+                    </div>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={img.url} alt={img.name} className="max-h-28 rounded-lg border border-border object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
+                    <div className="flex flex-wrap gap-1.5 items-center">
+                      <span className="text-[10px] text-fg-faint shrink-0">Insert as:</span>
+                      {(["basic", "caption", "component"] as const).map((fmt) => (
+                        <button key={fmt} onClick={() => insertImageBlock(img.url, fmt)}
+                          className="px-2.5 py-1 rounded-lg text-[10px] border border-border bg-bg text-fg-muted hover:border-accent hover:text-accent transition-colors font-mono">
+                          {fmt === "basic" ? "![alt](url)" : fmt === "caption" ? '![alt](url "cap")' : "<BlogImage />"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              !imgResult && (
+                <div className="text-center py-10 text-fg-faint">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-2 opacity-30">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                  <p className="text-xs">Upload an image to get started</p>
+                </div>
+              )
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Format Guide ───────────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+        <button onClick={() => setShowGuide(!showGuide)}
+          className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-surface-raised transition-colors">
+          <div className="flex items-center gap-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
+              <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
+            </svg>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">MDX Format Guide &amp; Tips</span>
+            <span className="text-[10px] text-fg-faint">— click any snippet to copy, toolbar buttons to insert at cursor</span>
+          </div>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            className={`text-fg-faint transition-transform shrink-0 ${showGuide ? "rotate-180" : ""}`}>
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        {showGuide && (
+          <div className="border-t border-border px-5 py-5 space-y-7">
+            {FORMAT_GUIDE.map((section) => (
+              <div key={section.heading}>
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-accent">{section.heading}</span>
+                  <div className="flex-1 h-px bg-border-subtle" />
+                </div>
+                <div className="space-y-2">
+                  {section.items.map((item) => (
+                    <div key={item.label} className="rounded-xl border border-border-subtle bg-bg hover:border-border transition-colors overflow-hidden">
+                      <div className="flex items-start justify-between gap-2 px-3 pt-2.5 pb-1">
+                        <p className="text-[11px] font-semibold text-fg-muted">{item.label}</p>
+                        <button
+                          onClick={() => copySnippet(item.syntax)}
+                          title="Copy snippet"
+                          className="shrink-0 text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border border-border text-fg-faint hover:text-accent hover:border-accent transition-colors">
+                          {copiedSnippet === item.syntax ? "✓ Copied" : "Copy"}
+                        </button>
+                      </div>
+                      {item.note && <p className="px-3 pb-1 text-[10px] text-fg-faint italic leading-relaxed">{item.note}</p>}
+                      <pre className="px-3 pb-3 text-[11px] font-mono text-zinc-300 bg-zinc-950 leading-relaxed whitespace-pre-wrap overflow-x-auto cursor-pointer"
+                        onClick={() => copySnippet(item.syntax)}>
+                        {item.syntax}
+                      </pre>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+
+            {/* Quick cheat-sheet */}
+            <div className="rounded-xl border border-border bg-surface-raised p-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Quick cheat-sheet</p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1 font-mono text-[10px] text-fg-muted">
+                {[
+                  ["## Heading 2",     "Section with underline"],
+                  ["### Heading 3",    "Sub-section"],
+                  ["**text**",         "Bold"],
+                  ["*text*",           "Italic"],
+                  ["`code`",           "Inline code"],
+                  ["~~text~~",         "Strikethrough"],
+                  ["[label](url)",     "Link"],
+                  ["![alt](url)",      "Image"],
+                  ["> text",           "Blockquote"],
+                  ["- item",           "Bullet list"],
+                  ["1. item",          "Numbered list"],
+                  ["<Divider />",      "Section break"],
+                  ["```python",        "Code block (+ lang)"],
+                  ["| col | col |",    "Table"],
+                  ['<Callout type="info">', "Info box"],
+                  ['<Callout type="tip">',  "Tip box"],
+                  ['<Callout type="warning">', "Warning box"],
+                  ['<Callout type="quote">',   "Quote box"],
+                  ["&#123; &#125;",    "Literal { } in text"],
+                  ["&lt; &gt;",        "Literal < > in text"],
+                ].map(([syntax, label]) => (
+                  <div key={syntax} className="flex gap-2 py-0.5">
+                    <span className="text-accent shrink-0 w-36 truncate">{syntax}</span>
+                    <span className="text-fg-faint">{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Result banner ──────────────────────────────────────────────────── */}
+      {result && (
+        <div className={`rounded-xl border px-4 py-3 text-sm flex items-start gap-2 ${
+          result.ok
+            ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
+            : "border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300"
+        }`}>
+          <span className="shrink-0 font-bold">{result.ok ? "✓" : "✗"}</span>
+          <span>
+            {result.message}
+            {result.ok && slug && (
+              <> &nbsp;<a href={`/blog/${slug}`} target="_blank" rel="noopener noreferrer" className="underline font-medium">View /blog/{slug} →</a></>
+            )}
+          </span>
+        </div>
+      )}
+
+      {/* ── Publish bar ────────────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-surface px-5 py-4">
+        <div className="text-[10px] text-fg-faint leading-relaxed space-y-0.5">
+          <p>Commits MDX to <code className="bg-surface-raised px-1 rounded">sabarishreddy99/itsjaya</code> main branch.</p>
+          <p>GH Actions rebuilds the site — /blog/{slug || "slug"} live in ~2 min.</p>
+        </div>
+        <button
+          onClick={publish}
+          disabled={publishing || !title.trim() || !slug.trim()}
+          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/50 hover:-translate-y-px transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0"
+        >
+          {publishing ? (
+            <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Publishing…</>
+          ) : (
+            <>Publish to GitHub <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg></>
+          )}
+        </button>
+      </div>
+
+    </div>
+  );
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 type Period = "week" | "month" | "all";
@@ -498,6 +1232,7 @@ function Dashboard({
   lastUpdated: Date | null;
 }) {
   const [period, setPeriod] = useState<Period>("all");
+  const [activeView, setActiveView] = useState<"analytics" | "write-blog">("analytics");
   const conv        = stats.conversations[period];
   const site        = stats.site_visitors[period];
   const feedback    = stats.feedback[period];
@@ -553,6 +1288,16 @@ function Dashboard({
               Home
             </Link>
             <button
+              onClick={() => setActiveView(activeView === "write-blog" ? "analytics" : "write-blog")}
+              className={`text-xs border rounded-lg px-3 py-1.5 transition-colors ${
+                activeView === "write-blog"
+                  ? "border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40"
+                  : "border-border text-fg-faint hover:text-fg-muted"
+              }`}
+            >
+              {activeView === "write-blog" ? "← Analytics" : "✏ Write Blog"}
+            </button>
+            <button
               onClick={onLogout}
               className="text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors"
             >
@@ -561,20 +1306,28 @@ function Dashboard({
           </div>
         </div>
 
-        {/* Period tabs */}
-        <div className="grid grid-cols-3 gap-1 bg-surface-raised rounded-xl p-1 border border-border sm:w-fit sm:flex sm:grid-cols-none">
-          {(["week", "month", "all"] as Period[]).map((p) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-colors text-center ${
-                period === p ? "bg-fg text-bg shadow-sm" : "text-fg-muted hover:text-fg"
-              }`}
-            >
-              {PERIOD_LABELS[p]}
-            </button>
-          ))}
-        </div>
+        {/* Period tabs — analytics only */}
+        {activeView === "analytics" && (
+          <div className="grid grid-cols-3 gap-1 bg-surface-raised rounded-xl p-1 border border-border sm:w-fit sm:flex sm:grid-cols-none">
+            {(["week", "month", "all"] as Period[]).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPeriod(p)}
+                className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-colors text-center ${
+                  period === p ? "bg-fg text-bg shadow-sm" : "text-fg-muted hover:text-fg"
+                }`}
+              >
+                {PERIOD_LABELS[p]}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Write Blog view */}
+        {activeView === "write-blog" && <BlogEditor />}
+
+        {/* Analytics content */}
+        {activeView === "analytics" && (<>
 
         {/* Top stat cards */}
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -907,6 +1660,8 @@ function Dashboard({
         <p className="text-center text-[10px] text-fg-faint pb-4">
           Avocado Admin · {new Date().getFullYear()} · Auto-refreshes every 60s · Data from analytics.db on Lightsail
         </p>
+
+        </>)}
 
       </div>
     </div>

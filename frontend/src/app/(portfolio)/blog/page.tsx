@@ -1,7 +1,18 @@
 import { getAllPosts } from "@/lib/blog";
 import { BlogIndexStats, BlogPostList } from "@/components/blog/BlogIndexStats";
 
-export const metadata = { title: "Blog — Jaya Sabarish Reddy Remala" };
+export const metadata = {
+  title: "Blog",
+  description:
+    "Technical writing on AI systems, ML infrastructure, distributed computing, and software craft by Jaya Sabarish Reddy Remala. Notes on building things that actually work.",
+  alternates: { canonical: "https://jayaremala.com/blog" },
+  openGraph: {
+    type: "website" as const,
+    url: "https://jayaremala.com/blog",
+    title: "Blog — Jaya Sabarish Reddy Remala",
+    description: "Notes on AI systems, ML infrastructure, distributed computing, and software craft.",
+  },
+};
 
 export default function BlogIndexPage() {
   const posts = getAllPosts();

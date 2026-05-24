@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import emailjs from "@emailjs/browser";
+import Link from "next/link";
 import { profile } from "@/data/profile";
 
 type ToastType = "success" | "warning" | "error";
@@ -80,6 +81,7 @@ export default function ContactForm() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const [nextId, setNextId] = useState(0);
 
@@ -113,6 +115,7 @@ export default function ContactForm() {
       setName("");
       setEmail("");
       setMessage("");
+      setSubmitted(true);
     } catch {
       pushToast("error", "Something went wrong", "Please try again or email me directly.");
     } finally {
@@ -131,6 +134,25 @@ export default function ContactForm() {
 
       <section className="rounded-2xl border border-border bg-surface-raised p-6 sm:p-8">
         <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-3">Get in Touch</h2>
+
+        {submitted ? (
+          <div className="flex flex-col items-center gap-4 py-10 text-center">
+            <div className="w-12 h-12 rounded-full bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5"/>
+              </svg>
+            </div>
+            <h3 className="font-semibold text-fg">Message received!</h3>
+            <p className="text-sm text-fg-subtle max-w-xs leading-relaxed">
+              Thanks for reaching out — I&apos;ll get back to you soon. In the meantime, feel free to explore.
+            </p>
+            <div className="flex gap-4 mt-1">
+              <Link href="/blog" className="text-xs text-accent hover:text-accent-hover transition-colors">Read the blog →</Link>
+              <Link href="/projects" className="text-xs text-accent hover:text-accent-hover transition-colors">See projects →</Link>
+            </div>
+          </div>
+        ) : (
+          <>
         {profile.contact_description && (
           <p className="text-sm text-fg-subtle mb-6 max-w-md">{profile.contact_description}</p>
         )}
@@ -236,6 +258,8 @@ export default function ContactForm() {
             </svg>
           </a>
         </div>
+          </>
+        )}
       </section>
     </>
   );

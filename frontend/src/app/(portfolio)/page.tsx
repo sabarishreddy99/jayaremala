@@ -9,6 +9,7 @@ import ScrollReveal from "@/components/ScrollReveal";
 import HeroAvocado from "@/components/HeroAvocado";
 import RagPipelineCard from "@/components/RagPipelineCard";
 import StackSection from "@/components/StackSection";
+import SkillsSection from "@/components/SkillsSection";
 
 export const metadata = {
   title: "Jaya Sabarish Reddy Remala — Software Engineer",
@@ -143,6 +144,14 @@ export default function PortfolioHome() {
             >
               View Projects
             </Link>
+            <a
+              href={profile.resume}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-5 py-3.5 sm:py-2.5 text-sm font-medium text-fg-subtle hover:text-fg hover:border-fg-muted transition-colors duration-200"
+            >
+              Resume ↗
+            </a>
           </div>
 
           {/* Latest blog teaser */}
@@ -272,23 +281,7 @@ export default function PortfolioHome() {
       {/* ── 4 · Skills ── z-[4] ────────────────────────────────── */}
       <StackSection z={4}>
         <Inner className="py-16 sm:py-20">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-6">Skills & Tools</h2>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {skills.map((group, i) => (
-              <ScrollReveal key={group.category} delay={i * 55}>
-                <div className="rounded-2xl border border-border bg-surface-raised p-5 card-lift h-full">
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-accent mb-3">{group.category}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {group.items.map((item) => (
-                      <span key={item} className="rounded-full border border-border bg-surface px-2.5 py-0.5 text-xs text-fg-muted transition-colors hover:border-border-strong hover:text-fg">
-                        {item}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </ScrollReveal>
-            ))}
-          </div>
+          <SkillsSection skills={skills} featuredProjects={featured} />
         </Inner>
       </StackSection>
 

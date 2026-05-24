@@ -6,6 +6,11 @@ const CONTENT_DIR = path.join(process.cwd(), "src", "content", "lab");
 
 export type LabStatus = "active" | "shipped" | "paused";
 
+export interface LabLink {
+  label: string;
+  url: string;
+}
+
 export interface LabFrontmatter {
   title: string;
   status: LabStatus;
@@ -13,6 +18,7 @@ export interface LabFrontmatter {
   startedAt: string;
   updatedAt: string;
   tech: string[];
+  links?: LabLink[];
 }
 
 export interface LabMeta extends LabFrontmatter {
@@ -42,6 +48,7 @@ export function getAllLabEntries(): LabMeta[] {
         startedAt: data.startedAt ?? "",
         updatedAt: data.updatedAt ?? "",
         tech: data.tech ?? [],
+        links: data.links ?? undefined,
       } as LabMeta;
     })
     .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || a.updatedAt < b.updatedAt ? 1 : -1);
@@ -60,6 +67,7 @@ export function getLabEntryBySlug(slug: string): LabEntry | null {
     startedAt: data.startedAt ?? "",
     updatedAt: data.updatedAt ?? "",
     tech: data.tech ?? [],
+    links: data.links ?? undefined,
     content,
   };
 }

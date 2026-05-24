@@ -172,7 +172,8 @@ body {
 }
 .prose blockquote p { margin-bottom: 0; }
 
-.prose code {
+/* ── Inline code (backtick) — NOT inside a pre block ── */
+.prose :not(pre) > code {
   background: var(--surface-raised);
   border: 1px solid var(--border);
   border-radius: 5px;
@@ -181,19 +182,91 @@ body {
   font-family: var(--font-mono), monospace;
   color: #c026d3;
 }
-.dark .prose code { color: #e879f9; }
+.dark .prose :not(pre) > code { color: #e879f9; }
+
+/* ── Code blocks — Shiki handles token colors ── */
 .prose pre {
-  background: #18181b;
-  color: #e4e4e7;
-  padding: 1.3em 1.5em;
+  background: #f6f8fa;
+  border: 1px solid #e1e4e8;
   border-radius: 0.875rem;
   overflow-x: auto;
   margin: 1.6em 0;
   font-size: 0.875em;
   line-height: 1.65;
-  border: 1px solid #27272a;
+  padding: 1.3em 1.5em;
 }
-.prose pre code { background: transparent; border: none; padding: 0; color: inherit; font-size: inherit; }
+.dark .prose pre {
+  background: #22272e;
+  border-color: #30363d;
+}
+.prose pre code {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  font-size: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+/* ── Shiki dual-theme token colours (next-themes uses .dark on <html>) ── */
+code[data-theme*=" "],
+code[data-theme*=" "] span {
+  color: var(--shiki-light);
+}
+.dark code[data-theme*=" "],
+.dark code[data-theme*=" "] span {
+  color: var(--shiki-dark);
+}
+
+/* ── Code block title / file name ── */
+figcaption[data-rehype-pretty-code-title] {
+  background: #eaeef2;
+  border: 1px solid #e1e4e8;
+  border-bottom: none;
+  border-radius: 0.875rem 0.875rem 0 0;
+  padding: 0.35em 1.2em;
+  font-size: 0.72em;
+  font-family: var(--font-mono), monospace;
+  color: #57606a;
+  letter-spacing: 0.01em;
+}
+.dark figcaption[data-rehype-pretty-code-title] {
+  background: #2d333b;
+  border-color: #30363d;
+  color: #8b949e;
+}
+figcaption[data-rehype-pretty-code-title] + pre {
+  border-radius: 0 0 0.875rem 0.875rem;
+  border-top: none;
+  margin-top: 0;
+}
+
+/* ── figure wrapper emitted by rehype-pretty-code ── */
+[data-rehype-pretty-code-figure] {
+  margin: 1.6em 0;
+}
+[data-rehype-pretty-code-figure] > pre {
+  margin: 0;
+}
+
+/* ── Highlighted lines ({1,3-5} syntax in code fence) ── */
+.prose pre [data-highlighted-line] {
+  background: rgba(99, 102, 241, 0.08);
+  border-left: 2px solid #6366f1;
+  display: block;
+  padding-left: calc(1.2em - 2px);
+  padding-right: 1.2em;
+  margin-left: -1.5em;
+  margin-right: -1.5em;
+}
+
+/* ── Highlighted words (::highlight syntax) ── */
+.prose pre mark[data-highlighted-chars] {
+  background: rgba(99, 102, 241, 0.18);
+  border-radius: 3px;
+  padding: 0.1em 0.15em;
+  color: inherit;
+}
 
 .prose hr { border: none; border-top: 1px solid var(--border); margin: 2.5em 0; }
 
@@ -204,8 +277,9 @@ body {
   margin: 1.8em 0 0.5em;
   box-shadow: 0 4px 20px rgba(0,0,0,0.06);
 }
-.prose figure { margin: 1.8em 0; }
-.prose figcaption { text-align: center; font-size: 0.8rem; color: var(--fg-faint); margin-top: 0.5em; font-style: italic; }
+/* Image figures (from BlogImage component) get their own margin — not code figures */
+.prose figure:not([data-rehype-pretty-code-figure]) { margin: 1.8em 0; }
+.prose figcaption:not([data-rehype-pretty-code-title]) { text-align: center; font-size: 0.8rem; color: var(--fg-faint); margin-top: 0.5em; font-style: italic; }
 
 .prose table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin: 1.6em 0; }
 .prose th { background: var(--surface-raised); font-weight: 700; color: var(--fg); padding: 0.6em 1em; text-align: left; border: 1px solid var(--border); }

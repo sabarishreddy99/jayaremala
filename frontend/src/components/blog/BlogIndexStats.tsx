@@ -1,7 +1,57 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+
+const SITE_URL = "https://jayaremala.com";
+
+function CardShareButton({ slug, title }: { slug: string; title: string }) {
+  const [copied, setCopied] = useState(false);
+
+  const share = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const url = `${SITE_URL}/blog/${slug}`;
+    if (navigator.share) {
+      try { await navigator.share({ title, url }); } catch { /* cancelled */ }
+    } else {
+      try {
+        await navigator.clipboard.writeText(url);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } catch { /* blocked */ }
+    }
+  }, [slug, title]);
+
+  return (
+    <button
+      onClick={share}
+      aria-label={copied ? "Link copied!" : "Share post"}
+      title={copied ? "Link copied!" : "Share post"}
+      className="flex items-center gap-1 shrink-0 rounded-lg px-2 py-1
+                 text-fg-faint hover:text-accent hover:bg-surface-raised
+                 transition-colors text-[10px] font-medium"
+    >
+      {copied ? (
+        <>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M20 6L9 17l-5-5"/>
+          </svg>
+          <span>Copied!</span>
+        </>
+      ) : (
+        <>
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
+            <polyline points="16 6 12 2 8 6"/>
+            <line x1="12" y1="2" x2="12" y2="15"/>
+          </svg>
+          <span>Share</span>
+        </>
+      )}
+    </button>
+  );
+}
 import { API_BASE_URL } from "@/lib/api/client";
 
 interface Summary {
@@ -234,12 +284,15 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
                 </div>
               </div>
               <p className="text-sm text-fg-subtle leading-relaxed mb-3">{p.description}</p>
-              <div className="flex flex-wrap gap-1.5">
-                {p.tags.map((t) => (
-                  <span key={t} className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
-                    #{t}
-                  </span>
-                ))}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {p.tags.map((t) => (
+                    <span key={t} className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
+                      #{t}
+                    </span>
+                  ))}
+                </div>
+                <CardShareButton slug={p.slug} title={p.title} />
               </div>
             </Link>
           </li>

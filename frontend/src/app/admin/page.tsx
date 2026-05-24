@@ -180,8 +180,9 @@ const GUIDE_SECTIONS = [
     note: "All MDX components (Callout, BlogImage, Divider) are auto-imported — no import statement needed.",
   },
   {
-    heading: "Code blocks",
-    code: "```python\ndef hello(): return 'hi'\n```\n\nSupported: python typescript javascript\nbash json yaml sql go rust",
+    heading: "Code blocks (Shiki — syntax highlighted)",
+    code: "```python\n# basic — language only\ndef hello(): return 'hi'\n```\n\n```python title=\"main.py\"\n# with filename tab\ndef hello(): return 'hi'\n```\n\n```python {2,4-5}\n# line highlighting — {lines} after language\ndef process():\n    result = compute()  # ← highlighted\n    log(result)\n    return result        # ← highlighted\n    # and 5 too         # ← highlighted\n```\n\n```python /return/\n# word/token highlighting — /pattern/ after language\ndef hello(): return 'hi'\ndef world(): return 'world'\n```",
+    note: "Copy button appears on hover. title=\"file.py\" adds a filename tab. {1,3-5} highlights specific lines (indigo accent). /word/ highlights every occurrence of that token. 200+ languages: python typescript javascript bash json yaml sql go rust + more.",
   },
   {
     heading: "Table",
@@ -508,7 +509,8 @@ function mdxToHTML(md: string): string {
         codeLines.push(lines[i].replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;"));
         i++;
       }
-      html += `<pre style="background:#18181b;color:#e4e4e7;padding:1em 1.2em;border-radius:0.75rem;overflow-x:auto;font-size:0.82em;line-height:1.6;border:1px solid #27272a;margin:1em 0">${codeLines.join("\n")}</pre>`;
+      const lang = line.slice(3).trim().split(/[\s{]/)[0] || "plaintext";
+      html += `<pre style="background:#f6f8fa;color:#24292e;padding:1em 1.2em;border-radius:0.75rem;overflow-x:auto;font-size:0.82em;line-height:1.6;border:1px solid #e1e4e8;margin:1em 0"><div style="font-size:9px;color:#57606a;margin-bottom:0.5em;font-family:monospace">[Shiki highlights on publish — ${lang} block]</div>${codeLines.join("\n")}</pre>`;
       i++; continue;
     }
     if (line.startsWith("#### ")) { html += `<h4 style="font-size:0.82rem;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#71717a;margin:1.4em 0 0.3em">${inlineFmt(line.slice(5))}</h4>`; i++; continue; }
@@ -580,18 +582,27 @@ const FORMAT_GUIDE: { heading: string; items: { label: string; syntax: string; n
     ],
   },
   {
-    heading: "Code Blocks",
+    heading: "Code Blocks (Shiki — syntax highlighted)",
     items: [
-      { label: "Python",     syntax: "```python\ndef hello():\n    return 'hi'\n```" },
-      { label: "TypeScript", syntax: "```typescript\nconst greet = (name: string) => `Hi ${name}`\n```" },
-      { label: "JavaScript", syntax: "```javascript\nconst x = 42\n```" },
+      { label: "Python",      syntax: "```python\ndef hello():\n    return 'hi'\n```" },
+      { label: "TypeScript",  syntax: "```typescript\nconst greet = (name: string) => `Hi ${name}`\n```" },
+      { label: "JavaScript",  syntax: "```javascript\nconst x = 42\n```" },
       { label: "Bash / Shell",syntax: "```bash\nnpm install && npm run dev\n```" },
-      { label: "JSON",       syntax: "```json\n{ \"key\": \"value\" }\n```" },
-      { label: "SQL",        syntax: "```sql\nSELECT * FROM users WHERE id = 1;\n```" },
-      { label: "YAML",       syntax: "```yaml\nname: Jaya\nrole: engineer\n```" },
-      { label: "Go",         syntax: "```go\nfunc main() { fmt.Println(\"hi\") }\n```" },
-      { label: "Rust",       syntax: "```rust\nfn main() { println!(\"hi\"); }\n```" },
-      { label: "No language",syntax: "```\nPlain text / pseudocode block\n```",  note: "Use when no language matches — still renders in dark code style." },
+      { label: "JSON",        syntax: "```json\n{ \"key\": \"value\" }\n```" },
+      { label: "SQL",         syntax: "```sql\nSELECT * FROM users WHERE id = 1;\n```" },
+      { label: "YAML",        syntax: "```yaml\nname: Jaya\nrole: engineer\n```" },
+      { label: "Go",          syntax: "```go\nfunc main() { fmt.Println(\"hi\") }\n```" },
+      { label: "Rust",        syntax: "```rust\nfn main() { println!(\"hi\"); }\n```" },
+      { label: "No language", syntax: "```\nPlain text / pseudocode block\n```",
+        note: "Falls back to 'plaintext' — still renders with copy button and correct block style." },
+      { label: "File title tab", syntax: "```python title=\"rag_pipeline.py\"\ndef query(q: str) -> str:\n    return chain.invoke(q)\n```",
+        note: "Adds a filename tab above the block. Works with any language." },
+      { label: "Line highlighting", syntax: "```python {2,4-6}\ndef process():\n    result = compute()   # ← line 2 highlighted\n    validate(result)\n    cache(result)        # ← lines 4-6 highlighted\n    log(result)\n    return result\n```",
+        note: "Use {n} for a single line, {n,m} for multiple lines, {n-m} for a range. Renders with indigo left border accent." },
+      { label: "Word / token highlight", syntax: "```python /return/\ndef hello(): return 'hi'\ndef world(): return 'world'\n```",
+        note: "Wrap the target token in /slashes/ right after the language identifier. Every occurrence in the block gets highlighted. Use different patterns with /a/ /b/ for multi-colour." },
+      { label: "Title + line highlight", syntax: "```typescript title=\"server.ts\" {3}\nimport express from 'express'\nconst app = express()\napp.listen(3000)   // ← highlighted\n```",
+        note: "title= and {lines} can be combined freely on the same opening fence." },
     ],
   },
   {
@@ -851,6 +862,8 @@ function BlogEditor() {
       { label: "```ts", title: "TypeScript block", action: () => insertBlock("```typescript\n// code here\n```", 14), mono: true },
       { label: "```sh", title: "Bash block",       action: () => insertBlock("```bash\n# command\n```", 7), mono: true },
       { label: "```",   title: "Generic block",    action: () => insertBlock("```\n\n```", 4), mono: true },
+      { label: "title", title: 'Code block with file title: ```python title="main.py"', action: () => insertBlock('```python title="main.py"\n# code here\n```', 23), mono: true },
+      { label: "{1}",   title: "Code block with line highlight: ```python {1}", action: () => insertBlock("```python {1}\n# this line highlighted\n```", 10), mono: true },
     ]},
     { group: "callout", btns: [
       { label: "ℹ Info",  title: "Info callout",    action: () => insertBlock('<Callout type="info" title="Info">\nYour note here\n</Callout>') },
@@ -1156,7 +1169,10 @@ function BlogEditor() {
                   ["- item",           "Bullet list"],
                   ["1. item",          "Numbered list"],
                   ["<Divider />",      "Section break"],
-                  ["```python",        "Code block (+ lang)"],
+                  ["```python",        "Code block (Shiki highlighted)"],
+                  ['```py title="f.py"', "Code block with filename tab"],
+                  ["```python {1,3-5}", "Code block with line highlight"],
+                  ["```python /word/",  "Code block with token highlight"],
                   ["| col | col |",    "Table"],
                   ['<Callout type="info">', "Info box"],
                   ['<Callout type="tip">',  "Tip box"],

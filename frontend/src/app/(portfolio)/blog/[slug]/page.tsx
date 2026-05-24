@@ -1,10 +1,18 @@
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
+import rehypePrettyCode from "rehype-pretty-code";
+import type { Options as PrettyCodeOptions } from "rehype-pretty-code";
 import { getAllSlugs, getPostBySlug } from "@/lib/blog";
 import Link from "next/link";
 import { mdxComponents } from "@/components/blog/MDXComponents";
 import BlogEngagement from "@/components/blog/BlogEngagement";
 import ShareButtons from "@/components/blog/ShareButtons";
+
+const prettyCodeOptions: PrettyCodeOptions = {
+  theme: { light: "github-light", dark: "github-dark-dimmed" },
+  keepBackground: false,
+  defaultLang: "plaintext",
+};
 
 const SITE_URL = "https://jayaremala.com";
 
@@ -95,7 +103,11 @@ export default async function BlogPostPage({ params }: Props) {
           </header>
 
           <div className="prose max-w-none font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
-            <MDXRemote source={post.content} components={mdxComponents} />
+            <MDXRemote
+              source={post.content}
+              components={mdxComponents}
+              options={{ mdxOptions: { rehypePlugins: [[rehypePrettyCode, prettyCodeOptions]] } }}
+            />
           </div>
 
           <BlogEngagement slug={post.slug} />

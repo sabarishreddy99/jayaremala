@@ -1,5 +1,6 @@
 import type { MDXComponents } from "mdx/types";
 import BlogImageClient from "./BlogImage";
+import CodeBlock from "./CodeBlock";
 
 /* ── Callout ─────────────────────────────────────────── */
 type CalloutVariant = "info" | "tip" | "warning" | "quote";
@@ -47,12 +48,9 @@ export const mdxComponents: MDXComponents = {
     <BlogImageClient src={src as string} alt={alt ?? ""} caption={title} />
   ),
 
-  // Styled inline code
-  code: ({ children }) => (
-    <code className="bg-surface-raised border border-border rounded px-1.5 py-0.5 text-[0.83em] font-mono text-fuchsia-700 dark:text-fuchsia-400">
-      {children}
-    </code>
-  ),
+  // Code blocks — Shiki highlights the tokens; CodeBlock adds the copy button.
+  // Inline code (single backtick) is NOT a pre element — handled by CSS only.
+  pre: (props) => <CodeBlock {...(props as React.ComponentPropsWithoutRef<"pre">)} />,
 
   // Headings with anchor links
   h2: ({ children, id }) => (

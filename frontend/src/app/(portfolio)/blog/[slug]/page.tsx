@@ -42,13 +42,13 @@ export async function generateMetadata({ params }: Props) {
       publishedTime: publishedAt,
       authors: ["Jaya Sabarish Reddy Remala"],
       tags: post.tags,
-      images: [{ url: `${SITE_URL}/og-image.png`, width: 1200, height: 630, alt: post.title }],
+      images: [{ url: post.image ? `${SITE_URL}${post.image}` : `${SITE_URL}/og-image.png`, width: 1200, height: 630, alt: post.title }],
     },
     twitter: {
       card: "summary_large_image" as const,
       title: post.title,
       description: post.description,
-      images: [`${SITE_URL}/og-image.png`],
+      images: [post.image ? `${SITE_URL}${post.image}` : `${SITE_URL}/og-image.png`],
     },
   };
 }

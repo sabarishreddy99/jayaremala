@@ -11,6 +11,7 @@ export interface PostFrontmatter {
   description: string;
   tags: string[];
   readingTime: number;
+  image?: string;
 }
 
 export interface PostMeta extends PostFrontmatter {
@@ -40,6 +41,7 @@ export function getAllPosts(): PostMeta[] {
         description: data.description ?? "",
         tags: data.tags ?? [],
         readingTime: Math.max(1, Math.ceil(wordCount / 200)),
+        image: data.image ?? undefined,
       } as PostMeta;
     })
     .sort((a, b) => (a.publishedAt! < b.publishedAt! ? 1 : -1));
@@ -61,6 +63,7 @@ export function getPostBySlug(slug: string): Post | null {
     description: data.description ?? "",
     tags: data.tags ?? [],
     readingTime: Math.max(1, Math.ceil(wordCount / 200)),
+    image: data.image ?? undefined,
     content,
   };
 }

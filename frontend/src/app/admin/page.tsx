@@ -567,6 +567,23 @@ function slugify(title: string): string {
   return title.toLowerCase().replace(/[^a-z0-9\s-]/g, "").trim().replace(/\s+/g, "-").replace(/-+/g, "-");
 }
 
+function parseFrontmatter(raw: string): { meta: Record<string, string>; content: string } {
+  if (!raw.startsWith("---")) return { meta: {}, content: raw };
+  const end = raw.indexOf("\n---", 3);
+  if (end === -1) return { meta: {}, content: raw };
+  const fm = raw.slice(4, end);
+  const body = raw.slice(end + 4).trimStart();
+  const meta: Record<string, string> = {};
+  for (const line of fm.split("\n")) {
+    const colon = line.indexOf(":");
+    if (colon === -1) continue;
+    const key = line.slice(0, colon).trim();
+    const val = line.slice(colon + 1).trim().replace(/^["']|["']$/g, "");
+    meta[key] = val;
+  }
+  return { meta, content: body };
+}
+
 // ── Format guide data ─────────────────────────────────────────────────────────
 
 const FORMAT_GUIDE: { heading: string; items: { label: string; syntax: string; note?: string }[] }[] = [
@@ -770,6 +787,15 @@ function BlogEditor() {
   const [insertingFor, setInsertingFor]         = useState<string | null>(null);
   const [captionInput, setCaptionInput]         = useState("");
 
+  // Published posts management
+  const [showPublishedPosts, setShowPublishedPosts] = useState(false);
+  const [publishedPosts, setPublishedPosts]         = useState<{ name: string; slug: string; sha: string }[]>([]);
+  const [loadingPosts, setLoadingPosts]             = useState(false);
+  const [postsResult, setPostsResult]               = useState<{ ok: boolean; message: string } | null>(null);
+  const [confirmDeleteSlug, setConfirmDeleteSlug]   = useState<string | null>(null);
+  const [deletingSlug, setDeletingSlug]             = useState<string | null>(null);
+  const [editingExisting, setEditingExisting]       = useState(false);
+
   // GitHub / publish
   const [githubPat, setGithubPat] = useState(() =>
     typeof window !== "undefined" ? localStorage.getItem("avocado_github_pat") ?? "" : ""
@@ -860,6 +886,7 @@ function BlogEditor() {
     setDescription(""); setTags([]); setTagInput(""); setOgImage(""); setContent("");
     setCurrentDraftId(null); setLastSaved(null); setShowTemplates(true);
     setResult(null); setShowDraftMenu(false); setActivePanel("write");
+    setEditingExisting(false);
   }
 
   // === EFFECTS ===
@@ -1044,6 +1071,94 @@ function BlogEditor() {
     }
   }
 
+  // === PUBLISHED POSTS ===
+  async function loadPublishedPosts() {
+    if (!githubPat.trim()) { setPostsResult({ ok: false, message: "GitHub token required — set it in the Publish section." }); return; }
+    setLoadingPosts(true);
+    setPostsResult(null);
+    try {
+      const res = await fetch(
+        "https://api.github.com/repos/sabarishreddy99/jayaremala/contents/frontend/src/content/blog",
+        { headers: { Authorization: `Bearer ${githubPat.trim()}`, Accept: "application/vnd.github+json" } }
+      );
+      if (!res.ok) { setPostsResult({ ok: false, message: `GitHub: ${res.status} ${res.statusText}` }); return; }
+      const files: { name: string; sha: string }[] = await res.json();
+      const posts = files
+        .filter((f) => f.name.endsWith(".mdx"))
+        .map((f) => ({ name: f.name, slug: f.name.replace(/\.mdx$/, ""), sha: f.sha }));
+      setPublishedPosts(posts);
+      setPostsResult({ ok: true, message: `${posts.length} post${posts.length !== 1 ? "s" : ""} found.` });
+    } catch (e: unknown) {
+      setPostsResult({ ok: false, message: `Error: ${(e as Error).message}` });
+    } finally {
+      setLoadingPosts(false);
+    }
+  }
+
+  async function loadPostForEdit(slug: string) {
+    if (!githubPat.trim()) return;
+    setPostsResult(null);
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/sabarishreddy99/jayaremala/contents/frontend/src/content/blog/${slug}.mdx`,
+        { headers: { Authorization: `Bearer ${githubPat.trim()}`, Accept: "application/vnd.github+json" } }
+      );
+      if (!res.ok) { setPostsResult({ ok: false, message: `Could not load ${slug}.mdx — ${res.status}` }); return; }
+      const data = await res.json();
+      const bytes = Uint8Array.from(atob(data.content.replace(/\n/g, "")), (c) => c.charCodeAt(0));
+      const raw = new TextDecoder("utf-8").decode(bytes);
+      const { meta, content: postContent } = parseFrontmatter(raw);
+      const parsedTags = meta.tags
+        ? meta.tags.replace(/^\[|\]$/g, "").split(",").map((t) => t.trim().replace(/^["']|["']$/g, "")).filter(Boolean)
+        : [];
+      setTitle(meta.title ?? "");
+      setSlug(slug);
+      setSlugEdited(true);
+      setDate(meta.date ?? todayISO());
+      setDescription(meta.description ?? "");
+      setTags(parsedTags);
+      setOgImage(meta.image ?? "");
+      setContent(postContent);
+      setCurrentDraftId(null);
+      setLastSaved(null);
+      setShowTemplates(false);
+      setActivePanel("write");
+      setEditingExisting(true);
+      setShowPublishedPosts(false);
+      setResult(null);
+      requestAnimationFrame(() => textareaRef.current?.focus());
+    } catch (e: unknown) {
+      setPostsResult({ ok: false, message: `Error loading post: ${(e as Error).message}` });
+    }
+  }
+
+  async function deletePost(slug: string, sha: string) {
+    if (!githubPat.trim()) return;
+    setDeletingSlug(slug);
+    try {
+      const res = await fetch(
+        `https://api.github.com/repos/sabarishreddy99/jayaremala/contents/frontend/src/content/blog/${slug}.mdx`,
+        {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${githubPat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+          body: JSON.stringify({ message: `blog: delete ${slug}`, sha, branch: "main" }),
+        }
+      );
+      if (res.ok) {
+        setPublishedPosts((prev) => prev.filter((p) => p.slug !== slug));
+        setPostsResult({ ok: true, message: `Deleted /blog/${slug} — site rebuilds in ~2 min.` });
+        setConfirmDeleteSlug(null);
+      } else {
+        const err = await res.json().catch(() => ({ message: res.statusText }));
+        setPostsResult({ ok: false, message: `GitHub: ${(err as { message?: string }).message ?? res.statusText}` });
+      }
+    } catch (e: unknown) {
+      setPostsResult({ ok: false, message: `Error: ${(e as Error).message}` });
+    } finally {
+      setDeletingSlug(null);
+    }
+  }
+
   // === FOCUS MODE ===
   if (focusMode) {
     return (
@@ -1143,9 +1258,129 @@ function BlogEditor() {
         </div>
       </div>
 
+      {/* ── Published Posts ─────────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+        <button
+          onClick={() => setShowPublishedPosts(!showPublishedPosts)}
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-raised transition-colors"
+        >
+          <div className="flex items-center gap-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Published Posts</span>
+            {publishedPosts.length > 0 && (
+              <span className="text-[10px] font-mono text-accent">({publishedPosts.length})</span>
+            )}
+          </div>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            className={`text-fg-faint transition-transform ${showPublishedPosts ? "rotate-180" : ""}`}>
+            <polyline points="6 9 12 15 18 9"/>
+          </svg>
+        </button>
+
+        {showPublishedPosts && (
+          <div className="border-t border-border p-5 space-y-4">
+            {/* Load + result */}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                onClick={loadPublishedPosts}
+                disabled={loadingPosts || !githubPat.trim()}
+                className="inline-flex items-center gap-1.5 text-xs font-medium border border-border rounded-lg px-3 py-1.5 text-fg-muted hover:text-fg hover:border-indigo-400 transition-colors disabled:opacity-40"
+              >
+                {loadingPosts ? (
+                  <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Loading…</>
+                ) : (
+                  <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Load from GitHub</>
+                )}
+              </button>
+              {!githubPat.trim() && (
+                <span className="text-[10px] text-amber-600 dark:text-amber-400">GitHub token required — set it in the Publish section below</span>
+              )}
+              {postsResult && (
+                <span className={`text-[10px] ${postsResult.ok ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500"}`}>
+                  {postsResult.message}
+                </span>
+              )}
+            </div>
+
+            {/* Posts list */}
+            {publishedPosts.length > 0 && (
+              <div className="space-y-1.5">
+                {publishedPosts.map((post) => (
+                  <div key={post.slug} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-bg hover:bg-surface-raised transition-colors group">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-fg truncate">/blog/<span className="text-accent">{post.slug}</span></p>
+                      <p className="text-[10px] font-mono text-fg-faint">{post.name}</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <button
+                        onClick={() => loadPostForEdit(post.slug)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-border text-[11px] font-medium text-fg-muted hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      >
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                        </svg>
+                        Edit
+                      </button>
+                      {confirmDeleteSlug === post.slug ? (
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-rose-500 font-medium">Delete forever?</span>
+                          <button
+                            onClick={() => deletePost(post.slug, post.sha)}
+                            disabled={deletingSlug === post.slug}
+                            className="px-2 py-1 rounded-lg bg-rose-600 text-white text-[10px] font-semibold hover:bg-rose-700 disabled:opacity-50 transition-colors"
+                          >
+                            {deletingSlug === post.slug ? "…" : "Yes, delete"}
+                          </button>
+                          <button
+                            onClick={() => setConfirmDeleteSlug(null)}
+                            className="px-2 py-1 rounded-lg border border-border text-[10px] text-fg-faint hover:text-fg transition-colors"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setConfirmDeleteSlug(post.slug)}
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-border text-[11px] font-medium text-fg-faint hover:border-rose-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                            <path d="M10 11v6M14 11v6M9 6V4h6v2"/>
+                          </svg>
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {publishedPosts.length === 0 && !loadingPosts && postsResult?.ok && (
+              <p className="text-xs text-fg-faint text-center py-2">No MDX posts found.</p>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* ── Post header card (title + description + tags + slug) ─────────────── */}
       <div className="rounded-2xl border border-border bg-surface overflow-hidden">
         <div className="p-5 sm:p-7 space-y-4">
+
+          {/* Editing existing post indicator */}
+          {editingExisting && (
+            <div className="flex items-center gap-2 text-[11px] bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+              <span>Editing existing post — publishing will update <code className="font-mono bg-amber-100 dark:bg-amber-900/50 px-1 rounded">/blog/{slug}</code></span>
+              <button onClick={() => setEditingExisting(false)} className="ml-auto opacity-60 hover:opacity-100 transition-opacity text-sm leading-none">×</button>
+            </div>
+          )}
 
           {/* Large title */}
           <input

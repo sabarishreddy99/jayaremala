@@ -675,6 +675,7 @@ function BlogEditor() {
   const [publishedAt]                       = useState(todayISO);
   const [description, setDescription]       = useState("");
   const [tags, setTags]                     = useState("");
+  const [ogImage, setOgImage]               = useState("");
   const [content, setContent]               = useState("## Introduction\n\nWrite your post content here…");
   const [githubPat, setGithubPat]           = useState(() =>
     typeof window !== "undefined" ? localStorage.getItem("avocado_github_pat") ?? "" : ""
@@ -768,7 +769,7 @@ function BlogEditor() {
         reader.readAsDataURL(file);
       });
       const filename = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
-      const apiURL   = `https://api.github.com/repos/sabarishreddy99/itsjaya/contents/frontend/public/blog/${filename}`;
+      const apiURL   = `https://api.github.com/repos/sabarishreddy99/jayaremala/contents/frontend/public/blog/${filename}`;
       const headers  = { Authorization: `Bearer ${githubPat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
       const getRes   = await fetch(apiURL, { headers });
       const body: Record<string, string> = { message: `blog: upload image ${filename}`, content: b64, branch: "main" };
@@ -778,6 +779,7 @@ function BlogEditor() {
         const imgUrl = `/blog/${filename}`;
         setUploadedImages((prev) => [{ name: filename, url: imgUrl }, ...prev.filter((i) => i.url !== imgUrl)]);
         setImgResult({ ok: true, message: `Uploaded → ${imgUrl}` });
+        if (!ogImage.trim()) setOgImage(imgUrl);
       } else {
         const err = await putRes.json().catch(() => ({ message: putRes.statusText }));
         setImgResult({ ok: false, message: `GitHub: ${(err as { message?: string }).message ?? putRes.statusText}` });
@@ -794,13 +796,19 @@ function BlogEditor() {
   function buildFrontmatter(): string {
     const tagArr  = tags.split(",").map((t) => t.trim()).filter(Boolean);
     const tagsStr = tagArr.length > 0 ? `[${tagArr.map((t) => `"${t}"`).join(", ")}]` : "[]";
-    return ["---", `title: "${title}"`, `date: "${date}"`, `publishedAt: "${publishedAt}"`, `description: "${description}"`, `tags: ${tagsStr}`, "---", ""].join("\n");
+    const lines   = ["---", `title: "${title}"`, `date: "${date}"`, `publishedAt: "${publishedAt}"`, `description: "${description}"`, `tags: ${tagsStr}`];
+    if (ogImage.trim()) lines.push(`image: "${ogImage.trim()}"`);
+    lines.push("---", "");
+    return lines.join("\n");
   }
 
   function buildFrontmatterPreview(): string {
     const tagArr  = tags.split(",").map((t) => t.trim()).filter(Boolean);
     const tagsStr = tagArr.length > 0 ? `[${tagArr.map((t) => `"${t}"`).join(", ")}]` : "[]";
-    return ["---", `title: "${title || "(untitled)"}"`, `date: "${date}"`, `publishedAt: "${publishedAt}"`, `description: "${description || "(none)"}"`, `tags: ${tagsStr}`, "---"].join("\n");
+    const lines   = ["---", `title: "${title || "(untitled)"}"`, `date: "${date}"`, `publishedAt: "${publishedAt}"`, `description: "${description || "(none)"}"`, `tags: ${tagsStr}`];
+    if (ogImage.trim()) lines.push(`image: "${ogImage.trim()}"`);
+    lines.push("---");
+    return lines.join("\n");
   }
 
   // ── Publish ────────────────────────────────────────────────────────────────
@@ -812,7 +820,7 @@ function BlogEditor() {
     setPublishing(true);
     setResult(null);
     const filePath = `frontend/src/content/blog/${slug}.mdx`;
-    const apiURL   = `https://api.github.com/repos/sabarishreddy99/itsjaya/contents/${filePath}`;
+    const apiURL   = `https://api.github.com/repos/sabarishreddy99/jayaremala/contents/${filePath}`;
     const headers  = { Authorization: `Bearer ${githubPat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
     const fullMDX  = buildFrontmatter() + content;
     try {
@@ -862,6 +870,7 @@ function BlogEditor() {
       { label: "```ts", title: "TypeScript block", action: () => insertBlock("```typescript\n// code here\n```", 14), mono: true },
       { label: "```sh", title: "Bash block",       action: () => insertBlock("```bash\n# command\n```", 7), mono: true },
       { label: "```",   title: "Generic block",    action: () => insertBlock("```\n\n```", 4), mono: true },
+      { label: "arch",  title: "ASCII diagram block (```arch)", action: () => insertBlock("```arch\n┌────────────┐\n│            │\n└────────────┘\n```", 8), mono: true },
       { label: "title", title: 'Code block with file title: ```python title="main.py"', action: () => insertBlock('```python title="main.py"\n# code here\n```', 23), mono: true },
       { label: "{1}",   title: "Code block with line highlight: ```python {1}", action: () => insertBlock("```python {1}\n# this line highlighted\n```", 10), mono: true },
     ]},
@@ -947,6 +956,26 @@ function BlogEditor() {
           <input type="text" value={tags} onChange={(e) => setTags(e.target.value)}
             placeholder="AI, Machine Learning, Python"
             className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
+        </div>
+        <div>
+          <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">OG Image <span className="font-normal normal-case">(optional — for social share preview)</span></label>
+          <div className="flex items-center gap-2">
+            <input type="text" value={ogImage} onChange={(e) => setOgImage(e.target.value)}
+              placeholder="/blog/my-post-cover.jpg"
+              className="flex-1 min-w-0 rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
+            {uploadedImages.length > 0 && (
+              <select
+                onChange={(e) => { if (e.target.value) setOgImage(e.target.value); e.target.value = ""; }}
+                className="shrink-0 rounded-xl border border-border bg-bg px-2 py-2 text-xs text-fg-muted focus:outline-none focus:border-accent transition-colors"
+              >
+                <option value="">Pick uploaded…</option>
+                {uploadedImages.map((img) => (
+                  <option key={img.url} value={img.url}>{img.name}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          <p className="text-[10px] text-fg-faint mt-1">Upload the image first in the Images tab, then paste its path here. Used as the Twitter/OG card image when someone shares the post.</p>
         </div>
         <p className="text-[10px] text-fg-faint flex items-center gap-1.5">
           <span>publishedAt:</span>
@@ -1212,7 +1241,7 @@ function BlogEditor() {
       {/* ── Publish bar ────────────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-surface px-5 py-4">
         <div className="text-[10px] text-fg-faint leading-relaxed space-y-0.5">
-          <p>Commits MDX to <code className="bg-surface-raised px-1 rounded">sabarishreddy99/itsjaya</code> main branch.</p>
+          <p>Commits MDX to <code className="bg-surface-raised px-1 rounded">sabarishreddy99/jayaremala</code> main branch.</p>
           <p>GH Actions rebuilds the site — /blog/{slug || "slug"} live in ~2 min.</p>
         </div>
         <button

@@ -152,7 +152,7 @@ export default function BlogGuideDrawer() {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6" data-lenis-prevent>
+        <div className="flex-1 overflow-y-auto px-5 py-4 space-y-6">
           {SECTIONS.map((s) => (
             <div key={s.heading}>
               <p className="text-[11px] font-bold uppercase tracking-wider text-accent mb-2">{s.heading}</p>

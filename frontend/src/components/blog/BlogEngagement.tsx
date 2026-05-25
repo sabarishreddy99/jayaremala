@@ -26,20 +26,24 @@ export default function BlogEngagement({ slug }: { slug: string }) {
   const nextFloatKey = useRef(0);
 
   useEffect(() => {
-    const load = async () => {
+    // Stats fetch and view POST are intentionally separated.
+    // A failed view POST must never prevent stats from displaying.
+    const loadStats = async () => {
       try {
-        const [statsRes, _viewRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/blog/${slug}/stats`),
-          fetch(`${API_BASE_URL}/blog/${slug}/view`, { method: "POST" }),
-        ]);
-        const data: Stats = await statsRes.json();
+        const res = await fetch(`${API_BASE_URL}/blog/${slug}/stats`);
+        if (!res.ok) throw new Error(`${res.status}`);
+        const data: Stats = await res.json();
         setStats(data);
         setLocalClaps(0);
       } catch {
         setStats({ views: 0, claps: 0, user_claps: 0 });
       }
     };
-    load();
+
+    loadStats();
+
+    // Fire-and-forget — don't block stats on view recording
+    fetch(`${API_BASE_URL}/blog/${slug}/view`, { method: "POST" }).catch(() => {});
   }, [slug]);
 
   const flushClaps = useCallback(async () => {
@@ -52,14 +56,17 @@ export default function BlogEngagement({ slug }: { slug: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ count }),
       });
+      if (!res.ok) throw new Error(`${res.status}`);
       const data: Stats = await res.json();
       setStats(data);
-    } catch {}
+    } catch {
+      // Clap sync failed — local optimistic state remains
+    }
   }, [slug]);
 
   const handleClap = useCallback(() => {
     if (!stats) return;
-    const totalUserClaps = (stats.user_claps) + localClaps;
+    const totalUserClaps = stats.user_claps + localClaps;
     if (totalUserClaps >= MAX_USER_CLAPS) return;
 
     setLocalClaps((c) => c + 1);

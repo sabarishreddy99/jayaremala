@@ -70,7 +70,7 @@ export function BlogIndexStats() {
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/blog/stats/summary`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
       .then(setSummary)
       .catch(() => {});
   }, []);
@@ -147,7 +147,7 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/blog/stats/summary`)
-      .then((r) => r.json())
+      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
       .then(setSummary)
       .catch(() => {});
   }, []);

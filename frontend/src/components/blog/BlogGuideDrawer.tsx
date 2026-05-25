@@ -104,7 +104,10 @@ export default function BlogGuideDrawer() {
   const [overview, setOverview] = useState<Overview | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE_URL}/stats/overview`).then(r => r.json()).then(setOverview).catch(() => {});
+    fetch(`${API_BASE_URL}/stats/overview`)
+      .then(r => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
+      .then(setOverview)
+      .catch(() => {});
   }, []);
 
   useEffect(() => {

@@ -194,6 +194,7 @@ export default function RagPipelineModal({
     >
       <div
         className="relative bg-surface border border-border rounded-2xl w-full max-w-lg max-h-[90dvh] overflow-y-auto shadow-2xl flex flex-col"
+        data-lenis-prevent
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

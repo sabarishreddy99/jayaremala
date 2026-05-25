@@ -173,7 +173,7 @@ export default function HeroAvocado() {
           </div>
           <div className="flex gap-3 px-4 py-3">
             <span className="mt-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-wider text-emerald-400">🥑</span>
-            <div className="max-h-52 overflow-y-auto text-zinc-300 leading-relaxed">
+            <div className="max-h-52 overflow-y-auto text-zinc-300 leading-relaxed" data-lenis-prevent>
               {error ? (
                 <span className="text-rose-400">
                   Connection error —{" "}

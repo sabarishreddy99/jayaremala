@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { getLenisInstance } from "@/lib/lenis-store";
 
 const NAV_H = 50;
 
@@ -67,14 +68,27 @@ export default function StackSection({
 
     const ro = new ResizeObserver(measure);
     ro.observe(content);
-    window.addEventListener("scroll", updateTransform, { passive: true });
     window.addEventListener("resize", onResize, { passive: true });
+
+    // Prefer Lenis scroll events — they fire within the same RAF tick as the
+    // lerped scroll update, so translateY stays in sync with the painted frame.
+    // Fall back to native scroll events when Lenis isn't active.
+    const lenis = getLenisInstance();
+    if (lenis) {
+      lenis.on("scroll", updateTransform);
+    } else {
+      window.addEventListener("scroll", updateTransform, { passive: true });
+    }
 
     return () => {
       clearTimeout(resizeTimer);
       ro.disconnect();
-      window.removeEventListener("scroll", updateTransform);
       window.removeEventListener("resize", onResize);
+      if (lenis) {
+        lenis.off("scroll", updateTransform);
+      } else {
+        window.removeEventListener("scroll", updateTransform);
+      }
     };
   }, []);
 

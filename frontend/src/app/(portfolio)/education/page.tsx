@@ -15,29 +15,80 @@ export const metadata = {
 };
 
 export default function EducationPage() {
+  const primaryEdu   = education[0];
+  const primaryGPA   = primaryEdu?.gpa;
+  const gradYear     = primaryEdu?.end?.split(" ").pop() ?? "";
+
   return (
     <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-12 sm:py-16">
 
       {/* Header */}
-      <header className="mb-12 sm:mb-16">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-2">Background</p>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Education</h1>
-        {profile.page_education && <p className="mt-2 text-sm text-fg-subtle max-w-md">{profile.page_education}</p>}
+      <header className="mb-12 sm:mb-16 relative">
+        {/* Decorative bloom */}
+        <div
+          className="absolute -top-8 -right-8 w-72 h-72 rounded-full blur-3xl pointer-events-none -z-10"
+          style={{ background: "radial-gradient(circle, rgba(251,191,36,0.12) 0%, rgba(245,158,11,0.06) 60%, transparent 100%)" }}
+          aria-hidden
+        />
+
+        <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-3">Background · Academia</p>
+
+        {/* Title with gradient glyph */}
+        <div className="flex items-baseline gap-4 mb-2">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Education</h1>
+          <span
+            className="text-2xl sm:text-3xl select-none"
+            style={{
+              background: "linear-gradient(135deg, #f59e0b, #f97316)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+            aria-hidden
+          >
+            ✺
+          </span>
+        </div>
+
+        {profile.page_education && (
+          <p className="text-sm text-fg-subtle max-w-xl leading-relaxed mb-4">
+            {profile.page_education}
+          </p>
+        )}
+
+        {/* Stat chips */}
+        <div className="flex flex-wrap gap-2 mt-4">
+          {primaryGPA && (
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-full px-3 py-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+              GPA {primaryGPA}
+            </span>
+          )}
+          {gradYear && (
+            <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+              Class of {gradYear}
+            </span>
+          )}
+          <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+            {education.length} institution{education.length !== 1 ? "s" : ""}
+          </span>
+        </div>
       </header>
 
       {/* Timeline */}
       <div className="relative">
         {/* Vertical line */}
-        <div className="absolute left-0 top-3 bottom-3 w-px bg-border hidden sm:block" />
+        <div className="absolute left-0 top-3 bottom-3 w-px bg-gradient-to-b from-amber-300 dark:from-amber-700 to-border hidden sm:block" />
 
         <div className="space-y-10">
           {education.map((edu, i) => (
             <div key={i} className="sm:pl-10 relative">
-
               {/* Timeline dot */}
-              <div className="hidden sm:flex absolute left-0 top-3 -translate-x-1/2 w-2.5 h-2.5 rounded-full bg-surface border-2 border-indigo-400" />
+              <div className="hidden sm:flex absolute left-0 top-3 -translate-x-1/2 w-3 h-3 rounded-full bg-surface border-2 border-amber-400 dark:border-amber-500 ring-2 ring-amber-100 dark:ring-amber-900" />
 
-              <div className="rounded-2xl border border-border bg-surface p-6 sm:p-7 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all">
+              <div className="group relative rounded-2xl border border-border bg-surface p-6 sm:p-7 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all overflow-hidden">
+                {/* Hover sweep */}
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-400 to-orange-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
 
                 {/* Top row: institution + period */}
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
@@ -52,7 +103,7 @@ export default function EducationPage() {
                       {edu.start} – {edu.end}
                     </span>
                     {edu.gpa && (
-                      <span className="rounded-full bg-accent-light border border-indigo-200 dark:border-indigo-800 px-3 py-0.5 text-[11px] font-semibold text-accent whitespace-nowrap">
+                      <span className="rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 px-3 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">
                         GPA {edu.gpa}
                       </span>
                     )}
@@ -80,24 +131,18 @@ export default function EducationPage() {
                       const isAward = h.toLowerCase().includes("award") || h.toLowerCase().includes("outstanding") || h.toLowerCase().includes("winner");
                       return (
                         <li key={j} className="flex items-start gap-2.5 text-sm text-fg-muted leading-relaxed">
-                          <span className={`mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full ${isAward ? "bg-amber-400" : "bg-indigo-300"}`} />
-                          <span>
-                            {isAward ? (
-                              <span className="font-medium text-fg">{h}</span>
-                            ) : h}
-                          </span>
+                          <span className={`mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full ${isAward ? "bg-amber-400" : "bg-indigo-300 dark:bg-indigo-600"}`} />
+                          <span>{isAward ? <span className="font-medium text-fg">{h}</span> : h}</span>
                         </li>
                       );
                     })}
                   </ul>
                 )}
-
               </div>
             </div>
           ))}
         </div>
       </div>
-
     </div>
   );
 }

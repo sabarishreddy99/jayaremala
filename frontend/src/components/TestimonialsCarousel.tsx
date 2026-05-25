@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useRef, useEffect } from "react";
 import { testimonials, type Testimonial } from "@/data/testimonials";
 
 function initials(name: string) {
@@ -23,27 +23,22 @@ function formatDate(iso: string) {
 
 function TestimonialCard({ item }: { item: Testimonial }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface p-6 sm:p-8 flex flex-col h-full shadow-sm">
-      {/* Quote mark */}
+    <div className="rounded-2xl border border-border bg-surface p-6 sm:p-7 flex flex-col shadow-sm flex-shrink-0">
       <svg
         className="shrink-0 text-accent/30 mb-4"
-        width="32" height="24" viewBox="0 0 32 24" fill="currentColor"
+        width="28" height="21" viewBox="0 0 32 24" fill="currentColor"
       >
         <path d="M0 24V14.4C0 6.4 5.12 1.6 15.36 0l1.28 2.56C11.52 3.84 8.96 6.4 8.32 10.24H14.4V24H0zm17.6 0V14.4C17.6 6.4 22.72 1.6 32.96 0l1.28 2.56C29.12 3.84 26.56 6.4 25.92 10.24H32V24H17.6z" />
       </svg>
 
-      {/* Description */}
       <p className="text-sm sm:text-base leading-7 text-fg-muted flex-1">
         {item.description}
       </p>
 
-      {/* Divider */}
-      <div className="mt-6 pt-5 border-t border-border-subtle">
+      <div className="mt-5 pt-4 border-t border-border-subtle">
         <div className="flex items-start justify-between gap-4">
-          {/* Person */}
           <div className="flex items-center gap-3 min-w-0">
-            {/* Avatar */}
-            <div className="shrink-0 w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white text-sm font-bold">
+            <div className="shrink-0 w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold">
               {initials(item.name)}
             </div>
             <div className="min-w-0">
@@ -66,7 +61,6 @@ function TestimonialCard({ item }: { item: Testimonial }) {
             </div>
           </div>
 
-          {/* Meta */}
           <div className="shrink-0 text-right">
             {item.source && (
               <span className="inline-flex items-center gap-1 rounded-full bg-surface-raised px-2.5 py-1 text-[10px] font-semibold text-fg-subtle uppercase tracking-wide">
@@ -81,72 +75,76 @@ function TestimonialCard({ item }: { item: Testimonial }) {
   );
 }
 
-export default function TestimonialsCarousel() {
-  const [current, setCurrent] = useState(0);
-  const total = testimonials.length;
+const SPEED = 0.025; // px/ms ≈ 25px/sec
 
-  const next = useCallback(() => setCurrent((c) => (c + 1) % total), [total]);
-  const prev = useCallback(() => setCurrent((c) => (c - 1 + total) % total), [total]);
+export default function TestimonialsCarousel() {
+  const total = testimonials.length;
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const pausedRef = useRef(false);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || total === 0) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+
+    let lastTime: number | null = null;
+    let rafId: number;
+
+    function tick(time: number) {
+      if (el) {
+        if (!pausedRef.current && lastTime !== null) {
+          const delta = Math.min(time - lastTime, 50); // cap to avoid jump after tab switch
+          el.scrollTop += SPEED * delta;
+          // Seamless loop: reset when past the first copy
+          const half = el.scrollHeight / 2;
+          if (el.scrollTop >= half) el.scrollTop -= half;
+        }
+        lastTime = time; // always update so resume has no jump
+      }
+      rafId = requestAnimationFrame(tick);
+    }
+
+    rafId = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafId);
+  }, [total]);
 
   if (total === 0) return null;
 
   return (
     <section>
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Testimonials</h2>
-        {total > 1 && (
-          <span className="text-[11px] text-fg-faint">{current + 1} / {total}</span>
-        )}
+      <div className="flex items-center justify-between mb-5">
+        <div className="flex items-center gap-2.5">
+          <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-emerald-500 to-teal-500 shrink-0" />
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Testimonials</h2>
+        </div>
+        <span className="text-[11px] text-fg-faint">{total} recommendation{total !== 1 ? "s" : ""}</span>
       </div>
 
       <div className="relative">
-        {/* Card */}
-        <div className="min-h-[220px]">
-          <TestimonialCard item={testimonials[current]} />
-        </div>
-
-        {/* Arrows — only when multiple */}
-        {total > 1 && (
-          <>
-            <button
-              onClick={prev}
-              aria-label="Previous testimonial"
-              className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 sm:-translate-x-5 w-9 h-9 rounded-full border border-border bg-surface shadow-sm flex items-center justify-center text-fg-subtle hover:text-fg hover:border-border-strong transition-all"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M15 18l-6-6 6-6" />
-              </svg>
-            </button>
-            <button
-              onClick={next}
-              aria-label="Next testimonial"
-              className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 sm:translate-x-5 w-9 h-9 rounded-full border border-border bg-surface shadow-sm flex items-center justify-center text-fg-subtle hover:text-fg hover:border-border-strong transition-all"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M9 18l6-6-6-6" />
-              </svg>
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Dots */}
-      {total > 1 && (
-        <div className="flex justify-center gap-2 mt-5">
-          {testimonials.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => setCurrent(i)}
-              aria-label={`Go to testimonial ${i + 1}`}
-              className={`rounded-full transition-all ${
-                i === current
-                  ? "w-5 h-2 bg-accent"
-                  : "w-2 h-2 bg-border-strong hover:bg-fg-subtle"
-              }`}
-            />
+        <div
+          ref={scrollRef}
+          onMouseEnter={() => { pausedRef.current = true; }}
+          onMouseLeave={() => { pausedRef.current = false; }}
+          className="flex flex-col gap-4 max-h-[520px] overflow-y-auto [&::-webkit-scrollbar]:hidden"
+          style={{ scrollbarWidth: "none" }}
+        >
+          {/* Render twice — seamless infinite loop via half-height reset */}
+          {[...testimonials, ...testimonials].map((item, i) => (
+            <TestimonialCard key={i} item={item} />
           ))}
         </div>
-      )}
+
+        {/* Top fade */}
+        <div
+          className="absolute top-0 inset-x-0 h-10 pointer-events-none"
+          style={{ background: "linear-gradient(to bottom, var(--color-bg, white) 0%, transparent 100%)" }}
+        />
+        {/* Bottom fade */}
+        <div
+          className="absolute bottom-0 inset-x-0 h-14 pointer-events-none"
+          style={{ background: "linear-gradient(to top, var(--color-bg, white) 0%, transparent 100%)" }}
+        />
+      </div>
     </section>
   );
 }

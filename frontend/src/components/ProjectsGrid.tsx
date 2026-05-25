@@ -62,32 +62,42 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
         )}
       </div>
 
-      {/* Tag filter */}
+      {/* Tag filter pills */}
       {allTags.length > 1 && (
         <div className="flex flex-wrap gap-2 mb-8">
           <button
             onClick={() => setActiveTag(null)}
-            className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
+            className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-1.5 border transition-all duration-150 ${
               !activeTag
-                ? "bg-fg text-bg"
-                : "border border-border bg-surface text-fg-muted hover:border-fg-muted hover:text-fg"
+                ? "bg-fg text-bg border-fg shadow-sm"
+                : "bg-surface border-border text-fg-faint hover:text-fg"
             }`}
           >
             All
+            <span className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${
+              !activeTag ? "bg-bg/20 text-bg" : "bg-surface-raised text-fg-faint"
+            }`}>{projects.length}</span>
           </button>
-          {allTags.map((tag) => (
-            <button
-              key={tag}
-              onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-              className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
-                activeTag === tag
-                  ? "bg-accent text-white border border-accent"
-                  : "border border-border bg-surface text-fg-muted hover:border-accent hover:text-accent"
-              }`}
-            >
-              {tag}
-            </button>
-          ))}
+          {allTags.map((tag) => {
+            const isActive = activeTag === tag;
+            const count = projects.filter((p) => p.tags.includes(tag)).length;
+            return (
+              <button
+                key={tag}
+                onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-1.5 border transition-all duration-150 ${
+                  isActive
+                    ? "bg-accent text-white border-accent shadow-sm"
+                    : "bg-surface border-border text-fg-faint hover:text-fg hover:border-accent/50"
+                }`}
+              >
+                {tag}
+                <span className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${
+                  isActive ? "bg-white/20 text-white" : "bg-surface-raised text-fg-faint"
+                }`}>{count}</span>
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -95,7 +105,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
       {filtered.length === 0 && (
         <div className="rounded-2xl border border-dashed border-border bg-surface p-10 text-center">
           <p className="text-sm text-fg-faint">
-            No projects match{query ? ` "${query}"` : ""}{activeTag ? ` in #${activeTag}` : ""}.
+            No projects match{query ? ` "${query}"` : ""}{activeTag ? ` tagged "${activeTag}"` : ""}.
           </p>
           <button
             onClick={() => { setQuery(""); setActiveTag(null); }}
@@ -109,74 +119,90 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
       {/* Grid */}
       {filtered.length > 0 && (
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((p, i) => (
-            <ScrollReveal key={i} delay={Math.min((i % 3) * 80, 160)} className="flex">
-            <div
-              className="group flex flex-col flex-1 rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 card-lift"
-            >
-              <div className="flex items-start justify-between gap-2 mb-3">
-                <h2 className="font-bold text-fg text-sm leading-snug">{p.title}</h2>
-                <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                  {p.award && (
-                    <span className="text-[10px] font-semibold rounded-full bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 px-2 py-0.5 whitespace-nowrap">
-                      🏆 Winner
-                    </span>
+          {filtered.map((p, i) => {
+            const isAward = Boolean(p.award);
+            const sweepClass = isAward
+              ? "from-amber-500 to-orange-500"
+              : p.featured
+              ? "from-blue-500 to-cyan-500"
+              : "from-indigo-500 to-violet-500";
+
+            return (
+              <ScrollReveal key={i} delay={Math.min((i % 3) * 80, 160)} className="flex">
+                <div className="group relative flex flex-col flex-1 rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden">
+                  {/* Hover sweep */}
+                  <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${sweepClass} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
+
+                  {/* Title + badges */}
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <h2 className="font-bold text-fg text-sm leading-snug group-hover:text-accent transition-colors">
+                      {p.title}
+                    </h2>
+                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                      {isAward && (
+                        <span className="text-[10px] font-semibold rounded-full bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 px-2 py-0.5 whitespace-nowrap">
+                          🏆 Winner
+                        </span>
+                      )}
+                      {p.featured && !isAward && (
+                        <span className="text-[10px] font-semibold rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 px-2 py-0.5">
+                          Featured
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <p className="text-xs leading-5 text-fg-subtle flex-1 mb-4">{p.description}</p>
+
+                  {/* Tag chips */}
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {p.tags.map((t) => (
+                      <button
+                        key={t}
+                        onClick={() => setActiveTag(activeTag === t ? null : t)}
+                        className={`rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                          activeTag === t
+                            ? "bg-accent border-accent text-white"
+                            : "bg-surface-raised border-border text-fg-muted hover:border-accent hover:text-accent"
+                        }`}
+                      >
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+
+                  {p.note && (
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900 rounded-lg px-3 py-2 mb-3 leading-relaxed">
+                      {p.note}
+                    </p>
                   )}
-                  {p.featured && !p.award?.length && (
-                    <span className="text-[10px] font-semibold rounded-full bg-accent-light border border-indigo-200 dark:border-indigo-800 text-accent px-2 py-0.5">
-                      Featured
-                    </span>
-                  )}
+
+                  {/* Source links */}
+                  <div className="flex flex-wrap gap-2 pt-2 border-t border-border-subtle">
+                    {p.sourceLinks && p.sourceLinks.length > 0 ? (
+                      p.sourceLinks.map((link) => (
+                        <a
+                          key={link.url}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-full bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:opacity-80 transition-opacity"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {link.label}
+                          <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                          </svg>
+                        </a>
+                      ))
+                    ) : (
+                      <span className="text-[11px] text-fg-faint">{p.note ? "" : "In progress"}</span>
+                    )}
+                  </div>
                 </div>
-              </div>
-
-              <p className="text-xs leading-5 text-fg-subtle flex-1 mb-4">{p.description}</p>
-
-              <div className="flex flex-wrap gap-1.5 mb-4">
-                {p.tags.map((t) => (
-                  <button
-                    key={t}
-                    onClick={() => setActiveTag(activeTag === t ? null : t)}
-                    className={`rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
-                      activeTag === t
-                        ? "bg-accent border-accent text-white"
-                        : "bg-surface-raised border-border text-fg-muted hover:border-accent hover:text-accent"
-                    }`}
-                  >
-                    {t}
-                  </button>
-                ))}
-              </div>
-
-              {p.note && (
-                <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900 rounded-lg px-3 py-2 mb-3 leading-relaxed">
-                  {p.note}
-                </p>
-              )}
-
-              <div className="flex flex-wrap gap-2 pt-2 border-t border-border-subtle">
-                {p.sourceLinks && p.sourceLinks.length > 0 ? (
-                  p.sourceLinks.map((link) => (
-                    <a
-                      key={link.url}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 rounded-full bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:opacity-80 transition-opacity"
-                    >
-                      {link.label}
-                      <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M7 17L17 7M17 7H7M17 7v10"/>
-                      </svg>
-                    </a>
-                  ))
-                ) : (
-                  <span className="text-[11px] text-fg-faint">{p.note ? "" : "In progress"}</span>
-                )}
-              </div>
-            </div>
-            </ScrollReveal>
-          ))}
+              </ScrollReveal>
+            );
+          })}
         </div>
       )}
     </div>

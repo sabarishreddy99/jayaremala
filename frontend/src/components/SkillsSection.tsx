@@ -27,7 +27,10 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
     <>
       {/* Header */}
       <div className="flex items-center justify-between mb-6 min-h-[1.5rem]">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Skills & Tools</h2>
+        <div className="flex items-center gap-2.5">
+          <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-violet-500 to-purple-500 shrink-0" />
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Skills & Tools</h2>
+        </div>
         {activeSkill && (
           <button
             onClick={() => setActiveSkill(null)}
@@ -45,7 +48,7 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
       {/* Skills grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {skills.map((group) => (
-          <div key={group.category} className="rounded-2xl border border-border bg-surface-raised p-5 h-full">
+          <div key={group.category} className="rounded-2xl border border-border bg-surface-raised p-5 h-full transition-all duration-200 hover:border-violet-200 dark:hover:border-violet-800 hover:shadow-sm">
             <p className="text-[11px] font-bold uppercase tracking-wider text-accent mb-3">{group.category}</p>
             <div className="flex flex-wrap gap-1.5">
               {group.items.map((item) => {

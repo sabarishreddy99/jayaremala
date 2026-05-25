@@ -368,7 +368,7 @@ export default function ChatInterface() {
       {/* Warm-up banner */}
       {backendStatus === "warming" && (
         <div className="shrink-0 px-3 sm:px-10 pt-2">
-          <div className="mx-auto max-w-2xl">
+          <div className="mx-auto max-w-2xl lg:max-w-3xl">
             <div className="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-3 py-2">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
               <p className="text-[11px] text-amber-700 dark:text-amber-400">
@@ -382,7 +382,7 @@ export default function ChatInterface() {
       {/* Rate-limit countdown banner */}
       {rateLimitUntil && (
         <div className="shrink-0 px-3 sm:px-10 pt-2">
-          <div className="mx-auto max-w-2xl">
+          <div className="mx-auto max-w-2xl lg:max-w-3xl">
             <div className="flex items-center justify-between gap-2 rounded-lg border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 px-3 py-2">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
@@ -400,7 +400,7 @@ export default function ChatInterface() {
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-4">
-        <div className="mx-auto max-w-2xl space-y-4 sm:space-y-5">
+        <div className="mx-auto max-w-2xl lg:max-w-3xl space-y-4 sm:space-y-5">
           {messages.map((m, i) => (
             <div key={i}>
               <ChatMessage message={m} />
@@ -488,7 +488,7 @@ export default function ChatInterface() {
 
       {/* Bottom — input + footer */}
       <div className="shrink-0 px-3 sm:px-6 lg:px-10 pt-2 pb-3 sm:pb-5">
-        <div className="mx-auto max-w-2xl space-y-2">
+        <div className="mx-auto max-w-2xl lg:max-w-3xl space-y-2">
 
           <ChatInput
             onSend={handleSend}

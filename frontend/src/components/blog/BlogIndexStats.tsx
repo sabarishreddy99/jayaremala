@@ -78,30 +78,27 @@ export function BlogIndexStats() {
   if (!summary || (summary.total_claps === 0 && summary.total_views === 0)) return null;
 
   return (
-    <div className="flex items-center gap-4 mt-4">
+    <div className="flex flex-wrap items-center gap-2 mt-4">
+      {summary.total_views > 0 && (
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+          </svg>
+          {formatCount(summary.total_views)} views
+        </span>
+      )}
       {summary.total_claps > 0 && (
-        <div className="flex items-center gap-1.5">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
             <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/>
             <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
           </svg>
-          <span className="text-sm font-semibold text-fg-muted">{formatCount(summary.total_claps)}</span>
-          <span className="text-xs text-fg-faint">total claps</span>
-        </div>
+          {formatCount(summary.total_claps)} claps
+        </span>
       )}
-      {summary.total_claps > 0 && summary.total_views > 0 && (
-        <span className="text-border">·</span>
-      )}
-      {summary.total_views > 0 && (
-        <div className="flex items-center gap-1.5">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-            <circle cx="12" cy="12" r="3"/>
-          </svg>
-          <span className="text-sm font-semibold text-fg-muted">{formatCount(summary.total_views)}</span>
-          <span className="text-xs text-fg-faint">total views</span>
-        </div>
-      )}
+      <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+        {summary.posts.length} posts
+      </span>
     </div>
   );
 }
@@ -249,8 +246,11 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
           <li key={p.slug}>
             <Link
               href={`/blog/${p.slug}`}
-              className="group block rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all"
+              className="group relative block rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden"
             >
+              {/* Hover sweep bar */}
+              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+
               <div className="flex items-start justify-between gap-4 mb-2">
                 <h2 className="text-base font-bold text-fg group-hover:text-accent transition-colors leading-snug">
                   {p.title}
@@ -258,7 +258,9 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <span className="text-[11px] text-fg-faint">{p.date}</span>
                   {p.readingTime && (
-                    <span className="text-[10px] text-fg-faint">{p.readingTime} min read</span>
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-fg-faint bg-surface-raised border border-border rounded-full px-2 py-0.5">
+                      {p.readingTime} min
+                    </span>
                   )}
                   {postStats && (postStats.views > 0 || postStats.claps > 0) && (
                     <div className="flex items-center gap-2.5">
@@ -292,7 +294,15 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
                     </span>
                   ))}
                 </div>
-                <CardShareButton slug={p.slug} title={p.title} />
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="flex items-center gap-1 text-[11px] font-medium text-accent opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-200">
+                    Read
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </span>
+                  <CardShareButton slug={p.slug} title={p.title} />
+                </div>
               </div>
             </Link>
           </li>

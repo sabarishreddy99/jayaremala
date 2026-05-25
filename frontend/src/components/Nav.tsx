@@ -13,6 +13,7 @@ const links = [
   { href: "/projects",   label: "Projects"   },
   { href: "/lab",        label: "Lab"        },
   { href: "/blog",       label: "Blog"       },
+  { href: "/quotes",     label: "Quotes"     },
 ];
 
 export default function Nav() {

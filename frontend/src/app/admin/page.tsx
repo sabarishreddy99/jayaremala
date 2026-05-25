@@ -1261,6 +1261,313 @@ function BlogEditor() {
   );
 }
 
+// ── QuotesEditor ──────────────────────────────────────────────────────────────
+
+interface QuoteEntry {
+  id: string;
+  text: string;
+  author: string;
+  source: string | null;
+  category: string;
+  favorite: boolean;
+  addedAt: string;
+}
+
+const QUOTE_CATEGORIES = ["Work", "Life", "Technology", "Philosophy", "Creativity", "Mindset"];
+
+function QuotesEditor() {
+  const [quotes, setQuotes]         = useState<QuoteEntry[]>([]);
+  const [sha, setSha]               = useState<string | null>(null);
+  const [loading, setLoading]       = useState(false);
+  const [saving, setSaving]         = useState(false);
+  const [loadResult, setLoadResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [saveResult, setSaveResult] = useState<{ ok: boolean; message: string } | null>(null);
+  const [githubPat, setGithubPat]   = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("avocado_github_pat") ?? "" : ""
+  );
+  const [patVisible, setPatVisible] = useState(false);
+
+  // New quote form state
+  const [newText, setNewText]         = useState("");
+  const [newAuthor, setNewAuthor]     = useState("");
+  const [newSource, setNewSource]     = useState("");
+  const [newCategory, setNewCategory] = useState("Technology");
+  const [newFavorite, setNewFavorite] = useState(false);
+
+  // Edit state
+  const [editingId, setEditingId]   = useState<string | null>(null);
+  const [editFields, setEditFields] = useState<Partial<QuoteEntry>>({});
+
+  const API_URL = "https://api.github.com/repos/sabarishreddy99/jayaremala/contents/backend/data/knowledge/quotes.json";
+
+  function apiHeaders() {
+    return {
+      Authorization: `Bearer ${githubPat.trim()}`,
+      Accept: "application/vnd.github+json",
+      "Content-Type": "application/json",
+    };
+  }
+
+  async function loadFromGitHub() {
+    if (!githubPat.trim()) { setLoadResult({ ok: false, message: "GitHub PAT required." }); return; }
+    setLoading(true);
+    setLoadResult(null);
+    try {
+      const res = await fetch(API_URL, { headers: apiHeaders() });
+      if (!res.ok) { setLoadResult({ ok: false, message: `GitHub: ${res.status} ${res.statusText}` }); return; }
+      const data = await res.json();
+      setSha(data.sha);
+      const decoded = JSON.parse(atob(data.content.replace(/\n/g, "")));
+      setQuotes(decoded);
+      setLoadResult({ ok: true, message: `Loaded ${decoded.length} quotes.` });
+    } catch (e: unknown) {
+      setLoadResult({ ok: false, message: `Error: ${(e as Error).message}` });
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function saveToGitHub(updatedQuotes: QuoteEntry[]) {
+    if (!githubPat.trim()) { setSaveResult({ ok: false, message: "GitHub PAT required." }); return; }
+    setSaving(true);
+    setSaveResult(null);
+    try {
+      const content = btoa(unescape(encodeURIComponent(JSON.stringify(updatedQuotes, null, 2))));
+      const body: Record<string, string> = { message: "quotes: update", content, branch: "main" };
+      if (sha) body.sha = sha;
+      const res = await fetch(API_URL, { method: "PUT", headers: apiHeaders(), body: JSON.stringify(body) });
+      if (res.ok) {
+        const data = await res.json();
+        setSha(data.content.sha);
+        setQuotes(updatedQuotes);
+        setSaveResult({ ok: true, message: "Saved! GH Actions will sync to frontend in ~2 min." });
+      } else {
+        const err = await res.json().catch(() => ({ message: res.statusText }));
+        setSaveResult({ ok: false, message: `GitHub: ${(err as { message?: string }).message ?? res.statusText}` });
+      }
+    } catch (e: unknown) {
+      setSaveResult({ ok: false, message: `Error: ${(e as Error).message}` });
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function addQuote() {
+    if (!newText.trim() || !newAuthor.trim()) return;
+    const newQuote: QuoteEntry = {
+      id: `q${Date.now()}`,
+      text: newText.trim(),
+      author: newAuthor.trim(),
+      source: newSource.trim() || null,
+      category: newCategory,
+      favorite: newFavorite,
+      addedAt: new Date().toISOString().slice(0, 10),
+    };
+    const updated = [...quotes, newQuote];
+    setNewText(""); setNewAuthor(""); setNewSource(""); setNewCategory("Technology"); setNewFavorite(false);
+    saveToGitHub(updated);
+  }
+
+  function deleteQuote(id: string) {
+    saveToGitHub(quotes.filter((q) => q.id !== id));
+  }
+
+  function startEdit(q: QuoteEntry) {
+    setEditingId(q.id);
+    setEditFields({ text: q.text, author: q.author, source: q.source ?? "", category: q.category, favorite: q.favorite });
+  }
+
+  function saveEdit(id: string) {
+    const updated = quotes.map((q) => q.id === id ? { ...q, ...editFields, source: (editFields.source as string | undefined)?.trim() || null } : q);
+    setEditingId(null);
+    saveToGitHub(updated);
+  }
+
+  const inputCls = "w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 transition-colors";
+  const labelCls = "block text-[11px] font-semibold text-fg-muted mb-1";
+
+  return (
+    <div className="space-y-6">
+
+      {/* PAT + Load */}
+      <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">GitHub Access</h2>
+        <div className="flex gap-2">
+          <div className="relative flex-1">
+            <input
+              type={patVisible ? "text" : "password"}
+              value={githubPat}
+              onChange={(e) => { setGithubPat(e.target.value); localStorage.setItem("avocado_github_pat", e.target.value); }}
+              placeholder="ghp_…"
+              className={inputCls}
+            />
+            <button
+              type="button"
+              onClick={() => setPatVisible(!patVisible)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-fg-faint hover:text-fg-muted text-[10px]"
+            >
+              {patVisible ? "hide" : "show"}
+            </button>
+          </div>
+          <button
+            onClick={loadFromGitHub}
+            disabled={loading || !githubPat.trim()}
+            className="shrink-0 px-4 py-2 rounded-xl bg-fg text-bg text-xs font-semibold hover:opacity-80 disabled:opacity-40 transition-opacity"
+          >
+            {loading ? "Loading…" : "Load"}
+          </button>
+        </div>
+        {loadResult && (
+          <p className={`text-xs ${loadResult.ok ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+            {loadResult.message}
+          </p>
+        )}
+      </div>
+
+      {/* Add new quote */}
+      <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Add New Quote</h2>
+        <div>
+          <label className={labelCls}>Quote text *</label>
+          <textarea
+            value={newText}
+            onChange={(e) => setNewText(e.target.value)}
+            placeholder="The best way to predict the future is to invent it."
+            rows={3}
+            className={`${inputCls} resize-none`}
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className={labelCls}>Author *</label>
+            <input value={newAuthor} onChange={(e) => setNewAuthor(e.target.value)} placeholder="Alan Kay" className={inputCls} />
+          </div>
+          <div>
+            <label className={labelCls}>Source / Book</label>
+            <input value={newSource} onChange={(e) => setNewSource(e.target.value)} placeholder="Profiles of the Future (optional)" className={inputCls} />
+          </div>
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex-1">
+            <label className={labelCls}>Category</label>
+            <select value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className={inputCls}>
+              {QUOTE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+            </select>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer mt-5">
+            <input type="checkbox" checked={newFavorite} onChange={(e) => setNewFavorite(e.target.checked)} className="rounded" />
+            <span className="text-xs font-medium text-fg-muted">Favorite ★</span>
+          </label>
+        </div>
+        <button
+          onClick={addQuote}
+          disabled={!newText.trim() || !newAuthor.trim() || saving || !githubPat.trim()}
+          className="w-full rounded-xl bg-indigo-600 text-white py-2 text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+        >
+          {saving ? "Saving…" : "Add Quote → GitHub"}
+        </button>
+        {saveResult && (
+          <p className={`text-xs text-center ${saveResult.ok ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+            {saveResult.message}
+          </p>
+        )}
+      </div>
+
+      {/* Existing quotes list */}
+      {quotes.length > 0 && (
+        <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+          <div className="px-5 py-4 border-b border-border flex items-center justify-between">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">{quotes.length} Quotes</h2>
+          </div>
+          <div className="divide-y divide-border">
+            {quotes.map((q) => (
+              <div key={q.id} className="px-5 py-4">
+                {editingId === q.id ? (
+                  <div className="space-y-3">
+                    <textarea
+                      value={editFields.text ?? ""}
+                      onChange={(e) => setEditFields((p) => ({ ...p, text: e.target.value }))}
+                      rows={3}
+                      className={`${inputCls} resize-none`}
+                    />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <input
+                        value={editFields.author ?? ""}
+                        onChange={(e) => setEditFields((p) => ({ ...p, author: e.target.value }))}
+                        placeholder="Author"
+                        className={inputCls}
+                      />
+                      <input
+                        value={(editFields.source as string | null | undefined) ?? ""}
+                        onChange={(e) => setEditFields((p) => ({ ...p, source: e.target.value }))}
+                        placeholder="Source (optional)"
+                        className={inputCls}
+                      />
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <select
+                        value={editFields.category ?? "Technology"}
+                        onChange={(e) => setEditFields((p) => ({ ...p, category: e.target.value }))}
+                        className={`${inputCls} flex-1`}
+                      >
+                        {QUOTE_CATEGORIES.map((c) => <option key={c}>{c}</option>)}
+                      </select>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editFields.favorite ?? false}
+                          onChange={(e) => setEditFields((p) => ({ ...p, favorite: e.target.checked }))}
+                          className="rounded"
+                        />
+                        <span className="text-xs font-medium text-fg-muted">Favorite</span>
+                      </label>
+                      <button onClick={() => saveEdit(q.id)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors">
+                        {saving ? "…" : "Save"}
+                      </button>
+                      <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded-lg border border-border text-xs text-fg-faint hover:text-fg transition-colors">
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">{q.category}</span>
+                        {q.favorite && <span className="text-amber-400 text-xs">★</span>}
+                      </div>
+                      <p className="text-sm text-fg leading-relaxed line-clamp-2">{q.text}</p>
+                      <p className="text-[11px] text-fg-faint mt-1">
+                        — {q.author}{q.source ? `, ${q.source}` : ""}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1 shrink-0">
+                      <button
+                        onClick={() => startEdit(q)}
+                        className="text-[10px] text-fg-faint hover:text-fg px-2 py-1 rounded-lg hover:bg-surface-raised transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => deleteQuote(q.id)}
+                        disabled={saving}
+                        className="text-[10px] text-rose-500 hover:text-rose-600 px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-40"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
+
 // ── Dashboard ─────────────────────────────────────────────────────────────────
 
 type Period = "week" | "month" | "all";
@@ -1277,7 +1584,7 @@ function Dashboard({
   lastUpdated: Date | null;
 }) {
   const [period, setPeriod] = useState<Period>("all");
-  const [activeView, setActiveView] = useState<"analytics" | "write-blog">("analytics");
+  const [activeView, setActiveView] = useState<"analytics" | "write-blog" | "quotes">("analytics");
   const conv        = stats.conversations[period];
   const site        = stats.site_visitors[period];
   const feedback    = stats.feedback[period];
@@ -1332,16 +1639,30 @@ function Dashboard({
               </svg>
               Home
             </Link>
-            <button
-              onClick={() => setActiveView(activeView === "write-blog" ? "analytics" : "write-blog")}
-              className={`text-xs border rounded-lg px-3 py-1.5 transition-colors ${
-                activeView === "write-blog"
-                  ? "border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40"
-                  : "border-border text-fg-faint hover:text-fg-muted"
-              }`}
-            >
-              {activeView === "write-blog" ? "← Analytics" : "✏ Write Blog"}
-            </button>
+            {activeView !== "analytics" && (
+              <button
+                onClick={() => setActiveView("analytics")}
+                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
+              >
+                ← Analytics
+              </button>
+            )}
+            {activeView !== "write-blog" && (
+              <button
+                onClick={() => setActiveView("write-blog")}
+                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
+              >
+                ✏ Write Blog
+              </button>
+            )}
+            {activeView !== "quotes" && (
+              <button
+                onClick={() => setActiveView("quotes")}
+                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
+              >
+                ❝ Quotes
+              </button>
+            )}
             <button
               onClick={onLogout}
               className="text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors"
@@ -1370,6 +1691,9 @@ function Dashboard({
 
         {/* Write Blog view */}
         {activeView === "write-blog" && <BlogEditor />}
+
+        {/* Quotes view */}
+        {activeView === "quotes" && <QuotesEditor />}
 
         {/* Analytics content */}
         {activeView === "analytics" && (<>

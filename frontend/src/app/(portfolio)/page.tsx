@@ -169,7 +169,10 @@ export default function PortfolioHome() {
       {/* ── 2 · At a Glance ── z-[2] ───────────────────────────── */}
       <StackSection z={2} seamless>
 <Inner className="py-16 sm:py-20">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-8">At a Glance</h2>
+          <div className="flex items-center gap-2.5 mb-8">
+            <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500 shrink-0" />
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">At a Glance</h2>
+          </div>
 
           <div className="grid gap-8 lg:grid-cols-[1fr_260px]">
             <div className="space-y-6">
@@ -218,7 +221,10 @@ export default function PortfolioHome() {
         <StackSection z={3}>
           <Inner className="py-16 sm:py-20">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Featured Projects</h2>
+              <div className="flex items-center gap-2.5">
+                <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-blue-500 to-cyan-500 shrink-0" />
+                <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Featured Projects</h2>
+              </div>
               <Link href="/projects" className="text-xs font-medium text-accent hover:text-accent-hover">
                 All projects →
               </Link>
@@ -236,9 +242,10 @@ export default function PortfolioHome() {
                       sourceLinks={p.sourceLinks}
                     />
                   ) : (
-                    <div className="group flex-1 rounded-2xl border border-border bg-surface p-5 space-y-3 hover:border-indigo-300 dark:hover:border-indigo-700 card-lift">
+                    <div className="group relative flex-1 rounded-2xl border border-border bg-surface p-5 space-y-3 hover:border-indigo-300 dark:hover:border-indigo-700 card-lift overflow-hidden">
+                      <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${p.award ? "from-amber-500 to-orange-500" : "from-blue-500 to-cyan-500"} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
                       <div className="flex items-start justify-between gap-2">
-                        <h3 className="font-semibold text-fg text-sm leading-snug">{p.title}</h3>
+                        <h3 className="font-semibold text-fg text-sm leading-snug group-hover:text-accent transition-colors">{p.title}</h3>
                         {p.award && (
                           <span className="text-[10px] font-semibold rounded-full bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-2 py-0.5 whitespace-nowrap flex-shrink-0">
                             🏆 {p.award}

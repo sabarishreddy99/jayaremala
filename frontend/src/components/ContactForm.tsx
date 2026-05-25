@@ -133,7 +133,10 @@ export default function ContactForm() {
       </div>
 
       <section className="rounded-2xl border border-border bg-surface-raised p-6 sm:p-8">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-3">Get in Touch</h2>
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-rose-500 to-pink-500 shrink-0" />
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Get in Touch</h2>
+        </div>
 
         {submitted ? (
           <div className="flex flex-col items-center gap-4 py-10 text-center">

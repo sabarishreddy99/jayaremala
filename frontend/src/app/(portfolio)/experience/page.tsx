@@ -16,59 +16,116 @@ export const metadata = {
 };
 
 export default function ExperiencePage() {
+  const uniqueCompanies = new Set(experience.map((e) => e.company)).size;
+  const isActive = experience.some((e) => e.end === "Present");
+
   return (
     <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-12 sm:py-16">
-      <header className="mb-12 sm:mb-16">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-2">Career</p>
-        <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Experience</h1>
-        {profile.page_experience && <p className="mt-2 text-sm text-fg-subtle">{profile.page_experience}</p>}
+
+      {/* Header */}
+      <header className="mb-12 sm:mb-16 relative">
+        {/* Decorative bloom */}
+        <div
+          className="absolute -top-8 -right-8 w-72 h-72 rounded-full blur-3xl pointer-events-none -z-10"
+          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, rgba(139,92,246,0.06) 60%, transparent 100%)" }}
+          aria-hidden
+        />
+
+        <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-3">Career · Timeline</p>
+
+        {/* Title with gradient glyph */}
+        <div className="flex items-baseline gap-4 mb-2">
+          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Experience</h1>
+          <span
+            className="text-2xl sm:text-3xl select-none"
+            style={{
+              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+              WebkitBackgroundClip: "text",
+              WebkitTextFillColor: "transparent",
+              backgroundClip: "text",
+            }}
+            aria-hidden
+          >
+            ◈
+          </span>
+        </div>
+
+        {profile.page_experience && (
+          <p className="text-sm text-fg-subtle max-w-xl leading-relaxed mb-4">
+            {profile.page_experience}
+          </p>
+        )}
+
+        {/* Stat chips */}
+        <div className="flex flex-wrap gap-2 mt-4">
+          {isActive && (
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-full px-3 py-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              Currently active
+            </span>
+          )}
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-full px-3 py-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+            {experience.length} roles
+          </span>
+          <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+            {uniqueCompanies} companies
+          </span>
+        </div>
       </header>
 
+      {/* Timeline */}
       <ol className="relative space-y-0">
         {experience.map((job, i) => (
           <li key={i} className="relative pl-8 pb-12 last:pb-0">
-            {/* Timeline line */}
+            {/* Timeline line — gradient fades toward bottom */}
             {i < experience.length - 1 && (
-              <div className="absolute left-[11px] top-4 bottom-0 w-px bg-border" />
+              <div className="absolute left-[10px] top-5 bottom-0 w-px bg-gradient-to-b from-indigo-300 dark:from-indigo-700 to-border" />
             )}
+
             {/* Timeline dot */}
-            <div className="absolute left-0 top-1 h-[22px] w-[22px] rounded-full border-2 border-bg bg-indigo-600 shadow-sm ring-2 ring-border" />
+            <div className="absolute left-0 top-1 h-[22px] w-[22px] rounded-full bg-indigo-600 shadow-sm ring-2 ring-indigo-200 dark:ring-indigo-800 flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rounded-full bg-white" />
+            </div>
 
             <ScrollReveal delay={Math.min(i * 70, 280)} className="w-full">
-            <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-border-strong card-lift">
-              {/* Header row */}
-              <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
-                <div>
-                  <h2 className="text-base font-bold text-fg">{job.role}</h2>
-                  <p className="text-sm font-medium text-accent">{job.company}</p>
-                </div>
-                <div className="text-right">
-                  <span className="inline-block rounded-full bg-surface-raised px-3 py-0.5 text-[11px] font-medium text-fg-muted">
-                    {job.start} – {job.end}
-                  </span>
-                  <p className="text-[11px] text-fg-faint mt-0.5">{job.location}</p>
-                </div>
-              </div>
+              <div className="group relative rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden">
+                {/* Hover sweep */}
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
 
-              {job.tech && (
-                <div className="flex flex-wrap gap-1.5 mb-4">
-                  {job.tech.split(", ").map((t) => (
-                    <span key={t} className="rounded-full bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[10px] font-medium text-accent">
-                      {t}
+                {/* Header row */}
+                <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+                  <div>
+                    <h2 className="text-base font-bold text-fg">{job.role}</h2>
+                    <p className="text-sm font-medium text-accent">{job.company}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <span className="inline-block rounded-full bg-surface-raised px-3 py-0.5 text-[11px] font-medium text-fg-muted">
+                      {job.start} – {job.end}
                     </span>
-                  ))}
+                    <p className="text-[11px] text-fg-faint mt-0.5">{job.location}</p>
+                  </div>
                 </div>
-              )}
 
-              <ul className="space-y-2.5">
-                {job.bullets.map((b, j) => (
-                  <li key={j} className="flex gap-2.5 text-sm text-fg-muted leading-relaxed">
-                    <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-400" />
-                    {b}
-                  </li>
-                ))}
-              </ul>
-            </div>
+                {job.tech && (
+                  <div className="flex flex-wrap gap-1.5 mb-4">
+                    {job.tech.split(", ").map((t) => (
+                      <span key={t} className="rounded-full bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[10px] font-medium text-accent">
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <ul className="space-y-2.5">
+                  {job.bullets.map((b, j) => (
+                    <li key={j} className="flex gap-2.5 text-sm text-fg-muted leading-relaxed">
+                      <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-400" />
+                      {b}
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </ScrollReveal>
           </li>
         ))}

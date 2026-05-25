@@ -191,6 +191,7 @@ export default function TestimonialsCarousel() {
           onMouseLeave={() => { pausedRef.current = false; }}
           className="flex flex-col gap-4 max-h-[520px] overflow-y-auto [&::-webkit-scrollbar]:hidden"
           style={{ scrollbarWidth: "none" }}
+          data-lenis-prevent
         >
           {[...testimonials, ...testimonials].map((item, i) => (
             <TestimonialCard key={i} item={item} />

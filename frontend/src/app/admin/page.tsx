@@ -490,6 +490,9 @@ function inlineFmt(text: string): string {
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
+    .replace(/!\[([^\]]*)\]\(([^)"]+?)(?:\s+"([^"]+)")?\)/g, (_, alt, src, cap) =>
+      `<img src="${src}" alt="${alt}" style="max-width:100%;vertical-align:middle;border-radius:8px;display:inline-block" />${cap ? ` <em style="font-size:0.82em;color:#71717a">${cap}</em>` : ""}`
+    )
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, "<em>$1</em>")
     .replace(/`([^`]+)`/g, '<code style="background:#27272a;color:#e879f9;padding:0.1em 0.35em;border-radius:4px;font-size:0.85em">$1</code>')
@@ -530,6 +533,24 @@ function mdxToHTML(md: string): string {
       html += `<ol style="padding-left:1.4em;margin:0.8em 0;list-style-type:decimal">${items}</ol>`; continue;
     }
     if (line.trim() === "") { html += `<div style="height:0.6em"></div>`; i++; continue; }
+    // BlogImage component — handles both single-line and multi-line
+    if (line.trim().startsWith("<BlogImage")) {
+      let fullTag = line;
+      while (!fullTag.includes("/>") && i < lines.length - 1) { i++; fullTag += " " + lines[i]; }
+      const srcM = fullTag.match(/src="([^"]+)"/);
+      const altM = fullTag.match(/alt="([^"]*)"/);
+      const capM = fullTag.match(/caption="([^"]*)"/);
+      const iSrc = srcM?.[1] ?? ""; const iAlt = altM?.[1] ?? ""; const iCap = capM?.[1];
+      html += `<figure style="margin:1.5em 0;text-align:center"><div style="display:inline-block;max-width:100%;border-radius:1rem;border:1px solid #3f3f46;overflow:hidden;background:#18181b;padding:0.75rem"><img src="${iSrc}" alt="${iAlt}" style="max-width:100%;height:auto;display:block;border-radius:0.5rem" /></div>${iCap ? `<figcaption style="margin-top:0.5em;font-size:0.82rem;color:#71717a;font-style:italic">${iCap}</figcaption>` : ""}</figure>`;
+      i++; continue;
+    }
+    // Standalone image line: ![alt](url) or ![alt](url "caption")
+    const imgMatch = line.trim().match(/^!\[([^\]]*)\]\(([^)"]+?)(?:\s+"([^"]+)")?\)$/);
+    if (imgMatch) {
+      const [, iAlt, iSrc, iCap] = imgMatch;
+      html += `<figure style="margin:1.5em 0;text-align:center"><div style="display:inline-block;max-width:100%;border-radius:1rem;border:1px solid #3f3f46;overflow:hidden;background:#18181b;padding:0.75rem"><img src="${iSrc}" alt="${iAlt}" style="max-width:100%;height:auto;display:block;border-radius:0.5rem" /></div>${iCap ? `<figcaption style="margin-top:0.5em;font-size:0.82rem;color:#71717a;font-style:italic">${iCap}</figcaption>` : ""}</figure>`;
+      i++; continue;
+    }
     if (/^<\w/.test(line.trim()) && line.trim().endsWith("/>")) {
       html += `<code style="display:inline-block;background:#1e1b4b;color:#818cf8;padding:0.2em 0.5em;border-radius:4px;font-size:0.8em;margin:0.4em 0">${line.trim().replace(/</g, "&lt;").replace(/>/g, "&gt;")}</code><br />`;
       i++; continue;
@@ -665,44 +686,213 @@ const FORMAT_GUIDE: { heading: string; items: { label: string; syntax: string; n
   },
 ];
 
+// ── BlogEditor types + constants ───────────────────────────────────────────────
+
+interface DraftEntry {
+  id: string;
+  title: string;
+  slug: string;
+  date: string;
+  publishedAt: string;
+  description: string;
+  tags: string;
+  ogImage: string;
+  content: string;
+  savedAt: string;
+}
+
+const DRAFTS_KEY = "avocado_blog_drafts";
+
+const TAG_POOL = [
+  "AI", "Machine Learning", "Python", "TypeScript", "System Design",
+  "RAG", "FastAPI", "Next.js", "React", "Career", "Productivity",
+  "Engineering", "Deep Learning", "NLP", "Databases", "LLM",
+  "Embeddings", "Infrastructure", "Leadership", "Distributed Systems",
+];
+
+const POST_TEMPLATES = [
+  {
+    id: "technical", emoji: "⚙️", label: "Technical Deep-Dive",
+    desc: "Architecture, systems, engineering decisions",
+    content: `## Introduction\n\nWhat problem does this solve and why does it matter?\n\n## The Problem\n\nDescribe the challenge. What were the constraints? What made it hard?\n\n## The Approach\n\nWalk through your thinking. What did you consider? What did you rule out and why?\n\n## Implementation\n\nThe actual solution — code snippets, diagrams, specifics.\n\n## Results\n\nMetrics, outcomes, what changed. Be concrete.\n\n## Key Takeaways\n\n- Insight 1\n- Insight 2\n- Insight 3`,
+  },
+  {
+    id: "tutorial", emoji: "📖", label: "Tutorial / How-To",
+    desc: "Step-by-step guide anyone can follow",
+    content: `## What You'll Build\n\nOne sentence: what does the reader have at the end?\n\n## Prerequisites\n\n- Requirement 1\n- Requirement 2\n\n## Step 1: [First Step]\n\nInstructions for step 1.\n\n## Step 2: [Second Step]\n\nInstructions for step 2.\n\n## Step 3: [Third Step]\n\nInstructions for step 3.\n\n## Conclusion\n\nWhat the reader now has. What to explore next.`,
+  },
+  {
+    id: "story", emoji: "💭", label: "Story / Reflection",
+    desc: "Experience, lessons learned, personal journey",
+    content: `## Background\n\nSet the scene. Where were you? What were you working on?\n\n## What Happened\n\nThe story. Keep it honest and specific.\n\n## What I Learned\n\nThe real insights. What shifted in how you think?\n\n## What I'd Do Differently\n\nHonest reflection. What would you tell past-you?`,
+  },
+  {
+    id: "quick", emoji: "⚡", label: "Quick Take",
+    desc: "Short opinion or observation (200–400 words)",
+    content: `Start writing here. A quick take is conversational — no strict structure needed.\n\n<Divider />\n\nClosing thought or question to the reader.`,
+  },
+];
+
 // ── BlogEditor ─────────────────────────────────────────────────────────────────
 
 function BlogEditor() {
-  const [title, setTitle]                   = useState("");
-  const [slug, setSlug]                     = useState("");
-  const [slugEdited, setSlugEdited]         = useState(false);
-  const [date, setDate]                     = useState(todayISO);
-  const [publishedAt]                       = useState(todayISO);
-  const [description, setDescription]       = useState("");
-  const [tags, setTags]                     = useState("");
-  const [ogImage, setOgImage]               = useState("");
-  const [content, setContent]               = useState("## Introduction\n\nWrite your post content here…");
-  const [githubPat, setGithubPat]           = useState(() =>
-    typeof window !== "undefined" ? localStorage.getItem("avocado_github_pat") ?? "" : ""
-  );
-  const [patVisible, setPatVisible]         = useState(false);
-  const [patSaved, setPatSaved]             = useState(false);
-  const [activePanel, setActivePanel]       = useState<"write" | "preview" | "images">("write");
-  const [publishing, setPublishing]         = useState(false);
-  const [result, setResult]                 = useState<{ ok: boolean; message: string } | null>(null);
+  // Core content
+  const [title, setTitle]               = useState("");
+  const [slug, setSlug]                 = useState("");
+  const [slugEdited, setSlugEdited]     = useState(false);
+  const [date, setDate]                 = useState(todayISO);
+  const [publishedAt]                   = useState(todayISO);
+  const [description, setDescription]   = useState("");
+  const [tags, setTags]                 = useState<string[]>([]);
+  const [tagInput, setTagInput]         = useState("");
+  const [ogImage, setOgImage]           = useState("");
+  const [content, setContent]           = useState("");
+
+  // Draft management
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
+  const [lastSaved, setLastSaved]           = useState<Date | null>(null);
+  const [drafts, setDrafts]                 = useState<DraftEntry[]>([]);
+  const [showDraftMenu, setShowDraftMenu]   = useState(false);
+
+  // Editor UI
+  const [showTemplates, setShowTemplates]   = useState(true);
+  const [activePanel, setActivePanel]       = useState<"write" | "preview">("write");
+  const [focusMode, setFocusMode]           = useState(false);
+  const [showPublish, setShowPublish]       = useState(false);
+  const [showFormatRef, setShowFormatRef]   = useState(false);
+  const [showAdvancedMeta, setShowAdvancedMeta] = useState(false);
+
+  // Images
   const [uploadedImages, setUploadedImages] = useState<{ name: string; url: string }[]>([]);
   const [uploadingImg, setUploadingImg]     = useState(false);
   const [imgResult, setImgResult]           = useState<{ ok: boolean; message: string } | null>(null);
-  const [showGuide, setShowGuide]           = useState(false);
-  const [copiedSnippet, setCopiedSnippet]   = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const [showImageManager, setShowImageManager] = useState(false);
+  const [insertingFor, setInsertingFor]         = useState<string | null>(null);
+  const [captionInput, setCaptionInput]         = useState("");
+
+  // GitHub / publish
+  const [githubPat, setGithubPat] = useState(() =>
+    typeof window !== "undefined" ? localStorage.getItem("avocado_github_pat") ?? "" : ""
+  );
+  const [patVisible, setPatVisible] = useState(false);
+  const [patSaved, setPatSaved]     = useState(false);
+  const [publishing, setPublishing] = useState(false);
+  const [result, setResult]         = useState<{ ok: boolean; message: string } | null>(null);
+
+  const [copiedSnippet, setCopiedSnippet] = useState("");
+  const textareaRef                       = useRef<HTMLTextAreaElement>(null);
+  const saveCallbackRef                   = useRef<() => void>(() => {});
+
+  // === COMPUTED ===
+  const wordCount   = content.trim() ? content.trim().split(/\s+/).length : 0;
+  const readingTime = Math.max(1, Math.ceil(wordCount / 200));
+
+  const checks = {
+    title:       title.trim().length > 0,
+    slug:        /^[a-z0-9-]+$/.test(slug.trim()) && slug.trim().length > 0,
+    description: description.trim().length > 0 && description.length <= 160,
+    tags:        tags.length > 0,
+    content:     wordCount >= 50,
+    pat:         githubPat.trim().length > 0,
+  };
+  const allValid    = Object.values(checks).every(Boolean);
+  const checksCount = Object.values(checks).filter(Boolean).length;
+
+  const savedAgoText = lastSaved
+    ? (() => {
+        const s = Math.round((Date.now() - lastSaved.getTime()) / 1000);
+        if (s < 10) return "just saved";
+        if (s < 60) return `saved ${s}s ago`;
+        return `saved ${Math.round(s / 60)}m ago`;
+      })()
+    : null;
+
+  const suggestedTags = TAG_POOL.filter((t) => !tags.includes(t)).slice(0, 8);
+
+  // === DRAFT HELPERS ===
+  function readDrafts(): DraftEntry[] {
+    try { return JSON.parse(localStorage.getItem(DRAFTS_KEY) ?? "[]"); }
+    catch { return []; }
+  }
+
+  function persistDraft(id: string | null): string {
+    const newId = id ?? `draft_${Date.now()}`;
+    const entry: DraftEntry = {
+      id: newId, title, slug, date, publishedAt,
+      description, tags: tags.join(", "), ogImage, content,
+      savedAt: new Date().toISOString(),
+    };
+    const all     = readDrafts();
+    const idx     = all.findIndex((d) => d.id === newId);
+    if (idx >= 0) all[idx] = entry; else all.unshift(entry);
+    const trimmed = all.slice(0, 10);
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(trimmed));
+    setCurrentDraftId(newId);
+    setLastSaved(new Date());
+    setDrafts(trimmed);
+    return newId;
+  }
+
+  function loadDraftEntry(d: DraftEntry) {
+    setTitle(d.title);
+    setSlug(d.slug);
+    setSlugEdited(true);
+    setDate(d.date);
+    setDescription(d.description);
+    setTags(d.tags.split(",").map((t) => t.trim()).filter(Boolean));
+    setOgImage(d.ogImage);
+    setContent(d.content);
+    setCurrentDraftId(d.id);
+    setLastSaved(new Date(d.savedAt));
+    setShowTemplates(false);
+    setShowDraftMenu(false);
+  }
+
+  function deleteDraftEntry(id: string) {
+    const all = readDrafts().filter((d) => d.id !== id);
+    localStorage.setItem(DRAFTS_KEY, JSON.stringify(all));
+    setDrafts(all);
+    if (currentDraftId === id) setCurrentDraftId(null);
+  }
+
+  function newPost() {
+    setTitle(""); setSlug(""); setSlugEdited(false); setDate(todayISO());
+    setDescription(""); setTags([]); setTagInput(""); setOgImage(""); setContent("");
+    setCurrentDraftId(null); setLastSaved(null); setShowTemplates(true);
+    setResult(null); setShowDraftMenu(false); setActivePanel("write");
+  }
+
+  // === EFFECTS ===
+  useEffect(() => { setDrafts(readDrafts()); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!slugEdited) setSlug(slugify(title));
   }, [title, slugEdited]);
 
-  // ── Insertion helpers ──────────────────────────────────────────────────────
+  // Auto-resize textarea
+  useEffect(() => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    ta.style.height = "auto";
+    ta.style.height = Math.max(420, ta.scrollHeight) + "px";
+  }, [content]);
 
+  // Stable autosave every 15s using callback ref pattern
+  useEffect(() => {
+    saveCallbackRef.current = () => {
+      if (title.trim() || content.trim()) persistDraft(currentDraftId);
+    };
+  });
+  useEffect(() => {
+    const id = setInterval(() => saveCallbackRef.current(), 15_000);
+    return () => clearInterval(id);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // === INSERTION HELPERS ===
   function insertInline(before: string, after: string, placeholder: string) {
     const ta = textareaRef.current;
     if (!ta) return;
-    const start = ta.selectionStart;
-    const end   = ta.selectionEnd;
+    const start = ta.selectionStart, end = ta.selectionEnd;
     const sel   = content.slice(start, end) || placeholder;
     const next  = content.slice(0, start) + before + sel + after + content.slice(end);
     setContent(next);
@@ -722,7 +912,7 @@ function BlogEditor() {
     const pad    = before.length === 0 ? "" : before.endsWith("\n\n") ? "" : before.endsWith("\n") ? "\n" : "\n\n";
     const next   = before + pad + template + "\n\n" + suffix;
     setContent(next);
-    const caret = pos + pad.length + (caretOffset ?? template.length);
+    const caret  = pos + pad.length + (caretOffset ?? template.length);
     requestAnimationFrame(() => {
       ta.selectionStart = caret;
       ta.selectionEnd   = caret;
@@ -730,40 +920,48 @@ function BlogEditor() {
     });
   }
 
-  function insertImageBlock(url: string, format: "basic" | "caption" | "component") {
-    const name = url.split("/").pop() ?? "image";
-    let snippet = "";
-    if (format === "basic")     snippet = `![${name}](${url})`;
-    if (format === "caption")   snippet = `![${name}](${url} "Your caption here")`;
-    if (format === "component") snippet = `<BlogImage\n  src="${url}"\n  alt="${name}"\n  caption="Optional caption"\n/>`;
-    insertBlock(snippet);
-    setActivePanel("write");
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    const mod = e.ctrlKey || e.metaKey;
+    if (!mod) return;
+    if (e.key === "b") { e.preventDefault(); insertInline("**", "**", "bold text"); }
+    if (e.key === "i") { e.preventDefault(); insertInline("*", "*", "italic text"); }
+    if (e.key === "k") { e.preventDefault(); insertInline("[", "](url)", "link text"); }
+    if (e.key === "`") { e.preventDefault(); insertInline("`", "`", "code"); }
+    if (e.key === "s") { e.preventDefault(); persistDraft(currentDraftId); }
   }
 
-  function copySnippet(text: string) {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedSnippet(text);
-      setTimeout(() => setCopiedSnippet(""), 1500);
-    });
+  // === TAG HELPERS ===
+  function addTag(t: string) {
+    const tag = t.trim();
+    if (!tag || tags.includes(tag)) return;
+    setTags([...tags, tag]);
+    setTagInput("");
+  }
+  function removeTag(t: string) { setTags(tags.filter((x) => x !== t)); }
+  function handleTagKey(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter" || e.key === ",") { e.preventDefault(); addTag(tagInput); }
+    if (e.key === "Backspace" && !tagInput && tags.length > 0) removeTag(tags[tags.length - 1]);
   }
 
-  // ── PAT helpers ────────────────────────────────────────────────────────────
-
+  // === PAT ===
   function savePat() {
     localStorage.setItem("avocado_github_pat", githubPat.trim());
     setPatSaved(true);
     setTimeout(() => setPatSaved(false), 2000);
   }
 
-  // ── Image upload ───────────────────────────────────────────────────────────
-
+  // === IMAGE UPLOAD ===
   async function uploadImage(file: File) {
-    if (!githubPat.trim()) { setImgResult({ ok: false, message: "GitHub PAT required — save it in the token section above." }); return; }
+    if (!githubPat.trim()) {
+      setShowPublish(true);
+      setImgResult({ ok: false, message: "Set your GitHub token in the Publish section first." });
+      return;
+    }
     setUploadingImg(true);
     setImgResult(null);
     try {
       const reader = new FileReader();
-      const b64 = await new Promise<string>((resolve, reject) => {
+      const b64    = await new Promise<string>((resolve, reject) => {
         reader.onload  = () => resolve((reader.result as string).split(",")[1]);
         reader.onerror = reject;
         reader.readAsDataURL(file);
@@ -780,6 +978,7 @@ function BlogEditor() {
         setUploadedImages((prev) => [{ name: filename, url: imgUrl }, ...prev.filter((i) => i.url !== imgUrl)]);
         setImgResult({ ok: true, message: `Uploaded → ${imgUrl}` });
         if (!ogImage.trim()) setOgImage(imgUrl);
+        insertBlock(`![${filename}](${imgUrl})`);
       } else {
         const err = await putRes.json().catch(() => ({ message: putRes.statusText }));
         setImgResult({ ok: false, message: `GitHub: ${(err as { message?: string }).message ?? putRes.statusText}` });
@@ -791,32 +990,33 @@ function BlogEditor() {
     }
   }
 
-  // ── MDX build ─────────────────────────────────────────────────────────────
-
-  function buildFrontmatter(): string {
-    const tagArr  = tags.split(",").map((t) => t.trim()).filter(Boolean);
-    const tagsStr = tagArr.length > 0 ? `[${tagArr.map((t) => `"${t}"`).join(", ")}]` : "[]";
+  // === BUILD MDX ===
+  function buildFrontmatter() {
+    const tagsStr = tags.length > 0 ? `[${tags.map((t) => `"${t}"`).join(", ")}]` : "[]";
     const lines   = ["---", `title: "${title}"`, `date: "${date}"`, `publishedAt: "${publishedAt}"`, `description: "${description}"`, `tags: ${tagsStr}`];
     if (ogImage.trim()) lines.push(`image: "${ogImage.trim()}"`);
     lines.push("---", "");
     return lines.join("\n");
   }
 
-  function buildFrontmatterPreview(): string {
-    const tagArr  = tags.split(",").map((t) => t.trim()).filter(Boolean);
-    const tagsStr = tagArr.length > 0 ? `[${tagArr.map((t) => `"${t}"`).join(", ")}]` : "[]";
+  function buildFrontmatterPreview() {
+    const tagsStr = tags.length > 0 ? `[${tags.map((t) => `"${t}"`).join(", ")}]` : "[]";
     const lines   = ["---", `title: "${title || "(untitled)"}"`, `date: "${date}"`, `publishedAt: "${publishedAt}"`, `description: "${description || "(none)"}"`, `tags: ${tagsStr}`];
     if (ogImage.trim()) lines.push(`image: "${ogImage.trim()}"`);
     lines.push("---");
     return lines.join("\n");
   }
 
-  // ── Publish ────────────────────────────────────────────────────────────────
+  function copySnippet(text: string) {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedSnippet(text);
+      setTimeout(() => setCopiedSnippet(""), 1500);
+    });
+  }
 
+  // === PUBLISH ===
   async function publish() {
-    if (!title.trim())     { setResult({ ok: false, message: "Title is required." }); return; }
-    if (!slug.trim())      { setResult({ ok: false, message: "Slug is required." }); return; }
-    if (!githubPat.trim()) { setResult({ ok: false, message: "GitHub PAT is required." }); return; }
+    if (!allValid) return;
     setPublishing(true);
     setResult(null);
     const filePath = `frontend/src/content/blog/${slug}.mdx`;
@@ -826,7 +1026,7 @@ function BlogEditor() {
     try {
       const getRes = await fetch(apiURL, { headers });
       let sha: string | undefined;
-      if (getRes.ok)                  { sha = (await getRes.json()).sha; }
+      if (getRes.ok) { sha = (await getRes.json()).sha; }
       else if (getRes.status !== 404) { setResult({ ok: false, message: `GitHub: ${getRes.status} ${getRes.statusText}` }); setPublishing(false); return; }
       const body: Record<string, string> = { message: `blog: ${sha ? "update" : "publish"} ${slug}`, content: btoa(unescape(encodeURIComponent(fullMDX))), branch: "main" };
       if (sha) body.sha = sha;
@@ -844,335 +1044,535 @@ function BlogEditor() {
     }
   }
 
-  // ── Toolbar definition ─────────────────────────────────────────────────────
+  // === FOCUS MODE ===
+  if (focusMode) {
+    return (
+      <div className="fixed inset-0 z-50 bg-bg flex flex-col">
+        <div className="flex items-center justify-between px-6 py-3 border-b border-border bg-surface shrink-0">
+          <div className="flex items-center gap-4">
+            <button onClick={() => setFocusMode(false)}
+              className="text-xs text-fg-faint hover:text-fg transition-colors flex items-center gap-1.5">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              Exit focus
+            </button>
+            {savedAgoText && <span className="text-[10px] text-fg-faint flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />● {savedAgoText}</span>}
+          </div>
+          <div className="flex items-center gap-4">
+            {[
+              { label: "B",  title: "Bold (⌘B)",   action: () => insertInline("**","**","bold text"), mono: true },
+              { label: "I",  title: "Italic (⌘I)", action: () => insertInline("*","*","italic text"), mono: true },
+              { label: "`",  title: "Code (⌘`)",   action: () => insertInline("`","`","code"), mono: true },
+              { label: "H2", title: "Heading 2",   action: () => insertBlock("## "), mono: true },
+              { label: "•",  title: "Bullet list", action: () => insertBlock("- "), mono: true },
+              { label: "—",  title: "Divider",     action: () => insertBlock("<Divider />"), mono: true },
+            ].map((btn) => (
+              <button key={btn.label} onClick={btn.action} title={btn.title}
+                className={`px-2 py-0.5 rounded text-[11px] text-fg-muted hover:text-fg transition-colors ${btn.mono ? "font-mono" : ""}`}>
+                {btn.label}
+              </button>
+            ))}
+            <span className="text-[10px] text-fg-faint tabular-nums ml-2">{wordCount > 0 ? `${wordCount} words · ~${readingTime} min` : ""}</span>
+          </div>
+        </div>
+        <textarea
+          ref={textareaRef}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          onKeyDown={handleKeyDown}
+          spellCheck
+          className="flex-1 w-full bg-bg resize-none focus:outline-none overflow-y-auto"
+          style={{ padding: "3rem min(8rem, 10vw)", fontFamily: "var(--font-blog, Georgia, serif)", fontSize: "1.1rem", lineHeight: 1.9, color: "var(--color-fg)" }}
+          placeholder="Write here…"
+        />
+      </div>
+    );
+  }
 
-  const toolbar: { group: string; btns: { label: string; title: string; action: () => void; mono?: boolean }[] }[] = [
-    { group: "heading", btns: [
-      { label: "H2",  title: "Heading 2",   action: () => insertBlock("## "),   mono: true },
-      { label: "H3",  title: "Heading 3",   action: () => insertBlock("### "),  mono: true },
-      { label: "H4",  title: "Heading 4 (label)", action: () => insertBlock("#### "), mono: true },
-    ]},
-    { group: "inline", btns: [
-      { label: "B",   title: "Bold",        action: () => insertInline("**", "**", "bold"), mono: true },
-      { label: "I",   title: "Italic",      action: () => insertInline("*", "*", "italic"), mono: true },
-      { label: "`",   title: "Inline code", action: () => insertInline("`", "`", "code"),   mono: true },
-      { label: "~~",  title: "Strikethrough", action: () => insertInline("~~", "~~", "text"), mono: true },
-      { label: "🔗",  title: "Link",        action: () => insertInline("[", "](url)", "link text") },
-    ]},
-    { group: "block", btns: [
-      { label: ">",   title: "Blockquote",  action: () => insertBlock("> Your quote here"), mono: true },
-      { label: "•",   title: "Bullet list", action: () => insertBlock("- Item 1\n- Item 2\n- Item 3"), mono: true },
-      { label: "1.",  title: "Numbered list", action: () => insertBlock("1. First\n2. Second\n3. Third"), mono: true },
-      { label: "—",   title: "Divider (<Divider />)", action: () => insertBlock("<Divider />"), mono: true },
-    ]},
-    { group: "code", btns: [
-      { label: "```py", title: "Python block",     action: () => insertBlock("```python\n# code here\n```", 10), mono: true },
-      { label: "```ts", title: "TypeScript block", action: () => insertBlock("```typescript\n// code here\n```", 14), mono: true },
-      { label: "```sh", title: "Bash block",       action: () => insertBlock("```bash\n# command\n```", 7), mono: true },
-      { label: "```",   title: "Generic block",    action: () => insertBlock("```\n\n```", 4), mono: true },
-      { label: "arch",  title: "ASCII diagram block (```arch)", action: () => insertBlock("```arch\n┌────────────┐\n│            │\n└────────────┘\n```", 8), mono: true },
-      { label: "title", title: 'Code block with file title: ```python title="main.py"', action: () => insertBlock('```python title="main.py"\n# code here\n```', 23), mono: true },
-      { label: "{1}",   title: "Code block with line highlight: ```python {1}", action: () => insertBlock("```python {1}\n# this line highlighted\n```", 10), mono: true },
-    ]},
-    { group: "callout", btns: [
-      { label: "ℹ Info",  title: "Info callout",    action: () => insertBlock('<Callout type="info" title="Info">\nYour note here\n</Callout>') },
-      { label: "💡 Tip",  title: "Tip callout",     action: () => insertBlock('<Callout type="tip" title="Tip">\nYour tip here\n</Callout>') },
-      { label: "⚠ Warn",  title: "Warning callout", action: () => insertBlock('<Callout type="warning" title="Warning">\nYour warning here\n</Callout>') },
-      { label: "❝ Quote", title: "Quote callout",   action: () => insertBlock('<Callout type="quote" title="Quote">\nYour quote here\n</Callout>') },
-    ]},
-    { group: "misc", btns: [
-      { label: "▦ Table", title: "Insert table", action: () => insertBlock("| Column A | Column B | Column C |\n|----------|----------|----------|\n| Cell     | Cell     | Cell     |") },
-      { label: "🖼 Image",  title: "Switch to Images tab to upload/insert", action: () => setActivePanel("images") },
-    ]},
-  ];
-
+  // === MAIN RENDER ===
   return (
-    <div className="space-y-5 pb-8">
+    <div className="space-y-4 pb-8">
 
-      {/* ── GitHub PAT ─────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">GitHub Access Token</p>
-          {githubPat && <span className="text-[10px] font-medium text-emerald-600 dark:text-emerald-400">● Token set</span>}
-        </div>
-        <div className="flex gap-2">
-          <input
-            type={patVisible ? "text" : "password"}
-            value={githubPat}
-            onChange={(e) => { setGithubPat(e.target.value); setPatSaved(false); }}
-            placeholder="ghp_… (needs repo write scope)"
-            className="flex-1 min-w-0 rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
-          />
-          <button onClick={() => setPatVisible(!patVisible)}
-            className="shrink-0 px-3 rounded-xl border border-border text-fg-faint hover:text-fg text-xs transition-colors">
-            {patVisible ? "Hide" : "Show"}
+      {/* ── Top bar ──────────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <button onClick={newPost}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-fg-faint hover:text-fg border border-border rounded-lg px-3 py-1.5 transition-colors">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            New post
           </button>
-          <button onClick={savePat}
-            className="shrink-0 px-4 rounded-xl bg-fg text-bg text-xs font-semibold hover:opacity-80 transition-opacity">
-            {patSaved ? "Saved ✓" : "Save"}
+          {drafts.length > 0 && (
+            <div className="relative">
+              <button onClick={() => setShowDraftMenu(!showDraftMenu)}
+                className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg border border-border rounded-lg px-3 py-1.5 transition-colors">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                </svg>
+                Drafts ({drafts.length})
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${showDraftMenu ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              {showDraftMenu && (
+                <div className="absolute left-0 top-full mt-1 z-30 w-72 bg-surface border border-border rounded-xl shadow-2xl py-1 overflow-hidden">
+                  {drafts.map((d) => (
+                    <div key={d.id} className="flex items-center gap-2 px-3 py-2 hover:bg-surface-raised transition-colors group">
+                      <button onClick={() => loadDraftEntry(d)} className="flex-1 text-left min-w-0">
+                        <p className="text-xs font-medium text-fg truncate">{d.title || "(untitled)"}</p>
+                        <p className="text-[10px] text-fg-faint">{new Date(d.savedAt).toLocaleString()}</p>
+                      </button>
+                      <button onClick={() => deleteDraftEntry(d.id)}
+                        className="shrink-0 text-[10px] text-rose-500 opacity-0 group-hover:opacity-100 hover:text-rose-600 transition-all px-2 py-0.5 rounded">
+                        Delete
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          {savedAgoText && (
+            <span className="text-[10px] text-fg-faint flex items-center gap-1.5">
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 inline-block" />
+              {savedAgoText}
+            </span>
+          )}
+          <button onClick={() => persistDraft(currentDraftId)}
+            className="text-xs text-fg-faint hover:text-fg border border-border rounded-lg px-3 py-1.5 transition-colors">
+            Save draft
           </button>
         </div>
-        <p className="text-[10px] text-fg-faint mt-2">
-          Stored in localStorage only. Generate at{" "}
-          <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-accent underline">github.com/settings/tokens</a>{" "}
-          — needs <code className="bg-surface-raised px-1 rounded text-[10px]">repo</code> write scope (or fine-grained: Contents write).
-        </p>
       </div>
 
-      {/* ── Metadata ───────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5 space-y-3">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Post Metadata</p>
-        <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">Title *</label>
-          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
-            placeholder="My Awesome Post"
-            className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
-        </div>
-        <div className="grid sm:grid-cols-2 gap-3">
+      {/* ── Post header card (title + description + tags + slug) ─────────────── */}
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+        <div className="p-5 sm:p-7 space-y-4">
+
+          {/* Large title */}
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Post title…"
+            className="w-full bg-transparent text-2xl sm:text-3xl font-bold text-fg placeholder:text-fg-faint/50 focus:outline-none leading-tight"
+          />
+
+          {/* Description with char counter */}
+          <div className="relative">
+            <input
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="One-line description shown on the blog index and search results…"
+              className="w-full bg-transparent text-sm text-fg-subtle placeholder:text-fg-faint focus:outline-none pr-14"
+            />
+            <span className={`absolute right-0 top-0 text-[10px] tabular-nums font-mono ${description.length > 160 ? "text-rose-500" : description.length > 130 ? "text-amber-500" : "text-fg-faint"}`}>
+              {description.length}/160
+            </span>
+          </div>
+
+          {/* Tags as chips */}
           <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">Slug * (URL)</label>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[11px] text-fg-faint font-mono shrink-0">/blog/</span>
-              <input type="text" value={slug}
-                onChange={(e) => { setSlug(e.target.value); setSlugEdited(true); }}
-                placeholder="my-awesome-post"
-                className="flex-1 min-w-0 rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
+            <div className="flex flex-wrap items-center gap-1.5 min-h-[28px]">
+              {tags.map((tag) => (
+                <span key={tag} className="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[11px] font-medium rounded-full px-2.5 py-0.5">
+                  #{tag}
+                  <button onClick={() => removeTag(tag)} className="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-200 leading-none ml-0.5">×</button>
+                </span>
+              ))}
+              <input
+                type="text"
+                value={tagInput}
+                onChange={(e) => setTagInput(e.target.value)}
+                onKeyDown={handleTagKey}
+                onBlur={() => tagInput && addTag(tagInput)}
+                placeholder={tags.length === 0 ? "Add tags (type then press Enter)…" : "Add tag…"}
+                className="bg-transparent text-sm text-fg placeholder:text-fg-faint focus:outline-none min-w-[160px] flex-1"
+              />
             </div>
-          </div>
-          <div>
-            <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">Display Date</label>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-              className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg focus:outline-none focus:border-accent transition-colors" />
-          </div>
-        </div>
-        <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">Description</label>
-          <input type="text" value={description} onChange={(e) => setDescription(e.target.value)}
-            placeholder="One-line summary shown on blog index"
-            className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
-        </div>
-        <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">Tags (comma-separated)</label>
-          <input type="text" value={tags} onChange={(e) => setTags(e.target.value)}
-            placeholder="AI, Machine Learning, Python"
-            className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
-        </div>
-        <div>
-          <label className="block text-[10px] font-semibold uppercase tracking-widest text-fg-faint mb-1.5">OG Image <span className="font-normal normal-case">(optional — for social share preview)</span></label>
-          <div className="flex items-center gap-2">
-            <input type="text" value={ogImage} onChange={(e) => setOgImage(e.target.value)}
-              placeholder="/blog/my-post-cover.jpg"
-              className="flex-1 min-w-0 rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
-            {uploadedImages.length > 0 && (
-              <select
-                onChange={(e) => { if (e.target.value) setOgImage(e.target.value); e.target.value = ""; }}
-                className="shrink-0 rounded-xl border border-border bg-bg px-2 py-2 text-xs text-fg-muted focus:outline-none focus:border-accent transition-colors"
-              >
-                <option value="">Pick uploaded…</option>
-                {uploadedImages.map((img) => (
-                  <option key={img.url} value={img.url}>{img.name}</option>
+            {suggestedTags.length > 0 && (
+              <div className="flex flex-wrap gap-1 mt-2">
+                {suggestedTags.slice(0, 8).map((t) => (
+                  <button key={t} onClick={() => addTag(t)}
+                    className="text-[10px] text-fg-faint hover:text-indigo-600 dark:hover:text-indigo-400 border border-border rounded-full px-2 py-0.5 transition-colors hover:border-indigo-300 dark:hover:border-indigo-700">
+                    + {t}
+                  </button>
                 ))}
-              </select>
+              </div>
             )}
           </div>
-          <p className="text-[10px] text-fg-faint mt-1">Upload the image first in the Images tab, then paste its path here. Used as the Twitter/OG card image when someone shares the post.</p>
+
+          {/* Slug + date row */}
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-2 border-t border-border-subtle text-[11px]">
+            <div className="flex items-center gap-1 font-mono text-fg-faint">
+              <span>/blog/</span>
+              <input
+                type="text"
+                value={slug}
+                onChange={(e) => { setSlug(e.target.value); setSlugEdited(true); }}
+                placeholder="post-slug"
+                className="bg-transparent text-accent focus:outline-none w-40"
+              />
+            </div>
+            <span className="text-fg-faint">·</span>
+            <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
+              className="bg-transparent text-fg-faint focus:outline-none focus:text-fg cursor-pointer" />
+            <span className="text-fg-faint">·</span>
+            <span className="text-fg-faint">publishedAt: <code className="font-mono text-accent">{publishedAt}</code></span>
+            <button onClick={() => setShowAdvancedMeta(!showAdvancedMeta)}
+              className="ml-auto text-fg-faint hover:text-fg transition-colors flex items-center gap-1">
+              OG image
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${showAdvancedMeta ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+          </div>
+
+          {showAdvancedMeta && (
+            <div className="pt-3 border-t border-border-subtle space-y-1.5">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-widest text-fg-faint w-20 shrink-0">OG Image</span>
+                <input type="text" value={ogImage} onChange={(e) => setOgImage(e.target.value)}
+                  placeholder="/blog/cover.jpg"
+                  className="flex-1 bg-bg border border-border rounded-lg px-2 py-1 text-xs text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
+                {uploadedImages.length > 0 && (
+                  <select onChange={(e) => { if (e.target.value) setOgImage(e.target.value); e.target.value = ""; }}
+                    className="shrink-0 bg-bg border border-border rounded-lg px-2 py-1 text-xs text-fg-muted focus:outline-none">
+                    <option value="">Pick uploaded…</option>
+                    {uploadedImages.map((img) => <option key={img.url} value={img.url}>{img.name}</option>)}
+                  </select>
+                )}
+              </div>
+              <p className="text-[10px] text-fg-faint">Used as Twitter/OG card image when someone shares the post. Upload via the 🖼 toolbar button first, then pick it here.</p>
+            </div>
+          )}
         </div>
-        <p className="text-[10px] text-fg-faint flex items-center gap-1.5">
-          <span>publishedAt:</span>
-          <code className="bg-surface-raised px-1.5 rounded font-mono">{publishedAt}</code>
-          <span className="italic">(sort key — set once, never changes)</span>
-        </p>
       </div>
 
-      {/* ── Editor panel ───────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
-
-        {/* Toolbar */}
-        <div className="border-b border-border bg-surface-raised px-3 py-2 flex flex-wrap gap-y-1.5 gap-x-1 items-center">
-          {toolbar.map((group, gi) => (
-            <span key={group.group} className="contents">
-              {gi > 0 && <span className="w-px h-4 bg-border shrink-0 mx-0.5" />}
-              {group.btns.map((btn) => (
-                <button key={btn.label} onClick={btn.action} title={btn.title}
-                  className={`px-2 py-0.5 rounded-md text-[11px] text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors whitespace-nowrap ${btn.mono ? "font-mono" : ""}`}>
-                  {btn.label}
-                </button>
-              ))}
-            </span>
-          ))}
-        </div>
-
-        {/* Tab bar */}
-        <div className="flex items-center justify-between border-b border-border px-4 py-2.5 bg-surface-raised">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Content (MDX)</p>
-          <div className="flex gap-0.5 bg-surface rounded-lg p-0.5 border border-border">
-            {(["write", "preview", "images"] as const).map((panel) => (
-              <button key={panel} onClick={() => setActivePanel(panel)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                  activePanel === panel ? "bg-fg text-bg shadow-sm" : "text-fg-muted hover:text-fg"
-                }`}>
-                {panel === "write" ? "✏ Write" : panel === "preview" ? "👁 Preview" : "🖼 Images"}
+      {/* ── Template picker ───────────────────────────────────────────────────── */}
+      {showTemplates && !content && (
+        <div className="rounded-2xl border border-dashed border-border bg-surface-raised/40 p-6">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-4 text-center">Start with a template — or just type below</p>
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {POST_TEMPLATES.map((t) => (
+              <button key={t.id}
+                onClick={() => { setContent(t.content); setShowTemplates(false); setActivePanel("write"); requestAnimationFrame(() => textareaRef.current?.focus()); }}
+                className="rounded-xl border border-border bg-surface p-4 text-left hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group">
+                <span className="text-2xl block mb-2">{t.emoji}</span>
+                <p className="text-xs font-semibold text-fg group-hover:text-accent transition-colors leading-snug">{t.label}</p>
+                <p className="text-[10px] text-fg-faint mt-1 leading-relaxed">{t.desc}</p>
               </button>
             ))}
           </div>
+          <div className="mt-4 text-center">
+            <button onClick={() => { setShowTemplates(false); requestAnimationFrame(() => textareaRef.current?.focus()); }}
+              className="text-[10px] text-fg-faint hover:text-fg transition-colors">
+              Skip — start from blank →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* ── Editor ───────────────────────────────────────────────────────────── */}
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+
+        {/* Toolbar */}
+        <div className="border-b border-border bg-surface-raised px-3 py-2 flex items-center gap-1 flex-wrap">
+          {/* Format */}
+          {[
+            { label: "B",  title: "Bold (⌘B)",          action: () => insertInline("**", "**", "bold text"),   mono: true },
+            { label: "I",  title: "Italic (⌘I)",         action: () => insertInline("*", "*", "italic text"),  mono: true },
+            { label: "`",  title: "Inline code (⌘`)",    action: () => insertInline("`", "`", "code"),         mono: true },
+            { label: "~~", title: "Strikethrough",        action: () => insertInline("~~", "~~", "text"),      mono: true },
+          ].map((b) => (
+            <button key={b.label} onClick={b.action} title={b.title}
+              className={`px-2 py-0.5 rounded-md text-[11px] text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors ${b.mono ? "font-mono" : ""}`}>
+              {b.label}
+            </button>
+          ))}
+          <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
+          {/* Headings */}
+          {[
+            { label: "H2", title: "Large section heading",       action: () => insertBlock("## "),   mono: true },
+            { label: "H3", title: "Sub-section heading",         action: () => insertBlock("### "),  mono: true },
+            { label: "H4", title: "Small label heading",         action: () => insertBlock("#### "), mono: true },
+          ].map((b) => (
+            <button key={b.label} onClick={b.action} title={b.title}
+              className="px-2 py-0.5 rounded-md text-[11px] font-mono text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
+              {b.label}
+            </button>
+          ))}
+          <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
+          {/* Block elements */}
+          {[
+            { label: "🔗",  title: "Link (⌘K)",              action: () => insertInline("[", "](url)", "link text") },
+            { label: ">",   title: "Blockquote / pull quote", action: () => insertBlock("> "),                        mono: true },
+            { label: "•",   title: "Bullet list",             action: () => insertBlock("- Item 1\n- Item 2\n- Item 3"), mono: true },
+            { label: "1.",  title: "Numbered list",           action: () => insertBlock("1. First\n2. Second\n3. Third"), mono: true },
+            { label: "—",   title: "Section divider",         action: () => insertBlock("<Divider />"),                mono: true },
+            { label: "▦",   title: "Insert table",            action: () => insertBlock("| Column A | Column B |\n|----------|----------|\n| Cell     | Cell     |") },
+          ].map((b) => (
+            <button key={b.label} onClick={b.action} title={b.title}
+              className={`px-2 py-0.5 rounded-md text-[11px] text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors ${b.mono ? "font-mono" : ""}`}>
+              {b.label}
+            </button>
+          ))}
+          <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
+          {/* Code blocks */}
+          {[
+            { label: "</>py",  title: "Python code block",     action: () => insertBlock("```python\n# code here\n```", 10) },
+            { label: "</>ts",  title: "TypeScript code block", action: () => insertBlock("```typescript\n// code here\n```", 14) },
+            { label: "</>sh",  title: "Shell / bash block",    action: () => insertBlock("```bash\n# command\n```", 7) },
+            { label: "</>",    title: "Generic code block",    action: () => insertBlock("```\n\n```", 4) },
+          ].map((b) => (
+            <button key={b.label} onClick={b.action} title={b.title}
+              className="px-2 py-0.5 rounded-md text-[11px] font-mono text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
+              {b.label}
+            </button>
+          ))}
+          <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
+          {/* Callouts */}
+          {[
+            { label: "ℹ",  title: "Info box",    action: () => insertBlock('<Callout type="info" title="Info">\nYour note here.\n</Callout>') },
+            { label: "💡", title: "Tip box",     action: () => insertBlock('<Callout type="tip" title="Tip">\nYour tip here.\n</Callout>') },
+            { label: "⚠",  title: "Warning box", action: () => insertBlock('<Callout type="warning" title="Warning">\nYour warning here.\n</Callout>') },
+            { label: "❝",  title: "Quote box",   action: () => insertBlock('<Callout type="quote" title="Quote">\nYour quote here.\n</Callout>') },
+          ].map((b) => (
+            <button key={b.label} onClick={b.action} title={b.title}
+              className="px-2 py-0.5 rounded-md text-[11px] text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
+              {b.label}
+            </button>
+          ))}
+          <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
+          {/* Image manager toggle */}
+          <button
+            onClick={() => setShowImageManager(!showImageManager)}
+            title="Image Library — upload multiple images and choose placement"
+            className={`px-2 py-0.5 rounded-md text-[11px] border transition-colors whitespace-nowrap ${showImageManager ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}
+          >
+            {uploadingImg ? "⏳ Uploading…" : uploadedImages.length > 0 ? `🖼 Images (${uploadedImages.length})` : "🖼 Images"}
+          </button>
+          {/* Spacer + right controls */}
+          <div className="flex-1" />
+          <span className="text-[10px] text-fg-faint tabular-nums hidden sm:block shrink-0">
+            {wordCount > 0 ? `${wordCount} words · ~${readingTime} min` : ""}
+          </span>
+          <span className="w-px h-4 bg-border mx-0.5 shrink-0 hidden sm:block" />
+          <button onClick={() => setActivePanel(activePanel === "preview" ? "write" : "preview")}
+            title="Toggle preview"
+            className={`px-2 py-0.5 rounded-md text-[11px] border transition-colors shrink-0 ${activePanel === "preview" ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}>
+            {activePanel === "preview" ? "✏ Write" : "👁 Preview"}
+          </button>
+          <button onClick={() => setFocusMode(true)} title="Focus mode — distraction-free writing"
+            className="px-2 py-0.5 rounded-md text-[11px] text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors shrink-0">
+            ⊞ Focus
+          </button>
         </div>
 
-        {/* Write */}
-        {activePanel === "write" && (
-          <textarea
-            ref={textareaRef}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            rows={26}
-            spellCheck
-            className="w-full bg-bg px-5 py-4 text-sm text-fg font-mono leading-relaxed placeholder:text-fg-faint focus:outline-none resize-y"
-            placeholder="Write your MDX content here…"
-          />
+        {/* ── Image Manager Panel ─────────────────────────────────────────── */}
+        {showImageManager && (
+          <div className="border-b border-border bg-bg">
+            <div className="flex items-center justify-between px-4 py-2.5 bg-surface-raised border-b border-border">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint flex items-center gap-1.5">
+                🖼 Image Library
+                {uploadedImages.length > 0 && <span className="font-mono text-accent ml-1">({uploadedImages.length} this session)</span>}
+              </span>
+              <button onClick={() => setShowImageManager(false)} className="text-base leading-none text-fg-faint hover:text-fg transition-colors px-1">×</button>
+            </div>
+
+            <div className="p-4 space-y-3">
+              {/* Upload drop zone */}
+              <label className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-6 px-4 cursor-pointer transition-all ${
+                uploadingImg ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 cursor-wait" : "border-border hover:border-indigo-400 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/20"
+              }`}>
+                <span className="text-2xl mb-1.5">{uploadingImg ? "⏳" : "☁️"}</span>
+                <span className="text-xs font-medium text-fg-muted">{uploadingImg ? "Uploading…" : "Click to upload images"}</span>
+                <span className="text-[10px] text-fg-faint mt-0.5">JPEG · PNG · WebP · GIF — multiple files supported</span>
+                <input type="file" accept="image/*" multiple className="hidden" disabled={uploadingImg}
+                  onChange={(e) => {
+                    const files = Array.from(e.target.files ?? []);
+                    if (files.length) files.reduce<Promise<void>>((p, f) => p.then(() => uploadImage(f)), Promise.resolve());
+                    e.target.value = "";
+                  }} />
+              </label>
+
+              {!githubPat.trim() && (
+                <p className="text-[10px] text-center text-amber-600 dark:text-amber-400">
+                  ⚠ Add your GitHub token in the Publish section first — it&apos;s needed to upload images.
+                </p>
+              )}
+
+              {imgResult && (
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${imgResult.ok ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300" : "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300"}`}>
+                  {imgResult.ok ? "✓" : "✗"} {imgResult.message}
+                  <button onClick={() => setImgResult(null)} className="ml-auto opacity-60 hover:opacity-100 leading-none text-sm">×</button>
+                </div>
+              )}
+
+              {/* Session gallery */}
+              {uploadedImages.length > 0 && (
+                <div className="space-y-2">
+                  <p className="text-[10px] font-semibold uppercase tracking-widest text-fg-faint">Choose how to place each image in your post</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {uploadedImages.map((img) => (
+                      <div key={img.url} className="rounded-xl border border-border bg-surface overflow-hidden">
+                        <div className="flex items-start gap-3 p-3">
+                          {/* Icon tile — thumbnail would be broken pre-deploy */}
+                          <div className="shrink-0 w-14 h-14 rounded-lg bg-surface-raised border border-border flex items-center justify-center text-xl">
+                            🖼
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-fg truncate">{img.name}</p>
+                            <p className="text-[10px] text-accent font-mono mt-0.5 truncate">{img.url}</p>
+
+                            {insertingFor === img.url ? (
+                              <div className="mt-2 space-y-1.5">
+                                <input
+                                  type="text"
+                                  value={captionInput}
+                                  onChange={(e) => setCaptionInput(e.target.value)}
+                                  placeholder="Caption (optional) — press Enter to insert"
+                                  autoFocus
+                                  className="w-full bg-bg border border-border rounded-lg px-2 py-1 text-xs text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 transition-colors"
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      insertBlock(captionInput.trim() ? `![${img.name}](${img.url} "${captionInput.trim()}")` : `![${img.name}](${img.url})`);
+                                      setInsertingFor(null); setCaptionInput("");
+                                    }
+                                    if (e.key === "Escape") { setInsertingFor(null); setCaptionInput(""); }
+                                  }}
+                                />
+                                <div className="flex gap-1.5">
+                                  <button
+                                    onClick={() => {
+                                      insertBlock(captionInput.trim() ? `![${img.name}](${img.url} "${captionInput.trim()}")` : `![${img.name}](${img.url})`);
+                                      setInsertingFor(null); setCaptionInput("");
+                                    }}
+                                    className="flex-1 px-2 py-1 rounded-lg bg-indigo-600 text-white text-[10px] font-semibold hover:bg-indigo-700 transition-colors"
+                                  >
+                                    Insert ✓
+                                  </button>
+                                  <button
+                                    onClick={() => { setInsertingFor(null); setCaptionInput(""); }}
+                                    className="px-2 py-1 rounded-lg border border-border text-[10px] text-fg-faint hover:text-fg transition-colors"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                <button
+                                  onClick={() => insertBlock(`![${img.name}](${img.url})`)}
+                                  title="Insert at cursor"
+                                  className="px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[10px] font-medium hover:bg-indigo-700 transition-colors"
+                                >
+                                  Insert
+                                </button>
+                                <button
+                                  onClick={() => setInsertingFor(img.url)}
+                                  title="Insert with a caption below the image"
+                                  className="px-2 py-0.5 rounded-md border border-border bg-surface-raised text-[10px] font-medium text-fg-muted hover:border-indigo-400 hover:text-fg transition-colors"
+                                >
+                                  + Caption
+                                </button>
+                                <button
+                                  onClick={() => insertBlock(`<BlogImage\n  src="${img.url}"\n  alt="${img.name}"\n/>`)}
+                                  title="Insert as full-width BlogImage with lightbox"
+                                  className="px-2 py-0.5 rounded-md border border-border bg-surface-raised text-[10px] font-medium text-fg-muted hover:border-indigo-400 hover:text-fg transition-colors"
+                                >
+                                  Full-width
+                                </button>
+                                <button
+                                  onClick={() => { setOgImage(img.url); setShowAdvancedMeta(true); }}
+                                  title="Set as social preview / OG cover image"
+                                  className="px-2 py-0.5 rounded-md border border-border bg-surface-raised text-[10px] font-medium text-amber-600 dark:text-amber-400 hover:border-amber-400 transition-colors"
+                                >
+                                  Cover
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {uploadedImages.length === 0 && !uploadingImg && (
+                <p className="text-[10px] text-fg-faint text-center pb-1">
+                  Uploaded images appear here — insert them anywhere in your post with the buttons above.
+                </p>
+              )}
+            </div>
+          </div>
         )}
 
-        {/* Preview */}
+        {/* Write panel */}
+        {activePanel === "write" && (
+          <div>
+            <textarea
+              ref={textareaRef}
+              value={content}
+              onChange={(e) => { setContent(e.target.value); if (showTemplates && e.target.value) setShowTemplates(false); }}
+              onKeyDown={handleKeyDown}
+              spellCheck
+              className="w-full bg-bg px-5 sm:px-8 py-6 text-sm text-fg font-mono leading-relaxed focus:outline-none resize-none"
+              placeholder={`Write your post here…${"\n"}Keyboard shortcuts: ⌘B bold · ⌘I italic · ⌘K link · ⌘\` code · ⌘S save draft`}
+              style={{ minHeight: "420px" }}
+            />
+            <div className="px-5 py-2 border-t border-border flex items-center justify-between text-[10px] text-fg-faint bg-surface-raised">
+              <span>{wordCount > 0 ? `${wordCount} words · ~${readingTime} min read` : "Start writing — use the toolbar above or keyboard shortcuts"}</span>
+              <span className="font-mono hidden sm:block">⌘B · ⌘I · ⌘K · ⌘S save</span>
+            </div>
+          </div>
+        )}
+
+        {/* Preview panel */}
         {activePanel === "preview" && (
-          <div className="px-5 sm:px-8 py-6 min-h-96 bg-bg">
-            <pre className="mb-5 text-[10px] font-mono leading-relaxed text-fg-faint bg-surface rounded-xl border border-border px-4 py-3 whitespace-pre-wrap overflow-x-auto">
+          <div className="bg-bg">
+            <pre className="px-5 sm:px-8 pt-5 pb-4 text-[10px] font-mono leading-relaxed text-fg-faint bg-surface border-b border-border whitespace-pre-wrap overflow-x-auto">
               {buildFrontmatterPreview()}
             </pre>
-            <div
+            <div className="px-5 sm:px-8 py-8"
               style={{ fontFamily: "var(--font-blog, Georgia, serif)", lineHeight: 1.8 }}
               dangerouslySetInnerHTML={{ __html: mdxToHTML(content) }}
             />
           </div>
         )}
-
-        {/* Images */}
-        {activePanel === "images" && (
-          <div className="p-5 space-y-4 bg-bg min-h-64">
-            <div className="flex flex-wrap items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold text-fg-muted mb-0.5">Upload images</p>
-                <p className="text-[10px] text-fg-faint">
-                  Files go to <code className="bg-surface-raised px-1 rounded">frontend/public/blog/</code> — reference as{" "}
-                  <code className="bg-surface-raised px-1 rounded">/blog/filename.jpg</code> in content.
-                </p>
-              </div>
-              <label className={`inline-flex items-center gap-2 cursor-pointer rounded-xl border px-4 py-2 text-xs font-semibold transition-colors shrink-0 ${
-                uploadingImg
-                  ? "border-border text-fg-faint opacity-50 cursor-not-allowed"
-                  : "border-indigo-300 dark:border-indigo-700 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40"
-              }`}>
-                {uploadingImg ? (
-                  <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Uploading…</>
-                ) : (
-                  <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>Upload image</>
-                )}
-                <input type="file" accept="image/*" className="hidden" disabled={uploadingImg}
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadImage(f); e.target.value = ""; }} />
-              </label>
-            </div>
-
-            {imgResult && (
-              <div className={`rounded-xl border px-3 py-2 text-xs flex items-center gap-2 ${
-                imgResult.ok
-                  ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
-                  : "border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300"
-              }`}>
-                {imgResult.ok ? "✓" : "✗"} {imgResult.message}
-              </div>
-            )}
-
-            {/* Placement guide */}
-            <div className="rounded-xl border border-border bg-surface p-3 space-y-1.5">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Placement tips</p>
-              {[
-                ["After a heading",         "## Section\n\n![alt](/blog/img.jpg)\n\nParagraph…",    "Image right after heading — extra top margin added automatically."],
-                ["Between paragraphs",      "Para one text.\n\n![alt](/blog/img.jpg)\n\nPara two.", "Always wrap with blank lines top and bottom."],
-                ["With caption",            '![alt](/blog/img.jpg "Caption text")',                  "Title attribute becomes caption text below the image."],
-                ["Full-control component",  '<BlogImage src="/blog/img.jpg" alt="…" caption="…" />', "Use when you need alt + caption independently styled."],
-              ].map(([label, syntax, note]) => (
-                <div key={label as string} className="rounded-lg border border-border-subtle bg-bg p-2 space-y-0.5">
-                  <p className="text-[10px] font-semibold text-fg-muted">{label}</p>
-                  <p className="text-[10px] text-fg-faint italic">{note}</p>
-                  <code className="block text-[10px] font-mono text-accent bg-surface-raised rounded px-2 py-1 whitespace-pre">{syntax}</code>
-                </div>
-              ))}
-            </div>
-
-            {uploadedImages.length > 0 ? (
-              <div className="space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Uploaded this session</p>
-                {uploadedImages.map((img) => (
-                  <div key={img.url} className="rounded-xl border border-border bg-surface p-3 space-y-2">
-                    <div className="flex items-center gap-2">
-                      <code className="flex-1 text-[11px] text-accent font-mono truncate">{img.url}</code>
-                    </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={img.url} alt={img.name} className="max-h-28 rounded-lg border border-border object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
-                    <div className="flex flex-wrap gap-1.5 items-center">
-                      <span className="text-[10px] text-fg-faint shrink-0">Insert as:</span>
-                      {(["basic", "caption", "component"] as const).map((fmt) => (
-                        <button key={fmt} onClick={() => insertImageBlock(img.url, fmt)}
-                          className="px-2.5 py-1 rounded-lg text-[10px] border border-border bg-bg text-fg-muted hover:border-accent hover:text-accent transition-colors font-mono">
-                          {fmt === "basic" ? "![alt](url)" : fmt === "caption" ? '![alt](url "cap")' : "<BlogImage />"}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              !imgResult && (
-                <div className="text-center py-10 text-fg-faint">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="mx-auto mb-2 opacity-30">
-                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                  </svg>
-                  <p className="text-xs">Upload an image to get started</p>
-                </div>
-              )
-            )}
-          </div>
-        )}
       </div>
 
-      {/* ── Format Guide ───────────────────────────────────────────────────── */}
+      {/* ── Format Reference (collapsible) ───────────────────────────────────── */}
       <div className="rounded-2xl border border-border bg-surface overflow-hidden">
-        <button onClick={() => setShowGuide(!showGuide)}
-          className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-surface-raised transition-colors">
-          <div className="flex items-center gap-2">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
-              <circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/>
-            </svg>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">MDX Format Guide &amp; Tips</span>
-            <span className="text-[10px] text-fg-faint">— click any snippet to copy, toolbar buttons to insert at cursor</span>
-          </div>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-            className={`text-fg-faint transition-transform shrink-0 ${showGuide ? "rotate-180" : ""}`}>
+        <button onClick={() => setShowFormatRef(!showFormatRef)}
+          className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-surface-raised transition-colors">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint flex items-center gap-2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+            Format Reference — MDX Syntax
+          </span>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-fg-faint transition-transform shrink-0 ${showFormatRef ? "rotate-180" : ""}`}>
             <polyline points="6 9 12 15 18 9"/>
           </svg>
         </button>
-
-        {showGuide && (
-          <div className="border-t border-border px-5 py-5 space-y-7">
+        {showFormatRef && (
+          <div className="border-t border-border px-5 py-5 space-y-6">
             {FORMAT_GUIDE.map((section) => (
               <div key={section.heading}>
-                <div className="flex items-center gap-2 mb-3">
+                <div className="flex items-center gap-2 mb-2">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-accent">{section.heading}</span>
                   <div className="flex-1 h-px bg-border-subtle" />
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   {section.items.map((item) => (
                     <div key={item.label} className="rounded-xl border border-border-subtle bg-bg hover:border-border transition-colors overflow-hidden">
                       <div className="flex items-start justify-between gap-2 px-3 pt-2.5 pb-1">
                         <p className="text-[11px] font-semibold text-fg-muted">{item.label}</p>
-                        <button
-                          onClick={() => copySnippet(item.syntax)}
-                          title="Copy snippet"
-                          className="shrink-0 text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-md border border-border text-fg-faint hover:text-accent hover:border-accent transition-colors">
+                        <button onClick={() => copySnippet(item.syntax)}
+                          className="shrink-0 text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded border border-border text-fg-faint hover:text-accent hover:border-accent transition-colors">
                           {copiedSnippet === item.syntax ? "✓ Copied" : "Copy"}
                         </button>
                       </div>
                       {item.note && <p className="px-3 pb-1 text-[10px] text-fg-faint italic leading-relaxed">{item.note}</p>}
-                      <pre className="px-3 pb-3 text-[11px] font-mono text-zinc-300 bg-zinc-950 leading-relaxed whitespace-pre-wrap overflow-x-auto cursor-pointer"
-                        onClick={() => copySnippet(item.syntax)}>
+                      <pre onClick={() => copySnippet(item.syntax)}
+                        className="px-3 pb-3 text-[11px] font-mono text-zinc-300 bg-zinc-950 leading-relaxed whitespace-pre-wrap overflow-x-auto cursor-pointer">
                         {item.syntax}
                       </pre>
                     </div>
@@ -1180,81 +1580,121 @@ function BlogEditor() {
                 </div>
               </div>
             ))}
-
-            {/* Quick cheat-sheet */}
-            <div className="rounded-xl border border-border bg-surface-raised p-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Quick cheat-sheet</p>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-1 font-mono text-[10px] text-fg-muted">
-                {[
-                  ["## Heading 2",     "Section with underline"],
-                  ["### Heading 3",    "Sub-section"],
-                  ["**text**",         "Bold"],
-                  ["*text*",           "Italic"],
-                  ["`code`",           "Inline code"],
-                  ["~~text~~",         "Strikethrough"],
-                  ["[label](url)",     "Link"],
-                  ["![alt](url)",      "Image"],
-                  ["> text",           "Blockquote"],
-                  ["- item",           "Bullet list"],
-                  ["1. item",          "Numbered list"],
-                  ["<Divider />",      "Section break"],
-                  ["```python",        "Code block (Shiki highlighted)"],
-                  ['```py title="f.py"', "Code block with filename tab"],
-                  ["```python {1,3-5}", "Code block with line highlight"],
-                  ["```python /word/",  "Code block with token highlight"],
-                  ["| col | col |",    "Table"],
-                  ['<Callout type="info">', "Info box"],
-                  ['<Callout type="tip">',  "Tip box"],
-                  ['<Callout type="warning">', "Warning box"],
-                  ['<Callout type="quote">',   "Quote box"],
-                  ["&#123; &#125;",    "Literal { } in text"],
-                  ["&lt; &gt;",        "Literal < > in text"],
-                ].map(([syntax, label]) => (
-                  <div key={syntax} className="flex gap-2 py-0.5">
-                    <span className="text-accent shrink-0 w-36 truncate">{syntax}</span>
-                    <span className="text-fg-faint">{label}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         )}
       </div>
 
-      {/* ── Result banner ──────────────────────────────────────────────────── */}
-      {result && (
-        <div className={`rounded-xl border px-4 py-3 text-sm flex items-start gap-2 ${
-          result.ok
-            ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300"
-            : "border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300"
-        }`}>
-          <span className="shrink-0 font-bold">{result.ok ? "✓" : "✗"}</span>
-          <span>
-            {result.message}
-            {result.ok && slug && (
-              <> &nbsp;<a href={`/blog/${slug}`} target="_blank" rel="noopener noreferrer" className="underline font-medium">View /blog/{slug} →</a></>
-            )}
-          </span>
-        </div>
-      )}
-
-      {/* ── Publish bar ────────────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-border bg-surface px-5 py-4">
-        <div className="text-[10px] text-fg-faint leading-relaxed space-y-0.5">
-          <p>Commits MDX to <code className="bg-surface-raised px-1 rounded">sabarishreddy99/jayaremala</code> main branch.</p>
-          <p>GH Actions rebuilds the site — /blog/{slug || "slug"} live in ~2 min.</p>
-        </div>
-        <button
-          onClick={publish}
-          disabled={publishing || !title.trim() || !slug.trim()}
-          className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/50 hover:-translate-y-px transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0"
-        >
-          {publishing ? (
-            <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Publishing…</>
-          ) : (
-            <>Publish to GitHub <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg></>
-          )}
+      {/* ── Publish section (collapsible with checklist) ──────────────────────── */}
+      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+        <button onClick={() => setShowPublish(!showPublish)}
+          className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-raised transition-colors">
+          <div className="flex items-center gap-2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
+              <path d="M7 17L17 7M17 7H7M17 7v10"/>
+            </svg>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Publish to GitHub</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <div className="flex gap-0.5">
+              {Object.values(checks).map((ok, i) => (
+                <span key={i} className={`h-1.5 w-1.5 rounded-full ${ok ? "bg-emerald-500" : "bg-border-strong"}`} />
+              ))}
+            </div>
+            <span className={`text-[10px] font-semibold ${allValid ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+              {checksCount}/{Object.keys(checks).length} ready
+            </span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-fg-faint transition-transform ${showPublish ? "rotate-180" : ""}`}>
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </div>
         </button>
+
+        {showPublish && (
+          <div className="border-t border-border p-5 space-y-5">
+
+            {/* Checklist */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Before you publish</p>
+              <div className="grid sm:grid-cols-2 gap-1.5">
+                {[
+                  { key: "title",       label: "Post has a title",                     ok: checks.title },
+                  { key: "slug",        label: "Slug is valid (lowercase, no spaces)",  ok: checks.slug },
+                  { key: "description", label: "Description written (≤160 chars)",      ok: checks.description },
+                  { key: "tags",        label: "At least one tag added",               ok: checks.tags },
+                  { key: "content",     label: "Content is at least 50 words",         ok: checks.content },
+                  { key: "pat",         label: "GitHub token saved",                   ok: checks.pat },
+                ].map(({ key, label, ok }) => (
+                  <div key={key} className="flex items-center gap-2 text-xs">
+                    <span className={`shrink-0 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold ${ok ? "bg-emerald-500 text-white" : "bg-surface-raised border border-border text-fg-faint"}`}>
+                      {ok ? "✓" : ""}
+                    </span>
+                    <span className={ok ? "text-fg-muted" : "text-fg-faint"}>{label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* GitHub token */}
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-2">GitHub Token</p>
+              <div className="flex gap-2">
+                <input
+                  type={patVisible ? "text" : "password"}
+                  value={githubPat}
+                  onChange={(e) => { setGithubPat(e.target.value); setPatSaved(false); }}
+                  placeholder="ghp_… (needs repo write scope)"
+                  className="flex-1 min-w-0 rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
+                />
+                <button onClick={() => setPatVisible(!patVisible)}
+                  className="shrink-0 px-3 rounded-xl border border-border text-fg-faint hover:text-fg text-xs transition-colors">
+                  {patVisible ? "Hide" : "Show"}
+                </button>
+                <button onClick={savePat}
+                  className="shrink-0 px-4 rounded-xl bg-fg text-bg text-xs font-semibold hover:opacity-80 transition-opacity">
+                  {patSaved ? "Saved ✓" : "Save"}
+                </button>
+              </div>
+              <p className="text-[10px] text-fg-faint mt-1.5">
+                One-time setup — stored in your browser only. Generate at{" "}
+                <a href="https://github.com/settings/tokens" target="_blank" rel="noopener noreferrer" className="text-accent underline">github.com/settings/tokens</a>
+                {" "}with <code className="bg-surface-raised px-1 rounded text-[10px]">repo</code> write scope.
+              </p>
+            </div>
+
+            {/* Result */}
+            {result && (
+              <div className={`rounded-xl border px-4 py-3 text-sm flex items-start gap-2 ${result.ok ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" : "border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300"}`}>
+                <span className="shrink-0 font-bold">{result.ok ? "✓" : "✗"}</span>
+                <span>
+                  {result.message}
+                  {result.ok && slug && (
+                    <> &nbsp;<a href={`/blog/${slug}`} target="_blank" rel="noopener noreferrer" className="underline font-medium">View /blog/{slug} →</a></>
+                  )}
+                </span>
+              </div>
+            )}
+
+            {/* Publish button */}
+            <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
+              <div className="text-[10px] text-fg-faint leading-relaxed">
+                <p>Commits <code className="bg-surface-raised px-1 rounded font-mono">{slug || "post-slug"}.mdx</code> to <code className="bg-surface-raised px-1 rounded font-mono">main</code>.</p>
+                <p>GH Actions rebuilds the site — your post is live in ~2 min.</p>
+              </div>
+              <button
+                onClick={publish}
+                disabled={publishing || !allValid}
+                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/50 hover:-translate-y-px transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0"
+              >
+                {publishing ? (
+                  <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Publishing…</>
+                ) : (
+                  <>Publish to GitHub <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg></>
+                )}
+              </button>
+            </div>
+
+          </div>
+        )}
       </div>
 
     </div>

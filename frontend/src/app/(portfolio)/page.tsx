@@ -132,7 +132,7 @@ export default function PortfolioHome() {
           <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
             <Link
               href="/chat"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3.5 sm:py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/50 hover:shadow-xl hover:-translate-y-px transition-all duration-200"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 px-6 py-3.5 sm:py-2.5 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200"
             >
               Chat with Avocado
               <span className="opacity-80">✦</span>

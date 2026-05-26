@@ -181,27 +181,26 @@ export default function NotFound() {
             </Link>
           ))}
 
-          {/* Chat with Avocado — full-width accent card */}
+          {/* Chat with Avocado — full-width, matches nav button style */}
           <Link
             href="/chat"
-            className="group sm:col-span-2 flex items-center gap-3.5 rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-accent-light px-4 py-4 transition-all duration-200 hover:border-indigo-400 dark:hover:border-indigo-600 hover:shadow-md"
+            className="group sm:col-span-2 flex items-center gap-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 px-4 py-4 transition-all duration-200 shadow-sm hover:shadow-md"
           >
-            {/* Icon pill — always accent-tinted */}
-            <div className="w-10 h-10 rounded-xl bg-indigo-100 dark:bg-indigo-950 flex items-center justify-center text-accent shrink-0 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-900 transition-colors duration-200">
+            <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-white shrink-0 group-hover:bg-white/20 transition-colors duration-200">
               <IconMessageAI />
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-semibold text-accent leading-none mb-1">
+              <p className="text-sm font-semibold text-white leading-none mb-1">
                 Chat with Avocado ✦
               </p>
-              <p className="text-[11px] text-fg-faint">
+              <p className="text-[11px] text-indigo-200">
                 Ask Jaya&apos;s AI anything — experience, projects, or just say hello
               </p>
             </div>
 
             <svg
-              className="shrink-0 text-accent/50 group-hover:text-accent group-hover:translate-x-0.5 transition-all duration-150"
+              className="shrink-0 text-white/60 group-hover:text-white group-hover:translate-x-0.5 transition-all duration-150"
               width="13" height="13" viewBox="0 0 24 24" fill="none"
               stroke="currentColor" strokeWidth="2.5" aria-hidden
             >

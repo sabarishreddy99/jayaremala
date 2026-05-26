@@ -219,7 +219,7 @@ export default function MobileAvocadoFAB() {
             href="/chat"
             onClick={() => setOpen(false)}
             className="flex items-center justify-between w-full rounded-2xl px-5 py-4 transition-opacity hover:opacity-90 active:scale-[0.98]"
-            style={{ background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" }}
+            style={{ background: "#4f46e5" }}
           >
             <div className="flex items-center gap-3">
               {/* Avocado icon */}

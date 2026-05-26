@@ -56,7 +56,7 @@ const SECTIONS: { href: string; label: string; icon: string; keywords: string[] 
     ],
   },
   {
-    href: "/portfolio",
+    href: "/",
     label: "Skills",
     icon: "◆",
     keywords: [
@@ -72,8 +72,8 @@ const SOURCE_TYPE_MAP: Record<string, { href: string; label: string; icon: strin
   experience: { href: "/experience", label: "Experience",  icon: "◎" },
   education:  { href: "/education",  label: "Education",   icon: "◉" },
   project:    { href: "/projects",   label: "Projects",    icon: "◈" },
-  skills:     { href: "/portfolio",  label: "Skills",      icon: "◆" },
-  profile:    { href: "/portfolio",  label: "Portfolio",   icon: "✦" },
+  skills:     { href: "/",  label: "Skills",      icon: "◆" },
+  profile:    { href: "/",  label: "Portfolio",   icon: "✦" },
 };
 
 /**

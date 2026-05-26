@@ -7,7 +7,7 @@ import { profile } from "@/data/profile";
 
 const NAV_ITEMS = [
   {
-    href: "/portfolio",
+    href: "/",
     label: "Home",
     icon: (
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
@@ -114,7 +114,7 @@ export default function MobileAvocadoFAB() {
   if (!mounted || hidden) return null;
 
   const isActive = (href: string) =>
-    href === "/portfolio" ? pathname === "/portfolio" : pathname.startsWith(href);
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   return (
     <>

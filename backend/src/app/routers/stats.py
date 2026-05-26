@@ -65,13 +65,15 @@ async def record_visit(
     body: VisitIn | None = None,
 ) -> None:
     ip = (
-        request.headers.get("x-forwarded-for", "")
-        .split(",")[0]
-        .strip()
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or request.headers.get("x-real-ip", "").strip()
         or (request.client.host if request.client else "unknown")
     )
+    # Prefer the stable per-device UUID sent by the frontend (localStorage).
+    # This counts devices individually even when they share a public IP (same WiFi/NAT).
+    identifier = request.headers.get("x-visitor-id", "").strip() or ip
     page = body.page if body else "/"
-    row_id = analytics.record_site_visit(ip, page)
+    row_id = analytics.record_site_visit(identifier, page)
     if row_id:
         background_tasks.add_task(_geo_update, "site_visits", row_id, ip)
 

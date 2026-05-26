@@ -150,25 +150,27 @@ _CUTOFFS = {
 SESSION_GAP_SECONDS = 600  # 10 minutes
 
 
-def record(ip: str) -> int | None:
-    """Record a chat response. Returns the new row id (for geo back-fill)."""
-    ip_hash = hashlib.sha256(ip.encode()).hexdigest()
+def record(identifier: str) -> int | None:
+    """Record a chat response. identifier is a visitor UUID or raw IP.
+    Returns the new row id (for geo back-fill).
+    """
+    id_hash = hashlib.sha256(identifier.encode()).hexdigest()
     try:
         with _connect() as conn:
-            cur = conn.execute("INSERT INTO interactions (ip_hash) VALUES (?)", (ip_hash,))
+            cur = conn.execute("INSERT INTO interactions (ip_hash) VALUES (?)", (id_hash,))
             return cur.lastrowid
     except Exception as exc:
         logger.warning("Analytics record failed (non-fatal): %s", exc)
         return None
 
 
-def record_site_visit(ip: str, page: str = "/") -> int | None:
+def record_site_visit(identifier: str, page: str = "/") -> int | None:
     """Insert a site-visit session row and return its id, or None if within the
-    10-minute window (same session — don't double-count).
-    Uses an atomic INSERT…SELECT…WHERE NOT EXISTS to avoid a race condition under
-    concurrent requests from the same IP.
+    10-minute window for the same (identifier, page) pair.
+    identifier is a visitor UUID (x-visitor-id header) or raw IP as fallback.
+    Dedup is per (identifier, page) so each page is counted separately.
     """
-    ip_hash = hashlib.sha256(ip.encode()).hexdigest()
+    id_hash = hashlib.sha256(identifier.encode()).hexdigest()
     try:
         with _connect() as conn:
             cur = conn.execute(
@@ -178,13 +180,14 @@ def record_site_visit(ip: str, page: str = "/") -> int | None:
                 WHERE NOT EXISTS (
                     SELECT 1 FROM site_visits
                     WHERE ip_hash = ?
+                    AND page = ?
                     AND created_at >= datetime('now', ?)
                 )
                 """,
-                (ip_hash, page, ip_hash, f"-{SESSION_GAP_SECONDS} seconds"),
+                (id_hash, page, id_hash, page, f"-{SESSION_GAP_SECONDS} seconds"),
             )
             if cur.rowcount == 0:
-                return None  # Same session — skip
+                return None  # Same session on this page — skip
             return cur.lastrowid
     except Exception as exc:
         logger.warning("record_site_visit failed (non-fatal): %s", exc)

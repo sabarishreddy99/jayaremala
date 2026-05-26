@@ -21,7 +21,7 @@ export default function SectionNav() {
   useEffect(() => {
     function update() {
       setScrolled(window.scrollY > 80);
-      let current = SECTIONS[0].id;
+      let current: string = SECTIONS[0].id;
       for (const { id } of SECTIONS) {
         const el = document.getElementById(id);
         if (el && el.getBoundingClientRect().top <= NAV_H) current = id;

@@ -361,7 +361,13 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
     sources = [f"{c['type']}:{c['id']}" for c in top_chunks]
     full_prompt = _build_chat_prompt(req, context)
 
-    ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown").split(",")[0].strip()
+    ip = (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or request.headers.get("x-real-ip", "").strip()
+        or (request.client.host if request.client else "unknown")
+    )
+    # Prefer the stable per-device UUID so unique chat users counts devices, not IPs.
+    identifier = request.headers.get("x-visitor-id", "").strip() or ip
     analytics.record_question(req.message)
 
     def event_stream():
@@ -372,7 +378,7 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
                     yield f"data: {json.dumps({'reset': True})}\n\n"
                 else:
                     yield f"data: {json.dumps({'token': item})}\n\n"
-            row_id = analytics.record(ip)
+            row_id = analytics.record(identifier)
             yield f"data: {json.dumps({'done': True, 'sources': sources, 'model': used_model[0] if used_model else settings.gemini_model})}\n\n"
             if row_id:
                 threading.Thread(

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useCallback } from "react";
 import { API_BASE_URL } from "@/lib/api/client";
+import { getOrCreateVisitorId } from "@/lib/visitor";
 
 interface Stats {
   views: number;
@@ -10,20 +11,6 @@ interface Stats {
 }
 
 const MAX_USER_CLAPS = 50;
-
-function getOrCreateVisitorId(): string {
-  try {
-    const key = "jaya_vid";
-    let id = localStorage.getItem(key);
-    if (!id) {
-      id = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36);
-      localStorage.setItem(key, id);
-    }
-    return id;
-  } catch {
-    return "anonymous";
-  }
-}
 
 function formatCount(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, startTransition } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api/client";
+import { getOrCreateVisitorId } from "@/lib/visitor";
 import { saveMessages, loadMessages, clearSession } from "@/lib/session";
 import { profile } from "@/data/profile";
 import ChatMessage from "./ChatMessage";
@@ -209,9 +210,13 @@ export default function ChatInterface() {
 
     setPendingRetry(null);
     try {
+      const vid = getOrCreateVisitorId();
       const res = await fetch(`${API_BASE_URL}/ai/chat/stream`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(vid ? { "x-visitor-id": vid } : {}),
+        },
         body: JSON.stringify({
           messages: nextMessages
             .filter((m) => m !== WELCOME)

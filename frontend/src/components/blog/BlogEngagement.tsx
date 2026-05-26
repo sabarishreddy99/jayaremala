@@ -26,24 +26,18 @@ export default function BlogEngagement({ slug }: { slug: string }) {
   const nextFloatKey = useRef(0);
 
   useEffect(() => {
-    // Stats fetch and view POST are intentionally separated.
-    // A failed view POST must never prevent stats from displaying.
-    const loadStats = async () => {
-      try {
-        const res = await fetch(`${API_BASE_URL}/blog/${slug}/stats`);
-        if (!res.ok) throw new Error(`${res.status}`);
-        const data: Stats = await res.json();
-        setStats(data);
-        setLocalClaps(0);
-      } catch {
-        setStats({ views: 0, claps: 0, user_claps: 0 });
-      }
-    };
-
-    loadStats();
-
-    // Fire-and-forget — don't block stats on view recording
-    fetch(`${API_BASE_URL}/blog/${slug}/view`, { method: "POST" }).catch(() => {});
+    // POST /view returns the updated stats (including this visit) — use that as
+    // the initial state so the count the user sees already reflects their view.
+    // Fall back to a plain GET if the POST fails for any reason.
+    fetch(`${API_BASE_URL}/blog/${slug}/view`, { method: "POST" })
+      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
+      .then((data: Stats) => { setStats(data); setLocalClaps(0); })
+      .catch(() => {
+        fetch(`${API_BASE_URL}/blog/${slug}/stats`)
+          .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
+          .then((data: Stats) => { setStats(data); setLocalClaps(0); })
+          .catch(() => setStats({ views: 0, claps: 0, user_claps: 0 }));
+      });
   }, [slug]);
 
   const flushClaps = useCallback(async () => {

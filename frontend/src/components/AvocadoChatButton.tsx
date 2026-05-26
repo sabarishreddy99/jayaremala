@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const SESSION_KEY  = "avocado_popup_shown";   // sessionStorage — once per browser session
 const DISMISS_KEY  = "avocado_popup_snoozed"; // localStorage  — timestamp, snooze 7 days on ×
@@ -17,6 +18,7 @@ function shouldAutoShow(): boolean {
 }
 
 export default function AvocadoChatButton() {
+  const pathname = usePathname();
   const [mounted, setMounted]                 = useState(false);
   const [visible, setVisible]                 = useState(false);
   const [permanentlyClosed, setPermanentlyClosed] = useState(false);
@@ -58,7 +60,8 @@ export default function AvocadoChatButton() {
     localStorage.setItem(DISMISS_KEY, String(Date.now()));
   };
 
-  if (!mounted) return null;
+  const hidden = pathname.startsWith("/blog") || pathname.startsWith("/lab") || pathname === "/quotes";
+  if (!mounted || hidden) return null;
 
   return (
     <div className="hidden md:block fixed bottom-7 right-7 z-50">

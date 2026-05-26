@@ -17,10 +17,19 @@ def _db_path() -> Path:
     return Path(settings.analytics_db_path)
 
 
+def _connect() -> sqlite3.Connection:
+    """Open a WAL-mode connection with a busy timeout for concurrent safety."""
+    conn = sqlite3.connect(_db_path(), timeout=10)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA busy_timeout=5000")
+    return conn
+
+
 def init_db() -> None:
     p = _db_path()
     p.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(p) as conn:
+    with _connect() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS blog_views (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,22 +73,24 @@ _SESSION_GAP = 600  # 10 minutes
 
 
 def record_blog_session(slug: str, ip: str) -> None:
-    """Record a blog open as a new session if 10+ min have passed since the last one."""
+    """Record a blog open as a new session if 10+ min have passed since the last one.
+    Uses an atomic INSERT…SELECT…WHERE NOT EXISTS to avoid a race condition under
+    concurrent requests from the same IP.
+    """
     h = _hash(ip)
     try:
-        with sqlite3.connect(_db_path()) as conn:
-            last = conn.execute(
-                "SELECT MAX(created_at) FROM blog_sessions WHERE slug=? AND ip_hash=?",
-                (slug, h),
-            ).fetchone()[0]
-            if last is not None:
-                seconds_ago = conn.execute(
-                    "SELECT strftime('%s','now') - strftime('%s',?)", (last,)
-                ).fetchone()[0]
-                if (seconds_ago or 0) < _SESSION_GAP:
-                    return  # Same session — skip
+        with _connect() as conn:
             conn.execute(
-                "INSERT INTO blog_sessions (slug, ip_hash) VALUES (?, ?)", (slug, h)
+                """
+                INSERT INTO blog_sessions (slug, ip_hash)
+                SELECT ?, ?
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM blog_sessions
+                    WHERE slug = ? AND ip_hash = ?
+                    AND created_at >= datetime('now', ?)
+                )
+                """,
+                (slug, h, slug, h, f"-{_SESSION_GAP} seconds"),
             )
     except Exception as exc:
         logger.warning("record_blog_session failed: %s", exc)
@@ -89,7 +100,7 @@ def record_view(slug: str, ip: str) -> dict[str, int]:
     """Record a unique view (idempotent) and a session open (10-min deduped)."""
     h = _hash(ip)
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             conn.execute(
                 "INSERT OR IGNORE INTO blog_views (slug, ip_hash) VALUES (?, ?)", (slug, h)
             )
@@ -100,23 +111,19 @@ def record_view(slug: str, ip: str) -> dict[str, int]:
 
 
 def record_clap(slug: str, ip: str, count: int) -> dict[str, int]:
-    """Add claps for a post. Caps total per-IP claps at MAX_CLAPS_PER_USER."""
+    """Add claps for a post. Caps total per-IP claps at MAX_CLAPS_PER_USER atomically."""
     h = _hash(ip)
     try:
-        with sqlite3.connect(_db_path()) as conn:
-            row = conn.execute(
-                "SELECT count FROM blog_claps WHERE slug=? AND ip_hash=?", (slug, h)
-            ).fetchone()
-            current = row[0] if row else 0
-            allowed = min(count, MAX_CLAPS_PER_USER - current)
-            if allowed > 0:
-                conn.execute("""
-                    INSERT INTO blog_claps (slug, ip_hash, count)
-                    VALUES (?, ?, ?)
-                    ON CONFLICT(slug, ip_hash) DO UPDATE SET
-                        count = count + excluded.count,
-                        updated_at = CURRENT_TIMESTAMP
-                """, (slug, h, allowed))
+        with _connect() as conn:
+            # Single atomic statement: cap is enforced inside SQL so concurrent
+            # requests can't race past MAX_CLAPS_PER_USER.
+            conn.execute("""
+                INSERT INTO blog_claps (slug, ip_hash, count)
+                VALUES (?, ?, MIN(?, ?))
+                ON CONFLICT(slug, ip_hash) DO UPDATE SET
+                    count = MIN(count + excluded.count, ?),
+                    updated_at = CURRENT_TIMESTAMP
+            """, (slug, h, count, MAX_CLAPS_PER_USER, MAX_CLAPS_PER_USER))
     except Exception as exc:
         logger.warning("record_clap failed: %s", exc)
     return get_post_stats(slug, ip)
@@ -125,7 +132,7 @@ def record_clap(slug: str, ip: str, count: int) -> dict[str, int]:
 def get_post_stats(slug: str, ip: str) -> dict[str, int]:
     h = _hash(ip)
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             views = conn.execute(
                 "SELECT COUNT(*) FROM blog_views WHERE slug=?", (slug,)
             ).fetchone()[0]
@@ -153,7 +160,7 @@ def get_blog_engagement_stats(period: str = "all") -> dict:
     """Session-based blog analytics: total opens, unique readers, revisit rates per post."""
     and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             total_opens = conn.execute(
                 f"SELECT COUNT(*) FROM blog_sessions WHERE 1=1 {and_clause}"
             ).fetchone()[0]
@@ -198,7 +205,7 @@ def get_summary(period: str = "all") -> dict:
     """
     view_where = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             total_claps = conn.execute(
                 "SELECT COALESCE(SUM(count),0) FROM blog_claps"
             ).fetchone()[0]

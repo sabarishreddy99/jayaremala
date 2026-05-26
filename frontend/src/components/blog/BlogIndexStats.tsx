@@ -65,16 +65,7 @@ function formatCount(n: number): string {
   return String(n);
 }
 
-export function BlogIndexStats() {
-  const [summary, setSummary] = useState<Summary | null>(null);
-
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/blog/stats/summary`)
-      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
-      .then(setSummary)
-      .catch(() => {});
-  }, []);
-
+export function BlogIndexStats({ summary }: { summary: Summary | null }) {
   if (!summary || (summary.total_claps === 0 && summary.total_views === 0)) return null;
 
   return (
@@ -140,17 +131,9 @@ interface PostMeta {
   readingTime?: number;
 }
 
-export function BlogPostList({ posts }: { posts: PostMeta[] }) {
-  const [summary, setSummary] = useState<Summary | null>(null);
+export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: Summary | null }) {
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
-
-  useEffect(() => {
-    fetch(`${API_BASE_URL}/blog/stats/summary`)
-      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
-      .then(setSummary)
-      .catch(() => {});
-  }, []);
 
   const q = query.toLowerCase().trim();
   const allTags = Array.from(new Set(posts.flatMap((p) => p.tags))).sort();
@@ -310,5 +293,23 @@ export function BlogPostList({ posts }: { posts: PostMeta[] }) {
       })}
     </ol>}
     </div>
+  );
+}
+
+export function BlogSection({ posts }: { posts: PostMeta[] }) {
+  const [summary, setSummary] = useState<Summary | null>(null);
+
+  useEffect(() => {
+    fetch(`${API_BASE_URL}/blog/stats/summary`)
+      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
+      .then(setSummary)
+      .catch(() => {});
+  }, []);
+
+  return (
+    <>
+      <BlogIndexStats summary={summary} />
+      <BlogPostList posts={posts} summary={summary} />
+    </>
   );
 }

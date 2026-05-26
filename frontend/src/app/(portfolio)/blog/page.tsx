@@ -1,5 +1,5 @@
 import { getAllPosts } from "@/lib/blog";
-import { BlogIndexStats, BlogPostList } from "@/components/blog/BlogIndexStats";
+import { BlogSection } from "@/components/blog/BlogIndexStats";
 
 export const metadata = {
   title: "Blog",
@@ -57,7 +57,6 @@ export default function BlogIndexPage() {
           software craft, navigating life, chaos and more.
         </p>
 
-        <BlogIndexStats />
       </header>
 
       {posts.length === 0 ? (
@@ -65,7 +64,7 @@ export default function BlogIndexPage() {
           <p className="text-sm text-fg-faint">No posts yet — check back soon.</p>
         </div>
       ) : (
-        <BlogPostList posts={posts} />
+        <BlogSection posts={posts} />
       )}
 
     </div>

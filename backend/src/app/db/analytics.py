@@ -24,10 +24,19 @@ def _db_path() -> Path:
     return Path(settings.analytics_db_path)
 
 
+def _connect() -> sqlite3.Connection:
+    """Open a WAL-mode connection with a busy timeout for concurrent safety."""
+    conn = sqlite3.connect(_db_path(), timeout=10)
+    conn.execute("PRAGMA journal_mode=WAL")
+    conn.execute("PRAGMA synchronous=NORMAL")
+    conn.execute("PRAGMA busy_timeout=5000")
+    return conn
+
+
 def init_db() -> None:
     p = _db_path()
     p.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(p) as conn:
+    with _connect() as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS interactions (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -115,7 +124,7 @@ def update_visit_geo(table: str, row_id: int, country: str, city: str) -> None:
     if not country and not city:
         return
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             conn.execute(
                 f"UPDATE {table} SET country=?, city=? WHERE id=?",  # noqa: S608
                 (country, city, row_id),
@@ -145,7 +154,7 @@ def record(ip: str) -> int | None:
     """Record a chat response. Returns the new row id (for geo back-fill)."""
     ip_hash = hashlib.sha256(ip.encode()).hexdigest()
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             cur = conn.execute("INSERT INTO interactions (ip_hash) VALUES (?)", (ip_hash,))
             return cur.lastrowid
     except Exception as exc:
@@ -156,22 +165,26 @@ def record(ip: str) -> int | None:
 def record_site_visit(ip: str, page: str = "/") -> int | None:
     """Insert a site-visit session row and return its id, or None if within the
     10-minute window (same session — don't double-count).
+    Uses an atomic INSERT…SELECT…WHERE NOT EXISTS to avoid a race condition under
+    concurrent requests from the same IP.
     """
     ip_hash = hashlib.sha256(ip.encode()).hexdigest()
     try:
-        with sqlite3.connect(_db_path()) as conn:
-            last = conn.execute(
-                "SELECT MAX(created_at) FROM site_visits WHERE ip_hash=?", (ip_hash,)
-            ).fetchone()[0]
-            if last is not None:
-                seconds_ago = conn.execute(
-                    "SELECT strftime('%s','now') - strftime('%s',?)", (last,)
-                ).fetchone()[0]
-                if (seconds_ago or 0) < SESSION_GAP_SECONDS:
-                    return None  # Same session — skip
+        with _connect() as conn:
             cur = conn.execute(
-                "INSERT INTO site_visits (ip_hash, page) VALUES (?, ?)", (ip_hash, page)
+                """
+                INSERT INTO site_visits (ip_hash, page)
+                SELECT ?, ?
+                WHERE NOT EXISTS (
+                    SELECT 1 FROM site_visits
+                    WHERE ip_hash = ?
+                    AND created_at >= datetime('now', ?)
+                )
+                """,
+                (ip_hash, page, ip_hash, f"-{SESSION_GAP_SECONDS} seconds"),
             )
+            if cur.rowcount == 0:
+                return None  # Same session — skip
             return cur.lastrowid
     except Exception as exc:
         logger.warning("record_site_visit failed (non-fatal): %s", exc)
@@ -180,7 +193,7 @@ def record_site_visit(ip: str, page: str = "/") -> int | None:
 
 def record_feedback(message_hash: str, rating: int) -> None:
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             conn.execute(
                 "INSERT INTO feedback (message_hash, rating) VALUES (?, ?)",
                 (message_hash, rating),
@@ -194,7 +207,7 @@ def record_question(text: str) -> None:
     if not normalized:
         return
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             conn.execute("INSERT INTO questions (text) VALUES (?)", (normalized,))
     except Exception as exc:
         logger.warning("record_question failed (non-fatal): %s", exc)
@@ -204,7 +217,7 @@ def record_experience_rating(rating: int) -> None:
     if not 1 <= rating <= 5:
         return
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             conn.execute("INSERT INTO experience_ratings (rating) VALUES (?)", (rating,))
     except Exception as exc:
         logger.warning("record_experience_rating failed (non-fatal): %s", exc)
@@ -215,7 +228,7 @@ def record_experience_rating(rating: int) -> None:
 def get_top_questions(n: int = 15, period: str = "all") -> list[dict]:
     and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             rows = conn.execute(f"""
                 SELECT text, COUNT(*) AS cnt
                 FROM questions
@@ -233,7 +246,7 @@ def get_top_questions(n: int = 15, period: str = "all") -> list[dict]:
 def get_feedback_summary(period: str = "all") -> dict:
     and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             row = conn.execute(f"""
                 SELECT
                     COUNT(*) AS total,
@@ -252,7 +265,7 @@ def get_feedback_summary(period: str = "all") -> dict:
 def get_experience_rating_summary(period: str = "all") -> dict:
     where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             rows = conn.execute(
                 f"SELECT rating, COUNT(*) FROM experience_ratings {where} GROUP BY rating"
             ).fetchall()
@@ -271,7 +284,7 @@ def get_stats(period: str = "all") -> dict[str, int]:
     """Chat interaction stats. sessions = distinct 10-min windows (via SQL LAG)."""
     where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             total  = conn.execute(f"SELECT COUNT(*) FROM interactions {where}").fetchone()[0]
             unique = conn.execute(f"SELECT COUNT(DISTINCT ip_hash) FROM interactions {where}").fetchone()[0]
             # A new session starts when: first row for this IP, OR 10+ min gap since previous row
@@ -293,7 +306,7 @@ def get_site_visitor_stats(period: str = "all") -> dict[str, int]:
     """Each row in site_visits already represents a session (10-min dedup on insert)."""
     where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             total  = conn.execute(f"SELECT COUNT(*) FROM site_visits {where}").fetchone()[0]
             unique = conn.execute(f"SELECT COUNT(DISTINCT ip_hash) FROM site_visits {where}").fetchone()[0]
         return {"total_visits": total, "unique_visitors": unique}
@@ -306,7 +319,7 @@ def get_location_stats(table: str, period: str = "all") -> list[dict]:
     """Top countries for a given table (site_visits or interactions)."""
     and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             rows = conn.execute(f"""
                 SELECT country, COUNT(*) AS visits, COUNT(DISTINCT ip_hash) AS unique_v
                 FROM {table}
@@ -325,7 +338,7 @@ def get_page_stats(period: str = "all") -> list[dict]:
     """Top visited pages by session count."""
     and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
     try:
-        with sqlite3.connect(_db_path()) as conn:
+        with _connect() as conn:
             rows = conn.execute(f"""
                 SELECT page, COUNT(*) AS sessions, COUNT(DISTINCT ip_hash) AS unique_v
                 FROM site_visits

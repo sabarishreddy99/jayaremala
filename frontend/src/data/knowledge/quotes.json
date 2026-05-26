@@ -60,6 +60,7 @@
     "source": "Beautiful Boy",
     "category": "Life",
     "favorite": false,
+    "featured": true,
     "addedAt": "2026-05-25"
   },
   {

@@ -9,6 +9,7 @@ export interface Quote {
   source?: string | null;
   category: QuoteCategory;
   favorite: boolean;
+  featured?: boolean;
   addedAt: string;
 }
 

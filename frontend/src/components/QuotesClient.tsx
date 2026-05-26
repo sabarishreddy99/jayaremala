@@ -69,9 +69,16 @@ function QuoteCard({ quote }: { quote: Quote }) {
         <span className={`inline-flex items-center text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${cfg.badge}`}>
           {quote.category}
         </span>
-        {quote.favorite && (
-          <span className="text-amber-400 text-sm" title="Favorite">★</span>
-        )}
+        <div className="flex items-center gap-1.5">
+          {quote.featured && (
+            <span className="text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+              Featured
+            </span>
+          )}
+          {quote.favorite && (
+            <span className="text-amber-400 text-sm" title="Favorite">★</span>
+          )}
+        </div>
       </div>
 
       {/* Large opening quote mark */}
@@ -129,7 +136,7 @@ function FeaturedQuote({ quote }: { quote: Quote }) {
 export default function QuotesClient({ quotes }: { quotes: Quote[] }) {
   const [activeCategory, setActiveCategory] = useState<QuoteCategory | "All">("All");
 
-  const featured = quotes.find((q) => q.favorite);
+  const featured = quotes.find((q) => q.featured);
 
   const filtered = activeCategory === "All"
     ? quotes

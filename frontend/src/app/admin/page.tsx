@@ -1945,6 +1945,7 @@ interface QuoteEntry {
   source: string | null;
   category: string;
   favorite: boolean;
+  featured?: boolean;
   addedAt: string;
 }
 
@@ -2047,13 +2048,25 @@ function QuotesEditor() {
     saveToGitHub(quotes.filter((q) => q.id !== id));
   }
 
+  function toggleFeatured(id: string) {
+    const already = quotes.find((q) => q.id === id)?.featured;
+    const updated = quotes.map((q) => ({
+      ...q,
+      featured: !already && q.id === id ? true : undefined,
+    }));
+    saveToGitHub(updated);
+  }
+
   function startEdit(q: QuoteEntry) {
     setEditingId(q.id);
-    setEditFields({ text: q.text, author: q.author, source: q.source ?? "", category: q.category, favorite: q.favorite });
+    setEditFields({ text: q.text, author: q.author, source: q.source ?? "", category: q.category, favorite: q.favorite, featured: q.featured ?? false });
   }
 
   function saveEdit(id: string) {
-    const updated = quotes.map((q) => q.id === id ? { ...q, ...editFields, source: (editFields.source as string | undefined)?.trim() || null } : q);
+    const updated = quotes.map((q) => {
+      if (q.id !== id) return editFields.featured ? { ...q, featured: undefined } : q;
+      return { ...q, ...editFields, source: (editFields.source as string | undefined)?.trim() || null, featured: editFields.featured ? true : undefined };
+    });
     setEditingId(null);
     saveToGitHub(updated);
   }
@@ -2196,6 +2209,15 @@ function QuotesEditor() {
                         />
                         <span className="text-xs font-medium text-fg-muted">Favorite</span>
                       </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={editFields.featured ?? false}
+                          onChange={(e) => setEditFields((p) => ({ ...p, featured: e.target.checked }))}
+                          className="rounded"
+                        />
+                        <span className="text-xs font-medium text-indigo-500">Featured on home</span>
+                      </label>
                       <button onClick={() => saveEdit(q.id)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors">
                         {saving ? "…" : "Save"}
                       </button>
@@ -2210,6 +2232,11 @@ function QuotesEditor() {
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">{q.category}</span>
                         {q.favorite && <span className="text-amber-400 text-xs">★</span>}
+                        {q.featured && (
+                          <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                            Featured
+                          </span>
+                        )}
                       </div>
                       <p className="text-sm text-fg leading-relaxed line-clamp-2">{q.text}</p>
                       <p className="text-[11px] text-fg-faint mt-1">
@@ -2217,6 +2244,18 @@ function QuotesEditor() {
                       </p>
                     </div>
                     <div className="flex flex-col gap-1 shrink-0">
+                      <button
+                        onClick={() => toggleFeatured(q.id)}
+                        disabled={saving}
+                        title={q.featured ? "Remove from home" : "Feature on home"}
+                        className={`text-[10px] px-2 py-1 rounded-lg transition-colors disabled:opacity-40 ${
+                          q.featured
+                            ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-950/60"
+                            : "text-fg-faint hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                        }`}
+                      >
+                        {q.featured ? "★ Featured" : "☆ Feature"}
+                      </button>
                       <button
                         onClick={() => startEdit(q)}
                         className="text-[10px] text-fg-faint hover:text-fg px-2 py-1 rounded-lg hover:bg-surface-raised transition-colors"

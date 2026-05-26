@@ -2,6 +2,7 @@ import Link from "next/link";
 import { profile } from "@/data/profile";
 import { projects } from "@/data/projects";
 import { skills } from "@/data/skills";
+import { quotes } from "@/data/quotes";
 import { getAllPosts } from "@/lib/blog";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import ContactForm from "@/components/ContactForm";
@@ -11,6 +12,7 @@ import HeroName from "@/components/HeroName";
 import RagPipelineCard from "@/components/RagPipelineCard";
 import StackSection from "@/components/StackSection";
 import SkillsSection from "@/components/SkillsSection";
+import SectionNav from "@/components/SectionNav";
 
 export const metadata = {
   title: "Jaya Sabarish Reddy Remala — Software Engineer",
@@ -71,16 +73,18 @@ function Inner({ children, className = "" }: { children: React.ReactNode; classN
 export default function PortfolioHome() {
   const featured = projects.filter((p) => p.featured);
   const latestPost = getAllPosts()[0] ?? null;
+  const latestQuote = quotes.find((q) => q.featured) ?? [...quotes].sort((a, b) => b.addedAt.localeCompare(a.addedAt))[0] ?? null;
 
   return (
     <div className="w-full">
+      <SectionNav />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
 
       {/* ── 1 · Hero — not sticky, scrolls away naturally ──────── */}
-      <section className="bg-bg overflow-x-clip">
+      <section id="hero" className="bg-bg overflow-x-clip scroll-mt-[50px]">
         <Inner className="grid gap-7 sm:gap-5 pt-14 sm:pt-16 pb-16">
 
           {/* Status badge */}
@@ -153,20 +157,30 @@ export default function PortfolioHome() {
             </a>
           </div>
 
-          {/* Latest blog teaser */}
-          {latestPost && (
-            <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 w-fit">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Latest</span>
-              <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1">
-                {latestPost.title} →
-              </span>
-            </Link>
-          )}
+          {/* Latest teasers — blog + quote */}
+          <div className="flex flex-col gap-2">
+            {latestPost && (
+              <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 w-fit max-w-sm">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Blog</span>
+                <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1">
+                  {latestPost.title} →
+                </span>
+              </Link>
+            )}
+            {latestQuote && (
+              <Link href="/quotes" className="group inline-flex items-center gap-2 w-fit max-w-sm">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Quote</span>
+                <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1 italic">
+                  &ldquo;{latestQuote.text}&rdquo; — {latestQuote.author} →
+                </span>
+              </Link>
+            )}
+          </div>
         </Inner>
       </section>
 
       {/* ── 2 · At a Glance ── z-[2] ───────────────────────────── */}
-      <StackSection z={2} seamless>
+      <StackSection z={2} seamless id="about">
 <Inner className="py-16 sm:py-20">
           <div className="flex items-center gap-2.5 mb-8">
             <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500 shrink-0" />
@@ -217,7 +231,7 @@ export default function PortfolioHome() {
 
       {/* ── 3 · Featured Projects ── z-[3] ─────────────────────── */}
       {featured.length > 0 && (
-        <StackSection z={3}>
+        <StackSection z={3} id="projects">
           <Inner className="py-16 sm:py-20">
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
@@ -285,21 +299,21 @@ export default function PortfolioHome() {
       )}
 
       {/* ── 4 · Skills ── z-[4] ────────────────────────────────── */}
-      <StackSection z={4}>
+      <StackSection z={4} id="skills">
         <Inner className="py-16 sm:py-20">
           <SkillsSection skills={skills} featuredProjects={featured} />
         </Inner>
       </StackSection>
 
       {/* ── 5 · Testimonials ── z-[5] ──────────────────────────── */}
-      <StackSection z={5}>
+      <StackSection z={5} id="testimonials">
         <Inner className="py-16 sm:py-20">
           <TestimonialsCarousel />
         </Inner>
       </StackSection>
 
       {/* ── 6 · Contact ── z-[6] ───────────────────────────────── */}
-      <StackSection z={6} className="pb-16 sm:pb-24">
+      <StackSection z={6} className="pb-16 sm:pb-24" id="contact">
         <Inner className="py-16 sm:py-20">
           <ContactForm />
         </Inner>

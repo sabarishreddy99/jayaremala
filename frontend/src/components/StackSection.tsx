@@ -22,11 +22,13 @@ export default function StackSection({
   z,
   className = "",
   seamless = false,
+  id,
 }: {
   children: React.ReactNode;
   z: number;
   className?: string;
   seamless?: boolean;
+  id?: string;
 }) {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -81,7 +83,7 @@ export default function StackSection({
   return (
     <>
       {/* sentinel — plain div, never sticks, gives us the true scroll offset */}
-      <div ref={sentinelRef} className="h-0" aria-hidden />
+      <div ref={sentinelRef} id={id} className="h-0 scroll-mt-[50px]" aria-hidden />
       <section
         className={`sticky top-[50px] overflow-hidden bg-bg${seamless ? "" : " stack-sect"}`}
         style={{ height: "calc(100dvh - 50px)", zIndex: z }}

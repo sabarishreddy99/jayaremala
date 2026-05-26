@@ -1,5 +1,16 @@
 [
   {
+    "slug": "thanks-for-stopping-by",
+    "title": "Thanks for stopping by!",
+    "date": "2026-05-26",
+    "description": "My heartfelt thanks to everyone landing here!",
+    "tags": [
+      "thanks",
+      "feedback"
+    ],
+    "content": "Hi there,\n\nI built this blog platform from the ground up to keep things fast, custom, and dependency-light. Because it's a homegrown engine, there might still be a few digital cobwebs hiding in the corners.\n\nIf you spot any bugs, broken layouts, or weird responsiveness issues, I would love to hear about them! Drop me a quick line at jr6421@nyu.edu or submit it directly through the form. Your QA eyes help make this platform better for everyone.\n\nBest,\nJaya"
+  },
+  {
     "slug": "welcome",
     "title": "Are you the real one who you think you are..?",
     "date": "2025-10-23",

@@ -69,7 +69,7 @@ export function BlogIndexStats({ summary }: { summary: Summary | null }) {
   if (!summary || (summary.total_claps === 0 && summary.total_views === 0)) return null;
 
   return (
-    <div className="flex flex-wrap items-center gap-2 mt-4">
+    <div className="flex flex-wrap items-center gap-2 mt-4 mb-8">
       {summary.total_views > 0 && (
         <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">

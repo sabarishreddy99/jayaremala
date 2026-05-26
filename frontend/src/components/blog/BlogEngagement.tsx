@@ -11,6 +11,20 @@ interface Stats {
 
 const MAX_USER_CLAPS = 50;
 
+function getOrCreateVisitorId(): string {
+  try {
+    const key = "jaya_vid";
+    let id = localStorage.getItem(key);
+    if (!id) {
+      id = crypto.randomUUID?.() ?? Math.random().toString(36).slice(2) + Date.now().toString(36);
+      localStorage.setItem(key, id);
+    }
+    return id;
+  } catch {
+    return "anonymous";
+  }
+}
+
 function formatCount(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1).replace(/\.0$/, "")}k`;
   return String(n);
@@ -29,11 +43,17 @@ export default function BlogEngagement({ slug }: { slug: string }) {
     // POST /view returns the updated stats (including this visit) — use that as
     // the initial state so the count the user sees already reflects their view.
     // Fall back to a plain GET if the POST fails for any reason.
-    fetch(`${API_BASE_URL}/blog/${slug}/view`, { method: "POST" })
+    const vid = getOrCreateVisitorId();
+    fetch(`${API_BASE_URL}/blog/${slug}/view`, {
+      method: "POST",
+      headers: { "x-visitor-id": vid },
+    })
       .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
       .then((data: Stats) => { setStats(data); setLocalClaps(0); })
       .catch(() => {
-        fetch(`${API_BASE_URL}/blog/${slug}/stats`)
+        fetch(`${API_BASE_URL}/blog/${slug}/stats`, {
+          headers: { "x-visitor-id": vid },
+        })
           .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
           .then((data: Stats) => { setStats(data); setLocalClaps(0); })
           .catch(() => setStats({ views: 0, claps: 0, user_claps: 0 }));
@@ -47,7 +67,7 @@ export default function BlogEngagement({ slug }: { slug: string }) {
     try {
       const res = await fetch(`${API_BASE_URL}/blog/${slug}/clap`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-visitor-id": getOrCreateVisitorId() },
         body: JSON.stringify({ count }),
       });
       if (!res.ok) throw new Error(`${res.status}`);

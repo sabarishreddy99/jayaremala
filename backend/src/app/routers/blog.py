@@ -9,6 +9,13 @@ router = APIRouter(prefix="/blog", tags=["blog"])
 
 
 def _get_ip(request: Request) -> str:
+    # Prefer the stable per-browser UUID sent by the frontend (stored in localStorage).
+    # This correctly identifies different devices as different visitors even when
+    # they share a public IP (e.g. same WiFi / same NAT). Falls back to IP for
+    # requests that don't include the header (e.g. direct API calls).
+    vid = request.headers.get("x-visitor-id", "").strip()
+    if vid:
+        return vid
     return (
         request.headers.get("x-forwarded-for", "")
         .split(",")[0]

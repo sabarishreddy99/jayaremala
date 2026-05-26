@@ -87,11 +87,19 @@ const NAV_ITEMS = [
 ];
 
 export default function MobileAvocadoFAB() {
-  const [open, setOpen]       = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [open, setOpen]         = useState(false);
+  const [mounted, setMounted]   = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const pathname = usePathname();
 
   useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 300);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (open) {
@@ -110,11 +118,15 @@ export default function MobileAvocadoFAB() {
 
   return (
     <>
-      {/* FAB trigger */}
+      {/* FAB trigger — fades in after 300px scroll, stays visible while sheet is open */}
       <button
         onClick={() => setOpen(true)}
         aria-label="Open site navigation"
-        className="md:hidden fixed bottom-6 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg shadow-indigo-500/25 active:scale-95 transition-transform duration-150"
+        className={`md:hidden fixed bottom-6 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg shadow-indigo-500/25 active:scale-95 transition-all duration-300 ${
+          scrolled || open
+            ? "opacity-100 translate-y-0 pointer-events-auto"
+            : "opacity-0 translate-y-3 pointer-events-none"
+        }`}
         style={{ background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)" }}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

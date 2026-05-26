@@ -7,6 +7,7 @@ import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import ContactForm from "@/components/ContactForm";
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroAvocado from "@/components/HeroAvocado";
+import HeroName from "@/components/HeroName";
 import RagPipelineCard from "@/components/RagPipelineCard";
 import StackSection from "@/components/StackSection";
 import SkillsSection from "@/components/SkillsSection";
@@ -91,9 +92,7 @@ export default function PortfolioHome() {
           </div>
 
           {/* Name */}
-          <h1 className="text-4xl sm:text-5xl font-bold leading-[1.15] tracking-tight text-fg max-w-2xl">
-            {profile.name}
-          </h1>
+          <HeroName name={profile.name} />
 
           {/* Tagline */}
           <p className="text-base sm:text-lg font-medium text-accent leading-relaxed">{profile.tagline}</p>

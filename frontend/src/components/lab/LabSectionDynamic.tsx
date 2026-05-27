@@ -27,7 +27,7 @@ export default function LabSectionDynamic({ staticEntries }: Props) {
     shouldRetryOnError: false,
   });
 
-  const entries: LabMeta[] = apiEntries
+  const entries: LabMeta[] = apiEntries && apiEntries.length > 0
     ? apiEntries.map(normalizeLabEntry)
     : staticEntries;
 

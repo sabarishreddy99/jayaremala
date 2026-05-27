@@ -38,9 +38,10 @@ export default function BlogSectionDynamic({ staticPosts }: Props) {
     shouldRetryOnError: false,
   });
 
-  // If API responded: use API posts (seeded from MDX + any new admin posts)
-  // If API is down: fall back to staticPosts from build time
-  const posts = apiPosts
+  // Use API data only when it has entries — an empty array means seeding hasn't
+  // run yet (e.g. CONTENT_DB_PATH not configured) and should not erase the
+  // static build-time posts. An empty [] is truthy in JS, hence the length check.
+  const posts = apiPosts && apiPosts.length > 0
     ? apiPosts.map(normalizeBlogPost).sort(
         (a, b) => (a.publishedAt! < b.publishedAt! ? 1 : -1)
       )

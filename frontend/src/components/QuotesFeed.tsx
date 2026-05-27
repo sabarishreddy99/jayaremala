@@ -22,7 +22,7 @@ export default function QuotesFeed({ staticQuotes }: Props) {
     shouldRetryOnError: false,
   });
 
-  const quotes: Quote[] = apiQuotes
+  const quotes: Quote[] = apiQuotes && apiQuotes.length > 0
     ? apiQuotes.map(normalizeQuote)
     : staticQuotes;
 

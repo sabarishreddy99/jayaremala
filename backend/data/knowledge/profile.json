@@ -21,13 +21,38 @@
   "availability": {
     "open": true,
     "label": "Available",
-    "types": ["Full-time"],
-    "locations": ["Remote", "NYC"]
+    "types": [
+      "Full-time"
+    ],
+    "locations": [
+      "Remote",
+      "Hybrid"
+    ]
   },
   "heroStats": [
-    { "value": 78,  "suffix": "%",  "label": "Latency Cut",      "sub": "P99 RAG on 3K+ RPS" },
-    { "value": 3,   "suffix": "K+", "label": "Peak RPS",         "sub": "99.9% uptime" },
-    { "value": 15,  "suffix": "ms", "label": "Edge Inference",   "sub": "Snapdragon NPU" },
-    { "value": 115, "suffix": "GB", "label": "Daily Throughput", "sub": "Zero data loss" }
+    {
+      "value": 78,
+      "suffix": "%",
+      "label": "Latency Cut",
+      "sub": "P99 RAG on 3K+ RPS"
+    },
+    {
+      "value": 3,
+      "suffix": "K+",
+      "label": "Peak RPS",
+      "sub": "99.9% uptime"
+    },
+    {
+      "value": 15,
+      "suffix": "ms",
+      "label": "Edge Inference",
+      "sub": "Snapdragon NPU"
+    },
+    {
+      "value": 115,
+      "suffix": "GB",
+      "label": "Daily Throughput",
+      "sub": "Zero data loss"
+    }
   ]
 }

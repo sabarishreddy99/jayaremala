@@ -10,13 +10,14 @@ from slowapi.middleware import SlowAPIMiddleware
 
 from app.core.limiter import limiter
 from app.core.settings import settings
-from app.db import analytics, blog_stats
+from app.db import analytics, blog_stats, content
 from app.rag import graph as rag_graph
 from app.rag.ingest import run_ingest
 from app.rag.store import warmup as rag_warmup
 from app.routers.admin import router as admin_router
 from app.routers.ai import router as ai_router
 from app.routers.blog import router as blog_router
+from app.routers.content import router as content_router
 from app.routers.stats import router as stats_router
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,10 @@ async def lifespan(app: FastAPI):
         blog_stats.init_db()
     except Exception as exc:
         logger.error("blog_stats.init_db failed (non-fatal): %s", exc)
+    try:
+        content.init_db()
+    except Exception as exc:
+        logger.error("content.init_db failed (non-fatal): %s", exc)
     threading.Thread(target=_background_startup, daemon=True).start()
     yield
 
@@ -68,9 +73,32 @@ app.add_middleware(
 app.include_router(admin_router)
 app.include_router(ai_router)
 app.include_router(blog_router)
+app.include_router(content_router)
 app.include_router(stats_router)
 
 
 @app.get("/health")
-def health():
-    return {"status": "ok"}
+def health() -> dict:
+    status: dict[str, str] = {
+        "api": "ok",
+        "analytics_db": "ok",
+        "content_db": "ok",
+        "rag": "ok",
+    }
+    try:
+        with analytics._connect() as c:
+            c.execute("SELECT 1")
+    except Exception:
+        status["analytics_db"] = "degraded"
+    try:
+        with content._connect() as c:
+            c.execute("SELECT 1")
+    except Exception:
+        status["content_db"] = "degraded"
+    try:
+        from app.rag.store import get_collection
+        get_collection().count()
+    except Exception:
+        status["rag"] = "degraded"
+    overall = "ok" if all(v == "ok" for v in status.values()) else "degraded"
+    return {"status": overall, **status}

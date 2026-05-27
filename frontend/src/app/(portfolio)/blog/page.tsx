@@ -1,5 +1,5 @@
 import { getAllPosts } from "@/lib/blog";
-import { BlogSection } from "@/components/blog/BlogIndexStats";
+import BlogSectionDynamic from "@/components/blog/BlogSectionDynamic";
 
 export const metadata = {
   title: "Blog",
@@ -15,7 +15,8 @@ export const metadata = {
 };
 
 export default function BlogIndexPage() {
-  const posts = getAllPosts();
+  // Build-time MDX posts — used as fallback if the API is unreachable
+  const staticPosts = getAllPosts();
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-12 sm:py-16">
@@ -59,13 +60,8 @@ export default function BlogIndexPage() {
 
       </header>
 
-      {posts.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface p-10 text-center">
-          <p className="text-sm text-fg-faint">No posts yet — check back soon.</p>
-        </div>
-      ) : (
-        <BlogSection posts={posts} />
-      )}
+      {/* BlogSectionDynamic fetches from API on the client; falls back to staticPosts */}
+      <BlogSectionDynamic staticPosts={staticPosts} />
 
     </div>
   );

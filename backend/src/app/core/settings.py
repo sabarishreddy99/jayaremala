@@ -10,9 +10,9 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.5-flash"
     # Comma-separated fallback chain tried in order when primary hits 503/429
     gemini_fallback_models: str = "gemini-2.0-flash,gemini-2.0-flash-lite,gemini-flash-latest"
-    # Persistent analytics DB — set to an absolute path on the Railway volume
-    # e.g. /data/analytics.db  (Railway volume mounted at /data)
+    # Persistent DB paths — set to absolute paths on the Lightsail volume (/data/)
     analytics_db_path: str = "./chroma_db/analytics.db"
+    content_db_path: str = "./chroma_db/content.db"
     chroma_db_path: str = "./chroma_db"
     # Set ADMIN_TOKEN env var to enable POST /admin/reingest.
     # Empty string (default) disables the endpoint entirely.

@@ -3,6 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { API_BASE_URL } from "@/lib/api/client";
+import ContentBlogEditor from "@/components/admin/ContentBlogEditor";
+import ContentLabEditor from "@/components/admin/ContentLabEditor";
+import ContentQuotesEditor from "@/components/admin/ContentQuotesEditor";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -2298,7 +2301,7 @@ function Dashboard({
   lastUpdated: Date | null;
 }) {
   const [period, setPeriod] = useState<Period>("all");
-  const [activeView, setActiveView] = useState<"analytics" | "write-blog" | "quotes">("analytics");
+  const [activeView, setActiveView] = useState<"analytics" | "write-blog" | "quotes" | "blog-api" | "lab" | "quotes-api">("analytics");
   const conv        = stats.conversations[period];
   const site        = stats.site_visitors[period];
   const feedback    = stats.feedback[period];
@@ -2377,6 +2380,30 @@ function Dashboard({
                 ❝ Quotes
               </button>
             )}
+            {activeView !== "blog-api" && (
+              <button
+                onClick={() => setActiveView("blog-api")}
+                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
+              >
+                📝 Blog (API)
+              </button>
+            )}
+            {activeView !== "lab" && (
+              <button
+                onClick={() => setActiveView("lab")}
+                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
+              >
+                🧪 Lab (API)
+              </button>
+            )}
+            {activeView !== "quotes-api" && (
+              <button
+                onClick={() => setActiveView("quotes-api")}
+                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
+              >
+                ❝ Quotes (API)
+              </button>
+            )}
             <button
               onClick={onLogout}
               className="text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors"
@@ -2406,8 +2433,13 @@ function Dashboard({
         {/* Write Blog view */}
         {activeView === "write-blog" && <BlogEditor />}
 
-        {/* Quotes view */}
+        {/* Quotes view (legacy GitHub-backed) */}
         {activeView === "quotes" && <QuotesEditor />}
+
+        {/* Content API views */}
+        {activeView === "blog-api" && <ContentBlogEditor />}
+        {activeView === "lab" && <ContentLabEditor />}
+        {activeView === "quotes-api" && <ContentQuotesEditor />}
 
         {/* Analytics content */}
         {activeView === "analytics" && (<>

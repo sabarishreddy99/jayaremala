@@ -9,6 +9,8 @@ import BlogEngagement from "@/components/blog/BlogEngagement";
 import ShareButtons from "@/components/blog/ShareButtons";
 import { TableOfContents, MobileTOC } from "@/components/blog/TableOfContents";
 import type { Heading } from "@/components/blog/TableOfContents";
+import BlogPostMarkdown from "@/components/blog/BlogPostMarkdown";
+import type { ApiBlogPost } from "@/lib/api/content";
 
 const prettyCodeOptions: PrettyCodeOptions = {
   theme: { light: "github-light", dark: "github-dark-dimmed" },
@@ -20,37 +22,140 @@ const SITE_URL = "https://jayaremala.com";
 
 type Props = { params: Promise<{ slug: string }> };
 
+/** Render a blog post sourced from the content API (no MDX, plain markdown). */
+function BlogPostApiView({ post }: { post: ApiBlogPost }) {
+  return (
+    <div className="mx-auto w-full max-w-3xl lg:max-w-[68rem] px-4 sm:px-6 py-12 sm:py-16">
+      <Link
+        href="/blog"
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover transition-colors mb-10"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        All posts
+      </Link>
+
+      <article>
+        <header className="mb-10 pb-8 border-b border-border">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-fg leading-tight mb-3 font-[family-name:var(--font-blog)]">
+            {post.title}
+          </h1>
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm text-fg-faint">{post.date}</span>
+            {post.tags.map((t) => (
+              <span key={t} className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
+                #{t}
+              </span>
+            ))}
+          </div>
+          <ShareButtons slug={post.slug} title={post.title} />
+        </header>
+
+        <div className="prose max-w-none font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
+          <BlogPostMarkdown content={post.content} />
+        </div>
+
+        <BlogEngagement slug={post.slug} />
+      </article>
+
+      <div className="mt-16 pt-8 border-t border-border">
+        <Link
+          href="/blog"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover transition-colors"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back to all posts
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 export async function generateStaticParams() {
-  return getAllSlugs().map((slug) => ({ slug }));
+  // Filesystem slugs (MDX files) — always available
+  const fsslugs = new Set(getAllSlugs());
+
+  // Also try to fetch slugs from the content API at build time so that posts
+  // published via the admin panel before this build get static HTML too.
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+    const res = await fetch(`${apiUrl}/content/blog`, { signal: AbortSignal.timeout(5000) });
+    if (res.ok) {
+      const apiPosts: { slug: string }[] = await res.json();
+      for (const p of apiPosts) fsslugs.add(p.slug);
+    }
+  } catch {
+    // API not available during build — that's fine, filesystem slugs are the baseline
+  }
+
+  return Array.from(fsslugs).map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
+  // Try filesystem first, then API
   const post = getPostBySlug(slug);
-  if (!post) return {};
+  const title = post?.title ?? slug;
+  const description = post?.description ?? "";
+  const tags = post?.tags ?? [];
+  const image = post?.image;
+  const publishedAt = post ? (post.publishedAt ?? post.date) : "";
+
+  if (!post) {
+    // Try to get metadata from API
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+      const res = await fetch(`${apiUrl}/content/blog/${slug}`, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) {
+        const apiPost = await res.json();
+        const url = `${SITE_URL}/blog/${slug}`;
+        return {
+          title: apiPost.title,
+          description: apiPost.description,
+          keywords: apiPost.tags,
+          alternates: { canonical: url },
+          openGraph: {
+            type: "article" as const,
+            url,
+            title: apiPost.title,
+            description: apiPost.description,
+            siteName: "Jaya Sabarish Reddy Remala",
+            publishedTime: apiPost.published_at,
+            authors: ["Jaya Sabarish Reddy Remala"],
+            tags: apiPost.tags,
+            images: [{ url: `${SITE_URL}/og-image.png`, width: 1200, height: 630, alt: apiPost.title }],
+          },
+        };
+      }
+    } catch { /* silent */ }
+    return {};
+  }
+
   const url = `${SITE_URL}/blog/${slug}`;
-  const publishedAt = post.publishedAt ?? post.date;
   return {
-    title: post.title,
-    description: post.description,
-    keywords: post.tags,
+    title,
+    description,
+    keywords: tags,
     alternates: { canonical: url },
     openGraph: {
       type: "article" as const,
       url,
-      title: post.title,
-      description: post.description,
+      title,
+      description,
       siteName: "Jaya Sabarish Reddy Remala",
       publishedTime: publishedAt,
       authors: ["Jaya Sabarish Reddy Remala"],
-      tags: post.tags,
-      images: [{ url: post.image ? `${SITE_URL}${post.image}` : `${SITE_URL}/og-image.png`, width: 1200, height: 630, alt: post.title }],
+      tags,
+      images: [{ url: image ? `${SITE_URL}${image}` : `${SITE_URL}/og-image.png`, width: 1200, height: 630, alt: title }],
     },
     twitter: {
       card: "summary_large_image" as const,
-      title: post.title,
-      description: post.description,
-      images: [post.image ? `${SITE_URL}${post.image}` : `${SITE_URL}/og-image.png`],
+      title,
+      description,
+      images: [image ? `${SITE_URL}${image}` : `${SITE_URL}/og-image.png`],
     },
   };
 }
@@ -58,7 +163,19 @@ export async function generateMetadata({ params }: Props) {
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
   const post = getPostBySlug(slug);
-  if (!post) notFound();
+
+  // If post not found in filesystem, check content API (admin-published post)
+  if (!post) {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+      const res = await fetch(`${apiUrl}/content/blog/${slug}`, { signal: AbortSignal.timeout(5000) });
+      if (res.ok) {
+        const apiPost = await res.json();
+        return <BlogPostApiView post={apiPost} />;
+      }
+    } catch { /* fall through to notFound */ }
+    notFound();
+  }
 
   // Extract h2/h3 headings for TOC
   const headings: Heading[] = [...post.content.matchAll(/^(#{2,3})\s+(.+)$/gm)].map(

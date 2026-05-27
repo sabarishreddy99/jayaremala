@@ -1,5 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import BlogEngagement from "@/components/blog/BlogEngagement";
+import ShareButtons from "@/components/blog/ShareButtons";
+import { fetchBlogPost, fetchLabEntry } from "@/lib/api/content";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 // All 18×18, stroke-based, theme-aware via currentColor
@@ -96,9 +104,90 @@ const LINKS: { href: string; label: string; desc: string; icon: ReactNode }[] = 
   { href: "/lab",        label: "Lab",        desc: "Living system docs",              icon: <IconFlask /> },
 ];
 
+// ── Inline blog/lab post renderer (for admin-published posts not yet in static HTML) ──
+
+function InlinePost({ type, slug }: { type: "blog" | "lab"; slug: string }) {
+  const [post, setPost] = useState<{ title: string; date?: string; tags?: string[]; content: string; slug: string } | null | "loading">("loading");
+
+  useEffect(() => {
+    const fetcher = type === "blog" ? fetchBlogPost : fetchLabEntry;
+    fetcher(slug)
+      .then((data) => {
+        if (!data) { setPost(null); return; }
+        if (type === "blog") {
+          const b = data as Awaited<ReturnType<typeof fetchBlogPost>>;
+          setPost({ title: b!.title, date: b!.date, tags: b!.tags, content: b!.content, slug: b!.slug });
+        } else {
+          const l = data as Awaited<ReturnType<typeof fetchLabEntry>>;
+          setPost({ title: l!.title, date: l!.started_at, tags: l!.tech, content: l!.content, slug: l!.slug });
+        }
+      })
+      .catch(() => setPost(null));
+  }, [type, slug]);
+
+  if (post === "loading") {
+    return (
+      <div className="min-h-[100dvh] bg-bg flex items-center justify-center">
+        <div className="w-6 h-6 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!post) return null; // Fall through to 404 UI
+
+  return (
+    <div className="mx-auto w-full max-w-3xl px-4 sm:px-6 py-12 sm:py-16">
+      <Link
+        href={`/${type}`}
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover transition-colors mb-10"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        {type === "blog" ? "All posts" : "Lab"}
+      </Link>
+      <article>
+        <header className="mb-10 pb-8 border-b border-border">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-fg leading-tight mb-3 font-[family-name:var(--font-blog)]">
+            {post.title}
+          </h1>
+          {post.date && <span className="text-sm text-fg-faint">{post.date}</span>}
+          {post.tags && post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {post.tags.map((t) => (
+                <span key={t} className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle">#{t}</span>
+              ))}
+            </div>
+          )}
+          {type === "blog" && <ShareButtons slug={post.slug} title={post.title} />}
+        </header>
+        <div className="prose max-w-none font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>{post.content}</ReactMarkdown>
+        </div>
+        {type === "blog" && <BlogEngagement slug={post.slug} />}
+      </article>
+    </div>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function NotFound() {
+  const [resolved, setResolved] = useState<{ type: "blog" | "lab"; slug: string } | null | "checking">("checking");
+
+  useEffect(() => {
+    const path = window.location.pathname;
+    const blogMatch = path.match(/^\/blog\/([^/]+)\/?$/);
+    const labMatch = path.match(/^\/lab\/([^/]+)\/?$/);
+    if (blogMatch) setResolved({ type: "blog", slug: blogMatch[1] });
+    else if (labMatch) setResolved({ type: "lab", slug: labMatch[1] });
+    else setResolved(null);
+  }, []);
+
+  if (resolved === "checking") return null;
+  if (resolved) {
+    return <InlinePost type={resolved.type} slug={resolved.slug} />;
+  }
   return (
     <div className="min-h-[100dvh] bg-bg flex flex-col">
 

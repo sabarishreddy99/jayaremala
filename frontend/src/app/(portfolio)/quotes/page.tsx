@@ -1,5 +1,5 @@
-import { quotes } from "@/data/quotes";
-import QuotesClient from "@/components/QuotesClient";
+import QuotesFeed from "@/components/QuotesFeed";
+import { quotes as staticQuotes } from "@/data/quotes";
 
 export const metadata = {
   title: "Favorite Quotes — Jaya Sabarish Reddy Remala",
@@ -7,5 +7,5 @@ export const metadata = {
 };
 
 export default function QuotesPage() {
-  return <QuotesClient quotes={quotes} />;
+  return <QuotesFeed staticQuotes={staticQuotes} />;
 }

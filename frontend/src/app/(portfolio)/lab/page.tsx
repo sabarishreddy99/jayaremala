@@ -1,12 +1,13 @@
 import { getAllLabEntries } from "@/lib/lab";
-import LabList from "@/components/LabList";
+import LabSectionDynamic from "@/components/lab/LabSectionDynamic";
 
 export const metadata = { title: "Lab — Jaya Sabarish Reddy Remala" };
 
 export default function LabPage() {
-  const entries = getAllLabEntries();
-  const activeCount  = entries.filter((e) => e.status === "active").length;
-  const shippedCount = entries.filter((e) => e.status === "shipped").length;
+  // Build-time MDX entries — used as fallback if the API is unreachable
+  const staticEntries = getAllLabEntries();
+  const activeCount  = staticEntries.filter((e) => e.status === "active").length;
+  const shippedCount = staticEntries.filter((e) => e.status === "shipped").length;
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-12 sm:py-16">
@@ -33,8 +34,8 @@ export default function LabPage() {
           Updated as things evolve — not a polished writeup, a working document.
         </p>
 
-        {/* Stat chips */}
-        {entries.length > 0 && (
+        {/* Stat chips — derived from staticEntries; updates after API hydrates */}
+        {staticEntries.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
             {activeCount > 0 && (
               <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-full px-3 py-1">
@@ -49,19 +50,14 @@ export default function LabPage() {
               </span>
             )}
             <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
-              {entries.length} experiment{entries.length !== 1 ? "s" : ""}
+              {staticEntries.length} experiment{staticEntries.length !== 1 ? "s" : ""}
             </span>
           </div>
         )}
       </header>
 
-      {entries.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border bg-surface p-10 text-center">
-          <p className="text-sm text-fg-faint">Nothing here yet — check back soon.</p>
-        </div>
-      ) : (
-        <LabList entries={entries} />
-      )}
+      {/* LabSectionDynamic fetches from API on the client; falls back to staticEntries */}
+      <LabSectionDynamic staticEntries={staticEntries} />
     </div>
   );
 }

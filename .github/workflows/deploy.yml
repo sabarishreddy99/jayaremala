@@ -16,7 +16,37 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ steps.filter.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            frontend:
+              - 'frontend/src/**'
+              - 'frontend/public/**'
+              - 'frontend/package*.json'
+              - 'frontend/next.config.*'
+              - 'frontend/tailwind.config.*'
+              - 'scripts/**'
+              - 'backend/data/knowledge/*.json'
+            backend:
+              - 'backend/src/**'
+              - 'backend/Dockerfile'
+              - 'backend/pyproject.toml'
+              - 'infra/**'
+
   build:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -65,6 +95,8 @@ jobs:
         uses: actions/deploy-pages@v4
 
   build-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -91,7 +123,8 @@ jobs:
           tags: ghcr.io/${{ github.repository_owner }}/itsjaya-backend:latest
 
   deploy-backend:
-    needs: [build, build-backend]
+    needs: [detect-changes, build-backend]
+    if: needs.detect-changes.outputs.backend == 'true' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Deploy backend via SSH

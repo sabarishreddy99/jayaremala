@@ -17,5 +17,17 @@
   "page_experience": "3+ years building production AI & distributed systems.",
   "page_education": "Academic foundations that underpin the systems I build.",
   "page_projects": "Things I've built — production systems, hackathon winners, and side projects.",
-  "contact_description": "Open to software engineering roles in AI/ML infrastructure, distributed systems, and full-stack. Healthcare, frontier research, and energy tech are my focus — but excited by any hard problem."
+  "contact_description": "Open to software engineering roles in AI/ML infrastructure, distributed systems, and full-stack. Healthcare, frontier research, and energy tech are my focus — but excited by any hard problem.",
+  "availability": {
+    "open": true,
+    "label": "Available",
+    "types": ["Full-time"],
+    "locations": ["Remote", "NYC"]
+  },
+  "heroStats": [
+    { "value": 78,  "suffix": "%",  "label": "Latency Cut",      "sub": "P99 RAG on 3K+ RPS" },
+    { "value": 3,   "suffix": "K+", "label": "Peak RPS",         "sub": "99.9% uptime" },
+    { "value": 15,  "suffix": "ms", "label": "Edge Inference",   "sub": "Snapdragon NPU" },
+    { "value": 115, "suffix": "GB", "label": "Daily Throughput", "sub": "Zero data loss" }
+  ]
 }

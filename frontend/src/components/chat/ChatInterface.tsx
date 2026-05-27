@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api/client";
 import { getOrCreateVisitorId } from "@/lib/visitor";
-import { saveMessages, loadMessages, clearSession } from "@/lib/session";
+import { saveMessages, loadMessages, clearSession, saveModel, loadModel } from "@/lib/session";
 import { profile } from "@/data/profile";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
@@ -135,6 +135,7 @@ export default function ChatInterface() {
   const [ratingDismissed, setRatingDismissed] = useState(false);
   const [ratingHover, setRatingHover] = useState(0);
   const [pendingRetry, setPendingRetry] = useState<string | null>(null);
+  const [sessionRestored, setSessionRestored] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -159,15 +160,29 @@ export default function ChatInterface() {
   const autoSentRef = useRef(false);
   useEffect(() => {
     const saved = loadMessages();
-    const restored: Message[] = saved && saved.length > 0 ? [WELCOME, ...saved] : [WELCOME];
+    const hasHistory = saved && saved.length > 0;
+    const restored: Message[] = hasHistory ? [WELCOME, ...saved] : [WELCOME];
     messagesRef.current = restored; // update ref immediately so handleSend reads it
     startTransition(() => setMessages(restored));
+
+    // Restore last known model so the badge shows immediately after navigation
+    const savedModel = loadModel();
+    if (savedModel) setActiveModel(savedModel);
+
+    // Show the "restored" pill if there was a real conversation to restore
+    let dismissTimer: ReturnType<typeof setTimeout> | undefined;
+    if (hasHistory) {
+      setSessionRestored(true);
+      dismissTimer = setTimeout(() => setSessionRestored(false), 3000);
+    }
 
     const q = searchParams.get("q");
     if (q && !autoSentRef.current) {
       autoSentRef.current = true;
       handleSend(decodeURIComponent(q));
     }
+
+    return () => { if (dismissTimer) clearTimeout(dismissTimer); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [streaming, setStreaming] = useState(false);
@@ -256,7 +271,7 @@ export default function ChatInterface() {
             if (data.token) { accumulated += data.token; setStreamingContent(accumulated); }
             if (data.error) { sseError = data.error as string; break outer; }
             if (data.done) {
-              if (data.model) setActiveModel(data.model);
+              if (data.model) { setActiveModel(data.model); saveModel(data.model as string); }
               if (data.sources) ragSources = data.sources as string[];
               break outer;
             }
@@ -383,6 +398,23 @@ export default function ChatInterface() {
           </div>
         </div>
       )}
+
+      {/* Session restored indicator */}
+      <div
+        className={`shrink-0 px-3 sm:px-10 pt-2 transition-all duration-500 ${sessionRestored ? "opacity-100 max-h-12" : "opacity-0 max-h-0 overflow-hidden pointer-events-none"}`}
+      >
+        <div className="mx-auto max-w-2xl lg:max-w-3xl">
+          <div className="flex items-center gap-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/30 px-3 py-2">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-indigo-400 shrink-0">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+              <path d="M3 3v5h5"/>
+            </svg>
+            <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
+              Conversation restored — pick up where you left off.
+            </p>
+          </div>
+        </div>
+      </div>
 
       {/* Rate-limit countdown banner */}
       {rateLimitUntil && (

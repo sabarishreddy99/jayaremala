@@ -1,10 +1,18 @@
 export interface StoredMessage {
   role: "user" | "assistant";
   content: string;
+  // navLinks and followUps are preserved via JSON round-trip at runtime
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  navLinks?: any[];
+  followUps?: string[];
 }
 
+// Session ID lives in localStorage (stable across tabs/sessions, used for analytics)
 const SESSION_ID_KEY = "jsr_session_id";
-const MESSAGES_KEY   = "jsr_chat_messages";
+
+// Messages and model live in sessionStorage (per-tab, clears when the tab closes)
+const MESSAGES_KEY = "jsr_chat_messages";
+const MODEL_KEY    = "jsr_chat_model";
 
 export function getSessionId(): string {
   if (typeof window === "undefined") return "";
@@ -18,13 +26,13 @@ export function getSessionId(): string {
 
 export function saveMessages(messages: StoredMessage[]): void {
   if (typeof window === "undefined") return;
-  localStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
+  sessionStorage.setItem(MESSAGES_KEY, JSON.stringify(messages));
 }
 
 export function loadMessages(): StoredMessage[] | null {
   if (typeof window === "undefined") return null;
   try {
-    const raw = localStorage.getItem(MESSAGES_KEY);
+    const raw = sessionStorage.getItem(MESSAGES_KEY);
     return raw ? (JSON.parse(raw) as StoredMessage[]) : null;
   } catch {
     return null;
@@ -33,5 +41,16 @@ export function loadMessages(): StoredMessage[] | null {
 
 export function clearSession(): void {
   if (typeof window === "undefined") return;
-  localStorage.removeItem(MESSAGES_KEY);
+  sessionStorage.removeItem(MESSAGES_KEY);
+  sessionStorage.removeItem(MODEL_KEY);
+}
+
+export function saveModel(model: string): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(MODEL_KEY, model);
+}
+
+export function loadModel(): string | null {
+  if (typeof window === "undefined") return null;
+  return sessionStorage.getItem(MODEL_KEY);
 }

@@ -9,6 +9,8 @@ import ContactForm from "@/components/ContactForm";
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroAvocado from "@/components/HeroAvocado";
 import HeroName from "@/components/HeroName";
+import HeroStats from "@/components/HeroStats";
+import ParticleBackground from "@/components/ParticleBackground";
 import RagPipelineCard from "@/components/RagPipelineCard";
 import StackSection from "@/components/StackSection";
 import SkillsSection from "@/components/SkillsSection";
@@ -69,6 +71,22 @@ function Inner({ children, className = "" }: { children: React.ReactNode; classN
   );
 }
 
+/** Wrap standalone numbers (optionally with unit suffix) in mono-bold spans */
+function HighlightNumbers({ text }: { text: string }) {
+  const parts = text.split(/(\d+(?:\.\d+)?(?:%|ms|GB|TB|MB|K\+?|M\+?|x|\+)?)/g);
+  return (
+    <>
+      {parts.map((part, i) =>
+        /^\d/.test(part) ? (
+          <span key={i} className="font-mono font-bold text-fg">{part}</span>
+        ) : (
+          part
+        )
+      )}
+    </>
+  );
+}
+
 
 export default function PortfolioHome() {
   const featured = projects.filter((p) => p.featured);
@@ -84,97 +102,149 @@ export default function PortfolioHome() {
       />
 
       {/* ── 1 · Hero — not sticky, scrolls away naturally ──────── */}
-      <section id="hero" className="bg-bg overflow-x-clip scroll-mt-[50px]">
-        <Inner className="grid gap-7 sm:gap-5 pt-14 sm:pt-16 pb-16">
+      {/* isolate creates a local stacking context so the canvas (z:-20) and blobs (z:-10)
+          are painted BELOW the section's normal-flow content without fighting the root context */}
+      <section id="hero" className="relative isolate overflow-x-clip scroll-mt-[50px]">
 
-          {/* Status badge */}
-          <div className="w-fit flex items-center gap-2 rounded-full bg-green-500/8 dark:bg-green-500/10 border border-green-500/20 px-3 py-1.5 sm:bg-transparent sm:border-transparent sm:px-0 sm:py-0">
-            <span className="inline-block w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-fg-faint">
-              Open to opportunities · {profile.location}
-            </span>
-          </div>
+        {/* Particle network — deepest layer in this stacking context */}
+        <ParticleBackground />
 
-          {/* Name */}
-          <HeroName name={profile.name} />
+        {/* Ambient blob layer */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          <div className="animate-blob absolute -top-32 -right-24 h-[560px] w-[560px] rounded-full bg-indigo-500/10 dark:bg-indigo-400/7 blur-[110px]" />
+          <div className="animate-blob animation-delay-2000 absolute bottom-0 -left-16 h-[420px] w-[420px] rounded-full bg-violet-600/8 dark:bg-violet-500/6 blur-[90px]" />
+          <div className="animate-blob animation-delay-4000 absolute top-1/2 left-[40%] h-[280px] w-[280px] -translate-y-1/2 rounded-full bg-blue-400/6 dark:bg-blue-400/4 blur-[70px]" />
+        </div>
 
-          {/* Tagline */}
-          <p className="text-base sm:text-lg font-medium text-accent leading-relaxed">{profile.tagline}</p>
+        <Inner className="grid lg:grid-cols-[1fr_420px] lg:gap-x-14 pt-14 sm:pt-16 pb-16 gap-y-5">
 
-          {/* Prev @ — pill chips on mobile */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-sm text-fg-faint">Prev @</span>
-            {profile.previous.split(",").map((co) => (
-              <span key={co} className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-xs font-medium text-fg-subtle">
-                {co.trim()}
-              </span>
-            ))}
-          </div>
+          {/* ── Left column ── */}
+          <div className="flex flex-col gap-5">
 
-          {/* Currently thinking about */}
-          {profile.currently && (
-            <div className="flex items-start gap-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 px-3.5 py-2.5 max-w-xl">
-              <span className="text-sm shrink-0 select-none">💭</span>
-              <p className="text-xs text-fg-muted leading-relaxed">
-                <span className="font-semibold text-fg-subtle">Currently deep in</span>
-                {" — "}{profile.currently}
-              </p>
+            {/* Status badge */}
+            {(() => {
+              const avail = profile.availability;
+              const isOpen = avail?.open ?? true;
+              const label = avail?.label ?? "Open to opportunities";
+              const parts = avail
+                ? [...(avail.types ?? []), ...(avail.locations ?? [])]
+                : [profile.location];
+              const chipText = parts.length > 0 ? `${label} · ${parts.join(" · ")}` : label;
+              return (
+                <div
+                  className={`animate-fade-up w-fit flex items-center gap-2 rounded-full border px-3 py-1.5 sm:bg-transparent sm:border-transparent sm:px-0 sm:py-0 ${isOpen ? "bg-green-500/8 dark:bg-green-500/10 border-green-500/20" : "bg-zinc-500/8 dark:bg-zinc-500/10 border-zinc-400/20"}`}
+                  style={{ animationDelay: "0ms" }}
+                >
+                  <span className={`inline-block w-2 h-2 rounded-full shrink-0 ${isOpen ? "bg-green-500 animate-pulse" : "bg-zinc-400 dark:bg-zinc-500"}`} />
+                  <span className="text-[11px] font-semibold uppercase tracking-widest text-fg-faint">
+                    {chipText}
+                  </span>
+                </div>
+              );
+            })()}
+
+            {/* Name */}
+            <HeroName name={profile.name} />
+
+            {/* Tagline */}
+            <p
+              className="animate-fade-up text-base sm:text-lg font-medium text-accent leading-relaxed"
+              style={{ animationDelay: "140ms" }}
+            >
+              {profile.tagline}
+            </p>
+
+            {/* Stats */}
+            <div className="animate-fade-up" style={{ animationDelay: "220ms" }}>
+              <HeroStats stats={profile.heroStats} />
             </div>
-          )}
 
-          {/* Ask Avocado — localized ambient glow */}
-          <div className="relative isolate max-w-xl">
-            <div aria-hidden className="pointer-events-none absolute inset-0 -z-10">
-              <div className="animate-blob absolute -top-16 -left-12 h-72 w-72 rounded-full bg-indigo-500/22 blur-[90px] dark:bg-indigo-500/15" />
-              <div className="animate-blob animation-delay-2000 absolute -bottom-12 -right-8 h-64 w-64 rounded-full bg-violet-500/20 blur-[80px] dark:bg-violet-500/12" />
-              <div className="animate-blob animation-delay-4000 absolute top-1/2 left-1/3 h-52 w-52 -translate-y-1/2 rounded-full bg-blue-400/15 blur-[70px] dark:bg-blue-400/10" />
+            {/* CTAs */}
+            <div
+              className="animate-fade-up flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3"
+              style={{ animationDelay: "300ms" }}
+            >
+              <Link
+                href="/chat"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 px-6 py-3.5 sm:py-2.5 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200"
+              >
+                Chat with Avocado
+                <span className="opacity-80">✦</span>
+              </Link>
+              <Link
+                href="/projects"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-border px-6 py-3.5 sm:py-2.5 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
+              >
+                View Projects
+              </Link>
+              <a
+                href={profile.resume}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-5 py-3.5 sm:py-2.5 text-sm font-medium text-fg-subtle hover:text-fg hover:border-fg-muted transition-colors duration-200"
+              >
+                Resume ↗
+              </a>
             </div>
-            <HeroAvocado />
+
+            {/* Prev @ */}
+            <div
+              className="animate-fade-up flex flex-wrap items-center gap-2"
+              style={{ animationDelay: "380ms" }}
+            >
+              <span className="text-sm text-fg-faint">Prev @</span>
+              {profile.previous.split(",").map((co) => (
+                <span key={co} className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-xs font-medium text-fg-subtle">
+                  {co.trim()}
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* CTAs — stacked full-width on mobile, inline on desktop */}
-          <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3">
-            <Link
-              href="/chat"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 px-6 py-3.5 sm:py-2.5 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200"
-            >
-              Chat with Avocado
-              <span className="opacity-80">✦</span>
-            </Link>
-            <Link
-              href="/projects"
-              className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-border px-6 py-3.5 sm:py-2.5 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
-            >
-              View Projects
-            </Link>
-            <a
-              href={profile.resume}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-5 py-3.5 sm:py-2.5 text-sm font-medium text-fg-subtle hover:text-fg hover:border-fg-muted transition-colors duration-200"
-            >
-              Resume ↗
-            </a>
-          </div>
+          {/* ── Right column ── */}
+          <div className="mt-6 lg:mt-0 flex flex-col gap-5">
 
-          {/* Latest teasers — blog + quote */}
-          <div className="flex flex-col gap-2">
-            {latestPost && (
-              <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 w-fit max-w-sm">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Blog</span>
-                <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1">
-                  {latestPost.title} →
-                </span>
-              </Link>
+            {/* Currently deep in */}
+            {profile.currently && (
+              <div
+                className="animate-fade-up flex items-start gap-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 px-3.5 py-2.5"
+                style={{ animationDelay: "80ms" }}
+              >
+                <span className="text-sm shrink-0 select-none">💭</span>
+                <p className="text-xs text-fg-muted leading-relaxed">
+                  <span className="font-semibold text-fg-subtle">Currently deep in</span>
+                  {" — "}{profile.currently}
+                </p>
+              </div>
             )}
-            {latestQuote && (
-              <Link href="/quotes" className="group inline-flex items-center gap-2 w-fit max-w-sm">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Quote</span>
-                <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1 italic">
-                  &ldquo;{latestQuote.text}&rdquo; — {latestQuote.author} →
-                </span>
-              </Link>
-            )}
+
+            {/* HeroAvocado */}
+            <div className="animate-fade-up" style={{ animationDelay: "160ms" }}>
+              <HeroAvocado />
+            </div>
+
+            {/* Latest teasers — blog + quote */}
+            <div
+              className="animate-fade-up flex flex-col gap-2"
+              style={{ animationDelay: "240ms" }}
+            >
+              {latestPost && (
+                <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 w-fit max-w-sm">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Blog</span>
+                  <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1">
+                    {latestPost.title} →
+                  </span>
+                </Link>
+              )}
+              {latestQuote && (
+                <Link href="/quotes" className="group inline-flex items-center gap-2 w-fit max-w-sm">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Quote</span>
+                  <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1 italic">
+                    &ldquo;{latestQuote.text}&rdquo; — {latestQuote.author} →
+                  </span>
+                </Link>
+              )}
+            </div>
           </div>
         </Inner>
       </section>
@@ -189,7 +259,9 @@ export default function PortfolioHome() {
 
           <div className="grid gap-8 lg:grid-cols-[1fr_260px]">
             <div className="space-y-6">
-              <p className="text-base sm:text-lg leading-8 text-fg max-w-2xl">{profile.bio}</p>
+              <p className="text-base sm:text-lg leading-8 text-fg max-w-2xl">
+                <HighlightNumbers text={profile.bio} />
+              </p>
 
               <div className="flex items-start gap-3 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/30 px-4 py-3.5 max-w-2xl">
                 <span className="mt-0.5 text-indigo-400 shrink-0">
@@ -222,6 +294,26 @@ export default function PortfolioHome() {
                     </span>
                   ))}
                   <span className="rounded-full border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-faint italic">& more</span>
+                </div>
+              </div>
+
+              {/* Company mini-timeline */}
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Career path</p>
+                <div className="flex flex-col">
+                  {profile.previous.split(",").map((co, i, arr) => (
+                    <div key={co} className="flex items-start gap-2.5">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${i === 0 ? "bg-accent" : "bg-border-strong"}`} />
+                        {i < arr.length - 1 && (
+                          <div className="w-px h-6 bg-gradient-to-b from-border-strong/60 to-transparent mt-0.5" />
+                        )}
+                      </div>
+                      <span className={`text-xs pb-4 ${i === 0 ? "text-fg font-medium" : "text-fg-subtle"}`}>
+                        {co.trim()}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

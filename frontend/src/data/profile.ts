@@ -1,5 +1,19 @@
 import profileJson from "@/data/knowledge/profile.json";
 
+export interface Availability {
+  open: boolean;
+  label: string;
+  types: string[];
+  locations: string[];
+}
+
+export interface HeroStat {
+  value: number;
+  suffix: string;
+  label: string;
+  sub: string;
+}
+
 export interface Profile {
   name: string;
   tagline: string;
@@ -20,6 +34,8 @@ export interface Profile {
   page_projects?: string;
   contact_description?: string;
   currently?: string;
+  availability?: Availability;
+  heroStats?: HeroStat[];
 }
 
 export const profile = profileJson as Profile;

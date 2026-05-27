@@ -6,6 +6,8 @@ import { API_BASE_URL } from "@/lib/api/client";
 import ContentBlogEditor from "@/components/admin/ContentBlogEditor";
 import ContentLabEditor from "@/components/admin/ContentLabEditor";
 import ContentQuotesEditor from "@/components/admin/ContentQuotesEditor";
+import AvailabilityEditor from "@/components/admin/AvailabilityEditor";
+import KnowledgeDataView from "@/components/admin/KnowledgeDataView";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -2301,7 +2303,8 @@ function Dashboard({
   lastUpdated: Date | null;
 }) {
   const [period, setPeriod] = useState<Period>("all");
-  const [activeView, setActiveView] = useState<"analytics" | "write-blog" | "quotes" | "blog-api" | "lab" | "quotes-api">("analytics");
+  const [activeView, setActiveView] = useState<"analytics" | "write-blog" | "quotes" | "blog-api" | "lab" | "quotes-api" | "availability" | "data">("analytics");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const conv        = stats.conversations[period];
   const site        = stats.site_visitors[period];
   const feedback    = stats.feedback[period];
@@ -2313,20 +2316,158 @@ function Dashboard({
   const pages       = stats.pages[period];
   const topPosts    = [...stats.blog.posts].sort((a, b) => b.views - a.views).slice(0, 8);
 
-  return (
-    <div className="min-h-screen bg-bg px-4 sm:px-6 py-8">
-      <div className="mx-auto max-w-5xl space-y-8">
+  type NavItem = { key: typeof activeView; label: string; icon: string; group: string };
+  const NAV: NavItem[] = [
+    { key: "analytics",   label: "Analytics",      icon: "📊", group: "Overview"  },
+    { key: "write-blog",  label: "Write Blog",     icon: "✏️",  group: "Content"  },
+    { key: "blog-api",    label: "Blog (API)",      icon: "📝", group: "Content"  },
+    { key: "lab",         label: "Lab (API)",       icon: "🧪", group: "Content"  },
+    { key: "quotes",      label: "Quotes",          icon: "❝",  group: "Content"  },
+    { key: "quotes-api",  label: "Quotes (API)",    icon: "💬", group: "Content"  },
+    { key: "data",        label: "Portfolio Data",  icon: "📋", group: "Data"     },
+    { key: "availability",label: "Availability",    icon: "🟢", group: "Data"     },
+  ];
+  const groups = ["Overview", "Content", "Data"] as const;
 
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <span className="text-xl">🥑</span>
-            <div>
-              <h1 className="text-lg font-bold text-fg">Avocado Analytics</h1>
-              <p className="text-[11px] text-fg-faint">Internal dashboard — not public</p>
+  const VIEW_LABELS: Record<typeof activeView, string> = {
+    analytics: "Analytics", "write-blog": "Write Blog", quotes: "Quotes",
+    "blog-api": "Blog (API)", lab: "Lab (API)", "quotes-api": "Quotes (API)",
+    availability: "Availability", data: "Portfolio Data",
+  };
+
+  function NavList({ onSelect }: { onSelect?: () => void }) {
+    return (
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+        {groups.map(g => (
+          <div key={g}>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint px-2 mb-1.5">{g}</p>
+            <div className="space-y-0.5">
+              {NAV.filter(n => n.group === g).map(n => (
+                <button
+                  key={n.key}
+                  onClick={() => { setActiveView(n.key); onSelect?.(); }}
+                  className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                    activeView === n.key
+                      ? "bg-fg text-bg shadow-sm"
+                      : "text-fg-muted hover:text-fg hover:bg-surface-raised"
+                  }`}
+                >
+                  <span className="text-sm leading-none">{n.icon}</span>
+                  {n.label}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
+        ))}
+      </nav>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-bg flex">
+
+      {/* ── Mobile overlay ── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* ── Sidebar ── */}
+      <aside className={`
+        fixed inset-y-0 left-0 z-50 w-56 flex flex-col bg-surface border-r border-border
+        transition-transform duration-200 ease-in-out
+        ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
+        lg:translate-x-0 lg:static lg:z-auto
+      `}>
+        {/* Sidebar header */}
+        <div className="flex items-center gap-2.5 px-4 py-4 border-b border-border shrink-0">
+          <span className="text-2xl leading-none">🥑</span>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-fg leading-tight">Avocado</p>
+            <p className="text-[10px] text-fg-faint">Admin Dashboard</p>
+          </div>
+          <button
+            onClick={() => setSidebarOpen(false)}
+            className="ml-auto text-fg-faint hover:text-fg lg:hidden"
+            aria-label="Close sidebar"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        {/* Nav items */}
+        <NavList onSelect={() => setSidebarOpen(false)} />
+
+        {/* Sidebar footer */}
+        <div className="shrink-0 border-t border-border px-3 py-3 space-y-1.5">
+          <Link
+            href="/"
+            className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-fg-muted hover:text-fg hover:bg-surface-raised transition-colors w-full"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            View site
+          </Link>
+          <button
+            onClick={onLogout}
+            className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-500/10 transition-colors w-full"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            Sign out
+          </button>
+        </div>
+      </aside>
+
+      {/* ── Main area ── */}
+      <div className="flex-1 flex flex-col min-w-0">
+
+        {/* Mobile top bar */}
+        <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-surface shrink-0 sticky top-0 z-30">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="text-fg-muted hover:text-fg"
+            aria-label="Open sidebar"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+          <span className="text-lg leading-none">🥑</span>
+          <p className="text-sm font-semibold text-fg flex-1 truncate">{VIEW_LABELS[activeView]}</p>
+          {lastUpdated && (
+            <span className="text-[10px] text-fg-faint tabular-nums hidden sm:inline">
+              {refreshing ? "Refreshing…" : secondsAgo < 10 ? "Just updated" : `${secondsAgo}s ago`}
+            </span>
+          )}
+          <button
+            onClick={onRefresh}
+            disabled={refreshing}
+            className="text-fg-faint hover:text-fg disabled:opacity-40"
+            title="Refresh"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              className={refreshing ? "animate-spin" : ""}>
+              <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+            </svg>
+          </button>
+        </header>
+
+        {/* Desktop top bar */}
+        <header className="hidden lg:flex items-center justify-between gap-4 px-6 py-3.5 border-b border-border bg-surface shrink-0">
+          <p className="text-sm font-semibold text-fg">{VIEW_LABELS[activeView]}</p>
+          <div className="flex items-center gap-3">
             {lastUpdated && (
               <span className="text-[10px] text-fg-faint tabular-nums">
                 {refreshing ? "Refreshing…" : secondsAgo < 10 ? "Just updated" : `Updated ${secondsAgo}s ago`}
@@ -2336,82 +2477,19 @@ function Dashboard({
               onClick={onRefresh}
               disabled={refreshing}
               className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors disabled:opacity-40"
-              title="Refresh stats"
             >
-              <svg
-                width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-                className={refreshing ? "animate-spin" : ""}
-              >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                className={refreshing ? "animate-spin" : ""}>
                 <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
               </svg>
               Refresh
             </button>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                <polyline points="9 22 9 12 15 12 15 22"/>
-              </svg>
-              Home
-            </Link>
-            {activeView !== "analytics" && (
-              <button
-                onClick={() => setActiveView("analytics")}
-                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
-              >
-                ← Analytics
-              </button>
-            )}
-            {activeView !== "write-blog" && (
-              <button
-                onClick={() => setActiveView("write-blog")}
-                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
-              >
-                ✏ Write Blog
-              </button>
-            )}
-            {activeView !== "quotes" && (
-              <button
-                onClick={() => setActiveView("quotes")}
-                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
-              >
-                ❝ Quotes
-              </button>
-            )}
-            {activeView !== "blog-api" && (
-              <button
-                onClick={() => setActiveView("blog-api")}
-                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
-              >
-                📝 Blog (API)
-              </button>
-            )}
-            {activeView !== "lab" && (
-              <button
-                onClick={() => setActiveView("lab")}
-                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
-              >
-                🧪 Lab (API)
-              </button>
-            )}
-            {activeView !== "quotes-api" && (
-              <button
-                onClick={() => setActiveView("quotes-api")}
-                className="text-xs border border-border rounded-lg px-3 py-1.5 text-fg-faint hover:text-fg-muted transition-colors"
-              >
-                ❝ Quotes (API)
-              </button>
-            )}
-            <button
-              onClick={onLogout}
-              className="text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors"
-            >
-              Sign out
-            </button>
           </div>
-        </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 space-y-6">
 
         {/* Period tabs — analytics only */}
         {activeView === "analytics" && (
@@ -2430,16 +2508,13 @@ function Dashboard({
           </div>
         )}
 
-        {/* Write Blog view */}
         {activeView === "write-blog" && <BlogEditor />}
-
-        {/* Quotes view (legacy GitHub-backed) */}
         {activeView === "quotes" && <QuotesEditor />}
-
-        {/* Content API views */}
         {activeView === "blog-api" && <ContentBlogEditor />}
         {activeView === "lab" && <ContentLabEditor />}
         {activeView === "quotes-api" && <ContentQuotesEditor />}
+        {activeView === "availability" && <AvailabilityEditor />}
+        {activeView === "data" && <KnowledgeDataView />}
 
         {/* Analytics content */}
         {activeView === "analytics" && (<>
@@ -2773,11 +2848,13 @@ function Dashboard({
         <SiteGuide />
 
         <p className="text-center text-[10px] text-fg-faint pb-4">
-          Avocado Admin · {new Date().getFullYear()} · Auto-refreshes every 60s · Data from analytics.db on Lightsail
+          Avocado Admin · {new Date().getFullYear()} · Auto-refreshes every 60s
         </p>
 
         </>)}
 
+          </div>
+        </main>
       </div>
     </div>
   );

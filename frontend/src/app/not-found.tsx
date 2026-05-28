@@ -270,7 +270,7 @@ export default function NotFound() {
             </Link>
           ))}
 
-          {/* Chat with Avocado — full-width, matches nav button style */}
+          {/* Ask Avocado — full-width, matches nav button style */}
           <Link
             href="/chat"
             className="group sm:col-span-2 flex items-center gap-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 px-4 py-4 transition-all duration-200 shadow-sm hover:shadow-md"
@@ -281,7 +281,7 @@ export default function NotFound() {
 
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-white leading-none mb-1">
-                Chat with Avocado ✦
+                Ask Avocado ✦
               </p>
               <p className="text-[11px] text-indigo-200">
                 Ask Jaya&apos;s AI anything — experience, projects, or just say hello

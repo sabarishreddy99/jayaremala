@@ -76,7 +76,7 @@ export default function Nav() {
             href="/chat"
             className="ml-2 px-4 py-1.5 rounded-full bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
           >
-            Chat with Avocado ✦
+            Ask Avocado ✦
           </Link>
         </nav>
 

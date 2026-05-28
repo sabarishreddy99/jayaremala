@@ -20,6 +20,7 @@ export default function ParticleBackground() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(max-width: 639px)").matches) return;
 
     const canvas = ref.current;
     if (!canvas) return;
@@ -130,14 +131,13 @@ export default function ParticleBackground() {
     <canvas
       ref={ref}
       aria-hidden
+      className="hidden sm:block"
       style={{
         position: "absolute",
         inset: 0,
         width: "100%",
         height: "100%",
         pointerEvents: "none",
-        // z-index: -20 within the hero's isolate stacking context —
-        // sits below the blob layer (-10) and below all normal-flow content
         zIndex: -20,
       }}
     />

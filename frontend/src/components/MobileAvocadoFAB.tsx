@@ -235,7 +235,7 @@ export default function MobileAvocadoFAB() {
                 </svg>
               </div>
               <div>
-                <p className="text-[11px] font-semibold text-white/90 leading-none mb-0.5">Chat with Avocado</p>
+                <p className="text-[11px] font-semibold text-white/90 leading-none mb-0.5">Ask Avocado</p>
                 <p className="text-[10px] text-white/60 leading-none">Ask anything about Jaya</p>
               </div>
             </div>

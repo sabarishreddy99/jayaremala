@@ -15,6 +15,7 @@ import RagPipelineCard from "@/components/RagPipelineCard";
 import StackSection from "@/components/StackSection";
 import SkillsSection from "@/components/SkillsSection";
 import SectionNav from "@/components/SectionNav";
+import MobileNoBg from "@/components/MobileNoBg";
 
 export const metadata = {
   title: "Jaya Sabarish Reddy Remala — Software Engineer",
@@ -95,6 +96,7 @@ export default function PortfolioHome() {
 
   return (
     <div className="w-full">
+      <MobileNoBg />
       <SectionNav />
       <script
         type="application/ld+json"
@@ -109,14 +111,14 @@ export default function PortfolioHome() {
         {/* Particle network — deepest layer in this stacking context */}
         <ParticleBackground />
 
-        {/* Ambient blob layer */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+        {/* Ambient blob layer — desktop only */}
+        <div aria-hidden className="hidden sm:block pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="animate-blob absolute -top-32 -right-24 h-[560px] w-[560px] rounded-full bg-indigo-500/10 dark:bg-indigo-400/7 blur-[110px]" />
           <div className="animate-blob animation-delay-2000 absolute bottom-0 -left-16 h-[420px] w-[420px] rounded-full bg-violet-600/8 dark:bg-violet-500/6 blur-[90px]" />
           <div className="animate-blob animation-delay-4000 absolute top-1/2 left-[40%] h-[280px] w-[280px] -translate-y-1/2 rounded-full bg-blue-400/6 dark:bg-blue-400/4 blur-[70px]" />
         </div>
 
-        <Inner className="grid lg:grid-cols-[1fr_420px] lg:gap-x-14 pt-14 sm:pt-16 pb-16 gap-y-5">
+        <Inner className="grid lg:grid-cols-[1fr_420px] lg:gap-x-14 pt-12 sm:pt-16 pb-14 sm:pb-16 gap-y-4 sm:gap-y-5">
 
           {/* ── Left column ── */}
           <div className="flex flex-col gap-5">
@@ -154,34 +156,34 @@ export default function PortfolioHome() {
               {profile.tagline}
             </p>
 
-            {/* Stats */}
-            <div className="animate-fade-up" style={{ animationDelay: "220ms" }}>
+            {/* Stats — desktop only; too cramped at xs */}
+            <div className="animate-fade-up hidden sm:block" style={{ animationDelay: "220ms" }}>
               <HeroStats stats={profile.heroStats} />
             </div>
 
             {/* CTAs */}
             <div
-              className="animate-fade-up flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-3"
+              className="animate-fade-up flex flex-row flex-wrap items-center gap-2 sm:gap-3"
               style={{ animationDelay: "300ms" }}
             >
               <Link
                 href="/chat"
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-indigo-600 hover:bg-indigo-700 px-6 py-3.5 sm:py-2.5 text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 px-4 py-2 sm:px-6 sm:py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200"
               >
-                Chat with Avocado
+                Ask Avocado
                 <span className="opacity-80">✦</span>
               </Link>
               <Link
                 href="/projects"
-                className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-border px-6 py-3.5 sm:py-2.5 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-border px-4 py-2 sm:px-6 sm:py-2.5 text-xs sm:text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
               >
-                View Projects
+                Projects
               </Link>
               <a
                 href={profile.resume}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-5 py-3.5 sm:py-2.5 text-sm font-medium text-fg-subtle hover:text-fg hover:border-fg-muted transition-colors duration-200"
+                className="inline-flex items-center justify-center gap-1 rounded-full border border-border px-3.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-medium text-fg-subtle hover:text-fg hover:border-fg-muted transition-colors duration-200"
               >
                 Resume ↗
               </a>
@@ -202,12 +204,12 @@ export default function PortfolioHome() {
           </div>
 
           {/* ── Right column ── */}
-          <div className="mt-6 lg:mt-0 flex flex-col gap-5">
+          <div className="mt-2 sm:mt-6 lg:mt-0 flex flex-col gap-4 sm:gap-5">
 
             {/* Currently deep in */}
             {profile.currently && (
               <div
-                className="animate-fade-up flex items-start gap-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 px-3.5 py-2.5"
+                className="animate-fade-up flex items-start gap-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 px-3.5 py-3 sm:py-2.5"
                 style={{ animationDelay: "80ms" }}
               >
                 <span className="text-sm shrink-0 select-none">💭</span>
@@ -218,8 +220,8 @@ export default function PortfolioHome() {
               </div>
             )}
 
-            {/* HeroAvocado */}
-            <div className="animate-fade-up" style={{ animationDelay: "160ms" }}>
+            {/* HeroAvocado — desktop only; terminal card is decorative */}
+            <div className="animate-fade-up hidden sm:block" style={{ animationDelay: "160ms" }}>
               <HeroAvocado />
             </div>
 

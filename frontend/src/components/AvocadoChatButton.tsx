@@ -139,7 +139,7 @@ export default function AvocadoChatButton() {
         <Link
           href="/chat"
           onMouseEnter={handleHoverEnter}
-          aria-label="Chat with Avocado AI"
+          aria-label="Ask Avocado AI"
           className="animate-avo-float animate-avo-glow group relative flex h-[60px] w-[60px] items-center justify-center rounded-full transition-transform duration-200 hover:scale-110 active:scale-95"
           style={{ background: "radial-gradient(circle at 36% 30%, #7ed957, #2d7d1e)" }}
         >

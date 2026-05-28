@@ -369,7 +369,7 @@ export default function ChatInterface() {
             </span>
           </div>
           <h1 className="text-base sm:text-2xl font-bold tracking-tight text-fg">
-            Chat with Avocado 🥑
+            Ask Avocado 🥑
           </h1>
           <p className="mt-0.5 text-[11px] font-medium text-accent tracking-wide">
             Jaya&apos;s personal AI assistant — ask anything

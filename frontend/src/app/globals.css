@@ -90,6 +90,11 @@ body {
   max-width: 100%;
 }
 
+@media (max-width: 639px) {
+  body.mobile-no-bg { background: transparent; }
+  .dark body.mobile-no-bg { background: var(--bg); }
+}
+
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }

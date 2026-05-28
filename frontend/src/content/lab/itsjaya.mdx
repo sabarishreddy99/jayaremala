@@ -3,8 +3,8 @@ title: "itsjaya — AI Portfolio"
 status: "active"
 description: "AI-powered personal portfolio with a RAG chatbot (Avocado), MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade — not a toy."
 startedAt: "2025-11-01"
-updatedAt: "2026-05-22"
-tech: [Next.js 16, FastAPI, ChromaDB, Gemini 2.5 Flash, BAAI/bge-base-en-v1.5, BM25, Knowledge Graph, SQLite, AWS Lightsail, Nginx, S3, GitHub Pages, GitHub Actions]
+updatedAt: "2026-05-28"
+tech: [Next.js 16, FastAPI, ChromaDB, Gemini 2.5 Flash, BAAI/bge-base-en-v1.5, HyDE, BM25, Knowledge Graph, SQLite, SlowAPI, AWS Lightsail, Nginx, S3, GitHub Pages, GitHub Actions]
 links:
   - label: GitHub
     url: https://github.com/sabarishreddy99/jayaremala
@@ -18,7 +18,7 @@ Most portfolios are static pages someone scrolls past in 30 seconds. This one st
 
 **Avocado** is an AI assistant backed by a hybrid RAG pipeline. It answers questions about experience, projects, skills, and blog posts in real time — with tokens streaming directly to the browser. Ask it *"what's your strongest AI project?"* and it retrieves the most relevant knowledge chunks, reranks them, and streams a grounded answer through Gemini.
 
-The portfolio half is a full static Next.js site — experience, education, projects, and a blog with per-post views and claps tracked in SQLite. The whole system auto-deploys on every `git push` with zero manual steps.
+The portfolio half is a full static Next.js site — experience, education, projects, and a blog with per-post views and claps tracked in SQLite. The whole system auto-deploys on every `git push` with zero manual steps. Content (blog posts, lab entries, quotes) can also be managed via a token-gated admin panel without any git commits.
 
 ### Why build it this way
 
@@ -37,68 +37,91 @@ An AI-backed portfolio inverts this. The visitor asks in natural language, the s
 │                            CLIENT BROWSER                                │
 │                                                                          │
 │  ┌─────────────────────────────┐   ┌──────────────────────────────────┐  │
-│  │       Avocado Chatbot       │   │      Portfolio + Blog + Lab      │  │
+│  │       Avocado Chatbot       │   │   Portfolio + Blog + Lab + More  │  │
 │  │   /  (full-screen)          │   │  /portfolio  /experience         │  │
 │  │   /chat  (nav-accessible)   │   │  /education  /projects           │  │
 │  │                             │   │  /blog  /blog/[slug]             │  │
 │  │  ChatInterface              │   │  /lab   /lab/[slug]              │  │
-│  │  ChatMessage (md renderer)  │   │                                  │  │
-│  │  Model badge  ·  Stats      │   │  BlogPostList  BlogEngagement    │  │
-│  │  SSE ReadableStream         │   │  BlogIndexStats  BlogGuideDrawer │  │
+│  │  ChatMessage (md renderer)  │   │  /quotes                         │  │
+│  │  Model badge  ·  Stats      │   │                                  │  │
+│  │  SSE ReadableStream         │   │  BlogPostList  BlogEngagement    │  │
+│  │                             │   │  BlogIndexStats  BlogGuideDrawer │  │
+│  │                             │   │  QuotesFeed                      │  │
 │  └──────────────┬──────────────┘   └──────────────────┬───────────────┘  │
+│                 │                                      │                  │
+│  ┌──────────────────────────────────────────────────┐  │                  │
+│  │  /admin  (token-gated, no-index)                 │  │                  │
+│  │  Stats dashboard · Content editors               │  │                  │
+│  │  (blog, lab, quotes, knowledge base)             │  │                  │
+│  └──────────────────────────────────────────────────┘  │                  │
 └─────────────────┼────────────────────────────────────────┼───────────────┘
                   │  HTTPS + SSE                           │  HTTPS REST
                   ▼                                        ▼
 ┌──────────────────────────────────────────────────────────────────────────┐
 │          api.jayaremala.com  (Nginx :443 → Docker :8000)                │
 │               AWS Lightsail 2GB  ·  Ubuntu 24.04 LTS                    │
+│               SlowAPI rate limiter (10 req/min on /ai/chat/stream)       │
 │                                                                          │
 │  POST /ai/chat/stream  ──►  RAG pipeline  ──►  Gemini SSE               │
 │  POST /ai/chat         ──►  RAG pipeline  ──►  Gemini sync              │
+│  POST /ai/feedback     ──►  thumbs up/down + satisfaction metrics        │
 │  POST /blog/{slug}/view  ──►  unique view per IP                        │
 │  POST /blog/{slug}/clap  ──►  cumulative claps (max 50 / user / post)   │
 │  GET  /blog/{slug}/stats                                                 │
 │  GET  /blog/stats/summary                                                │
 │  GET  /stats              total_responses · unique_visitors              │
 │  GET  /stats/overview     7d / 30d / 1y / all-time for all metrics      │
-│  GET  /health                                                            │
+│  POST /stats/visit        record site visit + page + geo                 │
+│  POST /stats/experience-rating  1–5 star UX rating                      │
+│  GET  /stats/admin        full breakdown (auth-gated)                    │
+│  GET  /content/blog       public blog post list                          │
+│  GET  /content/blog/{slug}                                               │
+│  POST /content/blog       create post (ADMIN_TOKEN)                      │
+│  PUT  /content/blog/{slug}  update (ADMIN_TOKEN)                        │
+│  DELETE /content/blog/{slug}  (ADMIN_TOKEN)                             │
+│  GET  /content/lab        lab entry list                                 │
+│  POST /content/lab · PUT · DELETE  (ADMIN_TOKEN)                        │
+│  GET  /content/quotes     quotes list                                    │
+│  POST /content/quotes · PUT · DELETE  (ADMIN_TOKEN)                     │
+│  POST /admin/reingest     force re-embed (ADMIN_TOKEN)                   │
+│  GET  /health             api · analytics_db · content_db · rag         │
 │                                                                          │
-│  ┌────────────────────────────┐   ┌──────────────────────────────────┐  │
-│  │        RAG Store           │   │  SQLite  analytics.db            │  │
-│  │                            │   │  /data/analytics.db              │  │
-│  │  ChromaDB  PersistentClient│   │  (Lightsail SSD  60 GB)          │  │
-│  │  HNSW cosine similarity    │   │                                  │  │
-│  │  bge-base-en-v1.5 (768-dim)│   │  interactions                    │  │
-│  │  LRU cache (256 entries)   │   │  ├── ip_hash  TEXT              │  │
-│  │  Knowledge Graph (static)  │   │  └── created_at  TIMESTAMP      │  │
-│  │  BM25Okapi  (rank_bm25)    │   │                                  │  │
-│  │  in-memory, rebuilt on     │   │  blog_views                     │  │
-│  │  every startup             │   │  ├── slug  TEXT                 │  │
-│  │                            │   │  ├── ip_hash  TEXT              │  │
-│  │  RRF merge  k=60           │   │  └── created_at  TIMESTAMP      │  │
-│  └────────────────────────────┘   │  UNIQUE(slug, ip_hash)          │  │
-│                                   │                                  │  │
-│  ┌──────────────────────────────┐  │  blog_claps                     │  │
-│  │  /data  (Lightsail SSD)      │  │  ├── slug  TEXT                 │  │
-│  │  ├── analytics.db            │  │  ├── ip_hash  TEXT              │  │
-│  │  ├── chroma_db/              │  │  ├── count  INTEGER             │  │
-│  │  └── logs/                   │  │  └── updated_at  TIMESTAMP      │  │
-│  └──────────────────────────────┘  └──────────────────────────────────┘  │
-│                 │                                                         │
-│                 │ daily cron 02:00 UTC                                    │
-│                 ▼                                                         │
-│  ┌──────────────────────────────┐                                         │
-│  │  S3: itsjaya-backups-        │                                         │
-│  │  analytics                   │                                         │
-│  │  7-day timestamped backups   │                                         │
-│  │  + latest_analytics.db       │                                         │
-│  └──────────────────────────────┘                                         │
+│  ┌──────────────────────────┐   ┌──────────────────────────────────────┐ │
+│  │        RAG Store         │   │  SQLite  analytics.db                │ │
+│  │                          │   │  /data/analytics.db                  │ │
+│  │  ChromaDB PersistentClient│  │  (Lightsail SSD  60 GB)             │ │
+│  │  HNSW cosine similarity  │   │                                      │ │
+│  │  bge-base-en-v1.5 (768d) │   │  interactions  (chat analytics)     │ │
+│  │  LRU cache (256 entries) │   │  site_visits   (page + geo)         │ │
+│  │  Knowledge Graph (static)│   │  blog_views    (unique/IP/post)     │ │
+│  │  BM25Okapi (rank_bm25)   │   │  blog_claps    (≤50/user/post)     │ │
+│  │  HyDE parallel retrieval │   │  feedback      (thumbs + hash)      │ │
+│  │  RRF merge  k=60         │   │  questions     (top-N tracking)     │ │
+│  └──────────────────────────┘   │  experience_ratings (1–5 UX)       │ │
+│                                  └──────────────────────────────────────┘ │
+│  ┌──────────────────────────┐   ┌──────────────────────────────────────┐ │
+│  │  /data  (Lightsail SSD)  │   │  SQLite  content.db                  │ │
+│  │  ├── analytics.db        │   │  /data/content.db                    │ │
+│  │  ├── content.db          │   │                                      │ │
+│  │  ├── chroma_db/          │   │  blog_posts  (slug, title, content,  │ │
+│  │  └── logs/               │   │               tags, published_at,    │ │
+│  └──────────────────────────┘   │               published bool)        │ │
+│                 │                │  lab_entries (slug, title, status,  │ │
+│                 │ daily 02:00 UTC│               tech, links, content)  │ │
+│                 ▼                │  quotes      (quote_id, text,       │ │
+│  ┌──────────────────────────┐   │               author, category,     │ │
+│  │  S3: itsjaya-backups-    │   │               favorite, featured)   │ │
+│  │  analytics               │   │  Seeded from JSON on first run.     │ │
+│  │  7-day timestamped       │   │  Writes auto-regenerate JSON +      │ │
+│  │  + latest_analytics.db   │   │  trigger run_ingest() in BG.        │ │
+│  └──────────────────────────┘   └──────────────────────────────────────┘ │
 │                                                                          │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │  Knowledge Base  backend/data/knowledge/                         │   │
 │  │  profile.json · experience.json · education.json                 │   │
 │  │  projects.json · skills.json · testimonials.json                 │   │
-│  │  blog.json  (auto-generated from MDX on every push)              │   │
+│  │  quotes.json · lab.json (auto-regenerated from content.db)       │   │
+│  │  blog.json   (auto-regenerated from content.db)                  │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────────────┘
                   │
@@ -117,7 +140,7 @@ An AI-backed portfolio inverts this. The visitor asks in natural language, the s
 
 ## RAG Pipeline — Deep Dive
 
-The retrieval pipeline runs before every Gemini call. Four stages in sequence:
+The streaming retrieval pipeline runs before every Gemini call. Six stages, several in parallel:
 
 ```arch
 User message: "what's your strongest AI project?"
@@ -143,40 +166,67 @@ User message: "what's your strongest AI project?"
 │  Result: up to 4 query strings                            │
 └──────────────────────┬────────────────────────────────────┘
                        │ 4 queries
-          ┌────────────┴─────────────┐
-          ▼                          ▼
-┌──────────────────────┐   ┌──────────────────────────────┐
-│  STAGE 2a — DENSE    │   │  STAGE 2b — LEXICAL (BM25)   │
-│                      │   │                              │
-│  One batched encode  │   │  BM25Okapi scoring           │
-│  call for all 4      │   │  Tokenize: lowercase,        │
-│  queries —           │   │  strip punctuation,          │
-│  single forward pass │   │  keep len > 1 tokens         │
-│  ~160ms vs ~400ms    │   │                              │
-│  for serial calls    │   │  Catches exact matches:      │
-│                      │   │  "3000 RPS", "SnapLog",      │
-│  bge-base-en-v1.5    │   │  "Qualcomm", "78%",          │
-│  768-dim ONNX        │   │  "115 GB/day"                │
-│  HNSW cosine         │   │                              │
-│  top 6 per query     │   │  top 15 results              │
-│  (deduped by id)     │   │  in-memory, rebuilt on       │
-└──────────┬───────────┘   │  every startup from docs     │
-           └───────┬────────┘
-                   ▼
+          ┌────────────┴──────────────────────────┐
+          ▼ (async, parallel)                     │
+┌────────────────────────────────────────┐        │
+│  STAGE 2a — HyDE                       │        │
+│  (Gao et al. 2022)                     │        │
+│                                        │        │
+│  Generate a short hypothetical answer  │        │
+│  to the user's question via Gemini.    │        │
+│  4s hard timeout; skipped for greetings│        │
+│  and messages < 15 chars.              │        │
+│                                        │        │
+│  Hypothetical answers sit closer in   │        │
+│  embedding space to real KB chunks    │        │
+│  than the raw question — higher cosine │        │
+│  similarity without any model change. │        │
+│  Embed HyDE doc → top-8 dense chunks. │        │
+└────────────────┬───────────────────────┘        │
+                 │                                │
+                 │                 ┌──────────────┘
+                 │                 ▼
+                 │    ┌──────────────────────────────┐
+                 │    │  STAGE 2b — Dense Retrieval  │
+                 │    │  (async, parallel with HyDE) │
+                 │    │                              │
+                 │    │  Batched encode: all 4 queries│
+                 │    │  in a single ONNX forward pass│
+                 │    │  ~160ms vs ~400ms for serial  │
+                 │    │                              │
+                 │    │  bge-base-en-v1.5            │
+                 │    │  768-dim ONNX, HNSW cosine   │
+                 │    │  top-6 per query (deduped)   │
+                 │    └──────────────┬───────────────┘
+                 │                   │
+                 │    ┌──────────────┘
+                 │    │  STAGE 2c — BM25 Lexical
+                 │    │  (sync, while async tasks run)
+                 │    │
+                 │    │  BM25Okapi scoring
+                 │    │  Catches exact matches:
+                 │    │  "3000 RPS", "SnapLog",
+                 │    │  "Qualcomm", "78%"
+                 │    │  top-15 results
+                 │    │  in-memory, rebuilt on startup
+                 └────┴───────────┐
+                                  ▼
 ┌───────────────────────────────────────────────────────────┐
 │  STAGE 3 — Reciprocal Rank Fusion                        │
 │                                                           │
+│  Merges: Dense chunks + HyDE chunks + BM25 results       │
 │  score(doc) = sum of  1 / (k + rank_i)    k = 60        │
 │  Cormack, Clarke, Buettcher 2009                         │
 │                                                           │
-│  Chunks in both dense + BM25 get boosted.                │
+│  Docs in both HyDE + dense get a double rank bonus.      │
 │  Output: up to 20 candidates ranked by RRF score         │
 └──────────────────────┬────────────────────────────────────┘
                        ▼
 ┌───────────────────────────────────────────────────────────┐
 │  STAGE 4 — Top-5 by RRF Score                            │
 │                                                           │
-│  Returns top 5 chunks ordered by RRF score               │
+│  Picks the 5 highest-scoring chunks from the RRF-20 pool │
+│  (cross-encoder reranker scaffolded, gated on 4GB RAM)   │
 └──────────────────────┬────────────────────────────────────┘
                        ▼
 ┌───────────────────────────────────────────────────────────┐
@@ -191,6 +241,10 @@ User message: "what's your strongest AI project?"
 │  No extra ChromaDB call — zero latency                   │
 │  Injected into Gemini alongside top-5                    │
 └───────────────────────────────────────────────────────────┘
+                       │
+              Up to 7 chunks as Gemini context
+                       │
+              SSE tokens streamed to client
 ```
 
 ---
@@ -245,15 +299,22 @@ Backup:   cron 0 2 * * * → infra/scripts/backup.sh
 
 ## Analytics Architecture
 
-All engagement data lives in a single SQLite file. IPs are SHA-256 hashed before storage.
+All engagement data lives in `analytics.db`. Content (posts, lab, quotes) lives in `content.db`. IPs are SHA-256 hashed before storage.
 
 ```arch
-analytics.db
+analytics.db  (/data/analytics.db — Lightsail SSD)
 │
-├── interactions               ← chat analytics
-│   ├── ip_hash  TEXT          SHA-256 of visitor IP
+├── interactions               ← chat analytics (per completed stream)
+│   ├── ip_hash  TEXT          SHA-256 or x-visitor-id device UUID
 │   └── created_at  TIMESTAMP
 │   Indexed: idx_ip ON ip_hash
+│
+├── site_visits                ← page view tracking
+│   ├── ip_hash  TEXT
+│   ├── page  TEXT             e.g. "/portfolio", "/blog/post-slug"
+│   ├── country  TEXT          resolved async via geo API
+│   ├── city  TEXT
+│   └── created_at  TIMESTAMP
 │
 ├── blog_views                 ← unique views per post per IP
 │   ├── slug  TEXT
@@ -261,12 +322,39 @@ analytics.db
 │   └── created_at  TIMESTAMP
 │   UNIQUE(slug, ip_hash)      idempotent — INSERT OR IGNORE
 │
-└── blog_claps                 ← cumulative claps per post per IP
-    ├── slug  TEXT
-    ├── ip_hash  TEXT
-    ├── count  INTEGER          capped at 50 per user per post
-    └── updated_at  TIMESTAMP
-    ON CONFLICT: count = count + excluded.count
+├── blog_claps                 ← cumulative claps per post per IP
+│   ├── slug  TEXT
+│   ├── ip_hash  TEXT
+│   ├── count  INTEGER          capped at 50 per user per post
+│   └── updated_at  TIMESTAMP
+│   ON CONFLICT: count = count + excluded.count
+│
+├── feedback                   ← thumbs up/down per message
+│   ├── message_hash  TEXT
+│   ├── rating  INTEGER        +1 (positive) or -1 (negative)
+│   └── created_at  TIMESTAMP
+│
+├── questions                  ← top-N question tracking
+│   ├── text  TEXT
+│   ├── count  INTEGER
+│   └── updated_at  TIMESTAMP
+│
+└── experience_ratings         ← 1–5 star UX ratings
+    ├── rating  INTEGER
+    └── created_at  TIMESTAMP
+
+content.db  (/data/content.db — Lightsail SSD)
+│
+├── blog_posts   (id, slug, title, date, published_at, description,
+│                 tags, image, content, published, created_at, updated_at)
+│   Indexes: published_at DESC, published
+│
+├── lab_entries  (id, slug, title, status, description, started_at,
+│                 updated_at, tech, links, content, created_at)
+│   Index: status  (active → paused → shipped ordering)
+│
+└── quotes       (id, quote_id, text, author, source, category,
+                   favorite, featured, added_at, created_at)
 
 Backup flow:
   02:00 UTC → backup.sh
@@ -278,6 +366,30 @@ Restore (disaster recovery):
   aws s3 cp s3://itsjaya-backups-analytics/analytics_db/latest_analytics.db /data/analytics.db
   docker restart itsjaya-backend
 ```
+
+---
+
+## Content API — CRUD without git
+
+Blog posts, lab entries, and quotes are stored in `content.db` and served via the `/content/*` API. Public `GET` endpoints return live data. Write endpoints require a `Bearer ADMIN_TOKEN` header.
+
+After every write, a background task:
+1. Regenerates the corresponding JSON file (`blog.json` or `lab.json`) in `backend/data/knowledge/`
+2. Calls `run_ingest()` — only changed documents are re-embedded (incremental ingest), zero user-visible latency
+
+```
+POST /content/blog   (ADMIN_TOKEN)
+  body: { slug, title, date, published_at, description, tags, content, published }
+  → creates row in content.db
+  → background: regenerate blog.json → run_ingest()
+
+PUT /content/blog/{slug}   → update row → regenerate → re-ingest
+DELETE /content/blog/{slug} → delete row → regenerate → re-ingest
+
+/content/lab/* and /content/quotes/* follow the same pattern.
+```
+
+The database is seeded on first startup from the existing JSON files in `backend/data/knowledge/` — existing content migrates automatically with no manual step.
 
 ---
 
@@ -295,23 +407,54 @@ jayaremala.com  (GitHub Pages — static export, no basePath)
 ├── /blog                Index sorted by publishedAt
 ├── /blog/[slug]         Source Serif 4 font + engagement
 ├── /lab                 Living system design index
-└── /lab/[slug]          This page
+├── /lab/[slug]          This page
+├── /quotes              Curated quotes — QuotesFeed with categories
+└── /admin               Stats dashboard + content editors (no-index)
 
 All portfolio routes share layout via (portfolio) route group.
 Chatbot lives outside — no nav, no footer, full screen.
+/admin is not linked in nav; robots.txt: no-index, no-follow.
 ```
 
 ---
 
 ## Tech Stack
 
-<Stack items={["Next.js 16 (App Router)", "React 19", "Tailwind CSS v4", "TypeScript", "MDX + next-mdx-remote", "gray-matter", "FastAPI", "Python 3.11", "Pydantic Settings", "ChromaDB", "fastembed (BAAI/bge-base-en-v1.5 ONNX, 768-dim)", "rank-bm25 (BM25Okapi)", "Knowledge Graph (static, in-memory)", "google-genai SDK", "Gemini 2.5 Flash", "SQLite3", "AWS Lightsail 2GB", "Nginx + Let's Encrypt", "Amazon S3", "Docker", "GitHub Pages", "GitHub Actions"]} />
+<Stack items={["Next.js 16 (App Router)", "React 19", "Tailwind CSS v4", "TypeScript", "MDX + next-mdx-remote", "gray-matter", "FastAPI", "Python 3.11", "Pydantic Settings", "SlowAPI (rate limiting)", "ChromaDB", "fastembed (BAAI/bge-base-en-v1.5 ONNX, 768-dim)", "rank-bm25 (BM25Okapi)", "HyDE (Hypothetical Document Embeddings)", "Knowledge Graph (static, in-memory)", "google-genai SDK", "Gemini 2.5 Flash", "SQLite3 (analytics.db)", "SQLite3 (content.db)", "AWS Lightsail 2GB", "Nginx + Let's Encrypt", "Amazon S3", "Docker", "GitHub Pages", "GitHub Actions"]} />
 
 ---
 
 ## Key Decisions
 
-<Decision date="2026-05-21" title="AWS Lightsail over Railway — $10/month VPS beats PaaS trial limits">
+<Decision date="2026-05-28" title="Content DB (SQLite) for CRUD — edit content without git commits">
+  Every blog post and lab entry previously required a git commit and a full deploy to appear on the site. That's a high-friction loop when you want to fix a typo or publish a draft at midnight. It also made the Avocado knowledge base stale until the next deploy.
+
+  The solution is a separate `content.db` SQLite database on the Lightsail SSD. A token-gated REST API (`/content/*`) handles full CRUD for blog posts, lab entries, and quotes. After every write, a background task regenerates the corresponding JSON and calls `run_ingest()` — only changed documents are re-embedded (incremental ingest already handles this), so the knowledge base is up-to-date within seconds of saving in the admin panel.
+
+  The database is seeded from existing JSON files on first startup, so nothing breaks on deploy. Two separate databases (analytics + content) means content schema migrations never lock analytics writes — SQLite's write lock applies per-file, not server-wide.
+</Decision>
+
+<Decision date="2026-05-28" title="HyDE (Hypothetical Document Embeddings) for retrieval precision">
+  Vague queries like "tell me about his AI experience" sit far from real knowledge-base chunks in embedding space. The raw question embedding retrieves semantically adjacent docs but often misses the most specific evidence a recruiter would want.
+
+  HyDE (Gao et al. 2022) generates a short hypothetical answer to the question first, then embeds *that* for retrieval. A hypothetical answer ("Jaya built SnapLog at Qualcomm...") has much higher cosine similarity to the real project chunk than the question ("tell me about AI experience") does. The HyDE query runs in parallel with the original dense retrieval via `asyncio.gather()` — no added serial latency. A 4-second hard timeout and a character-length guard ensure greetings and simple follow-ups skip the Gemini call entirely. HyDE chunks are prepended to the dense pool before RRF so docs retrieved by both signals get a double rank bonus.
+</Decision>
+
+<Decision date="2026-05-28" title="Rate limiting via SlowAPI — protect Gemini quota from abuse">
+  The `/ai/chat/stream` endpoint is public and calls Gemini on every request. Without rate limiting, a single automated client could exhaust the API quota in minutes, taking Avocado down for legitimate visitors. SlowAPI adds a 10 req/min limit per IP with correct `X-Forwarded-For` extraction behind Nginx. The middleware is added globally but limits are applied per-decorator — only the streaming endpoint is gated today. The limit is intentionally generous for human use but punishing for bots.
+</Decision>
+
+<Decision date="2026-05-28" title="Admin panel at /admin — operational visibility without SSH">
+  Operating the site previously required SSH + SQLite CLI to query analytics. The admin panel consolidates: conversation counts (week/month/all), top questions, feedback satisfaction, site visitor counts with geo + page breakdown, blog engagement (unique readers, revisit rate), and live content editors for blog, lab, and quotes. It's a standard Next.js route with `robots: { index: false }` in the layout metadata — no nav link. The admin stats endpoint (`GET /stats/admin`) is gated behind the same `ADMIN_TOKEN` as the content write endpoints.
+</Decision>
+
+<Decision date="2026-05-28" title="Background startup thread — API serves immediately during ONNX warmup">
+  The original startup sequence blocked the FastAPI lifespan on `run_ingest()`, which includes ONNX model loading, ChromaDB writes, and BM25 index rebuilding. The health check loop during blue-green deploy could wait up to 120 seconds before the old container was replaced.
+
+  Moving the ingest to a `daemon=True` background thread means the API starts serving `/health` immediately. The health endpoint returns `rag: "degraded"` while ingest is in progress, but `api: "ok"` — the health check loop can be shortened for cases where only the API availability matters. The warmup call (`query("warmup", n_results=1)`) pre-loads the ONNX model into memory so the first real user request doesn't pay the cold-load penalty.
+</Decision>
+
+<Decision date="2026-05-22" title="AWS Lightsail over Railway — $10/month VPS beats PaaS trial limits">
   Railway's free trial ended and stopped all backend services. The migration decision came down to minimum cost with maximum control. App Runner and ECS Fargate cost $20–40/month and add EFS complexity for a single SQLite file. Lightsail 2GB ($10/month) gives 2 vCPUs, 60GB SSD, and a static IP — all the resources the backend needs and nothing it doesn't.
 
   The 2GB plan was chosen over 1GB (EC2 t2.micro free tier) because the fastembed ONNX model + ChromaDB + FastAPI peaks at 400–600MB under load. The 1GB option leaves no headroom for the 120-second ONNX warmup window at startup. A cold-start OOM kill during a recruiter demo would be worse than the $2/month difference.
@@ -319,7 +462,7 @@ Chatbot lives outside — no nav, no footer, full screen.
   What this means for the system: the backend is now a Docker container on a VPS with persistent SSD storage, Nginx reverse proxy, and Let's Encrypt HTTPS — a standard production setup that doesn't depend on any PaaS billing cycle.
 </Decision>
 
-<Decision date="2026-05-21" title="Zero-downtime blue-green deploy via staging port 8001">
+<Decision date="2026-05-22" title="Zero-downtime blue-green deploy via staging port 8001">
   The original deploy script stopped the old container, then started the new one. During the gap — up to 120 seconds for the ONNX model to warm up — the API was completely down. For a portfolio chatbot, downtime during a deploy is especially bad: the visitor who opens the page while a deploy is running gets an error on their first message.
 
   The fix is blue-green deployment at the container level. The new image starts on port 8001 while the old container keeps serving port 8000 through Nginx. A health check loop polls `localhost:8001/health` every 5 seconds for up to 120 seconds. Only if the check passes does the script stop the old container and start the new one on port 8000. If the health check fails, the staging container is removed and the old one continues serving — zero downtime, zero user impact.
@@ -327,7 +470,7 @@ Chatbot lives outside — no nav, no footer, full screen.
   The entire logic lives in `infra/scripts/deploy.sh` in the repo. GitHub Actions calls it with a single SSH command, keeping the workflow YAML thin and the deploy logic version-controlled and independently testable.
 </Decision>
 
-<Decision date="2026-05-21" title="S3 backup for analytics.db over Lightsail additional disk">
+<Decision date="2026-05-22" title="S3 backup for analytics.db over Lightsail additional disk">
   Two options existed for protecting analytics.db from instance loss. Option A: Lightsail additional disk ($2/month) — a separate volume that survives instance replacement automatically. Option B: daily S3 backup (< $0.01/month) — a cron job copies the file to S3 and keeps 7 days of history.
 
   Option B wins for this workload. The analytics.db file is under 1MB. Storing 7 daily copies costs fractions of a cent per month. The restore path is one command. The additional disk would add 20% to the monthly bill for a file that changes by kilobytes per day.
@@ -335,7 +478,7 @@ Chatbot lives outside — no nav, no footer, full screen.
   The one scenario where Option A wins is if the instance is destroyed and rebuilt frequently. That doesn't apply here. The S3 backup cron runs at 02:00 UTC daily via `infra/scripts/backup.sh`. The deploy script auto-restores from S3 if `/data/analytics.db` is missing — so a fresh instance recovers all analytics data on the first deploy with no manual step.
 </Decision>
 
-<Decision date="2026-05-21" title="Custom domain jayaremala.com — necessary for HTTPS mixed content">
+<Decision date="2026-05-22" title="Custom domain jayaremala.com — necessary for HTTPS mixed content">
   Moving the backend from Railway (which gave a free HTTPS URL) to a raw Lightsail IP created a mixed content problem. The frontend is served over HTTPS from GitHub Pages. Modern browsers block `http://IP:8000` calls from an HTTPS page — Avocado would silently fail on every message.
 
   The fix requires HTTPS on the backend, which requires a domain. DuckDNS was attempted but proved unreliable. The right call was purchasing `jayaremala.com` on Namecheap (~$10/year), pointing `api.jayaremala.com` to the Lightsail static IP, and running Certbot for a free Let's Encrypt certificate behind Nginx. Certbot auto-renews via a systemd timer — zero maintenance.
@@ -349,7 +492,7 @@ Chatbot lives outside — no nav, no footer, full screen.
   A living MDX page that gets amended as the system evolves preserves the actual reasoning. The `Decision` and `Update` timeline components make it natural to add entries in-place instead of rewriting history. The constraint that forced MDX over a database-backed CMS is meaningful: the whole frontend is a static export. There is no database write path. MDX files committed to the repo are the only durable storage available at build time.
 </Decision>
 
-<Decision date="2026-05-21" title="Incremental per-document ingest over collection-level hash wipe">
+<Decision date="2026-05-22" title="Incremental per-document ingest over collection-level hash wipe">
   The collection-level hash approach had one critical failure mode: editing a single FAQ document or publishing one blog post triggered a full re-embed of all ~80 documents — a ~30-second ChromaDB wipe-and-rebuild on every deploy with any content change. As the knowledge base grows with more blog posts and lab entries, this gets worse linearly.
 
   The replacement tracks a SHA-256 hash per document in `.doc_hashes.json` (stored on the Lightsail SSD alongside ChromaDB). On each startup, `run_ingest()` diffs the current document set against the stored hashes: new or changed documents are upserted, documents removed from the source are deleted from ChromaDB, unchanged documents are skipped entirely. Adding one blog post now embeds one document instead of eighty.
@@ -357,10 +500,20 @@ Chatbot lives outside — no nav, no footer, full screen.
   Per-document tracking also enables precise deletion — when a post or FAQ entry is removed, its vector is deleted from ChromaDB immediately rather than lingering as stale dead weight. A forced full re-embed is available via `POST /admin/reingest?force=true` (bearer token-gated via `ADMIN_TOKEN` env var) for cases where the hash file is lost or a clean slate is needed.
 </Decision>
 
-<Decision date="2026-04-15" title="Hash-based re-ingest: SHA-256 of all knowledge JSON on startup">
-  Two simpler alternatives exist and both are wrong. Always re-ingest: adds 15–20s to every deploy regardless of whether the knowledge base changed. Skip if ChromaDB non-empty: knowledge updates never propagate after the first deploy.
+<Decision date="2026-05-22" title="BAAI/bge-base-en-v1.5 over all-MiniLM-L6-v2 — better retrieval, same ONNX runtime">
+  The original embedding model was `all-MiniLM-L6-v2` — a 6-layer distilled model producing 384-dim vectors. It was chosen for speed and the ~45MB ONNX binary size. The problem: distilled models sacrifice retrieval quality for size. On BEIR benchmarks, `BAAI/bge-base-en-v1.5` outperforms MiniLM by 8–12 recall points across task types. For a portfolio chatbot, missed recall means a recruiter asks "does he have Redis caching experience?" and the retrieval returns a profile doc instead of the exact 78% latency reduction bullet.
 
-  SHA-256 of the entire `data/knowledge/` directory solves both failure modes with a single file read at startup. If the volume is wiped, the missing hash file triggers a fresh ingest, which is correct. Superseded by per-document hashing (see above) which preserves these properties while adding incremental precision.
+  The switch stays fully ONNX via fastembed — no PyTorch dependency, no RAM regression beyond ~30–50MB for the larger 768-dim model. Critically, switching embedding models requires wiping ChromaDB and rebuilding from scratch because stored 384-dim vectors are incompatible with 768-dim queries. The auto-wipe mechanism handles this transparently on deploy.
+</Decision>
+
+<Decision date="2026-05-22" title="Auto-wipe ChromaDB on embedding model change — zero manual steps on deploy">
+  Changing the embedding model from 384-dim to 768-dim makes every stored vector incompatible. A naive deploy would crash with `InvalidArgumentError: Collection expecting dimension of 384, got 768`. The fix: `run_ingest()` stores the current `EMBED_MODEL` string under `__embed_model__` in `.doc_hashes.json`. On startup, if the stored model name differs from the constant, `reset_collection()` is called and all documents are re-embedded. No environment variable, no manual SSH, no pre-deploy migration step required.
+</Decision>
+
+<Decision date="2026-05-22" title="Static knowledge graph for context expansion — no graph library, no LLM extraction">
+  After retrieval, Avocado sometimes has all the pieces but not the connections. A user asks "what did he build at NYU IT?" — the experience doc is retrieved, but the Multi-Agent project doc sits at rank 12 in the RRF pool. Without graph expansion, Gemini gets the job description but not the specific system built there.
+
+  Full GraphRAG was evaluated and rejected. It's designed for corpora with millions of nodes. For ~90 documents with completely known structure, the extraction step is pure overhead. The implementation is a static in-memory graph built at startup. Three relationship maps: `project → skill category docs`, `experience → project docs`, `project → experience doc`. After the RRF top-5 is selected, `expand_context()` follows 1-hop edges and pulls in at most 2 related docs from the RRF-20 pool — no extra ChromaDB call, zero added latency.
 </Decision>
 
 <Decision date="2026-04-10" title="BM25 hybrid retrieval alongside ChromaDB dense search">
@@ -371,12 +524,6 @@ Chatbot lives outside — no nav, no footer, full screen.
 
 <Decision date="2026-04-05" title="SQLite over managed Postgres for analytics">
   The analytics workload is narrow: INSERT a view, INSERT OR UPDATE clap count, SELECT COUNT with a WHERE on timestamp. No joins. No concurrent writers. SQLite on the Lightsail SSD is zero-cost, same-process, and the entire database is one file that can be backed up with a single `aws s3 cp` command.
-</Decision>
-
-<Decision date="2026-03-20" title="Static export to GitHub Pages — now at custom domain jayaremala.com">
-  The portfolio UI has no per-request server-side needs. Everything dynamic — chat responses, blog stats — is client-side JavaScript calling the backend API. A fully static export generates HTML, CSS, and JS at build time and serves from GitHub Pages CDN for free with no cold starts.
-
-  With the custom domain migration, the `basePath: "/jayaremala"` constraint was lifted. The site now lives at the domain root. The one remaining constraint: always use `Link` from `next/link` for internal navigation — plain anchor tags bypass Next.js routing.
 </Decision>
 
 <Decision date="2026-03-10" title="Single source of truth: backend JSON as canonical data">
@@ -393,46 +540,48 @@ Chatbot lives outside — no nav, no footer, full screen.
   The questions that matter most in the first 30 seconds — "What makes Jaya stand out?", "How do I hire him?" — are not well-served by retrieval from raw experience data. The 12 FAQ documents are handwritten answers to the highest-probability recruiter questions, loaded into ChromaDB as their own document type. When one is retrieved, Gemini gets the answer already formed. These 12 documents have more impact on response quality than any pipeline improvement.
 </Decision>
 
-<Decision date="2026-05-22" title="BAAI/bge-base-en-v1.5 over all-MiniLM-L6-v2 — better retrieval, same ONNX runtime">
-  The original embedding model was `all-MiniLM-L6-v2` — a 6-layer distilled model producing 384-dim vectors. It was chosen for speed and the ~45MB ONNX binary size. The problem: distilled models sacrifice retrieval quality for size. On BEIR benchmarks, `BAAI/bge-base-en-v1.5` outperforms MiniLM by 8–12 recall points across task types. For a portfolio chatbot, missed recall means a recruiter asks "does he have Redis caching experience?" and the retrieval returns a profile doc instead of the exact 78% latency reduction bullet.
-
-  The switch stays fully ONNX via fastembed — no PyTorch dependency, no RAM regression beyond ~30–50MB for the larger 768-dim model. The ONNX binary is ~90MB vs 45MB, a one-time download. Critically, switching embedding models requires wiping ChromaDB and rebuilding from scratch because stored 384-dim vectors are incompatible with 768-dim queries. The auto-wipe mechanism (see next decision) handles this transparently on deploy.
-
-  PyTorch was explicitly evaluated and rejected: PyTorch and ONNX produce byte-identical embeddings for the same model weights. Switching runtimes without upgrading the model changes nothing except adding ~600MB RAM and a PyTorch dependency. What matters is the model, not the runtime.
-</Decision>
-
-<Decision date="2026-05-22" title="Auto-wipe ChromaDB on embedding model change — zero manual steps on deploy">
-  Changing the embedding model from 384-dim to 768-dim makes every stored vector incompatible. A naive deploy would start up, try to query with 768-dim vectors against a 384-dim collection, and crash with `InvalidArgumentError: Collection expecting dimension of 384, got 768`. The fallback kicks in but every query fails.
-
-  The fix: `run_ingest()` stores the current `EMBED_MODEL` string under `__embed_model__` in `.doc_hashes.json`. On startup, if the stored model name differs from the constant in `store.py` (or is absent — which happens when hashes exist from before tracking was added), `reset_collection()` is called first and `force=True` is set. ChromaDB wipes cleanly and all 87 documents are re-embedded with the new model before the app starts serving traffic. No environment variable, no manual SSH, no pre-deploy migration step required.
-
-  The absence case (`stored_model is None`) deliberately triggers a wipe rather than assuming the existing collection is compatible. On a fresh instance with no hashes file, the collection is also empty so the wipe is a no-op. On an existing instance with an old hashes file, the wipe is exactly what's needed.
-</Decision>
-
-<Decision date="2026-05-22" title="Static knowledge graph for context expansion — no graph library, no LLM extraction">
-  After retrieval, Avocado sometimes has all the pieces but not the connections. A user asks "what did he build at NYU IT?" — the experience doc is retrieved, but the Multi-Agent project doc sits at rank 12 in the RRF pool. Without graph expansion, Gemini gets the job description but not the specific system built there.
-
-  Full GraphRAG (Microsoft's approach using community detection and LLM-extracted entities) was evaluated and rejected. It's designed for corpora with millions of nodes. For 87 documents with completely known structure, the extraction step is pure overhead — we already know the relationships from the JSON files.
-
-  The implementation is a static in-memory graph built at startup from the knowledge JSON. Three relationship maps: `project → skill category docs` (from `projects.json tags[]`), `experience → project docs` (hard-coded temporal co-occurrence for the 5–6 known links), `project → experience doc` (reverse). After the RRF top-5 is selected, `expand_context()` follows 1-hop edges and pulls in at most 2 related docs from the RRF-20 pool — no extra ChromaDB call, zero added latency. The expanded docs go through the same `_build_context()` grouping as the retrieved ones.
-
-  The hard-coded experience→project links are a deliberate choice over dynamic temporal overlap detection. The temporal heuristic produces false positives (the portfolio project spans all NYU time, so it incorrectly maps to every NYU experience). A 6-line dict with the real mappings is correct, readable, and maintainable.
-</Decision>
-
 ---
 
 ## Progress Log
+
+<Update date="2026-05-28">
+  Added Content CRUD API (`/content/*`). Blog posts, lab entries, and quotes are now stored in `content.db` (SQLite on Lightsail SSD). Public GET endpoints; write endpoints require ADMIN_TOKEN bearer auth. After every write, a background task regenerates the corresponding JSON and calls run_ingest() — only changed documents are re-embedded.
+</Update>
+
+<Update date="2026-05-28">
+  Built admin panel at `/admin`. Consolidates: conversation analytics (week/month/all), feedback satisfaction %, top questions, site visitor stats with geo + page breakdown, blog engagement (unique readers, revisit rate), and content editors for blog posts, lab entries, and quotes. Not linked in nav; robots.txt no-index.
+</Update>
+
+<Update date="2026-05-28">
+  Added HyDE (Hypothetical Document Embeddings, Gao et al. 2022) to the streaming RAG pipeline. HyDE generates a hypothetical answer to the user query and uses it for an additional dense retrieval pass — both run in parallel via asyncio.gather(). HyDE chunks are prepended before RRF so docs retrieved by both signals get a double rank bonus. 4s hard timeout; skipped for greetings and messages under 15 chars.
+</Update>
+
+<Update date="2026-05-28">
+  Added SlowAPI rate limiting middleware. `/ai/chat/stream` is limited to 10 req/min per IP with correct X-Forwarded-For extraction behind Nginx.
+</Update>
+
+<Update date="2026-05-28">
+  Added `/quotes` portfolio route. QuotesFeed component displays curated quotes by category (Philosophy, Engineering, Science, etc.) with favorite/featured flags. Quotes stored in `content.db` and `quotes.json`; served from static JSON on the frontend.
+</Update>
+
+<Update date="2026-05-28">
+  Expanded analytics: site visit tracking (POST /stats/visit + async geo lookup), feedback recording (POST /ai/feedback + satisfaction %), top-questions table, experience ratings (1–5 star). GET /stats/admin returns full breakdown by week/month/all.
+</Update>
+
+<Update date="2026-05-28">
+  Moved RAG ingest to a background daemon thread at startup. FastAPI now serves /health immediately while ONNX loads and ingest runs. Health endpoint reports rag: "degraded" during warmup.
+</Update>
 
 <Update date="2026-05-22">
   Upgraded embedding model from all-MiniLM-L6-v2 (384-dim, 6-layer) to BAAI/bge-base-en-v1.5 (768-dim, 12-layer BERT) via fastembed ONNX. Same runtime, significantly better retrieval recall on BEIR benchmarks (+8–12 points). No PyTorch dependency added.
 </Update>
 
 <Update date="2026-05-22">
-  Added auto-wipe on embedding model change. run_ingest() now stores the current EMBED_MODEL in .doc_hashes.json. If the stored model name differs on startup, reset_collection() is called automatically and all 87 docs are re-ingested with the new model. Handles both explicit model changes and the first-startup case where no model was previously tracked.
+  Added auto-wipe on embedding model change. run_ingest() now stores the current EMBED_MODEL in .doc_hashes.json. If the stored model name differs on startup, reset_collection() is called automatically and all docs are re-ingested with the new model.
 </Update>
 
 <Update date="2026-05-22">
-  Added static knowledge graph (graph.py). build_graph() constructs three relationship maps from knowledge JSON at startup: project→skills, experience→projects, project→experience. expand_context() does 1-hop traversal after RRF top-5 rerank, pulling up to 2 related docs from the RRF-20 pool into the Gemini context window. Zero extra ChromaDB calls, zero latency penalty. Both /ai/chat and /ai/chat/stream updated.
+  Added static knowledge graph (graph.py). build_graph() constructs three relationship maps from knowledge JSON at startup: project→skills, experience→projects, project→experience. expand_context() does 1-hop traversal after RRF top-5 rerank, pulling up to 2 related docs from the RRF-20 pool into the Gemini context window. Zero extra ChromaDB calls, zero latency penalty.
 </Update>
 
 <Update date="2026-05-22">
@@ -440,7 +589,7 @@ Chatbot lives outside — no nav, no footer, full screen.
 </Update>
 
 <Update date="2026-05-21">
-  Replaced collection-level hash re-ingest with per-document incremental sync. Adding a blog post or lab entry now embeds only that one document rather than wiping and rebuilding the entire ~80-doc collection. Stale documents removed from source are deleted from ChromaDB automatically. Per-document hashes persisted in .doc_hashes.json on the Lightsail SSD. Token-gated POST /admin/reingest?force=true endpoint added for manual full re-embeds.
+  Replaced collection-level hash re-ingest with per-document incremental sync. Adding a blog post or lab entry now embeds only that one document rather than wiping and rebuilding the entire collection. Stale documents removed from source are deleted from ChromaDB automatically.
 </Update>
 
 <Update date="2026-05-21">
@@ -448,11 +597,11 @@ Chatbot lives outside — no nav, no footer, full screen.
 </Update>
 
 <Update date="2026-05-21">
-  Implemented zero-downtime blue-green deployment. New container health-checked on port 8001 before old :8000 is stopped. deploy.sh, rollback.sh, and backup.sh moved into infra/scripts/ and version-controlled in the repo. GitHub Actions deploy-backend job reduced to a single SSH call.
+  Implemented zero-downtime blue-green deployment. New container health-checked on port 8001 before old :8000 is stopped. deploy.sh, rollback.sh, and backup.sh moved into infra/scripts/ and version-controlled in the repo.
 </Update>
 
 <Update date="2026-05-21">
-  Set up daily S3 backup of analytics.db to itsjaya-backups-analytics bucket with 7-day retention. Deploy script auto-restores from S3 if /data/analytics.db is missing on a fresh instance. Docker log rotation configured: json-file driver, 10MB max, 3 files. CHROMA_DB_PATH made configurable via settings.py so ChromaDB persists to /data/chroma_db on the Lightsail SSD.
+  Set up daily S3 backup of analytics.db to itsjaya-backups-analytics bucket with 7-day retention. Deploy script auto-restores from S3 if /data/analytics.db is missing on a fresh instance. Docker log rotation configured: json-file driver, 10MB max, 3 files. CHROMA_DB_PATH made configurable via settings.py.
 </Update>
 
 <Update date="2026-04-22">
@@ -495,9 +644,10 @@ Chatbot lives outside — no nav, no footer, full screen.
 
 ## What's next
 
-- Cross-encoder reranking (`cross-encoder/ms-marco-MiniLM-L-6-v2`) — already scaffolded in `rerank_cross_encoder()`, gated on Lightsail upgrade to 4GB ($20/month) for the ~250MB RAM headroom
-- Entity-aware ChromaDB pre-filtering using the metadata fields added this session (entity_type, future company_key, project_key)
+- Cross-encoder reranking (`cross-encoder/ms-marco-MiniLM-L-6-v2`) — scaffolded in `rerank_cross_encoder()`, gated on Lightsail upgrade to 4GB ($20/month) for the ~250MB RAM headroom
+- Entity-aware ChromaDB pre-filtering using the metadata fields (entity_type, company_key, project_key)
 - Reading time estimate on blog cards
 - Search within blog posts
 - Avocado voice input (Web Speech API — already prototyped)
 - Monitoring dashboard (uptime + response time over time)
+- S3 backup for `content.db` alongside `analytics.db`

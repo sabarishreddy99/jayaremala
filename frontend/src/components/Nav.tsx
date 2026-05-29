@@ -8,13 +8,34 @@ import ThemeToggle from "@/components/ThemeToggle";
 import ReadingProgress from "@/components/blog/ReadingProgress";
 
 const links = [
-  { href: "/experience", label: "Experience" },
-  { href: "/education",  label: "Education"  },
-  { href: "/projects",   label: "Projects"   },
-  { href: "/lab",        label: "Lab"        },
-  { href: "/blog",       label: "Blog"       },
-  { href: "/quotes",     label: "Quotes"     },
-  { href: "/now",        label: "Now"        },
+  {
+    href: "/experience", label: "Experience",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>,
+  },
+  {
+    href: "/education",  label: "Education",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>,
+  },
+  {
+    href: "/projects",   label: "Projects",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+  },
+  {
+    href: "/lab",        label: "Lab",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0H5a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4m-6 0h6"/></svg>,
+  },
+  {
+    href: "/blog",       label: "Blog",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>,
+  },
+  {
+    href: "/quotes",     label: "Quotes",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zm14.017 0v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-3.983v-10h9.983z"/></svg>,
+  },
+  {
+    href: "/now",        label: "Now",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>,
+  },
 ];
 
 export default function Nav() {
@@ -49,19 +70,31 @@ export default function Nav() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {links.map((l) => (
-            <Link
-              key={l.href}
-              href={l.href}
-              className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                pathname.startsWith(l.href)
-                  ? "bg-surface-raised text-fg font-medium"
-                  : "text-fg-subtle hover:text-fg hover:bg-surface-raised"
-              }`}
-            >
-              {l.label}
-            </Link>
-          ))}
+          {links.map((l) => {
+            const active = pathname.startsWith(l.href);
+            return (
+              <Link
+                key={l.href}
+                href={l.href}
+                className={`group inline-flex items-center px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
+                  active
+                    ? "bg-surface-raised text-fg font-medium"
+                    : "text-fg-subtle hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:font-medium"
+                }`}
+              >
+                {active ? (
+                  <span className="relative inline-flex items-center justify-center">
+                    <span className="invisible text-sm select-none" aria-hidden>{l.label}</span>
+                    <span className="absolute inset-0 flex items-center justify-center text-accent opacity-80">
+                      {l.icon}
+                    </span>
+                  </span>
+                ) : (
+                  <span className="text-sm whitespace-nowrap">{l.label}</span>
+                )}
+              </Link>
+            );
+          })}
           <a
             href={profile.resume}
             target="_blank"
@@ -145,18 +178,21 @@ export default function Nav() {
       {/* Mobile drawer */}
       {open && (
         <div className="md:hidden border-t border-border-subtle bg-surface px-4 pb-4 pt-2">
-          <nav className="flex flex-col gap-1">
+          <nav className="flex flex-col gap-0.5">
             {links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
                 onClick={() => setOpen(false)}
-                className={`px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                   pathname.startsWith(l.href)
                     ? "bg-surface-raised text-fg font-medium"
                     : "text-fg-muted hover:bg-surface-raised"
                 }`}
               >
+                <span className={`shrink-0 ${pathname.startsWith(l.href) ? "text-accent" : "text-fg-faint"}`}>
+                  {l.icon}
+                </span>
                 {l.label}
               </Link>
             ))}

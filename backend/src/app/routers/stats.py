@@ -47,7 +47,9 @@ class VisitIn(BaseModel):
 
 @router.get("")
 def get_stats() -> dict[str, int]:
-    return analytics.get_stats()
+    chat = analytics.get_stats()
+    site = analytics.get_site_visitor_stats()
+    return {**chat, "site_unique_visitors": site["unique_visitors"]}
 
 
 @router.get("/overview")

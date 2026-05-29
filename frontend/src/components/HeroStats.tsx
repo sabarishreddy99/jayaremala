@@ -59,7 +59,7 @@ export default function HeroStats({ stats }: { stats?: HeroStat[] }) {
             <span className={`text-xl sm:text-2xl lg:text-[1.75rem] font-bold transition-colors duration-300 ${hovered === i ? "text-accent" : "text-fg"}`}>
               {counts[i]}
             </span>
-            <span className={`text-sm sm:text-base font-bold transition-colors duration-300 ${hovered === i ? "text-accent" : "text-accent"}`}>
+            <span className={`text-sm sm:text-base font-bold transition-colors duration-300 ${hovered === i ? "text-accent" : "text-fg-subtle"}`}>
               {stat.suffix}
             </span>
           </p>

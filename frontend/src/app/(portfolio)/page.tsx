@@ -17,6 +17,8 @@ import SkillsSection from "@/components/SkillsSection";
 import SectionNav from "@/components/SectionNav";
 import MobileNoBg from "@/components/MobileNoBg";
 import SiteVitals from "@/components/SiteVitals";
+import { testimonials } from "@/data/testimonials";
+import { experience } from "@/data/experience";
 
 export const metadata = {
   title: "Jaya Sabarish Reddy Remala — Software Engineer",
@@ -90,10 +92,19 @@ function HighlightNumbers({ text }: { text: string }) {
 }
 
 
+/** Find the most relevant experience entry for a company chip name */
+function findExp(chipName: string) {
+  const n = chipName.toLowerCase().trim();
+  return experience.find(
+    (e) => e.company.toLowerCase().includes(n.split(" ")[0]) || n.includes(e.company.toLowerCase().split(" ")[0])
+  );
+}
+
 export default function PortfolioHome() {
   const featured = projects.filter((p) => p.featured);
   const latestPost = getAllPosts()[0] ?? null;
   const latestQuote = quotes.find((q) => q.featured) ?? [...quotes].sort((a, b) => b.addedAt.localeCompare(a.addedAt))[0] ?? null;
+  const socialProof = testimonials.slice(0, 2);
 
   return (
     <div className="w-full">
@@ -151,18 +162,30 @@ export default function PortfolioHome() {
 
             {/* Tagline */}
             <p
-              className="animate-fade-up text-base sm:text-lg font-medium text-accent leading-relaxed"
+              className="animate-fade-up text-base sm:text-lg font-medium text-fg-muted leading-relaxed"
               style={{ animationDelay: "140ms" }}
             >
               {profile.tagline}
             </p>
 
-            {/* Stats — desktop only; too cramped at xs */}
+            {/* Stats — desktop (full 4-col); mobile (2-col compact, top 2 stats) */}
             <div className="animate-fade-up hidden sm:block" style={{ animationDelay: "220ms" }}>
               <HeroStats stats={profile.heroStats} />
             </div>
+            {profile.heroStats && profile.heroStats.length >= 2 && (
+              <div className="animate-fade-up grid grid-cols-2 gap-2 sm:hidden" style={{ animationDelay: "220ms" }}>
+                {profile.heroStats.slice(0, 2).map((s) => (
+                  <div key={s.label} className="rounded-xl border border-border bg-surface px-3 py-2.5">
+                    <p className="font-mono font-bold tabular-nums text-lg text-fg leading-none">
+                      {s.value}<span className="text-sm text-fg-subtle">{s.suffix}</span>
+                    </p>
+                    <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-1">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            )}
 
-            {/* CTAs */}
+            {/* CTAs — primary + secondary only (Hick's Law: 2 choices max) */}
             <div
               className="animate-fade-up flex flex-row flex-wrap items-center gap-2 sm:gap-3"
               style={{ animationDelay: "300ms" }}
@@ -180,32 +203,32 @@ export default function PortfolioHome() {
               >
                 Projects
               </Link>
-              <a
-                href={profile.resume}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1 rounded-full border border-border px-3.5 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-medium text-fg-subtle hover:text-fg hover:border-fg-muted transition-colors duration-200"
-              >
-                Resume ↗
+            </div>
+
+            {/* Contact shortcut — for recruiters ready to act immediately */}
+            <div className="animate-fade-up flex items-center gap-3 flex-wrap" style={{ animationDelay: "340ms" }}>
+              <a href={`mailto:${profile.email}`} className="inline-flex items-center gap-1 text-[11px] text-fg-faint hover:text-fg transition-colors">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                {profile.email}
               </a>
-            </div>
-
-            {/* Live site vitals */}
-            <div className="animate-fade-up" style={{ animationDelay: "350ms" }}>
-              <SiteVitals />
-            </div>
-
-            {/* Prev @ */}
-            <div
-              className="animate-fade-up flex flex-wrap items-center gap-2"
-              style={{ animationDelay: "380ms" }}
-            >
-              <span className="text-sm text-fg-faint">Prev @</span>
-              {profile.previous.split(",").map((co) => (
-                <span key={co} className="rounded-full border border-border bg-surface-raised px-2.5 py-0.5 text-xs font-medium text-fg-subtle">
-                  {co.trim()}
-                </span>
-              ))}
+              <span className="text-border text-[10px]">·</span>
+              <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-fg-faint hover:text-fg transition-colors">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                LinkedIn
+              </a>
+              <span className="text-border text-[10px]">·</span>
+              <a href={profile.github} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-fg-faint hover:text-fg transition-colors">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                GitHub
+              </a>
+              {profile.resume && (
+                <>
+                  <span className="text-border text-[10px]">·</span>
+                  <a href={profile.resume} target="_blank" rel="noopener noreferrer" className="text-[11px] text-fg-faint hover:text-fg transition-colors">
+                    Resume ↗
+                  </a>
+                </>
+              )}
             </div>
           </div>
 
@@ -260,6 +283,36 @@ export default function PortfolioHome() {
             </div>
           </div>
         </Inner>
+
+        {/* Section preview strip + scroll hint */}
+        <Inner className="pb-6 sm:pb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+          {/* Section chips — visual scent of what's below */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-[10px] text-fg-faint mr-1">Explore</span>
+            {[
+              { href: "#about",        label: "At a Glance" },
+              { href: "#projects",     label: "Projects" },
+              { href: "#skills",       label: "Skills" },
+              { href: "#testimonials", label: "Testimonials" },
+              { href: "#contact",      label: "Contact" },
+            ].map((s) => (
+              <a
+                key={s.href}
+                href={s.href}
+                className="rounded-full border border-border bg-surface/60 px-2.5 py-0.5 text-[11px] font-medium text-fg-faint hover:text-fg hover:border-fg-muted transition-colors"
+              >
+                {s.label}
+              </a>
+            ))}
+          </div>
+          {/* Scroll hint — bouncing chevron */}
+          <div className="flex flex-col items-center gap-1 opacity-40 animate-bounce" aria-hidden>
+            <span className="text-[10px] font-medium text-fg-faint tracking-wide">scroll</span>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-fg-faint">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+        </Inner>
       </section>
 
       {/* ── 2 · At a Glance ── z-[2] ───────────────────────────── */}
@@ -284,6 +337,26 @@ export default function PortfolioHome() {
                 </span>
                 <p className="text-sm sm:text-base leading-7 text-fg-muted italic">{profile.obsession}</p>
               </div>
+
+              {/* Social proof — 2 testimonial pull-quotes */}
+              {socialProof.length > 0 && (
+                <div className="grid sm:grid-cols-2 gap-3 max-w-2xl">
+                  {socialProof.map((t) => (
+                    <div key={t.name} className="rounded-xl border border-border bg-surface p-4 space-y-2.5">
+                      <p className="text-xs text-fg-muted leading-relaxed line-clamp-3 italic">
+                        &ldquo;{t.description.split(".")[0]}.&rdquo;
+                      </p>
+                      <div>
+                        <p className="text-[11px] font-semibold text-fg-subtle">{t.name}</p>
+                        <p className="text-[10px] text-fg-faint">{t.designation} · {t.company}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Site vitals — live meta stats */}
+              <SiteVitals />
             </div>
 
             <div className="hidden sm:flex flex-col gap-6 lg:pt-1">
@@ -310,23 +383,34 @@ export default function PortfolioHome() {
                 </div>
               </div>
 
-              {/* Company mini-timeline */}
+              {/* Company mini-timeline with hover tooltips */}
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Career path</p>
                 <div className="flex flex-col">
-                  {profile.previous.split(",").map((co, i, arr) => (
-                    <div key={co} className="flex items-start gap-2.5">
-                      <div className="flex flex-col items-center">
-                        <div className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${i === 0 ? "bg-accent" : "bg-border-strong"}`} />
-                        {i < arr.length - 1 && (
-                          <div className="w-px h-6 bg-gradient-to-b from-border-strong/60 to-transparent mt-0.5" />
-                        )}
+                  {profile.previous.split(",").map((co, i, arr) => {
+                    const exp = findExp(co.trim());
+                    return (
+                      <div key={co} className="flex items-start gap-2.5">
+                        <div className="flex flex-col items-center">
+                          <div className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${i === 0 ? "bg-accent" : "bg-border-strong"}`} />
+                          {i < arr.length - 1 && (
+                            <div className="w-px h-6 bg-gradient-to-b from-border-strong/60 to-transparent mt-0.5" />
+                          )}
+                        </div>
+                        <div className="relative group/co pb-4">
+                          <span className={`text-xs cursor-default ${i === 0 ? "text-fg font-medium" : "text-fg-subtle"}`}>
+                            {co.trim()}
+                          </span>
+                          {exp && (
+                            <div className="absolute left-0 top-full mt-1 z-10 hidden group-hover/co:block bg-surface border border-border rounded-lg px-3 py-2 shadow-md whitespace-nowrap pointer-events-none">
+                              <p className="text-[11px] font-semibold text-fg">{exp.role}</p>
+                              <p className="text-[10px] text-fg-faint">{exp.start} – {exp.end}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <span className={`text-xs pb-4 ${i === 0 ? "text-fg font-medium" : "text-fg-subtle"}`}>
-                        {co.trim()}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             </div>

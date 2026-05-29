@@ -62,10 +62,10 @@ export default function Nav() {
         {/* Logo */}
         <Link
           href="/"
-          className="text-sm font-bold tracking-tight text-fg hover:opacity-70 transition-opacity"
+          className="inline-flex items-center text-sm font-bold tracking-tight text-fg hover:opacity-70 transition-opacity"
           onClick={() => setOpen(false)}
         >
-          Jaya<span className="text-indigo-600 dark:text-indigo-400">.</span>
+          Jaya<span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 mx-0.5 -mb-1" />
         </Link>
 
         {/* Desktop nav */}

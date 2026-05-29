@@ -37,6 +37,7 @@ export interface Profile {
   github: string;
   linkedin: string;
   resume: string;
+  booking_url?: string;
   page_experience?: string;
   page_education?: string;
   page_projects?: string;

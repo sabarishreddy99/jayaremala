@@ -160,6 +160,27 @@ export default function ContactForm() {
           <p className="text-sm text-fg-subtle mb-6 max-w-md">{profile.contact_description}</p>
         )}
 
+        {/* Book a call CTA */}
+        <a
+          href={profile.booking_url ?? "https://calendar.app.google/3sScGpHpeSpvPjpSA"}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2.5 rounded-2xl border border-border bg-surface hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm px-5 py-3.5 mb-8 transition-all duration-200 group w-full sm:w-auto"
+        >
+          <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 shrink-0 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-950 transition-colors">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+            </svg>
+          </span>
+          <div>
+            <p className="text-sm font-semibold text-fg">Book a call</p>
+            <p className="text-[11px] text-fg-faint">Schedule a 30-min intro on Google Calendar</p>
+          </div>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-auto text-fg-faint group-hover:text-fg-subtle transition-colors shrink-0">
+            <path d="M7 17L17 7M17 7H7M17 7v10"/>
+          </svg>
+        </a>
+
         <form onSubmit={handleSubmit} className="space-y-4 mb-6">
           <div className="grid gap-4 sm:grid-cols-2">
             <div>

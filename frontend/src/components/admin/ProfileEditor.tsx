@@ -10,6 +10,7 @@ interface ProfileFields {
   name: string; tagline: string; bio: string; summary: string; obsession: string;
   currently: string; previous: string; prev_domain: string; interested_domain: string;
   location: string; email: string; phone: string; github: string; linkedin: string; resume: string;
+  booking_url: string;
   page_experience: string; page_education: string; page_projects: string; contact_description: string;
 }
 
@@ -17,6 +18,7 @@ const DEFAULT: ProfileFields = {
   name: "", tagline: "", bio: "", summary: "", obsession: "", currently: "",
   previous: "", prev_domain: "", interested_domain: "",
   location: "", email: "", phone: "", github: "", linkedin: "", resume: "",
+  booking_url: "",
   page_experience: "", page_education: "", page_projects: "", contact_description: "",
 };
 
@@ -60,9 +62,10 @@ const SECTIONS: { heading: string; fields: { key: keyof ProfileFields; label: st
       { key: "location", label: "Location",  placeholder: "United States" },
       { key: "email",    label: "Email",     placeholder: "jr6421@nyu.edu" },
       { key: "phone",    label: "Phone",     placeholder: "+1 (516) …" },
-      { key: "linkedin", label: "LinkedIn URL" },
-      { key: "github",   label: "GitHub URL"   },
-      { key: "resume",   label: "Resume URL"   },
+      { key: "linkedin",    label: "LinkedIn URL" },
+      { key: "github",      label: "GitHub URL"   },
+      { key: "resume",      label: "Resume URL"   },
+      { key: "booking_url", label: "Book a Call URL (Google Calendar)" },
     ],
   },
 ];
@@ -97,6 +100,7 @@ export default function ProfileEditor() {
       github:              profile.github              ?? "",
       linkedin:            profile.linkedin            ?? "",
       resume:              profile.resume              ?? "",
+      booking_url:         profile.booking_url         ?? "",
       page_experience:     profile.page_experience     ?? "",
       page_education:      profile.page_education      ?? "",
       page_projects:       profile.page_projects       ?? "",

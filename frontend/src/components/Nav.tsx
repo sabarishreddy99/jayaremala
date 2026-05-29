@@ -14,6 +14,7 @@ const links = [
   { href: "/lab",        label: "Lab"        },
   { href: "/blog",       label: "Blog"       },
   { href: "/quotes",     label: "Quotes"     },
+  { href: "/now",        label: "Now"        },
 ];
 
 export default function Nav() {

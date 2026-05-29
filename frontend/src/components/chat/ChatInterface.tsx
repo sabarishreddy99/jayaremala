@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api/client";
 import { getOrCreateVisitorId } from "@/lib/visitor";
-import { saveMessages, loadMessages, clearSession, saveModel, loadModel } from "@/lib/session";
+import { saveMessages, loadMessages, clearSession, saveModel, loadModel, saveLastQuestions, loadLastQuestions } from "@/lib/session";
 import { profile } from "@/data/profile";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
@@ -136,6 +136,7 @@ export default function ChatInterface() {
   const [ratingHover, setRatingHover] = useState(0);
   const [pendingRetry, setPendingRetry] = useState<string | null>(null);
   const [sessionRestored, setSessionRestored] = useState(false);
+  const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -174,6 +175,14 @@ export default function ChatInterface() {
     if (hasHistory) {
       setSessionRestored(true);
       dismissTimer = setTimeout(() => setSessionRestored(false), 3000);
+    }
+
+    // Welcome back: show last question from a previous session (localStorage, not sessionStorage)
+    if (!hasHistory) {
+      const prev = loadLastQuestions();
+      if (prev && prev.length > 0) {
+        setWelcomeBack(prev[0]);
+      }
     }
 
     const q = searchParams.get("q");
@@ -307,6 +316,11 @@ export default function ChatInterface() {
       const finalMessages = [...nextMessages, assistantMsg];
       setMessages(finalMessages);
       saveMessages(finalMessages.filter((m) => m !== WELCOME));
+      const userQuestions = finalMessages
+        .filter((m) => m.role === "user")
+        .map((m) => m.content)
+        .slice(-3);
+      saveLastQuestions(userQuestions);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
       setPendingRetry(text);
@@ -415,6 +429,32 @@ export default function ChatInterface() {
           </div>
         </div>
       </div>
+
+      {/* Welcome back banner — shown on return visits (new session, but prior questions exist) */}
+      {welcomeBack && (
+        <div className="shrink-0 px-3 sm:px-10 pt-2">
+          <div className="mx-auto max-w-2xl lg:max-w-3xl">
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50/60 dark:bg-violet-950/30 px-3 py-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-violet-400 shrink-0">
+                  <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                </svg>
+                <p className="text-[11px] text-violet-600 dark:text-violet-400 font-medium truncate">
+                  Welcome back! Last time:{" "}
+                  <span className="italic font-normal opacity-80 truncate">&ldquo;{welcomeBack}&rdquo;</span>
+                </p>
+              </div>
+              <button
+                onClick={() => setWelcomeBack(null)}
+                aria-label="Dismiss"
+                className="text-[12px] text-violet-400 hover:text-violet-600 dark:hover:text-violet-300 transition-colors shrink-0 leading-none"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Rate-limit countdown banner */}
       {rateLimitUntil && (

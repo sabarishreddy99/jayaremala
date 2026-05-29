@@ -14,6 +14,14 @@ export interface HeroStat {
   sub: string;
 }
 
+export interface NowBlock {
+  building: string;
+  learning: string;
+  reading: string;
+  location: string;
+  updated: string;
+}
+
 export interface Profile {
   name: string;
   tagline: string;
@@ -34,6 +42,7 @@ export interface Profile {
   page_projects?: string;
   contact_description?: string;
   currently?: string;
+  now?: NowBlock;
   availability?: Availability;
   heroStats?: HeroStat[];
 }

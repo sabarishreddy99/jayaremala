@@ -131,12 +131,45 @@ function FeaturedQuote({ quote }: { quote: Quote }) {
   );
 }
 
+// ── Quote of the Week ────────────────────────────────────────────────────────
+
+function getQuoteOfWeek(quotes: Quote[]): Quote {
+  const weekIndex = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+  return quotes[weekIndex % quotes.length];
+}
+
+function WeeklyQuote({ quote }: { quote: Quote }) {
+  const cfg = CAT_CONFIG[quote.category];
+  return (
+    <div className="relative rounded-2xl border-2 border-indigo-200 dark:border-indigo-800 bg-gradient-to-br from-indigo-50/60 to-violet-50/40 dark:from-indigo-950/30 dark:to-violet-950/20 p-6 sm:p-7 overflow-hidden mb-10">
+      <div className="absolute top-3 right-4 text-[11px] font-bold uppercase tracking-widest text-indigo-400 dark:text-indigo-500 flex items-center gap-1.5">
+        <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse inline-block" />
+        Quote of the Week
+      </div>
+      <div className={`text-5xl font-serif leading-none mb-3 select-none ${cfg.quote} opacity-80`} aria-hidden>❝</div>
+      <blockquote className="text-base sm:text-lg font-medium text-fg leading-relaxed italic mb-4">
+        {quote.text}
+      </blockquote>
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-semibold text-fg-muted">
+          — {quote.author}
+          {quote.source && <span className="text-fg-faint font-normal">, <em>{quote.source}</em></span>}
+        </p>
+        <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${cfg.badge}`}>
+          {quote.category}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Client Component ────────────────────────────────────────────────────
 
 export default function QuotesClient({ quotes }: { quotes: Quote[] }) {
   const [activeCategory, setActiveCategory] = useState<QuoteCategory | "All">("All");
 
   const featured = quotes.find((q) => q.featured);
+  const weeklyQuote = getQuoteOfWeek(quotes);
 
   const filtered = activeCategory === "All"
     ? quotes
@@ -196,8 +229,11 @@ export default function QuotesClient({ quotes }: { quotes: Quote[] }) {
         </div>
       </div>
 
+      {/* Quote of the Week */}
+      <WeeklyQuote quote={weeklyQuote} />
+
       {/* Featured quote */}
-      {featured && (
+      {featured && featured.id !== weeklyQuote.id && (
         <div className="mb-12">
           <FeaturedQuote quote={featured} />
         </div>

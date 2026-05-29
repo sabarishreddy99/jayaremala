@@ -16,6 +16,7 @@ import StackSection from "@/components/StackSection";
 import SkillsSection from "@/components/SkillsSection";
 import SectionNav from "@/components/SectionNav";
 import MobileNoBg from "@/components/MobileNoBg";
+import SiteVitals from "@/components/SiteVitals";
 
 export const metadata = {
   title: "Jaya Sabarish Reddy Remala — Software Engineer",
@@ -189,6 +190,11 @@ export default function PortfolioHome() {
               </a>
             </div>
 
+            {/* Live site vitals */}
+            <div className="animate-fade-up" style={{ animationDelay: "350ms" }}>
+              <SiteVitals />
+            </div>
+
             {/* Prev @ */}
             <div
               className="animate-fade-up flex flex-wrap items-center gap-2"
@@ -222,11 +228,19 @@ export default function PortfolioHome() {
               <HeroAvocado />
             </div>
 
-            {/* Latest teasers — blog + quote */}
+            {/* Latest teasers — now + blog + quote */}
             <div
               className="animate-fade-up flex flex-col gap-2"
               style={{ animationDelay: "240ms" }}
             >
+              {profile.now && (
+                <Link href="/now" className="group inline-flex items-center gap-2 w-fit max-w-sm">
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Now</span>
+                  <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1">
+                    {profile.now.building.split("—")[0].trim()} →
+                  </span>
+                </Link>
+              )}
               {latestPost && (
                 <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 w-fit max-w-sm">
                   <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Blog</span>

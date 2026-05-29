@@ -54,3 +54,21 @@ export function loadModel(): string | null {
   if (typeof window === "undefined") return null;
   return sessionStorage.getItem(MODEL_KEY);
 }
+
+// Last user questions — localStorage so they survive across sessions
+const LAST_QUESTIONS_KEY = "jsr_last_questions";
+
+export function saveLastQuestions(questions: string[]): void {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(LAST_QUESTIONS_KEY, JSON.stringify(questions.slice(0, 3)));
+}
+
+export function loadLastQuestions(): string[] | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(LAST_QUESTIONS_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : null;
+  } catch {
+    return null;
+  }
+}

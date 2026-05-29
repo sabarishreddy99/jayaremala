@@ -29,6 +29,13 @@
       "Hybrid"
     ]
   },
+  "now": {
+    "building": "itsjaya.com — AI-powered portfolio with RAG chatbot, blog, and lab sections",
+    "learning": "Recommendation systems at scale — collaborative filtering, two-tower models, and retrieval-augmented ranking",
+    "reading": "Designing Data-Intensive Applications — Martin Kleppmann",
+    "location": "New York, NY",
+    "updated": "2026-05-29"
+  },
   "heroStats": [
     {
       "value": 78,

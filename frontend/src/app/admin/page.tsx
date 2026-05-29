@@ -7,6 +7,14 @@ import ContentBlogEditor from "@/components/admin/ContentBlogEditor";
 import ContentLabEditor from "@/components/admin/ContentLabEditor";
 import ContentQuotesEditor from "@/components/admin/ContentQuotesEditor";
 import AvailabilityEditor from "@/components/admin/AvailabilityEditor";
+import NowEditor from "@/components/admin/NowEditor";
+import ProfileEditor from "@/components/admin/ProfileEditor";
+import HeroStatsEditor from "@/components/admin/HeroStatsEditor";
+import ExperienceEditor from "@/components/admin/ExperienceEditor";
+import EducationEditor from "@/components/admin/EducationEditor";
+import ProjectsEditor from "@/components/admin/ProjectsEditor";
+import SkillsEditor from "@/components/admin/SkillsEditor";
+import TestimonialsEditor from "@/components/admin/TestimonialsEditor";
 import KnowledgeDataView from "@/components/admin/KnowledgeDataView";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -2303,7 +2311,11 @@ function Dashboard({
   lastUpdated: Date | null;
 }) {
   const [period, setPeriod] = useState<Period>("all");
-  const [activeView, setActiveView] = useState<"analytics" | "write-blog" | "quotes" | "blog-api" | "lab" | "quotes-api" | "availability" | "data">("analytics");
+  const [activeView, setActiveView] = useState<
+    "analytics" | "write-blog" | "quotes" | "blog-api" | "lab" | "quotes-api" |
+    "availability" | "now" | "data" |
+    "profile" | "hero-stats" | "experience" | "education" | "projects" | "skills" | "testimonials"
+  >("analytics");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const conv        = stats.conversations[period];
   const site        = stats.site_visitors[period];
@@ -2324,15 +2336,25 @@ function Dashboard({
     { key: "lab",         label: "Lab (API)",       icon: "🧪", group: "Content"  },
     { key: "quotes",      label: "Quotes",          icon: "❝",  group: "Content"  },
     { key: "quotes-api",  label: "Quotes (API)",    icon: "💬", group: "Content"  },
-    { key: "data",        label: "Portfolio Data",  icon: "📋", group: "Data"     },
-    { key: "availability",label: "Availability",    icon: "🟢", group: "Data"     },
+    { key: "profile",      label: "Profile",         icon: "👤", group: "Portfolio" },
+    { key: "hero-stats",   label: "Hero Stats",      icon: "📈", group: "Portfolio" },
+    { key: "experience",   label: "Experience",      icon: "💼", group: "Portfolio" },
+    { key: "education",    label: "Education",       icon: "🎓", group: "Portfolio" },
+    { key: "projects",     label: "Projects",        icon: "🛠",  group: "Portfolio" },
+    { key: "skills",       label: "Skills",          icon: "⚡", group: "Portfolio" },
+    { key: "testimonials", label: "Testimonials",    icon: "💬", group: "Portfolio" },
+    { key: "data",        label: "Raw JSON",         icon: "📋", group: "Settings"  },
+    { key: "availability",label: "Availability",     icon: "🟢", group: "Settings"  },
+    { key: "now",         label: "Now Page",         icon: "⏱",  group: "Settings"  },
   ];
-  const groups = ["Overview", "Content", "Data"] as const;
+  const groups = ["Overview", "Content", "Portfolio", "Settings"] as const;
 
   const VIEW_LABELS: Record<typeof activeView, string> = {
     analytics: "Analytics", "write-blog": "Write Blog", quotes: "Quotes",
     "blog-api": "Blog (API)", lab: "Lab (API)", "quotes-api": "Quotes (API)",
-    availability: "Availability", data: "Portfolio Data",
+    availability: "Availability", now: "Now Page", data: "Raw JSON",
+    profile: "Profile", "hero-stats": "Hero Stats", experience: "Experience",
+    education: "Education", projects: "Projects", skills: "Skills", testimonials: "Testimonials",
   };
 
   function NavList({ onSelect }: { onSelect?: () => void }) {
@@ -2514,6 +2536,14 @@ function Dashboard({
         {activeView === "lab" && <ContentLabEditor />}
         {activeView === "quotes-api" && <ContentQuotesEditor />}
         {activeView === "availability" && <AvailabilityEditor />}
+        {activeView === "now"          && <NowEditor />}
+        {activeView === "profile"      && <ProfileEditor />}
+        {activeView === "hero-stats"   && <HeroStatsEditor />}
+        {activeView === "experience"   && <ExperienceEditor />}
+        {activeView === "education"    && <EducationEditor />}
+        {activeView === "projects"     && <ProjectsEditor />}
+        {activeView === "skills"       && <SkillsEditor />}
+        {activeView === "testimonials" && <TestimonialsEditor />}
         {activeView === "data" && <KnowledgeDataView />}
 
         {/* Analytics content */}

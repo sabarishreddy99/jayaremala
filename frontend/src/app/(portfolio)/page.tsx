@@ -209,14 +209,11 @@ export default function PortfolioHome() {
             {/* Currently deep in */}
             {profile.currently && (
               <div
-                className="animate-fade-up flex items-start gap-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900/50 bg-indigo-50/40 dark:bg-indigo-950/20 px-3.5 py-3 sm:py-2.5"
+                className="animate-fade-up pl-3 border-l-2 border-indigo-400/50 dark:border-indigo-500/50"
                 style={{ animationDelay: "80ms" }}
               >
-                <span className="text-sm shrink-0 select-none">💭</span>
-                <p className="text-xs text-fg-muted leading-relaxed">
-                  <span className="font-semibold text-fg-subtle">Currently deep in</span>
-                  {" — "}{profile.currently}
-                </p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-1">Experimenting</p>
+                <p className="text-xs text-fg-muted leading-relaxed">{profile.currently}</p>
               </div>
             )}
 

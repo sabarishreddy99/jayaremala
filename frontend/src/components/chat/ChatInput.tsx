@@ -23,9 +23,11 @@ export default function ChatInput({ onSend, disabled, prefill, onPrefillConsumed
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const [isListening, setIsListening] = useState(false);
-  const [voiceSupported] = useState(
-    () => typeof window !== "undefined" && ("SpeechRecognition" in window || "webkitSpeechRecognition" in window)
-  );
+  const [voiceSupported, setVoiceSupported] = useState(false);
+
+  useEffect(() => {
+    setVoiceSupported("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
+  }, []);
 
   // Populate textarea when a suggestion chip is clicked
   useEffect(() => {

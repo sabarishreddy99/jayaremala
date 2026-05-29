@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { profile } from "@/data/profile";
 import ThemeToggle from "@/components/ThemeToggle";
 import ReadingProgress from "@/components/blog/ReadingProgress";
@@ -19,9 +19,23 @@ const links = [
 export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 12);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   return (
-    <header className="sticky top-0 z-40 bg-surface/90 backdrop-blur-md border-b border-border relative">
+    <header
+      className={`sticky top-0 z-40 relative transition-all duration-300 ${
+        scrolled
+          ? "bg-surface/90 backdrop-blur-md border-b border-border shadow-sm"
+          : "bg-bg border-b border-transparent"
+      }`}
+    >
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 sm:px-6 py-3.5">
         {/* Logo */}
         <Link
@@ -74,9 +88,21 @@ export default function Nav() {
           </Link>
           <Link
             href="/chat"
-            className="ml-2 px-4 py-1.5 rounded-full bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
+            className="group ml-2 relative inline-flex items-center px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-sm hover:shadow-md transition-colors duration-200 overflow-hidden"
           >
-            Ask Avocado ✦
+            {/* Default — swipes out left on hover */}
+            <span className="flex items-center gap-2 transition-all duration-300 ease-in-out group-hover:-translate-x-10 group-hover:opacity-0">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 opacity-80">
+                <circle cx="11" cy="11" r="8" />
+                <path d="m21 21-4.35-4.35" />
+              </svg>
+              Ask Avocado
+              <span className="avocado-icon leading-none">🥑</span>
+            </span>
+            {/* Hover reveal — slides in from right */}
+            <span className="absolute inset-0 flex items-center justify-center translate-x-10 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-in-out text-sm font-medium tracking-wide">
+              Chat →
+            </span>
           </Link>
         </nav>
 

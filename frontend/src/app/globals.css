@@ -426,3 +426,8 @@ figcaption[data-rehype-pretty-code-title] + pre {
   background-size: 24px 24px;
 }
 
+/* ── Ask Avocado button — avocado icon ──────────────────── */
+.avocado-icon {
+  display: inline-block;
+}
+

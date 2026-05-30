@@ -78,7 +78,6 @@ export default async function BlogTagPage({ params }: Props) {
                     <Link
                       key={t}
                       href={`/blog/tag/${encodeURIComponent(t)}`}
-                      onClick={(e) => e.stopPropagation()}
                       className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-muted hover:text-accent transition-colors"
                     >
                       #{t}

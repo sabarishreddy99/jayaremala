@@ -40,7 +40,10 @@ export const metadata: Metadata = {
     "Machine Learning", "LLM", "NYU", "Qualcomm Hackathon", "Python",
     "Edge AI", "Production ML", "AI Infrastructure",
   ],
-  alternates: { canonical: SITE_URL },
+  alternates: {
+    canonical: SITE_URL,
+    types: { "application/rss+xml": `${SITE_URL}/feed.xml` },
+  },
   openGraph: {
     type: "website",
     url: SITE_URL,

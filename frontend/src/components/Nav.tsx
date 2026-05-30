@@ -106,6 +106,17 @@ export default function Nav() {
               <path d="M7 17L17 7M17 7H7M17 7v10"/>
             </svg>
           </a>
+          {/* Cmd+K search trigger */}
+          <button
+            onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }))}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-raised px-2.5 py-1.5 text-xs text-fg-faint hover:text-fg hover:border-fg-muted transition-colors"
+            aria-label="Search"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+            </svg>
+            <kbd className="font-sans text-[10px]">⌘K</kbd>
+          </button>
           <ThemeToggle />
           <Link
             href="/admin"

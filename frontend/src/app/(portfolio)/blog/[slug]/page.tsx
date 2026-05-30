@@ -149,13 +149,20 @@ export async function generateMetadata({ params }: Props) {
       publishedTime: publishedAt,
       authors: ["Jaya Sabarish Reddy Remala"],
       tags,
-      images: [{ url: image ? `${SITE_URL}${image}` : `${SITE_URL}/og-image.png`, width: 1200, height: 630, alt: title }],
+      images: [{
+        url: image
+          ? `${SITE_URL}${image}`
+          : `${SITE_URL}/og?type=blog&title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&tag=${encodeURIComponent(tags[0] ?? "")}`,
+        width: 1200, height: 630, alt: title,
+      }],
     },
     twitter: {
       card: "summary_large_image" as const,
       title,
       description,
-      images: [image ? `${SITE_URL}${image}` : `${SITE_URL}/og-image.png`],
+      images: [image
+        ? `${SITE_URL}${image}`
+        : `${SITE_URL}/og?type=blog&title=${encodeURIComponent(title)}&description=${encodeURIComponent(description)}&tag=${encodeURIComponent(tags[0] ?? "")}`],
     },
   };
 }
@@ -231,10 +238,15 @@ export default async function BlogPostPage({ params }: Props) {
               </h1>
               <div className="flex flex-wrap items-center gap-3">
                 <span className="text-sm text-fg-faint">{post.date}</span>
+                <span className="text-sm text-fg-faint">{post.readingTime} min read</span>
                 {post.tags.map((t) => (
-                  <span key={t} className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
+                  <Link
+                    key={t}
+                    href={`/blog/tag/${encodeURIComponent(t)}`}
+                    className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle hover:text-accent transition-colors"
+                  >
                     #{t}
-                  </span>
+                  </Link>
                 ))}
               </div>
               <ShareButtons slug={post.slug} title={post.title} />

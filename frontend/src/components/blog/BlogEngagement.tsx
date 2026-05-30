@@ -10,6 +10,36 @@ interface Stats {
   user_claps: number;
 }
 
+interface ConfettiParticle {
+  id: number;
+  tx: string;
+  ty: string;
+  rot: string;
+  color: string;
+  size: number;
+  dur: string;
+  circle: boolean;
+}
+
+const CONFETTI_COLORS = ["#6366f1","#8b5cf6","#ec4899","#f59e0b","#10b981","#3b82f6","#f97316"];
+
+function spawnConfetti(count = 18): ConfettiParticle[] {
+  return Array.from({ length: count }, (_, i) => {
+    const angle = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+    const dist  = 28 + Math.random() * 52;
+    return {
+      id:     Date.now() + i,
+      tx:     `${Math.round(Math.cos(angle) * dist)}px`,
+      ty:     `${Math.round(Math.sin(angle) * dist - 18)}px`,
+      rot:    `${200 + Math.round(Math.random() * 340)}deg`,
+      color:  CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      size:   5 + Math.floor(Math.random() * 4),
+      dur:    `${620 + Math.floor(Math.random() * 280)}ms`,
+      circle: Math.random() > 0.45,
+    };
+  });
+}
+
 const MAX_USER_CLAPS = 50;
 
 function formatCount(n: number): string {
@@ -22,6 +52,7 @@ export default function BlogEngagement({ slug }: { slug: string }) {
   const [localClaps, setLocalClaps] = useState(0);
   const [burst, setBurst] = useState(false);
   const [floats, setFloats] = useState<number[]>([]);
+  const [confetti, setConfetti] = useState<ConfettiParticle[]>([]);
   const pendingRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const nextFloatKey = useRef(0);
@@ -80,6 +111,12 @@ export default function BlogEngagement({ slug }: { slug: string }) {
     setBurst(true);
     setTimeout(() => setBurst(false), 200);
 
+    // Confetti burst — skip if user prefers reduced motion
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setConfetti(spawnConfetti());
+      setTimeout(() => setConfetti([]), 1050);
+    }
+
     pendingRef.current += 1;
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(flushClaps, 1500);
@@ -96,6 +133,7 @@ export default function BlogEngagement({ slug }: { slug: string }) {
       {/* Clap button */}
       <div className="flex flex-col items-center gap-1.5">
         <div className="relative">
+          {/* +1 floaters */}
           {floats.map((k) => (
             <span
               key={k}
@@ -103,6 +141,24 @@ export default function BlogEngagement({ slug }: { slug: string }) {
             >
               +1
             </span>
+          ))}
+          {/* Confetti burst */}
+          {confetti.map((p) => (
+            <span
+              key={p.id}
+              aria-hidden
+              className="confetti-particle pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+              style={{
+                "--tx": p.tx,
+                "--ty": p.ty,
+                "--rot": p.rot,
+                "--dur": p.dur,
+                width:  p.size,
+                height: p.size,
+                backgroundColor: p.color,
+                borderRadius: p.circle ? "50%" : "2px",
+              } as React.CSSProperties}
+            />
           ))}
           <button
             onClick={handleClap}

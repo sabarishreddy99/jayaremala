@@ -14,6 +14,18 @@ interface Project {
   sourceLinks?: SourceLink[];
 }
 
+function onTiltMove(e: React.MouseEvent<HTMLDivElement>) {
+  const el = e.currentTarget;
+  const { left, top, width, height } = el.getBoundingClientRect();
+  const x = (e.clientX - left) / width  - 0.5;
+  const y = (e.clientY - top)  / height - 0.5;
+  el.style.transform = `perspective(700px) rotateX(${(-y * 7).toFixed(1)}deg) rotateY(${(x * 7).toFixed(1)}deg) scale3d(1.02,1.02,1.02)`;
+}
+
+function onTiltLeave(e: React.MouseEvent<HTMLDivElement>) {
+  e.currentTarget.style.transform = "perspective(700px) rotateX(0deg) rotateY(0deg) scale3d(1,1,1)";
+}
+
 export default function ProjectsGrid({ projects }: { projects: Project[] }) {
   const [query, setQuery] = useState("");
   const [activeTag, setActiveTag] = useState<string | null>(null);
@@ -129,7 +141,12 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
 
             return (
               <ScrollReveal key={i} delay={Math.min((i % 3) * 80, 160)} className="flex">
-                <div className="group relative flex flex-col flex-1 rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden">
+                <div
+                  className="group relative flex flex-col flex-1 rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden"
+                  onMouseMove={onTiltMove}
+                  onMouseLeave={onTiltLeave}
+                  style={{ transition: "transform 0.2s cubic-bezier(0.16,1,0.3,1), border-color 0.2s, box-shadow 0.2s", willChange: "transform" }}
+                >
                   {/* Hover sweep */}
                   <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${sweepClass} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
 

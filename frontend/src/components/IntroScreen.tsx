@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { profile } from "@/data/profile";
 import { API_BASE_URL } from "@/lib/api/client";
 
@@ -27,6 +28,7 @@ function getGreeting() {
 // ─── component ────────────────────────────────────────────────────────────────
 
 export default function IntroScreen() {
+  const pathname = usePathname();
   const [mounted,      setMounted]      = useState(false);
   const [show,         setShow]         = useState(false);
   const [leaving,      setLeaving]      = useState(false);
@@ -44,6 +46,7 @@ export default function IntroScreen() {
 
   useEffect(() => {
     setMounted(true);
+    if (pathname.startsWith("/blog")) return;
     const preview = new URLSearchParams(window.location.search).has("intro");
     isPreview.current = preview;
 

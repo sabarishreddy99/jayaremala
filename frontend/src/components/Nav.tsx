@@ -153,21 +153,21 @@ export default function Nav() {
 
         {/* Mobile controls */}
         <div className="md:hidden flex items-center gap-1">
-          <ThemeToggle />
-          <Link
-            href="/admin"
-            title="Admin"
-            onClick={() => setOpen(false)}
-            className={`p-2 rounded-lg transition-colors ${
-              pathname === "/admin"
-                ? "text-fg bg-surface-raised"
-                : "text-fg-faint hover:text-fg-subtle hover:bg-surface-raised"
+          <button
+            onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }))}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-all duration-300 ${
+              scrolled
+                ? "border border-border bg-surface-raised text-fg-faint hover:text-fg hover:border-fg-muted"
+                : "border border-transparent text-fg-subtle hover:text-fg"
             }`}
+            aria-label="Search"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
-          </Link>
+            <span>Search</span>
+          </button>
+          <ThemeToggle />
           <button
             className="p-2 rounded-lg text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
             onClick={() => setOpen(!open)}

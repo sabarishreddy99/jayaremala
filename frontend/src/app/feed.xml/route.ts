@@ -1,5 +1,7 @@
 import { getAllPosts } from "@/lib/blog";
 
+export const dynamic = "force-static";
+
 const SITE_URL  = "https://jayaremala.com";
 const SITE_TITLE = "Jaya Sabarish Reddy Remala — Blog";
 const SITE_DESC  = "Notes on AI systems, distributed infrastructure, and software craft.";

@@ -11,9 +11,10 @@
 
 /* ── Light mode tokens ─────────────────────────────────── */
 :root {
-  --bg: #f8f8f6;
+  --bg: #fafaf8;
   --surface: #ffffff;
   --surface-raised: #f4f4f5;
+  --surface-sunken: #f0f0ee;
   --border: #e4e4e7;
   --border-subtle: #f4f4f5;
   --border-strong: #a1a1aa;
@@ -29,7 +30,7 @@
 
 /* ── Dark mode tokens ──────────────────────────────────── */
 .dark {
-  --bg: #0c0c0e;
+  --bg: #0d0b12;
   --surface: #18181b;
   --surface-raised: #27272a;
   --border: #3f3f46;
@@ -43,6 +44,15 @@
   --accent-hover: #a5b4fc;
   --accent-light: #1e1b4b;
   --accent-fg: #ffffff;
+  --surface-sunken: #09090b;
+}
+
+/* ── Type scale — 5 semantic sizes ─────────────────────── */
+:root {
+  --text-label:   0.625rem;   /* 10px  — section headers, micro-labels   */
+  --text-caption: 0.6875rem;  /* 11px  — secondary info, dates, hints    */
+  --text-body:    0.875rem;   /* 14px  — card text, descriptions         */
+  --text-lead:    1.0625rem;  /* 17px  — bio, primary paragraph text     */
 }
 
 @theme inline {
@@ -62,6 +72,7 @@
   --color-accent: var(--accent);
   --color-accent-hover: var(--accent-hover);
   --color-accent-light: var(--accent-light);
+  --color-surface-sunken: var(--surface-sunken);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-playfair);
@@ -84,10 +95,26 @@ body {
   color: var(--fg);
   font-family: var(--font-sans), system-ui, sans-serif;
   min-height: 100dvh;
-  transition: background-color 0.2s ease, color 0.2s ease;
-  overflow-x: clip; /* prevent horizontal bleed from blobs / marquee without breaking position:sticky */
+  transition: background-color 0.25s ease, color 0.25s ease,
+              border-color 0.25s ease, box-shadow 0.25s ease;
+  overflow-x: clip;
   width: 100%;
   max-width: 100%;
+}
+
+/* ── Global focus rings (keyboard nav / WCAG 2.1 AA) ───── */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+/* Inputs/textareas inside styled containers handle focus via the container */
+textarea:focus-visible,
+input:focus-visible {
+  outline: none;
+  box-shadow: none;
 }
 
 @media (max-width: 639px) {
@@ -116,6 +143,13 @@ body {
   .sr-reveal { opacity: 1 !important; transform: none !important; transition: none !important; }
 }
 
+/* ── Global button active state ────────────────────────────── */
+button:not(:disabled):active,
+a[role="button"]:active {
+  transform: scale(0.97);
+  transition-duration: 75ms !important;
+}
+
 /* ── Card depth + lift ─────────────────────────────────────── */
 .card-lift {
   box-shadow:
@@ -130,6 +164,10 @@ body {
   box-shadow:
     0 1px 3px 0 rgb(0 0 0 / 0.24),
     0 1px 2px -1px rgb(0 0 0 / 0.18);
+}
+.card-lift:active {
+  transform: translateY(0px) scale(0.98);
+  transition-duration: 75ms;
 }
 .card-lift:hover {
   transform: translateY(-2px);
@@ -426,8 +464,73 @@ figcaption[data-rehype-pretty-code-title] + pre {
   background-size: 24px 24px;
 }
 
+/* ── Chat textarea — hide scrollbar ─────────────────────── */
+.chat-textarea { scrollbar-width: none; }
+.chat-textarea::-webkit-scrollbar { display: none; }
+
 /* ── Ask Avocado button — avocado icon ──────────────────── */
 .avocado-icon {
   display: inline-block;
+}
+
+/* ── Hanging punctuation on blockquotes / pull-quotes ───── */
+.prose blockquote,
+.hanging-quote {
+  hanging-punctuation: first;
+}
+
+/* ── Gradient section micro-labels ─────────────────────── */
+.label-gradient {
+  background: linear-gradient(90deg, var(--accent) 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Reduced motion — disable ambient animations ────────── */
+@media (prefers-reduced-motion: reduce) {
+  .animate-blob,
+  .animate-avo-float,
+  .animate-avo-glow,
+  .animate-float,
+  .lw-path,
+  .animate-spin-ccw,
+  .animate-think-wave {
+    animation: none !important;
+  }
+  .animate-pulse { animation: none !important; opacity: 0.8; }
+  .animate-bounce { animation: none !important; }
+}
+
+/* ── Print stylesheet ───────────────────────────────────── */
+@media print {
+  /* Hide interactive / decorative chrome */
+  header, footer, nav,
+  canvas, .fixed, .sticky,
+  [aria-label="Open sidebar"],
+  [aria-label="Ask Avocado AI"] { display: none !important; }
+
+  body { background: #fff !important; color: #000 !important; font-size: 11pt; }
+
+  /* Show contact info block at top */
+  body::before {
+    content: "Jaya Sabarish Reddy Remala  ·  jr6421@nyu.edu  ·  linkedin.com/in/jayasabarishreddyr  ·  github.com/sabarishreddy99";
+    display: block;
+    font-size: 9pt;
+    color: #555;
+    border-bottom: 1px solid #ccc;
+    padding-bottom: 6pt;
+    margin-bottom: 14pt;
+  }
+
+  /* Expand all sections */
+  section { position: static !important; height: auto !important; overflow: visible !important; }
+  .stack-sect { box-shadow: none !important; }
+
+  /* Reasonable link display */
+  a[href]::after { content: " (" attr(href) ")"; font-size: 8pt; color: #666; }
+  a[href^="/"]:after { content: ""; } /* skip internal links */
+
+  @page { margin: 1.5cm; }
 }
 

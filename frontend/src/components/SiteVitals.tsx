@@ -11,13 +11,24 @@ interface Stats {
 
 export default function SiteVitals() {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetch(`${API_BASE_URL}/stats`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d) setStats(d); })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-4">
+        <div className="h-3 w-28 rounded-full bg-surface-raised animate-pulse" />
+        <div className="h-3 w-36 rounded-full bg-surface-raised animate-pulse hidden sm:block" />
+      </div>
+    );
+  }
 
   if (!stats) return null;
   const siteVisitors = stats.site_unique_visitors ?? stats.unique_visitors;

@@ -104,7 +104,11 @@ export default function PortfolioHome() {
   const featured = projects.filter((p) => p.featured);
   const latestPost = getAllPosts()[0] ?? null;
   const latestQuote = quotes.find((q) => q.featured) ?? [...quotes].sort((a, b) => b.addedAt.localeCompare(a.addedAt))[0] ?? null;
-  const socialProof = testimonials.slice(0, 2);
+  const weekIndex = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+  const socialProof = [
+    testimonials[weekIndex % testimonials.length],
+    testimonials[(weekIndex + 1) % testimonials.length],
+  ].filter(Boolean);
 
   return (
     <div className="w-full">
@@ -192,14 +196,14 @@ export default function PortfolioHome() {
             >
               <Link
                 href="/chat"
-                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 px-4 py-2 sm:px-6 sm:py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 px-5 py-3 sm:px-6 sm:py-2.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:shadow-md transition-all duration-200"
               >
                 Ask Avocado
                 <span className="opacity-80">✦</span>
               </Link>
               <Link
                 href="/projects"
-                className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-border px-4 py-2 sm:px-6 sm:py-2.5 text-xs sm:text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-border px-5 py-3 sm:px-6 sm:py-2.5 text-xs sm:text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
               >
                 Projects
               </Link>
@@ -207,7 +211,7 @@ export default function PortfolioHome() {
                 href={profile.booking_url ?? "https://calendar.app.google/3sScGpHpeSpvPjpSA"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-4 py-2 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-medium text-fg-subtle hover:text-fg hover:border-fg-muted transition-colors duration-200"
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-border px-5 py-3 sm:px-5 sm:py-2.5 text-xs sm:text-sm font-medium text-fg-subtle hover:text-fg hover:border-fg-muted transition-colors duration-200"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
                   <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
@@ -331,7 +335,7 @@ export default function PortfolioHome() {
 <Inner className="py-16 sm:py-20">
           <div className="flex items-center gap-2.5 mb-8">
             <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500 shrink-0" />
-            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">At a Glance</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest label-gradient">At a Glance</h2>
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[1fr_260px]">
@@ -340,8 +344,8 @@ export default function PortfolioHome() {
                 <HighlightNumbers text={profile.bio} />
               </p>
 
-              <div className="flex items-start gap-3 rounded-xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/30 px-4 py-3.5 max-w-2xl">
-                <span className="mt-0.5 text-indigo-400 shrink-0">
+              <div className="hanging-quote flex items-start gap-3 rounded-xl border border-border bg-surface-sunken px-4 py-3.5 max-w-2xl">
+                <span className="mt-0.5 text-fg-faint shrink-0">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zm14.017 0v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-3.983v-10h9.983z" />
                   </svg>
@@ -354,7 +358,7 @@ export default function PortfolioHome() {
                 <div className="grid sm:grid-cols-2 gap-3 max-w-2xl">
                   {socialProof.map((t) => (
                     <div key={t.name} className="rounded-xl border border-border bg-surface p-4 space-y-2.5">
-                      <p className="text-xs text-fg-muted leading-relaxed line-clamp-3 italic">
+                      <p className="hanging-quote text-xs text-fg-muted leading-relaxed line-clamp-3 italic">
                         &ldquo;{t.description.split(".")[0]}.&rdquo;
                       </p>
                       <div>
@@ -386,7 +390,7 @@ export default function PortfolioHome() {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Excited in</p>
                 <div className="flex flex-wrap gap-2">
                   {profile.interested_domain.split(",").map((d) => (
-                    <span key={d} className="rounded-full border border-indigo-200 dark:border-indigo-800 bg-accent-light px-3 py-1 text-xs font-medium text-accent">
+                    <span key={d} className="rounded-full border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-subtle">
                       {d.trim()}
                     </span>
                   ))}
@@ -413,9 +417,9 @@ export default function PortfolioHome() {
                             {co.trim()}
                           </span>
                           {exp && (
-                            <div className="absolute left-0 top-full mt-1 z-10 hidden group-hover/co:block bg-surface border border-border rounded-lg px-3 py-2 shadow-md whitespace-nowrap pointer-events-none">
+                            <div className="absolute left-0 top-full mt-1 z-10 hidden group-hover/co:block bg-surface border border-border rounded-xl px-3 py-2 shadow-md whitespace-nowrap pointer-events-none">
                               <p className="text-[11px] font-semibold text-fg">{exp.role}</p>
-                              <p className="text-[10px] text-fg-faint">{exp.start} – {exp.end}</p>
+                              <p className="text-[10px] text-fg-faint font-mono tabular-nums">{exp.start} – {exp.end}</p>
                             </div>
                           )}
                         </div>
@@ -425,6 +429,13 @@ export default function PortfolioHome() {
                 </div>
               </div>
             </div>
+          </div>
+          <div className="mt-10 pt-5 border-t border-border flex items-center justify-between">
+            <span className="text-[10px] text-fg-faint uppercase tracking-widest">1 / 5</span>
+            <a href="#projects" className="inline-flex items-center gap-1.5 text-[11px] text-fg-faint hover:text-fg transition-colors">
+              See what I&apos;ve built
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </a>
           </div>
         </Inner>
       </StackSection>
@@ -436,7 +447,7 @@ export default function PortfolioHome() {
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
                 <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-blue-500 to-cyan-500 shrink-0" />
-                <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Featured Projects</h2>
+                <h2 className="text-xs font-bold uppercase tracking-widest label-gradient">Featured Projects</h2>
               </div>
               <Link href="/projects" className="text-xs font-medium text-accent hover:text-accent-hover">
                 All projects →
@@ -444,7 +455,7 @@ export default function PortfolioHome() {
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {featured.map((p, i) => (
-                <ScrollReveal key={p.title} delay={i * 80} className="flex">
+                <ScrollReveal key={p.title} delay={i * 80} className="flex" direction="scale">
                   {p.title.startsWith("jayaremala") ? (
                     <RagPipelineCard
                       title={p.title}
@@ -455,7 +466,7 @@ export default function PortfolioHome() {
                       sourceLinks={p.sourceLinks}
                     />
                   ) : (
-                    <div className="group relative flex-1 rounded-2xl border border-border bg-surface p-5 space-y-3 hover:border-indigo-300 dark:hover:border-indigo-700 card-lift overflow-hidden">
+                    <div className="group relative flex-1 rounded-2xl border border-border bg-surface p-5 space-y-3 hover:border-border-strong card-lift overflow-hidden">
                       <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${p.award ? "from-amber-500 to-orange-500" : "from-blue-500 to-cyan-500"} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="font-semibold text-fg text-sm leading-snug group-hover:text-accent transition-colors">{p.title}</h3>
@@ -474,7 +485,7 @@ export default function PortfolioHome() {
                         ))}
                       </div>
                       {p.note && (
-                        <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900 rounded-lg px-2.5 py-1.5 leading-relaxed">
+                        <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900 rounded-xl px-2.5 py-1.5 leading-relaxed">
                           {p.note}
                         </p>
                       )}
@@ -494,6 +505,13 @@ export default function PortfolioHome() {
                 </ScrollReveal>
               ))}
             </div>
+          <div className="mt-10 pt-5 border-t border-border flex items-center justify-between">
+            <span className="text-[10px] text-fg-faint uppercase tracking-widest">2 / 5</span>
+            <a href="#skills" className="inline-flex items-center gap-1.5 text-[11px] text-fg-faint hover:text-fg transition-colors">
+              Technologies I work with
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </a>
+          </div>
           </Inner>
         </StackSection>
       )}
@@ -502,6 +520,13 @@ export default function PortfolioHome() {
       <StackSection z={4} id="skills">
         <Inner className="py-16 sm:py-20">
           <SkillsSection skills={skills} featuredProjects={featured} />
+          <div className="mt-10 pt-5 border-t border-border flex items-center justify-between">
+            <span className="text-[10px] text-fg-faint uppercase tracking-widest">3 / 5</span>
+            <a href="#testimonials" className="inline-flex items-center gap-1.5 text-[11px] text-fg-faint hover:text-fg transition-colors">
+              What colleagues say
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </a>
+          </div>
         </Inner>
       </StackSection>
 
@@ -509,6 +534,13 @@ export default function PortfolioHome() {
       <StackSection z={5} id="testimonials">
         <Inner className="py-16 sm:py-20">
           <TestimonialsCarousel />
+          <div className="mt-10 pt-5 border-t border-border flex items-center justify-between">
+            <span className="text-[10px] text-fg-faint uppercase tracking-widest">4 / 5</span>
+            <a href="#contact" className="inline-flex items-center gap-1.5 text-[11px] text-fg-faint hover:text-fg transition-colors">
+              Let&apos;s connect
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </a>
+          </div>
         </Inner>
       </StackSection>
 

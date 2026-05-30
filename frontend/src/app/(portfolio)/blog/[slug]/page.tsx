@@ -52,7 +52,7 @@ function BlogPostApiView({ post }: { post: ApiBlogPost }) {
           <ShareButtons slug={post.slug} title={post.title} />
         </header>
 
-        <div className="prose max-w-none font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
+        <div className="prose font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
           <BlogPostMarkdown content={post.content} />
         </div>
 
@@ -243,7 +243,7 @@ export default async function BlogPostPage({ params }: Props) {
             {/* Mobile TOC — inline before content */}
             <MobileTOC headings={headings} />
 
-            <div className="prose max-w-none font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
+            <div className="prose font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
               <MDXRemote
                 source={post.content}
                 components={mdxComponents}

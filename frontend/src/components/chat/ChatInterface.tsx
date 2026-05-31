@@ -412,10 +412,10 @@ export default function ChatInterface() {
         {/* Prompt cards — constrained to same width as chat messages */}
         <div className="px-3 sm:px-6 pb-5 sm:pb-7">
           <div className="mx-auto max-w-2xl lg:max-w-3xl">
-          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-fg-faint mb-2 px-1">
+          <p className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.2em] text-fg-faint mb-2 px-1">
             Start with a question
           </p>
-          <div className="grid grid-cols-2 gap-1.5">
+          <div className="hidden sm:grid grid-cols-2 gap-1.5">
             {PROMPTS.map((p) => (
               <button
                 key={p.full}

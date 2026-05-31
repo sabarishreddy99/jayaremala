@@ -13,6 +13,39 @@
   }
 }
 
+/* ── Reading / Focus mode ─────────────────────────────────────────────────── */
+
+/* Article floats above the portaled overlay (z-9998) */
+:root.reading-mode article {
+  position: relative;
+  z-index: 9999;
+  isolation: isolate;
+  background: var(--surface);
+  border-radius: 0.75rem;
+  padding: 2rem 2.5rem !important;
+  max-width: 700px;
+  margin-inline: auto;
+  transition: padding 0.35s ease, border-radius 0.35s ease;
+}
+
+/* Larger, more comfortable reading typography */
+:root.reading-mode article .prose {
+  font-size: 1.1rem !important;
+  line-height: 1.95 !important;
+  letter-spacing: 0.01em;
+}
+
+/* Dim the sticky nav header — NOT article's internal <header> */
+:root.reading-mode header.sticky,
+:root.reading-mode footer,
+:root.reading-mode aside {
+  opacity: 0.04;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+/* ── float-up ─────────────────────────────────────────────────────────────── */
+
 @keyframes float-up {
   0%   { opacity: 1; transform: translateX(-50%) translateY(0);     }
   100% { opacity: 0; transform: translateX(-50%) translateY(-28px); }

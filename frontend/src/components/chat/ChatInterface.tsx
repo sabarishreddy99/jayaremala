@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState, startTransition } from "react";
-import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api/client";
 import { getOrCreateVisitorId } from "@/lib/visitor";
 import { saveMessages, loadMessages, clearSession, saveModel, loadModel, saveLastQuestions, loadLastQuestions } from "@/lib/session";
-import { profile } from "@/data/profile";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import LoadingGame from "./LoadingGame";
@@ -18,51 +16,6 @@ export interface Message {
   navLinks?: NavLink[];
   followUps?: string[];
 }
-
-const FOLLOW_UP_POOL: Record<string, string[]> = {
-  experience: [
-    "What companies has Jaya worked at?",
-    "What were Jaya's key responsibilities at each role?",
-    "How long has Jaya been working in the industry?",
-  ],
-  project: [
-    "What's the most technically challenging project Jaya built?",
-    "What tech stack did Jaya use across his projects?",
-    "Does Jaya have any open-source or side projects?",
-  ],
-  faq: [
-    "What sets Jaya apart from other candidates?",
-    "What kind of problems does Jaya enjoy solving?",
-    "What are Jaya's biggest career achievements?",
-  ],
-  profile: [
-    "What is Jaya currently working on?",
-    "What domains is Jaya most passionate about?",
-    "Is Jaya open to new roles and where is he based?",
-  ],
-  education: [
-    "What did Jaya study at NYU?",
-    "What was Jaya's undergraduate background?",
-    "Did Jaya do any research or coursework in AI?",
-  ],
-  skills: [
-    "What AI and ML frameworks does Jaya know?",
-    "What cloud platforms has Jaya worked with?",
-    "What databases and data systems has Jaya used?",
-  ],
-  testimonial: [
-    "What do colleagues say about working with Jaya?",
-    "How does Jaya collaborate with engineering teams?",
-  ],
-  blog: [
-    "Has Jaya written about AI or system design?",
-    "What technical topics does Jaya write about?",
-  ],
-  lab: [
-    "Does Jaya have system design deep-dives I can read?",
-    "What architectural problems has Jaya documented?",
-  ],
-};
 
 function getGeminiResetInfo(): { time: string; countdown: string } {
   // Gemini free-tier daily quota resets at midnight Pacific Time.
@@ -91,19 +44,6 @@ function getGeminiResetInfo(): { time: string; countdown: string } {
   return { time, countdown };
 }
 
-function deriveFollowUps(sources: string[]): string[] {
-  const seen = new Set<string>();
-  const result: string[] = [];
-  for (const src of sources) {
-    const type = src.split(":")[0];
-    if (seen.has(type) || !FOLLOW_UP_POOL[type]) continue;
-    seen.add(type);
-    const pool = FOLLOW_UP_POOL[type];
-    result.push(pool[Math.floor(Math.random() * pool.length)]);
-    if (result.length >= 3) break;
-  }
-  return result;
-}
 
 const WELCOME: Message = {
   role: "assistant",
@@ -142,6 +82,8 @@ export default function ChatInterface() {
   const [pendingRetry, setPendingRetry] = useState<string | null>(null);
   const [sessionRestored, setSessionRestored] = useState(false);
   const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
+  const [dynamicFollowUps, setDynamicFollowUps] = useState<string[]>([]);
+  const [followUpsLoading, setFollowUpsLoading] = useState(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -211,7 +153,22 @@ export default function ChatInterface() {
   const [rateLimitUntil, setRateLimitUntil] = useState<number | null>(null);
   const [rateLimitSecsLeft, setRateLimitSecsLeft] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const [atBottom, setAtBottom] = useState(true);
+
+  /* Track whether the user is near the bottom of the scroll area */
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const dist = el.scrollHeight - el.scrollTop - el.clientHeight;
+      setAtBottom(dist < 120);
+    };
+    onScroll();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (!rateLimitUntil) return;
@@ -225,9 +182,15 @@ export default function ChatInterface() {
     return () => clearInterval(id);
   }, [rateLimitUntil]);
 
+  /* Auto-scroll only when the user is already at the bottom — never yank
+     them away from an earlier message they're reading */
   useEffect(() => {
+    if (atBottom) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, streamingContent, atBottom]);
+
+  function scrollToBottom() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, streamingContent]);
+  }
 
   /* Collapse the intro banner as soon as the first real message is sent */
   useEffect(() => {
@@ -243,6 +206,8 @@ export default function ChatInterface() {
     abortRef.current = new AbortController();
 
     setPendingRetry(null);
+    setDynamicFollowUps([]);
+    setFollowUpsLoading(false);
     try {
       const vid = getOrCreateVisitorId();
       const res = await fetch(`${API_BASE_URL}/ai/chat/stream`, {
@@ -320,9 +285,8 @@ export default function ChatInterface() {
         sourcesToNavLinks(ragSources),
         detectNavLinks(text, accumulated),
       );
-      const followUps = deriveFollowUps(ragSources);
       const content = accumulated.trim() || "Sorry, I couldn't generate a response. Please try again or reach Jaya directly at jr6421@nyu.edu.";
-      const assistantMsg: Message = { role: "assistant", content, navLinks, followUps };
+      const assistantMsg: Message = { role: "assistant", content, navLinks, followUps: [] };
       const finalMessages = [...nextMessages, assistantMsg];
       setMessages(finalMessages);
       saveMessages(finalMessages.filter((m) => m !== WELCOME));
@@ -331,6 +295,18 @@ export default function ChatInterface() {
         .map((m) => m.content)
         .slice(-3);
       saveLastQuestions(userQuestions);
+
+      // Async dynamic follow-ups — fire after message is committed
+      setFollowUpsLoading(true);
+      fetch(`${API_BASE_URL}/ai/followups`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text, response: content }),
+      })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => { if (d?.followups?.length) setDynamicFollowUps(d.followups); })
+        .catch(() => {})
+        .finally(() => setFollowUpsLoading(false));
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
       setPendingRetry(text);
@@ -535,7 +511,8 @@ export default function ChatInterface() {
       />
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-4">
+      <div className="relative flex-1 min-h-0">
+      <div ref={scrollRef} className="h-full overflow-y-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-4">
         <div className="mx-auto max-w-2xl lg:max-w-3xl space-y-4 sm:space-y-5">
           {messages.map((m, i) => (
             <div key={i}>
@@ -545,22 +522,38 @@ export default function ChatInterface() {
                   <NavSuggestions links={m.navLinks} />
                 </div>
               )}
-              {m.role === "assistant" && m.followUps && m.followUps.length > 0 &&
-               i === messages.length - 1 && !streaming && (
-                <div className="ml-10 mt-2.5">
-                  <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-fg-faint mb-1.5">
+              {m.role === "assistant" && i === messages.length - 1 && !streaming &&
+               (followUpsLoading || dynamicFollowUps.length > 0) && (
+                <div className="ml-10 mt-3">
+                  <p className="text-[9px] font-semibold uppercase tracking-[0.16em] text-fg-faint mb-2">
                     Ask next
                   </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {m.followUps.map((q) => (
-                      <button
-                        key={q}
-                        onClick={() => setPrefill(q)}
-                        className="rounded-full border border-border bg-surface px-3 py-1 text-[11px] text-fg-muted hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-accent transition-colors"
-                      >
-                        {q}
-                      </button>
-                    ))}
+                  <div className="flex flex-col gap-1.5">
+                    {followUpsLoading && dynamicFollowUps.length === 0 ? (
+                      /* Shimmer skeleton while Gemini generates */
+                      [45, 60, 52].map((w, idx) => (
+                        <div
+                          key={idx}
+                          className="h-8 rounded-lg bg-surface-raised animate-pulse"
+                          style={{ width: `${w}%` }}
+                        />
+                      ))
+                    ) : (
+                      dynamicFollowUps.map((q, idx) => (
+                        <button
+                          key={q}
+                          onClick={() => setPrefill(q)}
+                          style={{ animationDelay: `${idx * 60}ms` }}
+                          className="w-full text-left rounded-lg border border-border bg-surface/70
+                                     px-3 py-2 text-[11px] text-fg-muted
+                                     hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-accent
+                                     hover:bg-surface transition-all duration-150
+                                     opacity-0 animate-[fadeUp_0.4s_ease_forwards]"
+                        >
+                          {q}
+                        </button>
+                      ))
+                    )}
                   </div>
                 </div>
               )}
@@ -604,6 +597,26 @@ export default function ChatInterface() {
         </div>
       </div>
 
+        {/* Jump-to-latest — appears when scrolled up during/after a conversation */}
+        {!atBottom && messages.length > 2 && (
+          <button
+            onClick={scrollToBottom}
+            aria-label="Scroll to latest message"
+            className="absolute bottom-3 left-1/2 -translate-x-1/2 z-20
+                       inline-flex items-center gap-1.5 rounded-full
+                       border border-border bg-surface/95 backdrop-blur-sm
+                       px-3 py-1.5 text-[11px] font-medium text-fg-muted
+                       shadow-md hover:text-fg hover:border-fg-muted
+                       transition-all duration-200 animate-fade-up"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M19 12l-7 7-7-7" />
+            </svg>
+            Latest
+          </button>
+        )}
+      </div>
+
       {/* Bottom — input + footer */}
       <div className="shrink-0 px-3 sm:px-6 lg:px-10 pt-2 pb-3 sm:pb-5">
         <div className="mx-auto max-w-2xl lg:max-w-3xl space-y-2">
@@ -615,20 +628,25 @@ export default function ChatInterface() {
             onPrefillConsumed={() => setPrefill("")}
           />
 
-          <div className="flex items-center justify-between px-1">
-            <p className="text-[11px] text-fg-faint flex items-center gap-2 flex-wrap">
-              {activeModel && (
+          {/* Single meta row — model · keyboard hint · clear */}
+          <div className="flex items-center justify-between px-1 min-h-[18px]">
+            <div className="flex items-center gap-2">
+              {activeModel ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-surface-raised border border-border px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
                   {activeModel}
                 </span>
+              ) : (
+                <span className="text-[10px] text-fg-faint/70">Powered by RAG + Gemini</span>
               )}
-              <Link href="/" className="text-accent hover:text-accent-hover font-medium">
-                View portfolio →
-              </Link>
-            </p>
+              {totalResponses !== null && (
+                <span className="hidden sm:inline text-[10px] text-fg-faint/60">
+                  · {totalResponses.toLocaleString()} answered
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-3">
-              <span className="hidden sm:inline text-[10px] text-fg-faint/50 select-none">
+              <span className="hidden sm:inline text-[10px] text-fg-faint/40 select-none">
                 <kbd className="font-mono">↵</kbd> send · <kbd className="font-mono">⇧↵</kbd> newline
               </span>
               {messages.length > 1 && (
@@ -642,83 +660,45 @@ export default function ChatInterface() {
             </div>
           </div>
 
-          {/* Stats + Experience rating */}
-          <div className="flex items-center justify-center gap-3 py-0.5 flex-wrap">
-            {totalResponses !== null && (
-              <>
-                <div className="flex items-center gap-1.5">
-                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-accent">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                  </svg>
-                  <span className="text-[10px] text-fg-faint">
-                    <span className="font-semibold text-fg-muted">{totalResponses.toLocaleString()}</span> responses
-                  </span>
-                </div>
-                <span className="text-border text-[10px]">·</span>
-              </>
-            )}
-
-            {experienceRating !== null ? (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-fg-faint">Thanks for rating!</span>
-                <span className="text-sm leading-none">
-                  {[1,2,3,4,5].map((s) => (
-                    <span key={s} className={s <= experienceRating ? "text-amber-400" : "text-border"}>★</span>
-                  ))}
-                </span>
+          {/* Experience rating — contextual, appears only after 2+ exchanges */}
+          {messages.length >= 4 && experienceRating === null && !ratingDismissed && (
+            <div className="flex items-center justify-center gap-1.5 animate-fade-up">
+              <span className="text-[10px] text-fg-faint">Helpful? Rate Avocado</span>
+              <div className="flex items-center gap-0.5">
+                {[1,2,3,4,5].map((star) => (
+                  <button
+                    key={star}
+                    onClick={() => handleRate(star)}
+                    onMouseEnter={() => setRatingHover(star)}
+                    onMouseLeave={() => setRatingHover(0)}
+                    aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
+                    className={`text-sm leading-none transition-colors ${
+                      star <= (ratingHover || 0) ? "text-amber-400" : "text-border hover:text-amber-300"
+                    }`}
+                  >
+                    ★
+                  </button>
+                ))}
               </div>
-            ) : ratingDismissed ? (
-              <span className="text-[10px] text-fg-faint italic">Rate your experience next time!</span>
-            ) : (
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] text-fg-faint">Rate experience</span>
-                <div className="flex items-center gap-0.5">
-                  {[1,2,3,4,5].map((star) => (
-                    <button
-                      key={star}
-                      onClick={() => handleRate(star)}
-                      onMouseEnter={() => setRatingHover(star)}
-                      onMouseLeave={() => setRatingHover(0)}
-                      aria-label={`Rate ${star} star${star > 1 ? "s" : ""}`}
-                      className={`text-base leading-none transition-colors ${
-                        star <= (ratingHover || 0) ? "text-amber-400" : "text-border hover:text-amber-300"
-                      }`}
-                    >
-                      ★
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={handleRatingDismiss}
-                  aria-label="Dismiss"
-                  className="text-[11px] text-fg-faint hover:text-fg-muted transition-colors leading-none"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Footer */}
-          <div className="pt-2 sm:pt-3 border-t border-border">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] sm:text-[11px] text-fg-faint hidden sm:block">
-                © {new Date().getFullYear()} Jaya Sabarish Reddy Remala
-              </span>
-              {/* Mobile: show 3 key links only; sm+: show all */}
-              <div className="flex items-center gap-3 sm:gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                <a href={profile.linkedin} target="_blank" rel="noopener noreferrer"
-                  className="text-[10px] sm:text-[11px] text-fg-faint hover:text-fg-muted transition-colors">LinkedIn</a>
-                <a href={`mailto:${profile.email}`}
-                  className="text-[10px] sm:text-[11px] text-fg-faint hover:text-fg-muted transition-colors">Email</a>
-                <a href={profile.resume} target="_blank" rel="noopener noreferrer"
-                  className="text-[10px] sm:text-[11px] text-fg-faint hover:text-fg-muted transition-colors">Resume</a>
-                <Link href="/blog" className="hidden sm:inline text-[11px] text-fg-faint hover:text-fg-muted transition-colors">Blog</Link>
-                <a href={profile.github} target="_blank" rel="noopener noreferrer"
-                  className="hidden sm:inline text-[11px] text-fg-faint hover:text-fg-muted transition-colors">GitHub</a>
-              </div>
+              <button
+                onClick={handleRatingDismiss}
+                aria-label="Dismiss rating"
+                className="text-[11px] text-fg-faint hover:text-fg-muted transition-colors leading-none ml-1"
+              >
+                ×
+              </button>
             </div>
-          </div>
+          )}
+          {experienceRating !== null && (
+            <div className="flex items-center justify-center gap-1.5">
+              <span className="text-[10px] text-fg-faint">Thanks for rating!</span>
+              <span className="text-xs leading-none">
+                {[1,2,3,4,5].map((s) => (
+                  <span key={s} className={s <= experienceRating ? "text-amber-400" : "text-border"}>★</span>
+                ))}
+              </span>
+            </div>
+          )}
 
         </div>
       </div>

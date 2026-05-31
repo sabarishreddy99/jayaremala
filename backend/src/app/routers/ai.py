@@ -454,3 +454,40 @@ def ai_rewrite(req: RewriteRequest) -> dict:
         f"Instruction: {req.instruction}\n\nText:\n{req.text}",
     )
     return {"result": reply.strip()}
+
+
+# ── /ai/followups ──────────────────────────────────────────────────────────────
+
+class FollowUpsRequest(BaseModel):
+    message: str
+    response: str
+
+
+class FollowUpsResponse(BaseModel):
+    followups: list[str]
+
+
+@router.post("/followups", response_model=FollowUpsResponse)
+def ai_followups(req: FollowUpsRequest) -> FollowUpsResponse:
+    """Generate 2-3 dynamic follow-up questions from the last exchange."""
+    prompt = (
+        "A recruiter is chatting with an AI assistant about a software engineer named Jaya.\n\n"
+        f"Recruiter asked: {req.message}\n\n"
+        f"AI answered: {req.response[:700]}\n\n"
+        "Generate exactly 2-3 short follow-up questions the recruiter would naturally ask next.\n"
+        "Rules:\n"
+        "- Reference specific things mentioned in the answer (technologies, companies, projects, metrics)\n"
+        "- Each question must be under 12 words\n"
+        "- Output only the questions, one per line, no numbering, bullets, or prefixes\n"
+        "- Make them feel like natural curiosity, not generic questions"
+    )
+    try:
+        text = _generate("", prompt)
+        followups = [
+            q.strip().lstrip("•-–—0123456789.) ").strip()
+            for q in text.strip().splitlines()
+            if q.strip() and len(q.strip()) > 8
+        ][:3]
+        return FollowUpsResponse(followups=followups)
+    except Exception:
+        return FollowUpsResponse(followups=[])

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { mdxComponents } from "@/components/blog/MDXComponents";
 import BlogEngagement from "@/components/blog/BlogEngagement";
 import ShareButtons from "@/components/blog/ShareButtons";
+import ReadingMode from "@/components/blog/ReadingMode";
 import { TableOfContents, MobileTOC } from "@/components/blog/TableOfContents";
 import type { Heading } from "@/components/blog/TableOfContents";
 import BlogPostMarkdown from "@/components/blog/BlogPostMarkdown";
@@ -229,18 +230,21 @@ export default async function BlogPostPage({ params }: Props) {
               <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-fg leading-tight mb-3 font-[family-name:var(--font-blog)]">
                 {post.title}
               </h1>
-              <div className="flex flex-wrap items-center gap-3">
-                <span className="text-sm text-fg-faint">{post.date}</span>
-                <span className="text-sm text-fg-faint">{post.readingTime} min read</span>
-                {post.tags.map((t) => (
-                  <Link
-                    key={t}
-                    href={`/blog/tag/${encodeURIComponent(t)}`}
-                    className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle hover:text-accent transition-colors"
-                  >
-                    #{t}
-                  </Link>
-                ))}
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-sm text-fg-faint">{post.date}</span>
+                  <span className="text-sm text-fg-faint">{post.readingTime} min read</span>
+                  {post.tags.map((t) => (
+                    <Link
+                      key={t}
+                      href={`/blog/tag/${encodeURIComponent(t)}`}
+                      className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle hover:text-accent transition-colors"
+                    >
+                      #{t}
+                    </Link>
+                  ))}
+                </div>
+                <ReadingMode />
               </div>
               <ShareButtons slug={post.slug} title={post.title} />
             </header>

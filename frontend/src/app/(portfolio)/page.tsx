@@ -11,6 +11,7 @@ import HeroAvocado from "@/components/HeroAvocado";
 import HeroName from "@/components/HeroName";
 import HeroStats from "@/components/HeroStats";
 import ParticleBackground from "@/components/ParticleBackground";
+import CursorTrail from "@/components/CursorTrail";
 import RagPipelineCard from "@/components/RagPipelineCard";
 import StackSection from "@/components/StackSection";
 import SkillsSection from "@/components/SkillsSection";
@@ -118,6 +119,9 @@ export default function PortfolioHome() {
 
         {/* Particle network — deepest layer in this stacking context */}
         <ParticleBackground />
+
+        {/* Cursor trail — indigo/violet particles, desktop only, respects reduced-motion */}
+        <CursorTrail />
 
         {/* Ambient blob layer — desktop only */}
         <div aria-hidden className="hidden sm:block pointer-events-none absolute inset-0 -z-10 overflow-hidden">

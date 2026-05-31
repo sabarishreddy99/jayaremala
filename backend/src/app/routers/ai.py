@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import threading
+import time
 from typing import Iterator, Literal
 
 import google.genai as genai
@@ -426,6 +427,7 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
     # Prefer the stable per-device UUID so unique chat users counts devices, not IPs.
     identifier = request.headers.get("x-visitor-id", "").strip() or ip
     analytics.record_question(req.message)
+    req_start = time.perf_counter()
 
     def event_stream():
         used_model: list[str] = []
@@ -435,8 +437,10 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
                     yield f"data: {json.dumps({'reset': True})}\n\n"
                 else:
                     yield f"data: {json.dumps({'token': item})}\n\n"
-            row_id = analytics.record(identifier)
-            yield f"data: {json.dumps({'done': True, 'sources': sources, 'model': used_model[0] if used_model else settings.gemini_model})}\n\n"
+            model_used = used_model[0] if used_model else settings.gemini_model
+            latency_ms = int((time.perf_counter() - req_start) * 1000)
+            row_id = analytics.record(identifier, model_used, latency_ms)
+            yield f"data: {json.dumps({'done': True, 'sources': sources, 'model': model_used})}\n\n"
             if row_id:
                 threading.Thread(
                     target=analytics.geo_update_sync,

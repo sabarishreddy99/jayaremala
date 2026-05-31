@@ -111,4 +111,9 @@ def get_admin_stats(authorization: str = Header(default="")) -> dict:
             "chat": {x: analytics.get_location_stats("interactions", x) for x in p},
         },
         "pages": {x: analytics.get_page_stats(x) for x in p},
+        "models": {x: analytics.get_model_breakdown(x) for x in p},
+        "trends": {
+            "visitors":      analytics.get_daily_counts("site_visits", 30),
+            "conversations": analytics.get_daily_counts("interactions", 30),
+        },
     }

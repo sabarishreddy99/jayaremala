@@ -28,6 +28,8 @@ interface BlogSummary      { total_views: number; total_claps: number; posts: Bl
 interface ExperienceSummary{ total: number; average: number; distribution: Record<string, number> }
 interface LocationStat     { country: string; visits: number; unique_visitors: number }
 interface PageStat         { page: string; sessions: number; unique_visitors: number }
+interface ModelStat        { model: string; count: number; avg_ms: number }
+interface DailyCount       { date: string; count: number }
 interface BlogEngPost      { slug: string; unique_readers: number; total_opens: number; revisiting_readers: number; revisit_rate: number }
 interface BlogEngagement   { total_opens: number; posts: BlogEngPost[] }
 
@@ -46,6 +48,8 @@ interface AdminStats {
     chat: ByPeriod<LocationStat[]>;
   };
   pages: ByPeriod<PageStat[]>;
+  models?: ByPeriod<ModelStat[]>;
+  trends?: { visitors: DailyCount[]; conversations: DailyCount[] };
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -89,6 +93,168 @@ function SatisfactionBar({ positive, negative }: { positive: number; negative: n
         <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
       </div>
       <p className="text-[10px] text-fg-faint text-center">{pct}% satisfaction from {total} rated responses</p>
+    </div>
+  );
+}
+
+// ── Trends sparklines ───────────────────────────────────────────────────────────
+
+function Sparkline({ data, color }: { data: { date: string; count: number }[]; color: string }) {
+  if (!data.length) return null;
+  const W = 100, H = 28;
+  const max = Math.max(1, ...data.map((d) => d.count));
+  const step = data.length > 1 ? W / (data.length - 1) : W;
+  const pts = data.map((d, i) => [i * step, H - (d.count / max) * (H - 3) - 1.5]);
+  const line = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
+  const area = `${line} L ${W} ${H} L 0 ${H} Z`;
+  const id = `spark-${color.replace(/[^a-z]/gi, "")}`;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-8">
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill={`url(#${id})`} />
+      <path d={line} fill="none" stroke={color} strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+function TrendsPanel({ trends }: { trends?: { visitors: DailyCount[]; conversations: DailyCount[] } }) {
+  if (!trends) return null;
+  const series = [
+    { label: "Site visitors", data: trends.visitors,      color: "rgb(99 102 241)" },
+    { label: "Conversations", data: trends.conversations, color: "rgb(139 92 246)" },
+  ];
+  return (
+    <div className="grid sm:grid-cols-2 gap-4">
+      {series.map((s) => {
+        const total = s.data.reduce((a, d) => a + d.count, 0);
+        const peak = Math.max(0, ...s.data.map((d) => d.count));
+        return (
+          <div key={s.label} className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">{s.label} · 30 days</h2>
+              <span className="text-[11px] text-fg-faint tabular-nums">{fmt(total)} total · peak {peak}/day</span>
+            </div>
+            <Sparkline data={s.data} color={s.color} />
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Model health + reingest ────────────────────────────────────────────────────
+
+function ModelHealthPanel({ models }: { models: { model: string; count: number; avg_ms: number }[] }) {
+  const [reingesting, setReingesting] = useState(false);
+  const [reingestMsg, setReingestMsg] = useState<string | null>(null);
+
+  const total = models.reduce((s, m) => s + m.count, 0);
+  const primary = models[0];           // most-used = the one actually serving
+  const primaryShare = total > 0 && primary ? Math.round((primary.count / total) * 100) : 0;
+  // Weighted avg response time across all models that reported a latency
+  const lats = models.filter((m) => m.avg_ms > 0);
+  const avgMs = lats.length
+    ? Math.round(lats.reduce((s, m) => s + m.avg_ms * m.count, 0) / lats.reduce((s, m) => s + m.count, 0))
+    : 0;
+  // Healthy = one model dominates (no fallback churn). Mixed = quota/429 problems.
+  const healthy = primaryShare >= 85;
+
+  const COLORS = ["bg-indigo-500", "bg-violet-500", "bg-amber-500", "bg-rose-500", "bg-sky-500", "bg-zinc-400"];
+
+  async function reingest() {
+    setReingesting(true);
+    setReingestMsg(null);
+    try {
+      const token = localStorage.getItem("avocado_admin_token") ?? "";
+      const res = await fetch(`${API_BASE_URL}/admin/reingest`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      const d = await res.json();
+      setReingestMsg(`Done — +${d.added ?? 0} added · ${d.updated ?? 0} updated · ${d.deleted ?? 0} removed · ${d.total ?? 0} total`);
+    } catch (e) {
+      setReingestMsg(`Failed${e instanceof Error ? ` (${e.message})` : ""} — check ADMIN_TOKEN & backend`);
+    } finally {
+      setReingesting(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <div className="flex items-center gap-2.5">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Avocado Model Health</h2>
+          {total > 0 && (
+            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+              healthy
+                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+                : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${healthy ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`} />
+              {healthy ? "Healthy" : "Fallback churn"}
+            </span>
+          )}
+          {avgMs > 0 && (
+            <span className={`text-[11px] font-semibold tabular-nums ${avgMs <= 4000 ? "text-emerald-600 dark:text-emerald-400" : avgMs <= 9000 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}`}>
+              ~{(avgMs / 1000).toFixed(1)}s avg
+            </span>
+          )}
+        </div>
+
+        {/* Reingest button */}
+        <button
+          onClick={reingest}
+          disabled={reingesting}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-[11px] font-medium text-fg-muted hover:text-fg hover:border-fg-muted transition-colors disabled:opacity-50"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+            className={reingesting ? "animate-spin" : ""}>
+            <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          {reingesting ? "Re-ingesting…" : "Re-ingest knowledge base"}
+        </button>
+      </div>
+
+      {total === 0 ? (
+        <p className="text-sm text-fg-faint">No responses recorded yet for this period.</p>
+      ) : (
+        <>
+          {/* Stacked usage bar */}
+          <div className="flex h-2.5 w-full rounded-full overflow-hidden mb-3">
+            {models.map((m, i) => (
+              <div key={m.model} className={COLORS[i % COLORS.length]} style={{ width: `${(m.count / total) * 100}%` }} title={`${m.model}: ${m.count}`} />
+            ))}
+          </div>
+          {/* Legend */}
+          <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
+            {models.map((m, i) => (
+              <li key={m.model} className="flex items-center gap-2 text-xs min-w-0">
+                <span className={`w-2 h-2 rounded-full shrink-0 ${COLORS[i % COLORS.length]}`} />
+                <span className="font-mono text-fg-muted truncate">{m.model}</span>
+                <span className="ml-auto tabular-nums text-fg-faint shrink-0">
+                  {m.avg_ms > 0 && <span className="text-fg-muted mr-2">{(m.avg_ms / 1000).toFixed(1)}s</span>}
+                  {m.count} · {Math.round((m.count / total) * 100)}%
+                </span>
+              </li>
+            ))}
+          </ul>
+          {!healthy && (
+            <p className="mt-3 text-[11px] text-amber-700 dark:text-amber-400 leading-relaxed">
+              The primary model is serving only {primaryShare}% of responses — the chain is falling back (usually free-tier 429s). Reorder <span className="font-mono">GEMINI_MODEL</span> to put a quota-healthy model first to cut latency.
+            </p>
+          )}
+        </>
+      )}
+
+      {reingestMsg && (
+        <p className="mt-3 text-[11px] text-fg-muted bg-surface-raised border border-border rounded-lg px-3 py-2">{reingestMsg}</p>
+      )}
     </div>
   );
 }
@@ -2326,6 +2492,7 @@ function Dashboard({
   const siteLocations = stats.location.site[period];
   const chatLocations = stats.location.chat[period];
   const pages       = stats.pages[period];
+  const models      = stats.models?.[period] ?? [];
   const topPosts    = [...stats.blog.posts].sort((a, b) => b.views - a.views).slice(0, 8);
 
   type NavItem = { key: typeof activeView; label: string; icon: string; group: string };
@@ -2585,6 +2752,12 @@ function Dashboard({
             sub={`${fmt(stats.blog.total_claps)} claps across ${stats.blog.posts.length} posts`}
           />
         </div>
+
+        {/* 30-day trends */}
+        <TrendsPanel trends={stats.trends} />
+
+        {/* Avocado model health + operations */}
+        <ModelHealthPanel models={models} />
 
         {/* Questions + Feedback */}
         <div className="grid lg:grid-cols-2 gap-6">

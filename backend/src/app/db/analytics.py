@@ -8,6 +8,7 @@ import hashlib
 import json
 import logging
 import sqlite3
+from datetime import date, timedelta
 from pathlib import Path
 from urllib.request import urlopen
 
@@ -93,6 +94,8 @@ def _migrate(conn: sqlite3.Connection) -> None:
     for table, col_def in [
         ("interactions", "country TEXT DEFAULT ''"),
         ("interactions", "city TEXT DEFAULT ''"),
+        ("interactions", "model TEXT DEFAULT ''"),
+        ("interactions", "latency_ms INTEGER DEFAULT 0"),
         ("site_visits",  "page TEXT DEFAULT '/'"),
         ("site_visits",  "country TEXT DEFAULT ''"),
         ("site_visits",  "city TEXT DEFAULT ''"),
@@ -150,18 +153,63 @@ _CUTOFFS = {
 SESSION_GAP_SECONDS = 600  # 10 minutes
 
 
-def record(identifier: str) -> int | None:
+def record(identifier: str, model: str = "", latency_ms: int = 0) -> int | None:
     """Record a chat response. identifier is a visitor UUID or raw IP.
+    `model` is the Gemini model that served it; `latency_ms` the end-to-end time.
     Returns the new row id (for geo back-fill).
     """
     id_hash = hashlib.sha256(identifier.encode()).hexdigest()
     try:
         with _connect() as conn:
-            cur = conn.execute("INSERT INTO interactions (ip_hash) VALUES (?)", (id_hash,))
+            cur = conn.execute(
+                "INSERT INTO interactions (ip_hash, model, latency_ms) VALUES (?, ?, ?)",
+                (id_hash, model or "", int(latency_ms) or 0),
+            )
             return cur.lastrowid
     except Exception as exc:
         logger.warning("Analytics record failed (non-fatal): %s", exc)
         return None
+
+
+def get_model_breakdown(period: str = "all") -> list[dict]:
+    """Per-model response count + avg latency in the period.
+    If the primary isn't dominant, the fallback chain is churning (quota/429)."""
+    clauses = ["model != ''"]
+    if period in _CUTOFFS:
+        clauses.append(f"created_at >= {_CUTOFFS[period]}")
+    where = "WHERE " + " AND ".join(clauses)
+    try:
+        with _connect() as conn:
+            rows = conn.execute(
+                f"SELECT model, COUNT(*) AS c, AVG(NULLIF(latency_ms, 0)) AS avg_ms "
+                f"FROM interactions {where} GROUP BY model ORDER BY c DESC"
+            ).fetchall()
+        return [{"model": r[0], "count": r[1], "avg_ms": int(r[2]) if r[2] else 0} for r in rows]
+    except Exception as exc:
+        logger.warning("get_model_breakdown failed: %s", exc)
+        return []
+
+
+def get_daily_counts(table: str, days: int = 30) -> list[dict]:
+    """Daily counts for the last `days` days (zero-filled), for trend sparklines."""
+    if table not in ("interactions", "site_visits"):
+        return []
+    try:
+        with _connect() as conn:
+            rows = conn.execute(
+                f"SELECT date(created_at) AS d, COUNT(*) AS c FROM {table} "
+                f"WHERE created_at >= datetime('now', '-{int(days)} days') GROUP BY d"
+            ).fetchall()
+        counts = {r[0]: r[1] for r in rows}
+        today = date.today()
+        return [
+            {"date": (today - timedelta(days=i)).isoformat(),
+             "count": counts.get((today - timedelta(days=i)).isoformat(), 0)}
+            for i in range(days - 1, -1, -1)
+        ]
+    except Exception as exc:
+        logger.warning("get_daily_counts failed: %s", exc)
+        return []
 
 
 def record_site_visit(identifier: str, page: str = "/") -> int | None:

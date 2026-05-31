@@ -183,10 +183,12 @@ export default function ChatInterface() {
     }
 
     // Welcome back: show last question from a previous session (localStorage, not sessionStorage)
+    let welcomeTimer: ReturnType<typeof setTimeout> | undefined;
     if (!hasHistory) {
       const prev = loadLastQuestions();
       if (prev && prev.length > 0) {
         setWelcomeBack(prev[0]);
+        welcomeTimer = setTimeout(() => setWelcomeBack(null), 3000);
       }
     }
 
@@ -196,7 +198,10 @@ export default function ChatInterface() {
       handleSend(decodeURIComponent(q));
     }
 
-    return () => { if (dismissTimer) clearTimeout(dismissTimer); };
+    return () => {
+      if (dismissTimer) clearTimeout(dismissTimer);
+      if (welcomeTimer) clearTimeout(welcomeTimer);
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const [streaming, setStreaming] = useState(false);
@@ -403,10 +408,13 @@ export default function ChatInterface() {
           </h1>
           <p className="mt-1 text-xs text-fg-subtle max-w-xs leading-relaxed">
             Jaya&apos;s personal AI — powered by RAG + Gemini.
-            {totalResponses !== null && (
-              <> <span className="font-semibold text-fg-muted">{totalResponses.toLocaleString()}+</span> conversations answered.</>
-            )}
           </p>
+          {totalResponses !== null && (
+            <div className="mt-2 flex items-center gap-1.5">
+              <span className="text-base font-black tabular-nums text-fg">{totalResponses.toLocaleString()}+</span>
+              <span className="text-[11px] text-fg-faint leading-tight">conversations<br/>answered</span>
+            </div>
+          )}
         </div>
 
         {/* Prompt cards — constrained to same width as chat messages */}

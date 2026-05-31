@@ -13,6 +13,57 @@
   }
 }
 
+/* ── Grid background ──────────────────────────────────────────────────────── */
+.grid-lines {
+  background-image:
+    linear-gradient(to right,  rgb(99 102 241 / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(99 102 241 / 0.07) 1px, transparent 1px);
+  background-size: 46px 46px;
+  animation: grid-drift 75s linear infinite;
+  -webkit-mask-image: radial-gradient(ellipse 78% 68% at 50% 42%, #000 26%, transparent 84%);
+          mask-image: radial-gradient(ellipse 78% 68% at 50% 42%, #000 26%, transparent 84%);
+}
+.dark .grid-lines {
+  background-image:
+    linear-gradient(to right,  rgb(255 255 255 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+}
+@keyframes grid-drift {
+  from { background-position: 0 0,        0 0;        }
+  to   { background-position: 46px 46px,  46px 46px;  }
+}
+
+/* Perpendicular glowing scan-lines */
+.grid-scan-h {
+  top: 0;
+  background: linear-gradient(to right, transparent 0%, rgb(99 102 241 / 0.40) 50%, transparent 100%);
+  box-shadow: 0 0 12px 1px rgb(99 102 241 / 0.18);
+  animation: grid-scan-y 22s ease-in-out infinite;
+}
+.grid-scan-v {
+  left: 0;
+  background: linear-gradient(to bottom, transparent 0%, rgb(139 92 246 / 0.32) 50%, transparent 100%);
+  box-shadow: 0 0 12px 1px rgb(139 92 246 / 0.14);
+  animation: grid-scan-x 30s ease-in-out infinite;
+}
+@keyframes grid-scan-y {
+  0%        { top: 0;    opacity: 0; }
+  18%, 82%  { opacity: 0.7; }
+  100%      { top: 100%; opacity: 0; }
+}
+@keyframes grid-scan-x {
+  0%        { left: 0;    opacity: 0; }
+  18%, 82%  { opacity: 0.7; }
+  100%      { left: 100%; opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .grid-lines,
+  .grid-scan-h,
+  .grid-scan-v { animation: none !important; }
+  .grid-scan-h, .grid-scan-v { opacity: 0; }
+}
+
 /* ── Reading / Focus mode ─────────────────────────────────────────────────── */
 
 /* Article floats above the portaled overlay (z-9998) */

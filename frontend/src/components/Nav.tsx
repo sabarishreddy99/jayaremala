@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { profile } from "@/data/profile";
 import ThemeToggle from "@/components/ThemeToggle";
 import ReadingProgress from "@/components/blog/ReadingProgress";
@@ -43,6 +43,34 @@ export default function Nav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
+  // ── Magnetic spotlight indicator ──────────────────────────────
+  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  const [hoverIdx, setHoverIdx] = useState<number | null>(null);
+  const [spot, setSpot] = useState<{ left: number; width: number; opacity: number }>({
+    left: 0, width: 0, opacity: 0,
+  });
+
+  const activeIdx = links.findIndex((l) => pathname.startsWith(l.href));
+
+  useEffect(() => {
+    const idx = hoverIdx ?? activeIdx;
+    const el = idx >= 0 ? linkRefs.current[idx] : null;
+    if (el) setSpot({ left: el.offsetLeft, width: el.offsetWidth, opacity: 1 });
+    else setSpot((s) => ({ ...s, opacity: 0 }));
+  }, [hoverIdx, activeIdx, pathname]);
+
+  // Re-measure on resize (font / layout shifts)
+  useEffect(() => {
+    const remeasure = () => {
+      const idx = activeIdx;
+      const el = idx >= 0 ? linkRefs.current[idx] : null;
+      if (el) setSpot({ left: el.offsetLeft, width: el.offsetWidth, opacity: 1 });
+    };
+    const id = setTimeout(remeasure, 80); // after font swap
+    window.addEventListener("resize", remeasure);
+    return () => { clearTimeout(id); window.removeEventListener("resize", remeasure); };
+  }, [activeIdx]);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 12);
     onScroll();
@@ -70,31 +98,47 @@ export default function Nav() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {links.map((l) => {
-            const active = pathname.startsWith(l.href);
-            return (
-              <Link
-                key={l.href}
-                href={l.href}
-                className={`group inline-flex items-center px-3 py-1.5 rounded-lg text-sm transition-all duration-200 ${
-                  active
-                    ? "bg-surface-raised text-fg font-medium"
-                    : "text-fg-subtle hover:text-indigo-700 dark:hover:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:font-medium"
-                }`}
-              >
-                {active ? (
-                  <span className="relative inline-flex items-center justify-center">
-                    <span className="invisible text-sm select-none" aria-hidden>{l.label}</span>
-                    <span className="absolute inset-0 flex items-center justify-center text-accent opacity-80">
-                      {l.icon}
-                    </span>
-                  </span>
-                ) : (
-                  <span className="text-sm whitespace-nowrap">{l.label}</span>
-                )}
-              </Link>
-            );
-          })}
+          {/* Spotlight link group — a soft indigo highlight glides between items */}
+          <div
+            className="relative flex items-center gap-1"
+            onMouseLeave={() => setHoverIdx(null)}
+          >
+            {/* The gliding spotlight */}
+            <span
+              aria-hidden
+              className="pointer-events-none absolute top-1/2 -translate-y-1/2 h-8 rounded-lg
+                         bg-gradient-to-b from-indigo-50 to-indigo-100/60
+                         dark:from-indigo-950/70 dark:to-indigo-900/30
+                         ring-1 ring-indigo-200/60 dark:ring-indigo-800/50
+                         shadow-[0_2px_12px_-2px_rgb(99_102_241_/_0.25)]"
+              style={{
+                left: spot.left,
+                width: spot.width,
+                opacity: spot.opacity,
+                transition: "left 0.42s cubic-bezier(0.22,1,0.36,1), width 0.42s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease",
+              }}
+            />
+            {links.map((l, i) => {
+              const active = pathname.startsWith(l.href);
+              return (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  ref={(el) => { linkRefs.current[i] = el; }}
+                  onMouseEnter={() => setHoverIdx(i)}
+                  className={`relative z-10 inline-flex items-center px-3 py-1.5 text-sm whitespace-nowrap transition-colors duration-200 ${
+                    active
+                      ? "text-indigo-700 dark:text-indigo-300 font-medium"
+                      : hoverIdx === i
+                      ? "text-indigo-700 dark:text-indigo-300"
+                      : "text-fg-subtle"
+                  }`}
+                >
+                  {l.label}
+                </Link>
+              );
+            })}
+          </div>
           <a
             href={profile.resume}
             target="_blank"

@@ -56,6 +56,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
         </svg>
         <input
           type="search"
+          aria-label="Search projects"
           placeholder="Search by title, tech, or keyword…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -97,6 +98,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
               <button
                 key={tag}
                 onClick={() => setActiveTag(activeTag === tag ? null : tag)}
+                aria-pressed={isActive}
                 className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-1.5 border transition-all duration-150 ${
                   isActive
                     ? "bg-accent text-white border-accent shadow-sm"

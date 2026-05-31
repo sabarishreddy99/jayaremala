@@ -5,6 +5,8 @@ import MobileAvocadoFAB from "@/components/MobileAvocadoFAB";
 import ScrollToTop from "@/components/ScrollToTop";
 import SearchModal from "@/components/SearchModal";
 import IntroScreen from "@/components/IntroScreen";
+import ScrollAtmosphere from "@/components/ScrollAtmosphere";
+import SectionIndicator from "@/components/SectionIndicator";
 import { getAllPosts } from "@/lib/blog";
 import { projects } from "@/data/projects";
 import { quotes } from "@/data/quotes";
@@ -21,6 +23,8 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
   return (
     <>
       <IntroScreen />
+      <ScrollAtmosphere />
+      <SectionIndicator />
       <Nav />
       <SearchModal data={searchData} />
       <main className="flex-1">{children}</main>

@@ -89,7 +89,7 @@ export default function Footer() {
             animationDelay: "-24s",
             willChange: "transform",
           }}
-          baseOpacity="text-fg/[0.07]"
+          baseOpacity="text-fg/[0.12]"
           hoverOpacity="text-fg/60"
         />
 
@@ -113,7 +113,7 @@ export default function Footer() {
               animationDelay: "-12s",
               willChange: "transform",
             }}
-            baseOpacity="text-fg-faint/50"
+            baseOpacity="text-fg-faint/70"
             hoverOpacity="text-fg"
           />
         </div>

@@ -14,10 +14,8 @@ import ParticleBackground from "@/components/ParticleBackground";
 import RagPipelineCard from "@/components/RagPipelineCard";
 import StackSection from "@/components/StackSection";
 import SkillsSection from "@/components/SkillsSection";
-import SectionNav from "@/components/SectionNav";
 import MobileNoBg from "@/components/MobileNoBg";
 import SiteVitals from "@/components/SiteVitals";
-import { testimonials } from "@/data/testimonials";
 import { experience } from "@/data/experience";
 
 export const metadata = {
@@ -104,16 +102,10 @@ export default function PortfolioHome() {
   const featured = projects.filter((p) => p.featured);
   const latestPost = getAllPosts()[0] ?? null;
   const latestQuote = quotes.find((q) => q.featured) ?? [...quotes].sort((a, b) => b.addedAt.localeCompare(a.addedAt))[0] ?? null;
-  const weekIndex = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
-  const socialProof = [
-    testimonials[weekIndex % testimonials.length],
-    testimonials[(weekIndex + 1) % testimonials.length],
-  ].filter(Boolean);
 
   return (
     <div className="w-full">
       <MobileNoBg />
-      <SectionNav />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -220,29 +212,21 @@ export default function PortfolioHome() {
               </a>
             </div>
 
-            {/* Contact shortcut — for recruiters ready to act immediately */}
-            <div className="animate-fade-up flex items-center gap-3 flex-wrap" style={{ animationDelay: "340ms" }}>
-              <a href={`mailto:${profile.email}`} className="inline-flex items-center gap-1 text-[11px] text-fg-faint hover:text-fg transition-colors">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
-                {profile.email}
+            {/* Minimal social row — just icons, no email dump */}
+            <div className="animate-fade-up flex items-center gap-4" style={{ animationDelay: "340ms" }}>
+              <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
+                className="text-fg-faint hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
               </a>
-              <span className="text-border text-[10px]">·</span>
-              <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-fg-faint hover:text-fg transition-colors">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-                LinkedIn
-              </a>
-              <span className="text-border text-[10px]">·</span>
-              <a href={profile.github} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[11px] text-fg-faint hover:text-fg transition-colors">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-                GitHub
+              <a href={profile.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub"
+                className="text-fg-faint hover:text-fg transition-colors">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
               </a>
               {profile.resume && (
-                <>
-                  <span className="text-border text-[10px]">·</span>
-                  <a href={profile.resume} target="_blank" rel="noopener noreferrer" className="text-[11px] text-fg-faint hover:text-fg transition-colors">
-                    Resume ↗
-                  </a>
-                </>
+                <a href={profile.resume} target="_blank" rel="noopener noreferrer"
+                  className="text-[11px] font-medium text-fg-faint hover:text-fg border border-border/60 rounded-full px-3 py-1 hover:border-fg-muted transition-all">
+                  Resume ↗
+                </a>
               )}
             </div>
           </div>
@@ -266,36 +250,21 @@ export default function PortfolioHome() {
               <HeroAvocado />
             </div>
 
-            {/* Latest teasers — now + blog + quote */}
-            <div
-              className="animate-fade-up flex flex-col gap-2"
-              style={{ animationDelay: "240ms" }}
-            >
-              {profile.now && (
-                <Link href="/now" className="group inline-flex items-center gap-2 w-fit max-w-sm">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Now</span>
-                  <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1">
-                    {profile.now.building.split("—")[0].trim()} →
+            {/* Latest post teaser — one thing, not three */}
+            {latestPost && (
+              <div className="animate-fade-up" style={{ animationDelay: "240ms" }}>
+                <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 rounded-full border border-border/60 bg-surface/60 px-3.5 py-1.5 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all">
+                  <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-fg-faint shrink-0">Latest</span>
+                  <span className="w-px h-3 bg-border shrink-0" />
+                  <span className="text-[11px] text-fg-subtle group-hover:text-accent transition-colors line-clamp-1">
+                    {latestPost.title}
                   </span>
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-fg-faint group-hover:text-accent shrink-0 transition-colors">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
                 </Link>
-              )}
-              {latestPost && (
-                <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 w-fit max-w-sm">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Blog</span>
-                  <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1">
-                    {latestPost.title} →
-                  </span>
-                </Link>
-              )}
-              {latestQuote && (
-                <Link href="/quotes" className="group inline-flex items-center gap-2 w-fit max-w-sm">
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Quote</span>
-                  <span className="text-xs text-fg-subtle group-hover:text-accent transition-colors line-clamp-1 italic">
-                    &ldquo;{latestQuote.text}&rdquo; — {latestQuote.author} →
-                  </span>
-                </Link>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         </Inner>
 
@@ -330,9 +299,13 @@ export default function PortfolioHome() {
         </Inner>
       </section>
 
+
       {/* ── 2 · At a Glance ── z-[2] ───────────────────────────── */}
       <StackSection z={2} seamless id="about">
-<Inner className="py-16 sm:py-20">
+<Inner className="py-16 sm:py-20 relative">
+          {/* Ghost number */}
+          <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
+            style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>01</span>
           <div className="flex items-center gap-2.5 mb-8">
             <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500 shrink-0" />
             <h2 className="text-xs font-bold uppercase tracking-widest label-gradient">At a Glance</h2>
@@ -340,10 +313,13 @@ export default function PortfolioHome() {
 
           <div className="grid gap-8 lg:grid-cols-[1fr_260px]">
             <div className="space-y-6">
+              <ScrollReveal>
               <p className="text-base sm:text-lg leading-8 text-fg max-w-2xl">
                 <HighlightNumbers text={profile.bio} />
               </p>
+              </ScrollReveal>
 
+              <ScrollReveal delay={80}>
               <div className="hanging-quote flex items-start gap-3 rounded-xl border border-border bg-surface-sunken px-4 py-3.5 max-w-2xl">
                 <span className="mt-0.5 text-fg-faint shrink-0">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
@@ -352,23 +328,7 @@ export default function PortfolioHome() {
                 </span>
                 <p className="text-sm sm:text-base leading-7 text-fg-muted italic">{profile.obsession}</p>
               </div>
-
-              {/* Social proof — 2 testimonial pull-quotes */}
-              {socialProof.length > 0 && (
-                <div className="grid sm:grid-cols-2 gap-3 max-w-2xl">
-                  {socialProof.map((t) => (
-                    <div key={t.name} className="rounded-xl border border-border bg-surface p-4 space-y-2.5">
-                      <p className="hanging-quote text-xs text-fg-muted leading-relaxed line-clamp-3 italic">
-                        &ldquo;{t.description.split(".")[0]}.&rdquo;
-                      </p>
-                      <div>
-                        <p className="text-[11px] font-semibold text-fg-subtle">{t.name}</p>
-                        <p className="text-[10px] text-fg-faint">{t.designation} · {t.company}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+              </ScrollReveal>
 
               {/* Site vitals — live meta stats */}
               <SiteVitals />
@@ -443,7 +403,10 @@ export default function PortfolioHome() {
       {/* ── 3 · Featured Projects ── z-[3] ─────────────────────── */}
       {featured.length > 0 && (
         <StackSection z={3} id="projects">
-          <Inner className="py-16 sm:py-20">
+          <Inner className="py-16 sm:py-20 relative">
+            {/* Ghost number */}
+            <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
+              style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>02</span>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
                 <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-blue-500 to-cyan-500 shrink-0" />
@@ -518,7 +481,10 @@ export default function PortfolioHome() {
 
       {/* ── 4 · Skills ── z-[4] ────────────────────────────────── */}
       <StackSection z={4} id="skills">
-        <Inner className="py-16 sm:py-20">
+        <Inner className="py-16 sm:py-20 relative">
+          {/* Ghost number */}
+          <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
+            style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>03</span>
           <SkillsSection skills={skills} featuredProjects={featured} />
           <div className="mt-10 pt-5 border-t border-border flex items-center justify-between">
             <span className="text-[10px] text-fg-faint uppercase tracking-widest">3 / 5</span>
@@ -532,7 +498,10 @@ export default function PortfolioHome() {
 
       {/* ── 5 · Testimonials ── z-[5] ──────────────────────────── */}
       <StackSection z={5} id="testimonials">
-        <Inner className="py-16 sm:py-20">
+        <Inner className="py-16 sm:py-20 relative">
+          {/* Ghost number */}
+          <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
+            style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>04</span>
           <TestimonialsCarousel />
           <div className="mt-10 pt-5 border-t border-border flex items-center justify-between">
             <span className="text-[10px] text-fg-faint uppercase tracking-widest">4 / 5</span>
@@ -546,7 +515,10 @@ export default function PortfolioHome() {
 
       {/* ── 6 · Contact ── z-[6] ───────────────────────────────── */}
       <StackSection z={6} className="pb-16 sm:pb-24" id="contact">
-        <Inner className="py-16 sm:py-20">
+        <Inner className="py-16 sm:py-20 relative">
+          {/* Ghost number */}
+          <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
+            style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>05</span>
           <ContactForm />
         </Inner>
       </StackSection>

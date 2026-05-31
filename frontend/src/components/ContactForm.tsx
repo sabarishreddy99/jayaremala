@@ -66,7 +66,8 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number)
       </div>
       <button
         onClick={() => { setVisible(false); setTimeout(() => onDismiss(toast.id), 300); }}
-        className="ml-1 shrink-0 text-fg-faint hover:text-fg-subtle transition-colors"
+        aria-label="Dismiss notification"
+        className="ml-1 shrink-0 text-fg-faint hover:text-fg-subtle transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent rounded"
       >
         <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
           <path d="M18 6L6 18M6 6l12 12" />
@@ -228,7 +229,7 @@ export default function ContactForm() {
           <button
             type="submit"
             disabled={sending}
-            className="rounded-full bg-fg text-bg px-6 py-2.5 text-sm font-semibold hover:opacity-80 transition-opacity disabled:opacity-50 flex items-center gap-2"
+            className="rounded-full bg-fg text-bg px-6 py-2.5 text-sm font-semibold hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {sending ? (
               <>

@@ -17,7 +17,7 @@ export default function ChatPage() {
       <AvocadoBg />
 
       {/* Nav */}
-      <header className="relative z-10 shrink-0 px-4 sm:px-12 pt-4 sm:pt-5 pb-2 sm:pb-3">
+      <header className="relative z-[60] shrink-0 px-4 sm:px-12 pt-4 sm:pt-5 pb-2 sm:pb-3">
         <div className="mx-auto flex w-full max-w-2xl lg:max-w-3xl items-center justify-between">
           <Link
             href="/"
@@ -80,7 +80,7 @@ export default function ChatPage() {
             href={`mailto:${profile.email}`}
             aria-label="Email"
             title={profile.email}
-            className="text-fg-faint hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors duration-150"
+            className="text-fg-faint hover:text-accent transition-colors duration-150"
           >
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -95,7 +95,7 @@ export default function ChatPage() {
             rel="noopener noreferrer"
             aria-label="Resume"
             title="View Resume"
-            className="text-fg-faint hover:text-violet-500 dark:hover:text-violet-400 transition-colors duration-150"
+            className="text-fg-faint hover:text-fg transition-colors duration-150"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>

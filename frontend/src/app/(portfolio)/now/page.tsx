@@ -103,7 +103,7 @@ export default function NowPage() {
       )}
 
       {/* Footer links */}
-      <div className="mt-12 pt-8 border-t border-border flex flex-wrap gap-x-6 gap-y-2 text-xs text-fg-faint">
+      <div className="mt-12 pt-8 border-t border-border flex flex-wrap gap-x-4 gap-y-2 sm:gap-x-6 text-xs text-fg-faint">
         <Link href="/" className="hover:text-fg-subtle transition-colors">← Portfolio</Link>
         <Link href="/blog" className="hover:text-fg-subtle transition-colors">Blog</Link>
         <Link href="/projects" className="hover:text-fg-subtle transition-colors">Projects</Link>

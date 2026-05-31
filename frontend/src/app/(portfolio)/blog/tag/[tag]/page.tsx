@@ -34,7 +34,8 @@ export default async function BlogTagPage({ params }: Props) {
       <div className="mb-10">
         <Link
           href="/blog"
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-fg-faint hover:text-fg transition-colors mb-6"
+          aria-label="Back to all posts"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-fg-faint hover:text-fg transition-colors mb-6 min-h-[44px] sm:min-h-0"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <path d="M19 12H5M12 19l-7-7 7-7"/>

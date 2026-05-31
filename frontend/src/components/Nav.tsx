@@ -189,7 +189,7 @@ export default function Nav() {
       {/* Mobile drawer */}
       {open && (
         <div className="md:hidden border-t border-border-subtle bg-surface px-4 pb-4 pt-2">
-          <nav className="flex flex-col gap-0.5">
+          <nav className="flex flex-col gap-1">
             {links.map((l) => (
               <Link
                 key={l.href}
@@ -198,7 +198,7 @@ export default function Nav() {
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
                   pathname.startsWith(l.href)
                     ? "bg-surface-raised text-fg font-medium"
-                    : "text-fg-muted hover:bg-surface-raised"
+                    : "text-fg-muted hover:bg-surface-raised hover:text-indigo-600 dark:hover:text-indigo-400"
                 }`}
               >
                 <span className={`shrink-0 ${pathname.startsWith(l.href) ? "text-accent" : "text-fg-faint"}`}>

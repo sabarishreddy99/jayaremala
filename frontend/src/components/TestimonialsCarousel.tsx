@@ -36,7 +36,7 @@ function TestimonialCard({ item }: { item: Testimonial }) {
       <div className="mt-5 pt-4 border-t border-border-subtle">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="shrink-0 w-9 h-9 rounded-full bg-indigo-600 flex items-center justify-center text-white text-xs font-bold">
+            <div className="shrink-0 w-9 h-9 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold">
               {initials(item.name)}
             </div>
             <div className="min-w-0">
@@ -51,7 +51,7 @@ function TestimonialCard({ item }: { item: Testimonial }) {
                 </span>
               )}
               {item.designation && <p className="text-xs text-fg-subtle leading-snug truncate">{item.designation}</p>}
-              {item.company && <p className="text-xs font-medium text-accent truncate">{item.company}</p>}
+              {item.company && <p className="text-xs font-medium text-fg-muted truncate">{item.company}</p>}
             </div>
           </div>
           <div className="shrink-0 text-right">
@@ -169,11 +169,12 @@ export default function TestimonialsCarousel() {
         {/* Dot indicators */}
         {total > 1 && (
           <div className="flex justify-center gap-1.5 mt-3">
-            {testimonials.map((_, i) => (
+            {testimonials.map((item, i) => (
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
-                aria-label={`Go to testimonial ${i + 1}`}
+                aria-label={`Show testimonial from ${item.name}`}
+                aria-pressed={i === current}
                 className={`rounded-full transition-all duration-200 ${
                   i === current ? "w-5 h-2 bg-accent" : "w-2 h-2 bg-border-strong hover:bg-fg-subtle"
                 }`}

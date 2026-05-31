@@ -111,15 +111,20 @@ const WELCOME: Message = {
     "Hi! I'm Avocado, Jaya's AI assistant. Ask me anything about his background, work experience, projects, or skills.",
 };
 
-const SUGGESTIONS = [
-  { label: "Open to new roles?",       hint: "Availability & location",    full: "Is Jaya currently open to new job opportunities? Where is he based?" },
-  { label: "Most impressive project",  hint: "Standout work",              full: "What is Jaya's most impressive project and what makes it stand out?" },
-  { label: "AI & ML expertise",        hint: "RAG, LLMs, Edge AI",         full: "Tell me about Jaya's AI and machine learning expertise." },
-  { label: "Current work at NYU",      hint: "What he's building now",     full: "What is Jaya currently working on at NYU?" },
-  { label: "Distributed systems",      hint: "Scale & reliability",        full: "Tell me about Jaya's distributed systems and backend engineering experience." },
-  { label: "Experience at Shell",      hint: "Industry background",        full: "What did Jaya build at Wipro and Shell PLC?" },
-  { label: "How Avocado works",        hint: "This chatbot's tech",        full: "How does this AI portfolio chatbot work? What powers Avocado?" },
-  { label: "Resume & contact",         hint: "Get in touch",               full: "How can I contact Jaya or view his resume?" },
+function getTimeGreeting() {
+  const h = new Date().getHours();
+  if (h < 12) return "Good morning";
+  if (h < 18) return "Good afternoon";
+  return "Good evening";
+}
+
+const PROMPTS = [
+  { category: "Availability",   label: "Open to new roles?",    full: "Is Jaya currently open to new job opportunities? Where is he based and what kind of roles interest him?" },
+  { category: "Projects",       label: "Most impressive work",   full: "What is Jaya's most impressive project and what makes it technically stand out?" },
+  { category: "AI Expertise",   label: "AI & ML skills",         full: "Tell me about Jaya's AI and machine learning expertise — RAG pipelines, LLMs, and edge AI." },
+  { category: "Experience",     label: "Shell, Wipro & NYU",     full: "What did Jaya build at Shell PLC, Wipro, and NYU? Walk me through his career timeline." },
+  { category: "Recognition",    label: "Hackathon winner?",      full: "Tell me about Jaya's Qualcomm Edge AI Hackathon win and other notable achievements." },
+  { category: "About Avocado",  label: "How this AI works",      full: "How does this AI portfolio chatbot work? What powers Avocado behind the scenes?" },
 ];
 
 export default function ChatInterface() {
@@ -365,37 +370,71 @@ export default function ChatInterface() {
   return (
     <div className="flex flex-col h-full">
 
-      {/* Intro — collapses to zero once the first message is sent */}
+      {/* ── Intro — cinematic first impression, collapses on first send ── */}
       <div
-        className="shrink-0 px-4 sm:px-6 text-center overflow-hidden transition-all duration-500 ease-in-out"
+        className="shrink-0 overflow-hidden transition-all duration-500 ease-in-out"
         style={{
-          maxHeight: introVisible ? "160px" : "0px",
+          maxHeight: introVisible ? "580px" : "0px",
           opacity: introVisible ? 1 : 0,
-          paddingTop: introVisible ? undefined : "0px",
-          paddingBottom: introVisible ? undefined : "0px",
         }}
       >
-        <div className="pt-2 sm:pt-4 pb-2 sm:pb-4">
-          <div className="flex items-center justify-center gap-2 mb-1.5 sm:mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.22em] text-fg-faint">
-              Avocado · Live
+        {/* Avatar + greeting */}
+        <div className="flex flex-col items-center px-4 sm:px-6 pt-7 sm:pt-10 pb-3 text-center">
+          {/* Avocado avatar with glow ring */}
+          <div className="relative mb-4">
+            <div className="absolute inset-[-8px] rounded-full bg-indigo-500/15 blur-lg animate-avo-glow" />
+            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-3xl shadow-xl shadow-indigo-500/20">
+              🥑
+            </div>
+            {/* Live status dot */}
+            <span className="absolute bottom-0.5 right-0.5 flex h-4 w-4">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" />
+              <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-bg items-center justify-center">
+                <span className="w-1 h-1 rounded-full bg-white" />
+              </span>
             </span>
           </div>
-          <h1 className="text-base sm:text-2xl font-bold tracking-tight text-fg">
-            Ask Avocado 🥑
-          </h1>
-          <p className="mt-0.5 text-[11px] font-medium text-accent tracking-wide">
-            Jaya&apos;s personal AI assistant — ask anything
+
+          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-fg-faint mb-1">
+            {getTimeGreeting()} · Avocado
           </p>
-          {totalResponses !== null && (
-            <p className="mt-1.5 text-[10px] text-fg-faint">
-              Answered{" "}
-              <span className="font-semibold text-fg-muted">{totalResponses.toLocaleString()}</span>
-              {" "}questions from recruiters &amp; visitors
-            </p>
-          )}
-          <div className="mx-auto mt-2 sm:mt-4 w-8 h-px bg-border" />
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-fg leading-tight">
+            Ask me anything about Jaya
+          </h1>
+          <p className="mt-1 text-xs text-fg-subtle max-w-xs leading-relaxed">
+            Jaya&apos;s personal AI — powered by RAG + Gemini.
+            {totalResponses !== null && (
+              <> <span className="font-semibold text-fg-muted">{totalResponses.toLocaleString()}+</span> conversations answered.</>
+            )}
+          </p>
+        </div>
+
+        {/* Prompt cards — constrained to same width as chat messages */}
+        <div className="px-3 sm:px-6 pb-5 sm:pb-7">
+          <div className="mx-auto max-w-2xl lg:max-w-3xl">
+          <p className="text-[9px] font-bold uppercase tracking-[0.2em] text-fg-faint mb-2 px-1">
+            Start with a question
+          </p>
+          <div className="grid grid-cols-2 gap-1.5">
+            {PROMPTS.map((p) => (
+              <button
+                key={p.full}
+                onClick={() => setPrefill(p.full)}
+                className="group text-left rounded-lg border border-border bg-surface/70
+                           px-3 py-2 hover:border-indigo-300 dark:hover:border-indigo-700
+                           hover:bg-surface active:scale-[0.98]
+                           transition-all duration-150"
+              >
+                <span className="text-[9px] font-bold uppercase tracking-widest text-fg-faint block mb-0.5">
+                  {p.category}
+                </span>
+                <span className="text-[11px] font-medium text-fg-muted group-hover:text-accent transition-colors leading-snug block">
+                  {p.label}
+                </span>
+              </button>
+            ))}
+          </div>
+          </div>
         </div>
       </div>
 
@@ -475,6 +514,18 @@ export default function ChatInterface() {
         </div>
       )}
 
+      {/* Ambient status strip — live feedback on streaming / warming state */}
+      <div
+        aria-hidden
+        className={`shrink-0 h-0.5 w-full transition-all duration-700 ${
+          streaming
+            ? "opacity-80 bg-gradient-to-r from-indigo-500 via-violet-400 to-indigo-500"
+            : backendStatus === "warming"
+            ? "opacity-50 bg-amber-400"
+            : "opacity-0"
+        }`}
+      />
+
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-4">
         <div className="mx-auto max-w-2xl lg:max-w-3xl space-y-4 sm:space-y-5">
@@ -508,30 +559,12 @@ export default function ChatInterface() {
             </div>
           ))}
 
-          {/* Suggestion chips — only on initial state */}
-          {isInitial && (
-            <div className="pt-1 sm:pt-2">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-fg-faint mb-2 sm:mb-3">
-                Ask Avocado about
+          {/* Welcome back prompt — shown after intro has gone away but chat is fresh */}
+          {isInitial && messages.length === 1 && (
+            <div className="pt-2">
+              <p className="text-[10px] text-fg-faint text-center">
+                Pick a card above or type your question below ↓
               </p>
-              <div className="grid grid-cols-2 gap-2">
-                {SUGGESTIONS.map((s) => (
-                  <button
-                    key={s.full}
-                    onClick={() => setPrefill(s.full)}
-                    className="group text-left rounded-xl border border-border bg-surface px-3 py-2.5 sm:px-4 sm:py-3 shadow-sm transition-all hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md active:scale-[0.98]"
-                  >
-                    <span className="flex flex-col gap-0.5">
-                      <span className="text-[11px] sm:text-xs font-semibold text-fg-muted group-hover:text-accent transition-colors leading-tight">
-                        {s.label}
-                      </span>
-                      <span className="text-[10px] text-fg-faint leading-tight hidden sm:block">
-                        {s.hint}
-                      </span>
-                    </span>
-                  </button>
-                ))}
-              </div>
             </div>
           )}
 
@@ -575,8 +608,7 @@ export default function ChatInterface() {
           />
 
           <div className="flex items-center justify-between px-1">
-            <p className="text-[11px] text-fg-faint flex items-center gap-2">
-              Avocado answers from Jaya&apos;s profile.{" "}
+            <p className="text-[11px] text-fg-faint flex items-center gap-2 flex-wrap">
               {activeModel && (
                 <span className="inline-flex items-center gap-1 rounded-full bg-surface-raised border border-border px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
@@ -587,14 +619,19 @@ export default function ChatInterface() {
                 View portfolio →
               </Link>
             </p>
-            {messages.length > 1 && (
-              <button
-                onClick={handleClear}
-                className="text-[11px] text-fg-faint hover:text-fg-muted transition-colors"
-              >
-                Clear
-              </button>
-            )}
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline text-[10px] text-fg-faint/50 select-none">
+                <kbd className="font-mono">↵</kbd> send · <kbd className="font-mono">⇧↵</kbd> newline
+              </span>
+              {messages.length > 1 && (
+                <button
+                  onClick={handleClear}
+                  className="text-[11px] text-fg-faint hover:text-fg-muted transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Stats + Experience rating */}

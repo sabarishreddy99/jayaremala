@@ -3,6 +3,16 @@
 /* Class-based dark mode for next-themes */
 @variant dark (&:where(.dark, .dark *));
 
+/* Prevent iOS Safari auto-zoom on input focus.
+   Safari zooms when font-size < 16px — enforce it on mobile only. */
+@media (max-width: 640px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+}
+
 @keyframes float-up {
   0%   { opacity: 1; transform: translateX(-50%) translateY(0);     }
   100% { opacity: 0; transform: translateX(-50%) translateY(-28px); }

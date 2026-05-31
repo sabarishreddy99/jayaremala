@@ -7,9 +7,11 @@ class Settings(BaseSettings):
     app_env: str = "dev"
     frontend_origin: str = "http://localhost:3000,http://127.0.0.1:3000,https://jayaremala.com,https://www.jayaremala.com"
     google_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    # 2.0-flash is faster to first token than 2.5-flash; since answers are grounded
+    # in retrieved context the quality gap is minimal. 2.5-flash stays as a fallback.
+    gemini_model: str = "gemini-2.0-flash"
     # Comma-separated fallback chain tried in order when primary hits 503/429
-    gemini_fallback_models: str = "gemini-2.0-flash,gemini-2.0-flash-lite,gemini-flash-latest"
+    gemini_fallback_models: str = "gemini-2.5-flash,gemini-2.0-flash-lite,gemini-flash-latest"
     # Persistent DB paths — set to absolute paths on the Lightsail volume (/data/)
     analytics_db_path: str = "./chroma_db/analytics.db"
     content_db_path: str = "./chroma_db/content.db"

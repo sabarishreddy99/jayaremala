@@ -127,6 +127,8 @@ export default function ChatInterface() {
     fetch(`${API_BASE_URL}/health`, { signal: controller.signal })
       .then((r) => { if (r.ok) setBackendStatus("ready"); else setBackendStatus("warming"); })
       .catch(() => setBackendStatus("warming"));
+    // Pre-warm the embedder + retrieval path so the first real question is hot
+    fetch(`${API_BASE_URL}/ai/warmup`, { signal: controller.signal }).catch(() => {});
     // Restore previously-chosen persona
     const saved = (typeof localStorage !== "undefined" && localStorage.getItem(PERSONA_KEY)) as PersonaId | null;
     if (saved && PROMPTS_BY_PERSONA[saved]) setPersona(saved);

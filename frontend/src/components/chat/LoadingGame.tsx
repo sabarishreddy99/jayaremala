@@ -12,32 +12,15 @@ const THOUGHTS = [
 
 export default function LoadingGame() {
   const [thoughtIdx, setThoughtIdx] = useState(0);
-  const [coldStart, setColdStart] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setThoughtIdx((i) => (i + 1) % THOUGHTS.length), 2200);
-    const cold = setTimeout(() => setColdStart(true), 6000);
-    return () => { clearInterval(t); clearTimeout(cold); };
+    return () => clearInterval(t);
   }, []);
 
   return (
     <div className="space-y-2 animate-in fade-in duration-300">
 
-      {/* Cold-start warning */}
-      {coldStart && (
-        <div className="flex justify-start gap-3">
-          <div className="w-7 shrink-0" />
-          <div className="animate-in fade-in duration-500 rounded-xl border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-3 py-2 flex items-start gap-2 max-w-[80%] sm:max-w-[75%]">
-            <span className="text-sm shrink-0 mt-px">⏳</span>
-            <div>
-              <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">Avocado is waking up…</p>
-              <p className="text-[10px] text-amber-600 dark:text-amber-500 mt-0.5">
-                First response takes ~20–30 s on cold start. Subsequent ones are instant.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Main thinking row */}
       <div className="flex justify-start gap-3">

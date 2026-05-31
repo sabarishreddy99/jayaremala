@@ -81,28 +81,58 @@ _HYDE_PROMPT = (
 )
 
 
+# Strong category signals — these retrieve well via the name-anchored + topic
+# query variants already, so HyDE's extra LLM round-trip adds latency without
+# improving precision. Skip it for them; reserve HyDE for genuinely vague queries.
+_HYDE_SKIP_KEYWORDS = (
+    "experience", "work", "job", "role", "company", "wipro", "shell", "nyu", "intern",
+    "project", "built", "build", "snaplog", "codecollab", "genecart", "hackathon", "qualcomm",
+    "skill", "stack", "tech", "language", "framework", "python", "react", "aws", "kubernetes",
+    "education", "degree", "university", "gpa", "tandon", "master",
+    "contact", "email", "reach", "hire", "linkedin", "resume", "cv",
+    "award", "win", "achiev", "available", "open to", "location", "based", "who is",
+)
+
+_hyde_cache: dict[str, "str | None"] = {}
+_HYDE_CACHE_MAX = 256
+
+
+def _should_use_hyde(stripped: str) -> bool:
+    if len(stripped) < 15 or stripped in _GREETINGS:
+        return False
+    if any(kw in stripped for kw in _HYDE_SKIP_KEYWORDS):
+        return False
+    return True
+
+
 async def _hyde_query(user_message: str) -> str | None:
     """HyDE — Hypothetical Document Embeddings (Gao et al. 2022).
     Generates a short hypothetical answer and embeds *that* for vector search.
-    Hypothetical answers sit closer in embedding space to real KB chunks than
-    the raw question does, improving retrieval precision for vague queries.
-    Skipped for greetings and very short messages. Hard timeout keeps latency bounded.
+    Only runs for genuinely vague queries (no strong category signal); results
+    are cached by normalized query and the call is hard-timeout bounded.
     """
     stripped = user_message.lower().strip()
-    if len(stripped) < 15 or stripped in _GREETINGS:
+    if not _should_use_hyde(stripped):
         return None
+    if stripped in _hyde_cache:
+        return _hyde_cache[stripped]
+
     prompt = _HYDE_PROMPT.format(question=user_message)
     try:
         loop = asyncio.get_running_loop()
         doc = await asyncio.wait_for(
             loop.run_in_executor(None, lambda: _generate("", prompt)),
-            timeout=4.0,
+            timeout=2.5,
         )
-        logger.debug("HyDE doc: %s", doc[:120] if doc else "(empty)")
-        return doc.strip() or None
+        result = doc.strip() or None
     except Exception as exc:
         logger.debug("HyDE generation skipped: %s", exc)
-        return None
+        result = None
+
+    if len(_hyde_cache) >= _HYDE_CACHE_MAX:
+        _hyde_cache.clear()
+    _hyde_cache[stripped] = result
+    return result
 
 
 def _build_rag_queries(req: ChatRequest) -> list[str]:
@@ -327,11 +357,11 @@ def ai_chat(req: ChatRequest) -> ChatResponse:
     dense = rag_store.query_batch(queries, n_per_query=6)
     bm25 = rag_store.bm25_query(req.message, n_results=15)
     merged = rag_store.rrf_merge(dense, bm25, k=60, top_n=20)
-    top_chunks = rag_store.rerank_cross_encoder(req.message, merged, top_n=5)
+    top_chunks = rag_store.rerank_cross_encoder(req.message, merged, top_n=4)
     graph_extras = rag_graph.expand_context(
         retrieved_ids=[c["id"] for c in top_chunks],
         rrf_pool=merged,
-        max_expansion=2,
+        max_expansion=1,
     )
     if graph_extras:
         top_chunks = top_chunks + graph_extras
@@ -371,13 +401,13 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
                 logger.debug("HyDE embedding step failed (non-fatal): %s", exc)
         # 4. Hybrid merge via Reciprocal Rank Fusion
         merged = rag_store.rrf_merge(dense, bm25, k=60, top_n=20)
-        # 5. Cross-encoder rerank → top 5
-        top_chunks = await rag_store.rerank_cross_encoder_async(req.message, merged, top_n=5)
-        # 6. Graph expansion — pull in up to 2 related docs from the merged pool
+        # 5. Cross-encoder rerank → top 4 (fewer context tokens = faster first token)
+        top_chunks = await rag_store.rerank_cross_encoder_async(req.message, merged, top_n=4)
+        # 6. Graph expansion — pull in 1 related doc from the merged pool
         graph_extras = rag_graph.expand_context(
             retrieved_ids=[c["id"] for c in top_chunks],
             rrf_pool=merged,
-            max_expansion=2,
+            max_expansion=1,
         )
         if graph_extras:
             top_chunks = top_chunks + graph_extras
@@ -423,6 +453,19 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+# ── /ai/warmup ────────────────────────────────────────────────────────────────
+
+@router.get("/warmup")
+async def ai_warmup() -> dict:
+    """Pre-warm the ONNX embedder + retrieval path so the first real query is hot.
+    Called by the chat page on mount to eliminate the cold-start cliff."""
+    try:
+        await rag_store.query_batch_async(["warmup"], n_per_query=1)
+    except Exception as exc:
+        logger.debug("warmup skipped: %s", exc)
+    return {"status": "warm"}
 
 
 # ── /ai/feedback ──────────────────────────────────────────────────────────────

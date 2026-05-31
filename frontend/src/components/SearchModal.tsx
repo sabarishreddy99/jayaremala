@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
+import { profile } from "@/data/profile";
 
 // ── Types ─────────────────────────────────────────────────
 
-type ResultType = "blog" | "project" | "quote" | "lab" | "skill" | "page";
+type ResultType = "blog" | "project" | "quote" | "lab" | "skill" | "page" | "action";
 
 interface SearchResult {
   type: ResultType;
@@ -14,6 +16,8 @@ interface SearchResult {
   description?: string;
   href: string;
   tags?: string[];
+  action?: () => void;   // when set, runs instead of navigating
+  icon?: React.ReactNode;
 }
 
 // ── Type config ────────────────────────────────────────────
@@ -25,6 +29,7 @@ const TYPE_STYLES: Record<ResultType, { bg: string; text: string; label: string 
   lab:     { bg: "bg-emerald-50 dark:bg-emerald-950/50",text: "text-emerald-600 dark:text-emerald-400",label: "Lab"    },
   skill:   { bg: "bg-amber-50 dark:bg-amber-950/50",    text: "text-amber-600 dark:text-amber-400",   label: "Skill"   },
   page:    { bg: "bg-zinc-100 dark:bg-zinc-800",         text: "text-zinc-600 dark:text-zinc-400",     label: "Page"    },
+  action:  { bg: "bg-indigo-100 dark:bg-indigo-900/50",  text: "text-indigo-700 dark:text-indigo-300", label: "Action"  },
 };
 
 // ── Search index builder (server data passed as props) ─────
@@ -119,11 +124,46 @@ export default function SearchModal({ data }: { data: SearchData }) {
   const [selected, setSelected] = useState(0);
   const inputRef  = useRef<HTMLInputElement>(null);
   const router    = useRouter();
+  const { resolvedTheme, setTheme } = useTheme();
 
   const index   = useRef(buildIndex(data));
-  const results = search(query, index.current);
 
   const close = useCallback(() => { setOpen(false); setQuery(""); setSelected(0); }, []);
+
+  // ── Command actions — do things, not just navigate ──
+  const latestPost = data.posts[0];
+  const actions = useMemo<SearchResult[]>(() => {
+    const list: SearchResult[] = [
+      { type: "action", title: "Ask Avocado", description: "Chat with the AI assistant", href: "/chat" },
+      { type: "action", title: "Email Jaya", description: profile.email, href: `mailto:${profile.email}`,
+        action: () => { window.location.href = `mailto:${profile.email}`; } },
+      { type: "action", title: "Download résumé", description: "Open the PDF", href: profile.resume,
+        action: () => window.open(profile.resume, "_blank", "noopener") },
+      { type: "action", title: `Switch to ${resolvedTheme === "dark" ? "light" : "dark"} theme`, description: "Toggle appearance", href: "#",
+        action: () => setTheme(resolvedTheme === "dark" ? "light" : "dark") },
+      { type: "action", title: "Book a call", description: "30-min intro on Google Calendar", href: profile.booking_url ?? "https://calendar.app.google/3sScGpHpeSpvPjpSA",
+        action: () => window.open(profile.booking_url ?? "https://calendar.app.google/3sScGpHpeSpvPjpSA", "_blank", "noopener") },
+      { type: "action", title: "Copy link to this site", description: "Share jayaremala.com", href: "#",
+        action: () => navigator.clipboard?.writeText("https://jayaremala.com").catch(() => {}) },
+    ];
+    if (latestPost) {
+      list.push({ type: "action", title: "Open latest post", description: latestPost.title, href: `/blog/${latestPost.slug}` });
+    }
+    return list;
+  }, [resolvedTheme, setTheme, latestPost]);
+
+  const results = query.trim()
+    ? search(query, [...actions, ...index.current])
+    : [];
+
+  // Items currently visible for keyboard nav (search results, or actions when idle)
+  const navItems = query.trim() ? results : actions;
+
+  function run(r: SearchResult) {
+    if (r.action) { r.action(); }
+    else { router.push(r.href); }
+    close();
+  }
 
   // Cmd+K / Ctrl+K global shortcut
   useEffect(() => {
@@ -145,11 +185,10 @@ export default function SearchModal({ data }: { data: SearchData }) {
 
   // Keyboard navigation
   function onKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "ArrowDown") { e.preventDefault(); setSelected((s) => Math.min(s + 1, results.length - 1)); }
+    if (e.key === "ArrowDown") { e.preventDefault(); setSelected((s) => Math.min(s + 1, navItems.length - 1)); }
     if (e.key === "ArrowUp")   { e.preventDefault(); setSelected((s) => Math.max(s - 1, 0)); }
-    if (e.key === "Enter" && results[selected]) {
-      router.push(results[selected].href);
-      close();
+    if (e.key === "Enter" && navItems[selected]) {
+      run(navItems[selected]);
     }
   }
 
@@ -194,10 +233,9 @@ export default function SearchModal({ data }: { data: SearchData }) {
               const cfg = TYPE_STYLES[r.type];
               return (
                 <li key={`${r.type}-${r.href}-${i}`}>
-                  <Link
-                    href={r.href}
-                    onClick={close}
-                    className={`flex items-start gap-3 px-4 py-2.5 transition-colors ${
+                  <button
+                    onClick={() => run(r)}
+                    className={`w-full text-left flex items-start gap-3 px-4 py-2.5 transition-colors ${
                       i === selected ? "bg-surface-raised" : "hover:bg-surface-raised"
                     }`}
                     onMouseEnter={() => setSelected(i)}
@@ -211,10 +249,10 @@ export default function SearchModal({ data }: { data: SearchData }) {
                         <p className="text-[11px] text-fg-faint truncate mt-0.5">{r.description}</p>
                       )}
                     </div>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-auto shrink-0 mt-1 text-fg-faint opacity-0 group-hover:opacity-100">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`ml-auto shrink-0 mt-1 text-fg-faint transition-opacity ${i === selected ? "opacity-100" : "opacity-0"}`}>
                       <path d="M9 18l6-6-6-6"/>
                     </svg>
-                  </Link>
+                  </button>
                 </li>
               );
             })}
@@ -224,20 +262,32 @@ export default function SearchModal({ data }: { data: SearchData }) {
             No results for <strong className="text-fg">&ldquo;{query}&rdquo;</strong>
           </div>
         ) : (
-          <div className="px-4 py-4">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-2">Quick links</p>
-            <div className="flex flex-wrap gap-1.5">
-              {["/blog", "/projects", "/lab", "/quotes", "/now", "/chat"].map((href) => (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={close}
-                  className="rounded-full border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-muted hover:text-fg hover:border-fg-muted transition-colors capitalize"
-                >
-                  {href.slice(1) || "home"}
-                </Link>
-              ))}
-            </div>
+          <div className="px-2 py-2">
+            <p className="px-2 text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-1">Actions</p>
+            <ul>
+              {actions.map((r, i) => {
+                const cfg = TYPE_STYLES[r.type];
+                return (
+                  <li key={r.title}>
+                    <button
+                      onClick={() => run(r)}
+                      onMouseEnter={() => setSelected(i)}
+                      className={`w-full text-left flex items-center gap-3 px-2 py-2 rounded-lg transition-colors ${
+                        i === selected ? "bg-surface-raised" : "hover:bg-surface-raised"
+                      }`}
+                    >
+                      <span className={`shrink-0 rounded-md px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-widest ${cfg.bg} ${cfg.text}`}>
+                        {cfg.label}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-fg truncate">{r.title}</p>
+                        {r.description && <p className="text-[11px] text-fg-faint truncate">{r.description}</p>}
+                      </div>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </div>
         )}
 

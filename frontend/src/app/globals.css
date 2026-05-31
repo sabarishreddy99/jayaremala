@@ -13,6 +13,16 @@
   }
 }
 
+/* ── Page transition ──────────────────────────────────────────────────────── */
+@keyframes page-transition-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-transition { animation: page-transition-in 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .page-transition { animation: none; }
+}
+
 /* ── Grid background ──────────────────────────────────────────────────────── */
 .grid-lines {
   background-image:
@@ -66,17 +76,27 @@
 
 /* ── Reading / Focus mode ─────────────────────────────────────────────────── */
 
-/* Article floats above the portaled overlay (z-9998) */
+/* Box-shadow spotlight — the article dims everything around it with a giant
+   shadow. Immune to ancestor stacking contexts (e.g. PageTransition's
+   transform), so no overlay / z-index war is needed. */
 :root.reading-mode article {
   position: relative;
-  z-index: 9999;
-  isolation: isolate;
+  z-index: 1;
   background: var(--surface);
   border-radius: 0.75rem;
   padding: 2rem 2.5rem !important;
-  max-width: 700px;
+  max-width: 720px;
   margin-inline: auto;
+  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.62);
   transition: padding 0.35s ease, border-radius 0.35s ease;
+}
+
+/* Don't clip the spotlight shadow anywhere on the path to the viewport */
+:root.reading-mode,
+:root.reading-mode body,
+:root.reading-mode main,
+:root.reading-mode .page-transition {
+  overflow: visible !important;
 }
 
 /* Larger, more comfortable reading typography */

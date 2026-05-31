@@ -9,6 +9,7 @@ import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import LoadingGame from "./LoadingGame";
 import NavSuggestions, { detectNavLinks, sourcesToNavLinks, mergeNavLinks, NavLink } from "./NavSuggestions";
+import RichCards from "./RichCards";
 
 export interface Message {
   role: "user" | "assistant";
@@ -67,6 +68,40 @@ const PROMPTS = [
   { category: "About Avocado",  label: "How this AI works",      full: "How does this AI portfolio chatbot work? What powers Avocado behind the scenes?" },
 ];
 
+// ── Audience personas ─────────────────────────────────────────────────────────
+type PersonaId = "recruiter" | "engineer" | "founder";
+
+const PERSONAS: { id: PersonaId; label: string; hint: string }[] = [
+  { id: "recruiter", label: "Recruiter", hint: "Impact & availability" },
+  { id: "engineer",  label: "Engineer",  hint: "Architecture & stack" },
+  { id: "founder",   label: "Founder",   hint: "Shipping & ownership" },
+];
+
+type Prompt = { label: string; full: string };
+
+const PROMPTS_BY_PERSONA: Record<PersonaId, Prompt[]> = {
+  recruiter: [
+    { label: "Open to new roles?",       full: "Is Jaya open to new opportunities? What roles and locations is he targeting?" },
+    { label: "Biggest measurable impact", full: "What's the most impressive, measurable impact Jaya has delivered?" },
+    { label: "How he works with teams",   full: "How does Jaya collaborate with engineering teams and stakeholders?" },
+    { label: "Standout achievement",      full: "What is Jaya's standout career achievement and why does it matter?" },
+  ],
+  engineer: [
+    { label: "How the RAG pipeline works", full: "Walk me through how Jaya's RAG pipeline works end to end." },
+    { label: "Hardest technical problem",  full: "What's the hardest technical problem Jaya has solved, and how?" },
+    { label: "Stack & design tradeoffs",   full: "What's Jaya's core tech stack and what design tradeoffs has he made?" },
+    { label: "Edge AI & low-latency work", full: "Tell me about Jaya's edge AI and low-latency inference work." },
+  ],
+  founder: [
+    { label: "Can he build 0 → 1?",       full: "Can Jaya build a product from zero to one on his own? What has he shipped solo?" },
+    { label: "How fast does he ship?",     full: "How quickly does Jaya ship, and how does he handle ambiguity?" },
+    { label: "Full-stack range",           full: "What's the full range of what Jaya can build across the stack?" },
+    { label: "Business impact",            full: "What business impact has Jaya's work driven?" },
+  ],
+};
+
+const PERSONA_KEY = "avocado_persona";
+
 export default function ChatInterface() {
   const searchParams = useSearchParams();
   const [messages, setMessages] = useState<Message[]>([WELCOME]);
@@ -74,7 +109,6 @@ export default function ChatInterface() {
   const messagesRef = useRef<Message[]>([WELCOME]);
   messagesRef.current = messages;
   const [activeModel, setActiveModel] = useState<string | null>(null);
-  const [totalResponses, setTotalResponses] = useState<number | null>(null);
   const [backendStatus, setBackendStatus] = useState<"checking" | "ready" | "warming">("checking");
   const [experienceRating, setExperienceRating] = useState<number | null>(null);
   const [ratingDismissed, setRatingDismissed] = useState(false);
@@ -84,18 +118,31 @@ export default function ChatInterface() {
   const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
   const [dynamicFollowUps, setDynamicFollowUps] = useState<string[]>([]);
   const [followUpsLoading, setFollowUpsLoading] = useState(false);
+  const [persona, setPersona] = useState<PersonaId | null>(null);
+  const personaRef = useRef<PersonaId | null>(null);
+  personaRef.current = persona;
 
   useEffect(() => {
     const controller = new AbortController();
     fetch(`${API_BASE_URL}/health`, { signal: controller.signal })
       .then((r) => { if (r.ok) setBackendStatus("ready"); else setBackendStatus("warming"); })
       .catch(() => setBackendStatus("warming"));
-    fetch(`${API_BASE_URL}/stats`)
-      .then((r) => { if (!r.ok) throw new Error(`${r.status}`); return r.json(); })
-      .then((d) => { if (d.total_responses > 0) setTotalResponses(d.total_responses); })
-      .catch(() => {});
+    // Restore previously-chosen persona
+    const saved = (typeof localStorage !== "undefined" && localStorage.getItem(PERSONA_KEY)) as PersonaId | null;
+    if (saved && PROMPTS_BY_PERSONA[saved]) setPersona(saved);
     return () => controller.abort();
   }, []);
+
+  function choosePersona(id: PersonaId) {
+    const next = persona === id ? null : id;
+    setPersona(next);
+    try {
+      if (next) localStorage.setItem(PERSONA_KEY, next);
+      else localStorage.removeItem(PERSONA_KEY);
+    } catch { /* storage blocked */ }
+  }
+
+  const activePrompts: Prompt[] = persona ? PROMPTS_BY_PERSONA[persona] : PROMPTS;
 
   // Restore rating state from sessionStorage after hydration
   useEffect(() => {
@@ -222,6 +269,7 @@ export default function ChatInterface() {
             .slice(-10)
             .map((m) => ({ role: m.role, content: m.content })),
           message: text,
+          ...(personaRef.current ? { persona: personaRef.current } : {}),
         }),
         signal: abortRef.current.signal,
       });
@@ -355,69 +403,74 @@ export default function ChatInterface() {
       <div
         className="shrink-0 overflow-hidden transition-all duration-500 ease-in-out"
         style={{
-          maxHeight: introVisible ? "580px" : "0px",
+          maxHeight: introVisible ? "720px" : "0px",
           opacity: introVisible ? 1 : 0,
         }}
       >
-        {/* Avatar + greeting */}
-        <div className="flex flex-col items-center px-4 sm:px-6 pt-7 sm:pt-10 pb-3 text-center">
-          {/* Avocado avatar with glow ring */}
-          <div className="relative mb-4">
-            <div className="absolute inset-[-8px] rounded-full bg-indigo-500/15 blur-lg animate-avo-glow" />
-            <div className="relative w-16 h-16 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-3xl shadow-xl shadow-indigo-500/20">
+        {/* Avatar + greeting — minimal */}
+        <div className="flex flex-col items-center px-4 sm:px-6 pt-10 sm:pt-16 pb-4 text-center">
+          <div className="relative mb-3">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl">
               🥑
             </div>
-            {/* Live status dot */}
-            <span className="absolute bottom-0.5 right-0.5 flex h-4 w-4">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-50" />
-              <span className="relative inline-flex rounded-full h-4 w-4 bg-emerald-500 border-2 border-bg items-center justify-center">
-                <span className="w-1 h-1 rounded-full bg-white" />
-              </span>
-            </span>
+            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-bg" />
           </div>
 
-          <p className="text-[10px] font-bold uppercase tracking-[0.22em] text-fg-faint mb-1">
-            {getTimeGreeting()} · Avocado
-          </p>
-          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-fg leading-tight">
+          <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-fg leading-tight">
             Ask me anything about Jaya
           </h1>
-          <p className="mt-1 text-xs text-fg-subtle max-w-xs leading-relaxed">
-            Jaya&apos;s personal AI — powered by RAG + Gemini.
+          <p className="mt-1.5 text-xs text-fg-faint">
+            {getTimeGreeting()} — I&apos;m Avocado, his AI assistant.
           </p>
-          {totalResponses !== null && (
-            <div className="mt-2 flex items-center gap-1.5">
-              <span className="text-base font-black tabular-nums text-fg">{totalResponses.toLocaleString()}+</span>
-              <span className="text-[11px] text-fg-faint leading-tight">conversations<br/>answered</span>
+
+          {/* Audience personas — tailor tone + what Avocado leads with */}
+          <div className="mt-5 flex flex-col items-center gap-2">
+            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-faint/70">
+              {persona ? "Tailored for a" : "I'm a…"}
+            </span>
+            <div className="flex items-center gap-1.5">
+              {PERSONAS.map((p) => {
+                const selected = persona === p.id;
+                return (
+                  <button
+                    key={p.id}
+                    onClick={() => choosePersona(p.id)}
+                    title={p.hint}
+                    aria-pressed={selected}
+                    className={`rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-all duration-150 ${
+                      selected
+                        ? "border-indigo-400 bg-indigo-600 text-white shadow-sm"
+                        : "border-border bg-surface/60 text-fg-muted hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-accent"
+                    }`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
             </div>
-          )}
+            {persona && (
+              <span className="text-[10px] text-fg-faint animate-fade-up">
+                {PERSONAS.find((p) => p.id === persona)?.hint} · tap again to clear
+              </span>
+            )}
+          </div>
         </div>
 
-        {/* Prompt cards — constrained to same width as chat messages */}
-        <div className="px-3 sm:px-6 pb-5 sm:pb-7">
-          <div className="mx-auto max-w-2xl lg:max-w-3xl">
-          <p className="hidden sm:block text-[9px] font-bold uppercase tracking-[0.2em] text-fg-faint mb-2 px-1">
-            Start with a question
-          </p>
-          <div className="hidden sm:grid grid-cols-2 gap-1.5">
-            {PROMPTS.map((p) => (
+        {/* Prompt suggestions — centered cards, swap with persona */}
+        <div className="px-4 sm:px-6 pb-6 sm:pb-8">
+          <div className="mx-auto max-w-lg hidden sm:grid grid-cols-2 gap-2">
+            {activePrompts.map((p) => (
               <button
                 key={p.full}
                 onClick={() => setPrefill(p.full)}
-                className="group text-left rounded-lg border border-border bg-surface/70
-                           px-3 py-2 hover:border-indigo-300 dark:hover:border-indigo-700
-                           hover:bg-surface active:scale-[0.98]
-                           transition-all duration-150"
+                className="group rounded-xl border border-border/60 bg-surface/50 px-4 py-3
+                           text-[13px] text-center text-fg-muted
+                           hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-accent hover:bg-surface
+                           active:scale-[0.98] transition-all duration-150"
               >
-                <span className="text-[9px] font-bold uppercase tracking-widest text-fg-faint block mb-0.5">
-                  {p.category}
-                </span>
-                <span className="text-[11px] font-medium text-fg-muted group-hover:text-accent transition-colors leading-snug block">
-                  {p.label}
-                </span>
+                {p.label}
               </button>
             ))}
-          </div>
           </div>
         </div>
       </div>
@@ -517,6 +570,12 @@ export default function ChatInterface() {
           {messages.map((m, i) => (
             <div key={i}>
               <ChatMessage message={m} />
+              {/* Inline rich cards — projects mentioned in the reply */}
+              {m.role === "assistant" && m !== WELCOME && (
+                <div className="ml-10">
+                  <RichCards content={m.content} />
+                </div>
+              )}
               {m.role === "assistant" && m.navLinks && m.navLinks.length > 0 && m !== WELCOME && (
                 <div className="ml-10">
                   <NavSuggestions links={m.navLinks} />
@@ -628,36 +687,26 @@ export default function ChatInterface() {
             onPrefillConsumed={() => setPrefill("")}
           />
 
-          {/* Single meta row — model · keyboard hint · clear */}
-          <div className="flex items-center justify-between px-1 min-h-[18px]">
-            <div className="flex items-center gap-2">
+          {/* Minimal meta row — model status · clear */}
+          <div className="flex items-center justify-between px-1 min-h-[16px]">
+            <span className="inline-flex items-center gap-1 text-[10px] text-fg-faint/60">
               {activeModel ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-surface-raised border border-border px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
+                <>
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
                   {activeModel}
-                </span>
+                </>
               ) : (
-                <span className="text-[10px] text-fg-faint/70">Powered by RAG + Gemini</span>
+                "Powered by Gemini"
               )}
-              {totalResponses !== null && (
-                <span className="hidden sm:inline text-[10px] text-fg-faint/60">
-                  · {totalResponses.toLocaleString()} answered
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <span className="hidden sm:inline text-[10px] text-fg-faint/40 select-none">
-                <kbd className="font-mono">↵</kbd> send · <kbd className="font-mono">⇧↵</kbd> newline
-              </span>
-              {messages.length > 1 && (
-                <button
-                  onClick={handleClear}
-                  className="text-[11px] text-fg-faint hover:text-fg-muted transition-colors"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
+            </span>
+            {messages.length > 1 && (
+              <button
+                onClick={handleClear}
+                className="text-[11px] text-fg-faint hover:text-fg-muted transition-colors"
+              >
+                Clear
+              </button>
+            )}
           </div>
 
           {/* Experience rating — contextual, appears only after 2+ exchanges */}

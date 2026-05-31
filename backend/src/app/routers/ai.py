@@ -207,8 +207,13 @@ def _build_chat_prompt(req: ChatRequest, context: str) -> str:
         if context else ""
     )
 
+    persona_block = ""
+    if req.persona and req.persona in _PERSONA_GUIDANCE:
+        persona_block = f"AUDIENCE TAILORING: {_PERSONA_GUIDANCE[req.persona]}\n\n"
+
     return (
         f"{SYSTEM_PROMPT}\n\n"
+        f"{persona_block}"
         f"{context_block}"
         f"Conversation history:\n{history_text}"
         f"User: {req.message}\nAvocado:"
@@ -285,6 +290,28 @@ class ChatMessage(BaseModel):
 class ChatRequest(BaseModel):
     messages: list[ChatMessage] = []
     message: str
+    persona: str | None = None
+
+
+_PERSONA_GUIDANCE = {
+    "recruiter": (
+        "The visitor is a RECRUITER or hiring manager. Lead with impact, outcomes, and fit: "
+        "availability, target roles, standout achievements (Qualcomm Edge AI win, 78% P99 latency cut, "
+        "Shell maritime scale), and how Jaya works with teams. Keep it crisp and results-focused, "
+        "quantify wherever possible, and proactively surface availability and how to reach him."
+    ),
+    "engineer": (
+        "The visitor is a SOFTWARE ENGINEER. Lead with technical depth: architecture, the stack, "
+        "design tradeoffs, and how systems were actually built (hybrid RAG retrieval, HyDE, RRF, "
+        "Edge AI inference on Snapdragon NPUs, distributed infra). Use precise technical language "
+        "and concrete implementation details."
+    ),
+    "founder": (
+        "The visitor is a FOUNDER or startup leader. Lead with ownership, shipping speed, and "
+        "end-to-end capability: what Jaya can build solo and how fast, breadth across the stack, "
+        "and the business impact of his work. Emphasize turning ambiguity into shipped product."
+    ),
+}
 
 
 class ChatResponse(BaseModel):

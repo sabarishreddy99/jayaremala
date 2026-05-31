@@ -15,6 +15,7 @@ import ShareSiteChip from "@/components/ShareSiteChip";
 import RagPipelineCard from "@/components/RagPipelineCard";
 import StackSection from "@/components/StackSection";
 import SkillsSection from "@/components/SkillsSection";
+import SkillsConstellation from "@/components/SkillsConstellation";
 import MobileNoBg from "@/components/MobileNoBg";
 import SiteVitals from "@/components/SiteVitals";
 import { experience } from "@/data/experience";
@@ -474,6 +475,16 @@ export default function PortfolioHome() {
           <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
             style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>03</span>
           <SkillsSection skills={skills} featuredProjects={featured} />
+
+          {/* Interactive skills ↔ projects constellation — desktop only */}
+          <div className="hidden lg:block mt-12 pt-10 border-t border-border">
+            <div className="flex items-center gap-2.5 mb-6">
+              <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-violet-500 to-indigo-500 shrink-0" />
+              <h3 className="text-xs font-bold uppercase tracking-widest label-gradient">Skills in Action</h3>
+            </div>
+            <SkillsConstellation />
+          </div>
+
           <div className="mt-10 pt-5 border-t border-border flex items-center justify-between">
             <span className="text-[10px] text-fg-faint uppercase tracking-widest">3 / 5</span>
             <a href="#testimonials" className="inline-flex items-center gap-1.5 text-[11px] text-fg-faint hover:text-fg transition-colors">

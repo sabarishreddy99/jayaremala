@@ -53,7 +53,9 @@ export default function IntroScreen() {
     if (preview || !localStorage.getItem(STORAGE_KEY)) {
       setShow(true);
       document.body.style.overflow = "hidden";
-      // Focus the dialog so screen-readers announce it (Accessibility)
+      // Mark seen immediately — if the user reloads before dismissing
+      // the curtain would re-appear without this
+      if (!preview) localStorage.setItem(STORAGE_KEY, "1");
       setTimeout(() => dialogRef.current?.focus(), 60);
     }
 
@@ -72,7 +74,6 @@ export default function IntroScreen() {
     setDragY(0);
     setIsDragging(false);
     setLeaving(true);
-    if (!isPreview.current) localStorage.setItem(STORAGE_KEY, "1");
     setTimeout(() => {
       document.body.style.overflow = "";
       setShow(false);

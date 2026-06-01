@@ -1,11 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import type { GalleryItem } from "@/data/gallery";
 
 export default function GalleryGrid({ items }: { items: GalleryItem[] }) {
   const [active, setActive] = useState<string | null>(null);   // category filter
   const [lightbox, setLightbox] = useState<number | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   const categories = Array.from(new Set(items.map((i) => i.category).filter(Boolean))) as string[];
   const shown = active ? items.filter((i) => i.category === active) : items;
@@ -62,8 +66,8 @@ export default function GalleryGrid({ items }: { items: GalleryItem[] }) {
         ))}
       </div>
 
-      {/* Lightbox */}
-      {lightbox !== null && shown[lightbox] && (
+      {/* Lightbox — portaled to body to escape PageTransition's transform stacking context */}
+      {mounted && lightbox !== null && shown[lightbox] && createPortal(
         <div
           className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/90 backdrop-blur-sm p-4 sm:p-8"
           onClick={() => setLightbox(null)}
@@ -88,7 +92,8 @@ export default function GalleryGrid({ items }: { items: GalleryItem[] }) {
               <p className="text-[10px] text-white/40 mt-2 tabular-nums">{lightbox + 1} / {shown.length}</p>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );

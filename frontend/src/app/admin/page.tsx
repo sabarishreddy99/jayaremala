@@ -87,8 +87,14 @@ function SatisfactionBar({ positive, negative }: { positive: number; negative: n
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between text-[11px]">
-        <span className="text-emerald-600 dark:text-emerald-400 font-medium">👍 {positive} positive</span>
-        <span className="text-rose-600 dark:text-rose-400 font-medium">{negative} negative 👎</span>
+        <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+          {positive} positive
+        </span>
+        <span className="text-rose-600 dark:text-rose-400 font-medium flex items-center gap-1">
+          {negative} negative
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+        </span>
       </div>
       <div className="h-2 rounded-full bg-surface-raised overflow-hidden">
         <div className="h-full bg-emerald-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
@@ -532,7 +538,10 @@ function SiteGuide() {
                 </div>
               ))}
               <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded-lg p-2.5 space-y-1">
-                <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">⚠ Resume link is hardcoded in Nav.tsx</p>
+                <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                  Resume link is hardcoded in Nav.tsx
+                </p>
                 <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed">
                   The resume Google Drive URL in <span className="font-mono">profile.json</span> powers the chatbot and home page, but <span className="font-mono">components/Nav.tsx</span> has a separate hardcoded copy in both desktop and mobile nav. Update both when the resume changes.
                 </p>
@@ -966,22 +975,22 @@ const TAG_POOL = [
 
 const POST_TEMPLATES = [
   {
-    id: "technical", emoji: "⚙️", label: "Technical Deep-Dive",
+    id: "technical", icon: "layers", label: "Technical Deep-Dive",
     desc: "Architecture, systems, engineering decisions",
     content: `## Introduction\n\nWhat problem does this solve and why does it matter?\n\n## The Problem\n\nDescribe the challenge. What were the constraints? What made it hard?\n\n## The Approach\n\nWalk through your thinking. What did you consider? What did you rule out and why?\n\n## Implementation\n\nThe actual solution — code snippets, diagrams, specifics.\n\n## Results\n\nMetrics, outcomes, what changed. Be concrete.\n\n## Key Takeaways\n\n- Insight 1\n- Insight 2\n- Insight 3`,
   },
   {
-    id: "tutorial", emoji: "📖", label: "Tutorial / How-To",
+    id: "tutorial", icon: "book", label: "Tutorial / How-To",
     desc: "Step-by-step guide anyone can follow",
     content: `## What You'll Build\n\nOne sentence: what does the reader have at the end?\n\n## Prerequisites\n\n- Requirement 1\n- Requirement 2\n\n## Step 1: [First Step]\n\nInstructions for step 1.\n\n## Step 2: [Second Step]\n\nInstructions for step 2.\n\n## Step 3: [Third Step]\n\nInstructions for step 3.\n\n## Conclusion\n\nWhat the reader now has. What to explore next.`,
   },
   {
-    id: "story", emoji: "💭", label: "Story / Reflection",
+    id: "story", icon: "feather", label: "Story / Reflection",
     desc: "Experience, lessons learned, personal journey",
     content: `## Background\n\nSet the scene. Where were you? What were you working on?\n\n## What Happened\n\nThe story. Keep it honest and specific.\n\n## What I Learned\n\nThe real insights. What shifted in how you think?\n\n## What I'd Do Differently\n\nHonest reflection. What would you tell past-you?`,
   },
   {
-    id: "quick", emoji: "⚡", label: "Quick Take",
+    id: "quick", icon: "zap", label: "Quick Take",
     desc: "Short opinion or observation (200–400 words)",
     content: `Start writing here. A quick take is conversational — no strict structure needed.\n\n<Divider />\n\nClosing thought or question to the reader.`,
   },
@@ -1407,7 +1416,7 @@ function BlogEditor() {
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
               Exit focus
             </button>
-            {savedAgoText && <span className="text-[10px] text-fg-faint flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />● {savedAgoText}</span>}
+            {savedAgoText && <span className="text-[10px] text-fg-faint flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />{savedAgoText}</span>}
           </div>
           <div className="flex items-center gap-4">
             {[
@@ -1712,7 +1721,7 @@ function BlogEditor() {
                   </select>
                 )}
               </div>
-              <p className="text-[10px] text-fg-faint">Used as Twitter/OG card image when someone shares the post. Upload via the 🖼 toolbar button first, then pick it here.</p>
+              <p className="text-[10px] text-fg-faint">Used as Twitter/OG card image when someone shares the post. Upload via the Images toolbar button first, then pick it here.</p>
             </div>
           )}
         </div>
@@ -1723,15 +1732,27 @@ function BlogEditor() {
         <div className="rounded-2xl border border-dashed border-border bg-surface-raised/40 p-6">
           <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-4 text-center">Start with a template — or just type below</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {POST_TEMPLATES.map((t) => (
-              <button key={t.id}
-                onClick={() => { setContent(t.content); setShowTemplates(false); setActivePanel("write"); requestAnimationFrame(() => textareaRef.current?.focus()); }}
-                className="rounded-xl border border-border bg-surface p-4 text-left hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group">
-                <span className="text-2xl block mb-2">{t.emoji}</span>
-                <p className="text-xs font-semibold text-fg group-hover:text-accent transition-colors leading-snug">{t.label}</p>
-                <p className="text-[10px] text-fg-faint mt-1 leading-relaxed">{t.desc}</p>
-              </button>
-            ))}
+            {POST_TEMPLATES.map((t) => {
+              const tmplIcons: Record<string, React.ReactNode> = {
+                layers:  <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
+                book:    <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>,
+                feather: <><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5l6.74-6.76z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17" y1="15" x2="9" y2="15"/></>,
+                zap:     <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
+              };
+              return (
+                <button key={t.id}
+                  onClick={() => { setContent(t.content); setShowTemplates(false); setActivePanel("write"); requestAnimationFrame(() => textareaRef.current?.focus()); }}
+                  className="rounded-xl border border-border bg-surface p-4 text-left hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group">
+                  <div className="w-7 h-7 rounded-lg bg-surface-raised flex items-center justify-center mb-2.5 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/40 transition-colors">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-fg-faint group-hover:text-indigo-500 transition-colors">
+                      {tmplIcons[t.icon]}
+                    </svg>
+                  </div>
+                  <p className="text-xs font-semibold text-fg group-hover:text-accent transition-colors leading-snug">{t.label}</p>
+                  <p className="text-[10px] text-fg-faint mt-1 leading-relaxed">{t.desc}</p>
+                </button>
+              );
+            })}
           </div>
           <div className="mt-4 text-center">
             <button onClick={() => { setShowTemplates(false); requestAnimationFrame(() => textareaRef.current?.focus()); }}
@@ -1774,7 +1795,7 @@ function BlogEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
           {/* Block elements */}
           {[
-            { label: "🔗",  title: "Link (⌘K)",              action: () => insertInline("[", "](url)", "link text") },
+            { label: "lnk", title: "Link (⌘K)",              action: () => insertInline("[", "](url)", "link text"), mono: true },
             { label: ">",   title: "Blockquote / pull quote", action: () => insertBlock("> "),                        mono: true },
             { label: "•",   title: "Bullet list",             action: () => insertBlock("- Item 1\n- Item 2\n- Item 3"), mono: true },
             { label: "1.",  title: "Numbered list",           action: () => insertBlock("1. First\n2. Second\n3. Third"), mono: true },
@@ -1802,13 +1823,13 @@ function BlogEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
           {/* Callouts */}
           {[
-            { label: "ℹ",  title: "Info box",    action: () => insertBlock('<Callout type="info" title="Info">\nYour note here.\n</Callout>') },
-            { label: "💡", title: "Tip box",     action: () => insertBlock('<Callout type="tip" title="Tip">\nYour tip here.\n</Callout>') },
-            { label: "⚠",  title: "Warning box", action: () => insertBlock('<Callout type="warning" title="Warning">\nYour warning here.\n</Callout>') },
-            { label: "❝",  title: "Quote box",   action: () => insertBlock('<Callout type="quote" title="Quote">\nYour quote here.\n</Callout>') },
+            { label: "info", title: "Info callout",    action: () => insertBlock('<Callout type="info" title="Info">\nYour note here.\n</Callout>'), mono: true },
+            { label: "tip",  title: "Tip callout",     action: () => insertBlock('<Callout type="tip" title="Tip">\nYour tip here.\n</Callout>'), mono: true },
+            { label: "warn", title: "Warning callout", action: () => insertBlock('<Callout type="warning" title="Warning">\nYour warning here.\n</Callout>'), mono: true },
+            { label: "quot", title: "Quote callout",   action: () => insertBlock('<Callout type="quote" title="Quote">\nYour quote here.\n</Callout>'), mono: true },
           ].map((b) => (
             <button key={b.label} onClick={b.action} title={b.title}
-              className="px-2 py-0.5 rounded-md text-[11px] text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
+              className="px-2 py-0.5 rounded-md text-[11px] font-mono text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
               {b.label}
             </button>
           ))}
@@ -1817,9 +1838,14 @@ function BlogEditor() {
           <button
             onClick={() => setShowImageManager(!showImageManager)}
             title="Image Library — upload multiple images and choose placement"
-            className={`px-2 py-0.5 rounded-md text-[11px] border transition-colors whitespace-nowrap ${showImageManager ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition-colors whitespace-nowrap ${showImageManager ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}
           >
-            {uploadingImg ? "⏳ Uploading…" : uploadedImages.length > 0 ? `🖼 Images (${uploadedImages.length})` : "🖼 Images"}
+            {uploadingImg ? (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin shrink-0"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+            ) : (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+            )}
+            {uploadingImg ? "Uploading…" : uploadedImages.length > 0 ? `Images (${uploadedImages.length})` : "Images"}
           </button>
           {/* Spacer + right controls */}
           <div className="flex-1" />
@@ -1829,12 +1855,17 @@ function BlogEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0 hidden sm:block" />
           <button onClick={() => setActivePanel(activePanel === "preview" ? "write" : "preview")}
             title="Toggle preview"
-            className={`px-2 py-0.5 rounded-md text-[11px] border transition-colors shrink-0 ${activePanel === "preview" ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}>
-            {activePanel === "preview" ? "✏ Write" : "👁 Preview"}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition-colors shrink-0 ${activePanel === "preview" ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}>
+            {activePanel === "preview" ? (
+              <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"/></svg>Write</>
+            ) : (
+              <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>Preview</>
+            )}
           </button>
           <button onClick={() => setFocusMode(true)} title="Focus mode — distraction-free writing"
-            className="px-2 py-0.5 rounded-md text-[11px] text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors shrink-0">
-            ⊞ Focus
+            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors shrink-0">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+            Focus
           </button>
         </div>
 
@@ -1843,7 +1874,8 @@ function BlogEditor() {
           <div className="border-b border-border bg-bg">
             <div className="flex items-center justify-between px-4 py-2.5 bg-surface-raised border-b border-border">
               <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint flex items-center gap-1.5">
-                🖼 Image Library
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                Image Library
                 {uploadedImages.length > 0 && <span className="font-mono text-accent ml-1">({uploadedImages.length} this session)</span>}
               </span>
               <button onClick={() => setShowImageManager(false)} className="text-base leading-none text-fg-faint hover:text-fg transition-colors px-1">×</button>
@@ -1854,7 +1886,13 @@ function BlogEditor() {
               <label className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-6 px-4 cursor-pointer transition-all ${
                 uploadingImg ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 cursor-wait" : "border-border hover:border-indigo-400 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/20"
               }`}>
-                <span className="text-2xl mb-1.5">{uploadingImg ? "⏳" : "☁️"}</span>
+                <div className="w-9 h-9 rounded-xl bg-surface-raised border border-border flex items-center justify-center mb-2">
+                  {uploadingImg ? (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin text-fg-faint"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                  ) : (
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-fg-faint"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>
+                  )}
+                </div>
                 <span className="text-xs font-medium text-fg-muted">{uploadingImg ? "Uploading…" : "Click to upload images"}</span>
                 <span className="text-[10px] text-fg-faint mt-0.5">JPEG · PNG · WebP · GIF — multiple files supported</span>
                 <input type="file" accept="image/*" multiple className="hidden" disabled={uploadingImg}
@@ -1867,7 +1905,7 @@ function BlogEditor() {
 
               {!githubPat.trim() && (
                 <p className="text-[10px] text-center text-amber-600 dark:text-amber-400">
-                  ⚠ Add your GitHub token in the Publish section first — it&apos;s needed to upload images.
+                  Add your GitHub token in the Publish section first — it&apos;s needed to upload images.
                 </p>
               )}
 
@@ -1887,8 +1925,8 @@ function BlogEditor() {
                       <div key={img.url} className="rounded-xl border border-border bg-surface overflow-hidden">
                         <div className="flex items-start gap-3 p-3">
                           {/* Icon tile — thumbnail would be broken pre-deploy */}
-                          <div className="shrink-0 w-14 h-14 rounded-lg bg-surface-raised border border-border flex items-center justify-center text-xl">
-                            🖼
+                          <div className="shrink-0 w-14 h-14 rounded-lg bg-surface-raised border border-border flex items-center justify-center">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-fg-faint"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-xs font-medium text-fg truncate">{img.name}</p>
@@ -2381,7 +2419,10 @@ function QuotesEditor() {
           </div>
           <label className="flex items-center gap-2 cursor-pointer mt-5">
             <input type="checkbox" checked={newFavorite} onChange={(e) => setNewFavorite(e.target.checked)} className="rounded" />
-            <span className="text-xs font-medium text-fg-muted">Favorite ★</span>
+            <span className="text-xs font-medium text-fg-muted flex items-center gap-1">
+              Favorite
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </span>
           </label>
         </div>
         <button
@@ -2468,7 +2509,7 @@ function QuotesEditor() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">{q.category}</span>
-                        {q.favorite && <span className="text-amber-400 text-xs">★</span>}
+                        {q.favorite && <svg width="10" height="10" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>}
                         {q.featured && (
                           <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
                             Featured
@@ -2491,7 +2532,13 @@ function QuotesEditor() {
                             : "text-fg-faint hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
                         }`}
                       >
-                        {q.featured ? "★ Featured" : "☆ Feature"}
+                        <span className="inline-flex items-center gap-1">
+                          <svg width="10" height="10" viewBox="0 0 24 24" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
+                            className={q.featured ? "fill-indigo-500 stroke-indigo-500" : "fill-none stroke-current"}>
+                            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                          </svg>
+                          {q.featured ? "Featured" : "Feature"}
+                        </span>
                       </button>
                       <button
                         onClick={() => startEdit(q)}
@@ -2863,7 +2910,7 @@ function Dashboard({
           />
           <StatCard
             label="Avg Experience"
-            value={exp.total > 0 ? `${exp.average} ★` : "—"}
+            value={exp.total > 0 ? `${exp.average}/5` : "—"}
             sub={`from ${exp.total} visitor rating${exp.total !== 1 ? "s" : ""}`}
             color={exp.average >= 4 ? "emerald" : exp.average >= 3 ? "default" : exp.total > 0 ? "rose" : "default"}
           />
@@ -2915,11 +2962,17 @@ function Dashboard({
               </div>
               <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2.5 text-center">
                 <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">{feedback.positive}</p>
-                <p className="text-[9px] sm:text-[10px] text-emerald-700 dark:text-emerald-500 mt-0.5">👍 Positive</p>
+                <p className="text-[9px] sm:text-[10px] text-emerald-700 dark:text-emerald-500 mt-0.5 flex items-center justify-center gap-0.5">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
+                  Positive
+                </p>
               </div>
               <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2.5 text-center">
                 <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">{feedback.negative}</p>
-                <p className="text-[9px] sm:text-[10px] text-rose-700 dark:text-rose-500 mt-0.5">👎 Negative</p>
+                <p className="text-[9px] sm:text-[10px] text-rose-700 dark:text-rose-500 mt-0.5 flex items-center justify-center gap-0.5">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+                  Negative
+                </p>
               </div>
             </div>
             <SatisfactionBar positive={feedback.positive} negative={feedback.negative} />
@@ -2955,10 +3008,14 @@ function Dashboard({
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Visitor Experience</h2>
             {exp.total > 0 && (
               <div className="flex items-center gap-1.5">
-                <span className="text-amber-400 text-base leading-none">
-                  {"★".repeat(Math.round(exp.average))}
-                  {"☆".repeat(5 - Math.round(exp.average))}
-                </span>
+                <div className="flex items-center gap-0.5">
+                  {[1,2,3,4,5].map((s) => (
+                    <svg key={s} width="13" height="13" viewBox="0 0 24 24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                      className={s <= Math.round(exp.average) ? "fill-amber-400 stroke-amber-400" : "fill-none stroke-fg-faint"}>
+                      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                    </svg>
+                  ))}
+                </div>
                 <span className="text-sm font-bold text-fg">{exp.average}</span>
                 <span className="text-[10px] text-fg-faint">/ 5 from {exp.total} rating{exp.total !== 1 ? "s" : ""}</span>
               </div>
@@ -2974,7 +3031,7 @@ function Dashboard({
                 return (
                   <div key={star} className="flex items-center gap-3">
                     <span className="text-[11px] text-fg-faint w-4 shrink-0 text-right">{star}</span>
-                    <span className="text-amber-400 text-xs leading-none shrink-0">★</span>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     <div className="flex-1 h-2 bg-surface-raised rounded-full overflow-hidden">
                       <div
                         className="h-full bg-amber-400 rounded-full transition-all"

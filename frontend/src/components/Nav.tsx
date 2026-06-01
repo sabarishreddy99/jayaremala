@@ -29,6 +29,10 @@ const links = [
     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>,
   },
   {
+    href: "/gallery",    label: "Gallery",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>,
+  },
+  {
     href: "/quotes",     label: "Quotes",
     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zm14.017 0v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-3.983v-10h9.983z"/></svg>,
   },
@@ -139,17 +143,6 @@ export default function Nav() {
               );
             })}
           </div>
-          <a
-            href={profile.resume}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="ml-1 px-3 py-1.5 rounded-lg text-sm text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors inline-flex items-center gap-1"
-          >
-            Resume
-            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M7 17L17 7M17 7H7M17 7v10"/>
-            </svg>
-          </a>
           {/* Cmd+K search trigger */}
           <button
             onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }))}

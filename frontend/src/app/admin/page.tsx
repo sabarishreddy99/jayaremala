@@ -15,6 +15,7 @@ import EducationEditor from "@/components/admin/EducationEditor";
 import ProjectsEditor from "@/components/admin/ProjectsEditor";
 import SkillsEditor from "@/components/admin/SkillsEditor";
 import TestimonialsEditor from "@/components/admin/TestimonialsEditor";
+import GalleryEditor from "@/components/admin/GalleryEditor";
 import KnowledgeDataView from "@/components/admin/KnowledgeDataView";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -2480,7 +2481,7 @@ function Dashboard({
   const [activeView, setActiveView] = useState<
     "analytics" | "write-blog" | "quotes" | "blog-api" | "lab" | "quotes-api" |
     "availability" | "now" | "data" |
-    "profile" | "hero-stats" | "experience" | "education" | "projects" | "skills" | "testimonials"
+    "profile" | "hero-stats" | "experience" | "education" | "projects" | "skills" | "testimonials" | "gallery"
   >("analytics");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const conv        = stats.conversations[period];
@@ -2510,6 +2511,7 @@ function Dashboard({
     { key: "projects",     label: "Projects",        icon: "🛠",  group: "Portfolio" },
     { key: "skills",       label: "Skills",          icon: "⚡", group: "Portfolio" },
     { key: "testimonials", label: "Testimonials",    icon: "💬", group: "Portfolio" },
+    { key: "gallery",      label: "Gallery",         icon: "🖼", group: "Portfolio" },
     { key: "data",        label: "Raw JSON",         icon: "📋", group: "Settings"  },
     { key: "availability",label: "Availability",     icon: "🟢", group: "Settings"  },
     { key: "now",         label: "Now Page",         icon: "⏱",  group: "Settings"  },
@@ -2522,6 +2524,7 @@ function Dashboard({
     availability: "Availability", now: "Now Page", data: "Raw JSON",
     profile: "Profile", "hero-stats": "Hero Stats", experience: "Experience",
     education: "Education", projects: "Projects", skills: "Skills", testimonials: "Testimonials",
+    gallery: "Gallery",
   };
 
   function NavList({ onSelect }: { onSelect?: () => void }) {
@@ -2711,6 +2714,7 @@ function Dashboard({
         {activeView === "projects"     && <ProjectsEditor />}
         {activeView === "skills"       && <SkillsEditor />}
         {activeView === "testimonials" && <TestimonialsEditor />}
+        {activeView === "gallery" && <GalleryEditor />}
         {activeView === "data" && <KnowledgeDataView />}
 
         {/* Analytics content */}

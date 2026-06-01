@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 interface GalleryItem {
   id: string;
@@ -11,8 +11,21 @@ interface GalleryItem {
   date?: string;
 }
 
+interface QueuedFile {
+  file: File;
+  id: string;
+  title: string;
+  caption: string;
+  category: string;
+  date: string;
+  preview: string;
+  status: "pending" | "uploading" | "done" | "error";
+  error?: string;
+}
+
 const REPO         = "sabarishreddy99/jayaremala";
 const BASE         = `https://api.github.com/repos/${REPO}/contents`;
+const GIT          = `https://api.github.com/repos/${REPO}/git`;
 const GALLERY_JSON = "backend/data/knowledge/gallery.json";
 const IMG_DIR      = "frontend/public/gallery";
 const PAT_KEY      = "avocado_github_pat";
@@ -21,29 +34,43 @@ function slugify(s: string): string {
   return s.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-").slice(0, 40) || "photo";
 }
 
+function nameToTitle(filename: string): string {
+  return filename.replace(/\.[^.]+$/, "").replace(/[-_]/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const r = new FileReader();
-    r.onload = () => resolve(String(r.result).split(",")[1]); // strip data: prefix
+    r.onload = () => resolve(String(r.result).split(",")[1]);
     r.onerror = reject;
     r.readAsDataURL(file);
   });
 }
 
-export default function GalleryEditor() {
-  const [pat, setPat] = useState(() => typeof window !== "undefined" ? localStorage.getItem(PAT_KEY) ?? "" : "");
-  const [items, setItems] = useState<GalleryItem[]>([]);
-  const [sha, setSha] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+function fileToObjectUrl(file: File): string {
+  return URL.createObjectURL(file);
+}
 
-  // Form
-  const [file, setFile] = useState<File | null>(null);
-  const [title, setTitle] = useState("");
+export default function GalleryEditor() {
+  const [pat, setPat]       = useState(() => typeof window !== "undefined" ? localStorage.getItem(PAT_KEY) ?? "" : "");
+  const [items, setItems]   = useState<GalleryItem[]>([]);
+  const [sha, setSha]       = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [busy, setBusy]     = useState(false);
+  const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [tab, setTab]       = useState<"single" | "bulk">("single");
+
+  // Single upload
+  const [file, setFile]       = useState<File | null>(null);
+  const [title, setTitle]     = useState("");
   const [caption, setCaption] = useState("");
   const [category, setCategory] = useState("");
-  const [date, setDate] = useState("");
+  const [date, setDate]       = useState("");
+
+  // Bulk upload
+  const [queue, setQueue]   = useState<QueuedFile[]>([]);
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null);
+  const dropRef = useRef<HTMLDivElement>(null);
 
   const headers = () => ({ Authorization: `Bearer ${pat}`, Accept: "application/vnd.github+json" });
 
@@ -71,7 +98,6 @@ export default function GalleryEditor() {
   }
 
   async function putJson(next: GalleryItem[], message: string): Promise<boolean> {
-    // refetch sha to avoid conflicts
     const cur = await fetch(`${BASE}/${GALLERY_JSON}`, { headers: headers() });
     const curData = cur.ok ? await cur.json() : null;
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(next, null, 2) + "\n")));
@@ -84,10 +110,11 @@ export default function GalleryEditor() {
     throw new Error(`gallery.json PUT ${res.status}`);
   }
 
+  // ── Single upload ──────────────────────────────────────────────────────────
   async function addPhoto() {
-    if (!file)  { setResult({ ok: false, msg: "Pick an image first." }); return; }
+    if (!file)        { setResult({ ok: false, msg: "Pick an image first." }); return; }
     if (!title.trim()) { setResult({ ok: false, msg: "Add a title." }); return; }
-    if (!loaded) { setResult({ ok: false, msg: "Load the gallery first." }); return; }
+    if (!loaded)      { setResult({ ok: false, msg: "Load the gallery first." }); return; }
     setBusy(true); setResult(null);
     try {
       const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
@@ -95,7 +122,6 @@ export default function GalleryEditor() {
       const imgPath = `${IMG_DIR}/${id}.${ext}`;
       const b64 = await fileToBase64(file);
 
-      // 1. Commit the image file
       const imgRes = await fetch(`${BASE}/${imgPath}`, {
         method: "PUT",
         headers: { ...headers(), "Content-Type": "application/json" },
@@ -103,12 +129,11 @@ export default function GalleryEditor() {
       });
       if (!imgRes.ok) throw new Error(`image upload ${imgRes.status}`);
 
-      // 2. Append metadata + commit gallery.json
       const entry: GalleryItem = {
         id, title: title.trim(), src: `/gallery/${id}.${ext}`,
-        ...(caption.trim() && { caption: caption.trim() }),
+        ...(caption.trim()  && { caption:  caption.trim()  }),
         ...(category.trim() && { category: category.trim() }),
-        ...(date.trim() && { date: date.trim() }),
+        ...(date.trim()     && { date:     date.trim()     }),
       };
       const next = [entry, ...items];
       await putJson(next, `gallery: add "${entry.title}"`);
@@ -119,6 +144,146 @@ export default function GalleryEditor() {
     } catch (e) {
       setResult({ ok: false, msg: `Upload failed: ${(e as Error).message}` });
     } finally { setBusy(false); }
+  }
+
+  // ── Bulk upload — single commit via Git Trees API ─────────────────────────
+  function enqueueFiles(files: File[]) {
+    const images = files.filter((f) => f.type.startsWith("image/"));
+    const newItems: QueuedFile[] = images.map((f) => ({
+      file: f,
+      id: `${slugify(nameToTitle(f.name))}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 5)}`,
+      title: nameToTitle(f.name),
+      caption: "", category: "", date: "",
+      preview: fileToObjectUrl(f),
+      status: "pending",
+    }));
+    setQueue((q) => [...q, ...newItems]);
+  }
+
+  function updateQueued(id: string, field: keyof Pick<QueuedFile, "title" | "caption" | "category" | "date">, val: string) {
+    setQueue((q) => q.map((it) => it.id === id ? { ...it, [field]: val } : it));
+  }
+
+  function removeQueued(id: string) {
+    setQueue((q) => {
+      const item = q.find((i) => i.id === id);
+      if (item) URL.revokeObjectURL(item.preview);
+      return q.filter((i) => i.id !== id);
+    });
+  }
+
+  async function bulkUpload() {
+    if (!loaded)        { setResult({ ok: false, msg: "Load the gallery first." }); return; }
+    if (queue.length === 0) { setResult({ ok: false, msg: "Add images to the queue." }); return; }
+    const missing = queue.find((q) => !q.title.trim());
+    if (missing) { setResult({ ok: false, msg: `Give a title to "${missing.file.name}".` }); return; }
+
+    setBusy(true); setResult(null);
+    setBulkProgress({ done: 0, total: queue.length });
+
+    try {
+      // 1. Get latest commit on main
+      const refRes = await fetch(`${GIT}/ref/heads/main`, { headers: headers() });
+      if (!refRes.ok) throw new Error(`ref fetch ${refRes.status}`);
+      const refData = await refRes.json();
+      const latestCommitSha: string = refData.object.sha;
+
+      // 2. Get its tree SHA
+      const commitRes = await fetch(`${GIT}/commits/${latestCommitSha}`, { headers: headers() });
+      if (!commitRes.ok) throw new Error(`commit fetch ${commitRes.status}`);
+      const baseTreeSha: string = (await commitRes.json()).tree.sha;
+
+      // 3. Create blobs for each image (sequentially to avoid rate limits)
+      const newEntries: GalleryItem[] = [];
+      const treeNodes: { path: string; mode: string; type: string; sha: string }[] = [];
+
+      for (let i = 0; i < queue.length; i++) {
+        const q = queue[i];
+        setQueue((prev) => prev.map((it) => it.id === q.id ? { ...it, status: "uploading" } : it));
+
+        const ext = (q.file.name.split(".").pop() || "jpg").toLowerCase();
+        const id  = q.id;
+        const path = `${IMG_DIR}/${id}.${ext}`;
+        const b64  = await fileToBase64(q.file);
+
+        const blobRes = await fetch(`${GIT}/blobs`, {
+          method: "POST",
+          headers: { ...headers(), "Content-Type": "application/json" },
+          body: JSON.stringify({ content: b64, encoding: "base64" }),
+        });
+        if (!blobRes.ok) {
+          setQueue((prev) => prev.map((it) => it.id === q.id ? { ...it, status: "error", error: `blob ${blobRes.status}` } : it));
+          throw new Error(`blob creation failed for ${q.file.name}: ${blobRes.status}`);
+        }
+        const blobSha: string = (await blobRes.json()).sha;
+
+        treeNodes.push({ path, mode: "100644", type: "blob", sha: blobSha });
+        newEntries.push({
+          id, title: q.title.trim(), src: `/gallery/${id}.${ext}`,
+          ...(q.caption.trim()  && { caption:  q.caption.trim()  }),
+          ...(q.category.trim() && { category: q.category.trim() }),
+          ...(q.date.trim()     && { date:     q.date.trim()     }),
+        });
+
+        setQueue((prev) => prev.map((it) => it.id === q.id ? { ...it, status: "done" } : it));
+        setBulkProgress({ done: i + 1, total: queue.length });
+      }
+
+      // 4. Build updated gallery.json blob
+      const nextItems = [...newEntries.reverse(), ...items];
+      const jsonContent = JSON.stringify(nextItems, null, 2) + "\n";
+      const jsonBlobRes = await fetch(`${GIT}/blobs`, {
+        method: "POST",
+        headers: { ...headers(), "Content-Type": "application/json" },
+        body: JSON.stringify({ content: jsonContent, encoding: "utf-8" }),
+      });
+      if (!jsonBlobRes.ok) throw new Error(`gallery.json blob ${jsonBlobRes.status}`);
+      const jsonBlobSha: string = (await jsonBlobRes.json()).sha;
+      treeNodes.push({ path: GALLERY_JSON, mode: "100644", type: "blob", sha: jsonBlobSha });
+
+      // 5. Create new tree
+      const treeRes = await fetch(`${GIT}/trees`, {
+        method: "POST",
+        headers: { ...headers(), "Content-Type": "application/json" },
+        body: JSON.stringify({ base_tree: baseTreeSha, tree: treeNodes }),
+      });
+      if (!treeRes.ok) throw new Error(`tree creation ${treeRes.status}`);
+      const newTreeSha: string = (await treeRes.json()).sha;
+
+      // 6. Create commit
+      const titles = newEntries.map((e) => `"${e.title}"`).join(", ");
+      const commitRes2 = await fetch(`${GIT}/commits`, {
+        method: "POST",
+        headers: { ...headers(), "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message: `gallery: bulk add ${newEntries.length} photo${newEntries.length !== 1 ? "s" : ""} — ${titles}`,
+          tree: newTreeSha,
+          parents: [latestCommitSha],
+        }),
+      });
+      if (!commitRes2.ok) throw new Error(`commit ${commitRes2.status}`);
+      const newCommitSha: string = (await commitRes2.json()).sha;
+
+      // 7. Update main ref
+      const updateRef = await fetch(`${GIT}/refs/heads/main`, {
+        method: "PATCH",
+        headers: { ...headers(), "Content-Type": "application/json" },
+        body: JSON.stringify({ sha: newCommitSha }),
+      });
+      if (!updateRef.ok) throw new Error(`ref update ${updateRef.status}`);
+
+      setItems(nextItems);
+      // clean up previews
+      queue.forEach((q) => URL.revokeObjectURL(q.preview));
+      setQueue([]);
+      setBulkProgress(null);
+      setResult({ ok: true, msg: `Pushed ${newEntries.length} photo${newEntries.length !== 1 ? "s" : ""} in one commit! Live in ~2 min after rebuild.` });
+    } catch (e) {
+      setResult({ ok: false, msg: `Bulk upload failed: ${(e as Error).message}` });
+    } finally {
+      setBusy(false);
+      setBulkProgress(null);
+    }
   }
 
   async function remove(id: string) {
@@ -154,8 +319,20 @@ export default function GalleryEditor() {
         </button>
       </div>
 
-      {/* Upload form */}
+      {/* Tabs */}
       {loaded && (
+        <div className="flex gap-1 p-1 rounded-xl bg-surface border border-border w-fit">
+          {(["single", "bulk"] as const).map((t) => (
+            <button key={t} onClick={() => setTab(t)}
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize ${tab === t ? "bg-indigo-600 text-white" : "text-fg-subtle hover:text-fg"}`}>
+              {t === "bulk" ? "Bulk upload" : "Single upload"}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* Single upload */}
+      {loaded && tab === "single" && (
         <div className="rounded-2xl border border-border bg-surface p-4 space-y-3">
           <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint">Add a photo</p>
           <input type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)}
@@ -170,6 +347,99 @@ export default function GalleryEditor() {
           <button onClick={addPhoto} disabled={busy} className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 text-sm font-semibold disabled:opacity-50 transition-colors inline-flex items-center gap-2">
             {busy ? "Uploading…" : "Upload photo"}
           </button>
+        </div>
+      )}
+
+      {/* Bulk upload */}
+      {loaded && tab === "bulk" && (
+        <div className="space-y-3">
+          {/* Drop zone */}
+          <div
+            ref={dropRef}
+            onDragOver={(e) => { e.preventDefault(); dropRef.current?.classList.add("border-indigo-500"); }}
+            onDragLeave={() => dropRef.current?.classList.remove("border-indigo-500")}
+            onDrop={(e) => {
+              e.preventDefault();
+              dropRef.current?.classList.remove("border-indigo-500");
+              enqueueFiles(Array.from(e.dataTransfer.files));
+            }}
+            className="rounded-2xl border-2 border-dashed border-border bg-surface p-6 text-center transition-colors cursor-pointer hover:border-indigo-400"
+            onClick={() => document.getElementById("bulk-file-input")?.click()}
+          >
+            <input id="bulk-file-input" type="file" accept="image/*" multiple className="hidden"
+              onChange={(e) => enqueueFiles(Array.from(e.target.files ?? []))} />
+            <p className="text-sm font-medium text-fg-subtle">Drop images here or click to select</p>
+            <p className="text-[11px] text-fg-faint mt-1">Supports multiple files — all pushed in one commit</p>
+          </div>
+
+          {/* Queue */}
+          {queue.length > 0 && (
+            <div className="rounded-2xl border border-border bg-surface p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint">{queue.length} image{queue.length !== 1 ? "s" : ""} queued</p>
+                <button onClick={() => { queue.forEach((q) => URL.revokeObjectURL(q.preview)); setQueue([]); }}
+                  className="text-[11px] text-rose-500 hover:text-rose-400 font-medium">Clear all</button>
+              </div>
+
+              <div className="space-y-3 max-h-[520px] overflow-y-auto pr-1">
+                {queue.map((q) => (
+                  <div key={q.id} className="flex gap-3 p-3 rounded-xl border border-border bg-surface-raised">
+                    {/* Preview */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={q.preview} alt="" className="w-20 h-16 rounded-lg object-cover shrink-0" />
+
+                    {/* Fields */}
+                    <div className="flex-1 min-w-0 space-y-2">
+                      <input value={q.title} onChange={(e) => updateQueued(q.id, "title", e.target.value)}
+                        placeholder="Title *" className={inputCls + " text-xs"} />
+                      <div className="grid grid-cols-2 gap-2">
+                        <input value={q.caption} onChange={(e) => updateQueued(q.id, "caption", e.target.value)}
+                          placeholder="Caption" className={inputCls + " text-xs"} />
+                        <input value={q.category} onChange={(e) => updateQueued(q.id, "category", e.target.value)}
+                          placeholder="Category" className={inputCls + " text-xs"} />
+                      </div>
+                      <input value={q.date} onChange={(e) => updateQueued(q.id, "date", e.target.value)}
+                        placeholder="Date (e.g. Nov 2024)" className={inputCls + " text-xs"} />
+                      <div className="flex items-center justify-between">
+                        <p className="text-[10px] text-fg-faint truncate">{q.file.name} · {(q.file.size / 1024).toFixed(0)} KB</p>
+                        {q.status === "done"     && <span className="text-[10px] text-emerald-500 font-medium">Done</span>}
+                        {q.status === "uploading" && <span className="text-[10px] text-indigo-400 font-medium">Uploading…</span>}
+                        {q.status === "error"    && <span className="text-[10px] text-rose-500 font-medium">{q.error}</span>}
+                      </div>
+                    </div>
+
+                    {/* Remove */}
+                    <button onClick={() => removeQueued(q.id)} disabled={busy}
+                      className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-fg-faint hover:text-rose-500 hover:bg-rose-500/10 transition-colors disabled:opacity-40">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Progress bar */}
+              {bulkProgress && (
+                <div className="space-y-1">
+                  <div className="h-1.5 rounded-full bg-border overflow-hidden">
+                    <div
+                      className="h-full rounded-full bg-indigo-500 transition-all duration-300"
+                      style={{ width: `${(bulkProgress.done / bulkProgress.total) * 100}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-fg-faint text-right">{bulkProgress.done} / {bulkProgress.total}</p>
+                </div>
+              )}
+
+              <button onClick={bulkUpload} disabled={busy || queue.length === 0}
+                className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 text-sm font-semibold disabled:opacity-50 transition-colors inline-flex items-center gap-2">
+                {busy
+                  ? bulkProgress ? `Uploading ${bulkProgress.done}/${bulkProgress.total}…` : "Working…"
+                  : `Push ${queue.length} photo${queue.length !== 1 ? "s" : ""} in one commit`}
+              </button>
+            </div>
+          )}
         </div>
       )}
 

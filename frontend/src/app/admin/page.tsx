@@ -266,6 +266,7 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -285,45 +286,101 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-4">
-      <div className="w-full max-w-sm">
-        <div className="flex items-center gap-2 justify-center mb-8">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
-            <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-          </svg>
-          <span className="text-sm font-semibold text-fg">Avocado Admin</span>
-        </div>
-        <form onSubmit={handleSubmit} className="rounded-2xl border border-border bg-surface p-6 space-y-4">
-          <div>
-            <label className="block text-xs font-medium text-fg-muted mb-1.5">Admin token</label>
-            <input
-              type="password"
-              value={token}
-              onChange={(e) => setToken(e.target.value)}
-              placeholder="Enter ADMIN_TOKEN"
-              className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
-              autoFocus
-            />
+    <div className="relative min-h-screen flex items-center justify-center bg-bg px-4 overflow-hidden">
+      {/* Subtle dot-grid background */}
+      <div
+        className="absolute inset-0 pointer-events-none opacity-[0.35]"
+        style={{ backgroundImage: "radial-gradient(circle, var(--color-border, #3f3f46) 1px, transparent 1px)", backgroundSize: "28px 28px" }}
+      />
+      {/* Soft radial glow behind the card */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div className="w-96 h-96 rounded-full bg-indigo-500/5 blur-3xl" />
+      </div>
+
+      <div className="relative w-full max-w-sm space-y-7">
+        {/* Brand mark */}
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+            <span className="text-white font-bold text-lg leading-none select-none">A</span>
           </div>
-          {error && <p className="text-xs text-rose-600 dark:text-rose-400">{error}</p>}
+          <div className="text-center">
+            <h1 className="text-base font-bold text-fg tracking-tight">Avocado Admin</h1>
+            <p className="text-[11px] text-fg-faint mt-0.5">itsjaya.com dashboard</p>
+          </div>
+        </div>
+
+        {/* Card */}
+        <form
+          onSubmit={handleSubmit}
+          className="rounded-2xl border border-border bg-surface p-6 space-y-4 shadow-xl shadow-black/10"
+        >
+          <div className="space-y-1.5">
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-fg-faint">
+              Admin token
+            </label>
+            <div className="relative">
+              <input
+                type={visible ? "text" : "password"}
+                value={token}
+                onChange={(e) => setToken(e.target.value)}
+                placeholder="Enter ADMIN_TOKEN…"
+                className="w-full rounded-xl border border-border bg-bg px-3 py-2.5 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/10 transition-all font-mono pr-16"
+                autoFocus
+              />
+              <button
+                type="button"
+                tabIndex={-1}
+                onClick={() => setVisible(!visible)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold uppercase tracking-wider text-fg-faint hover:text-fg-muted transition-colors"
+              >
+                {visible ? "Hide" : "Show"}
+              </button>
+            </div>
+          </div>
+
+          {error && (
+            <div className="rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 px-3 py-2.5 flex items-start gap-2">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-rose-500 shrink-0 mt-0.5">
+                <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+              </svg>
+              <p className="text-xs text-rose-700 dark:text-rose-400 leading-snug">{error}</p>
+            </div>
+          )}
+
           <button
             type="submit"
             disabled={!token || loading}
-            className="w-full rounded-xl bg-fg text-bg py-2 text-sm font-semibold hover:opacity-80 transition-opacity disabled:opacity-40"
+            className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-2.5 text-sm font-semibold hover:from-indigo-500 hover:to-violet-500 transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
           >
-            {loading ? "Verifying…" : "Sign in"}
+            {loading ? (
+              <>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin">
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                </svg>
+                Verifying…
+              </>
+            ) : (
+              <>
+                Sign in
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </>
+            )}
           </button>
+        </form>
+
+        <div className="text-center">
           <Link
             href="/"
-            className="flex items-center justify-center gap-1.5 text-xs text-fg-faint hover:text-fg-muted transition-colors pt-1"
+            className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg-muted transition-colors"
           >
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
+              <path d="M19 12H5M12 5l-7 7 7 7"/>
             </svg>
             Back to portfolio
           </Link>
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -2484,6 +2541,15 @@ function Dashboard({
     "profile" | "hero-stats" | "experience" | "education" | "projects" | "skills" | "testimonials" | "gallery"
   >("analytics");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hasPat, setHasPat] = useState(() =>
+    typeof window !== "undefined" ? !!localStorage.getItem("avocado_github_pat") : false
+  );
+  // Refresh PAT status whenever sidebar footer mounts or window focuses
+  useEffect(() => {
+    function checkPat() { setHasPat(!!localStorage.getItem("avocado_github_pat")); }
+    window.addEventListener("focus", checkPat);
+    return () => window.removeEventListener("focus", checkPat);
+  }, []);
   const conv        = stats.conversations[period];
   const site        = stats.site_visitors[period];
   const feedback    = stats.feedback[period];
@@ -2496,25 +2562,25 @@ function Dashboard({
   const models      = stats.models?.[period] ?? [];
   const topPosts    = [...stats.blog.posts].sort((a, b) => b.views - a.views).slice(0, 8);
 
-  type NavItem = { key: typeof activeView; label: string; icon: string; group: string };
+  type NavItem = { key: typeof activeView; label: string; group: string };
   const NAV: NavItem[] = [
-    { key: "analytics",   label: "Analytics",      icon: "📊", group: "Overview"  },
-    { key: "write-blog",  label: "Write Blog",     icon: "✏️",  group: "Content"  },
-    { key: "blog-api",    label: "Blog (API)",      icon: "📝", group: "Content"  },
-    { key: "lab",         label: "Lab (API)",       icon: "🧪", group: "Content"  },
-    { key: "quotes",      label: "Quotes",          icon: "❝",  group: "Content"  },
-    { key: "quotes-api",  label: "Quotes (API)",    icon: "💬", group: "Content"  },
-    { key: "profile",      label: "Profile",         icon: "👤", group: "Portfolio" },
-    { key: "hero-stats",   label: "Hero Stats",      icon: "📈", group: "Portfolio" },
-    { key: "experience",   label: "Experience",      icon: "💼", group: "Portfolio" },
-    { key: "education",    label: "Education",       icon: "🎓", group: "Portfolio" },
-    { key: "projects",     label: "Projects",        icon: "🛠",  group: "Portfolio" },
-    { key: "skills",       label: "Skills",          icon: "⚡", group: "Portfolio" },
-    { key: "testimonials", label: "Testimonials",    icon: "💬", group: "Portfolio" },
-    { key: "gallery",      label: "Gallery",         icon: "🖼", group: "Portfolio" },
-    { key: "data",        label: "Raw JSON",         icon: "📋", group: "Settings"  },
-    { key: "availability",label: "Availability",     icon: "🟢", group: "Settings"  },
-    { key: "now",         label: "Now Page",         icon: "⏱",  group: "Settings"  },
+    { key: "analytics",    label: "Analytics",    group: "Overview"  },
+    { key: "write-blog",   label: "Write Blog",   group: "Content"   },
+    { key: "blog-api",     label: "Blog · API",   group: "Content"   },
+    { key: "lab",          label: "Lab · API",    group: "Content"   },
+    { key: "quotes",       label: "Quotes",       group: "Content"   },
+    { key: "quotes-api",   label: "Quotes · API", group: "Content"   },
+    { key: "profile",      label: "Profile",      group: "Portfolio" },
+    { key: "hero-stats",   label: "Hero Stats",   group: "Portfolio" },
+    { key: "experience",   label: "Experience",   group: "Portfolio" },
+    { key: "education",    label: "Education",    group: "Portfolio" },
+    { key: "projects",     label: "Projects",     group: "Portfolio" },
+    { key: "skills",       label: "Skills",       group: "Portfolio" },
+    { key: "testimonials", label: "Testimonials", group: "Portfolio" },
+    { key: "gallery",      label: "Gallery",      group: "Portfolio" },
+    { key: "data",         label: "Raw JSON",     group: "Settings"  },
+    { key: "availability", label: "Availability", group: "Settings"  },
+    { key: "now",          label: "Now Page",     group: "Settings"  },
   ];
   const groups = ["Overview", "Content", "Portfolio", "Settings"] as const;
 
@@ -2527,27 +2593,57 @@ function Dashboard({
     gallery: "Gallery",
   };
 
+  function NavIcon({ navKey }: { navKey: string }) {
+    const paths: Record<string, React.ReactNode> = {
+      analytics:     <><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></>,
+      "write-blog":  <><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"/></>,
+      "blog-api":    <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,
+      lab:           <><path d="M8 3v8l-4 9h16l-4-9V3M6 3h12"/></>,
+      quotes:        <><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,
+      "quotes-api":  <><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></>,
+      profile:       <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
+      "hero-stats":  <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>,
+      experience:    <><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></>,
+      education:     <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>,
+      projects:      <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
+      skills:        <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
+      testimonials:  <><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></>,
+      gallery:       <><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>,
+      data:          <><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></>,
+      availability:  <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
+      now:           <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
+    };
+    return (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-80">
+        {paths[navKey]}
+      </svg>
+    );
+  }
+
   function NavList({ onSelect }: { onSelect?: () => void }) {
     return (
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-5">
+      <nav className="flex-1 overflow-y-auto py-3 space-y-4" style={{ scrollbarWidth: "none" }}>
         {groups.map(g => (
           <div key={g}>
-            <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint px-2 mb-1.5">{g}</p>
-            <div className="space-y-0.5">
-              {NAV.filter(n => n.group === g).map(n => (
-                <button
-                  key={n.key}
-                  onClick={() => { setActiveView(n.key); onSelect?.(); }}
-                  className={`w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-medium transition-all text-left ${
-                    activeView === n.key
-                      ? "bg-fg text-bg shadow-sm"
-                      : "text-fg-muted hover:text-fg hover:bg-surface-raised"
-                  }`}
-                >
-                  <span className="text-sm leading-none">{n.icon}</span>
-                  {n.label}
-                </button>
-              ))}
+            <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint px-4 mb-1">{g}</p>
+            <div className="space-y-px">
+              {NAV.filter(n => n.group === g).map(n => {
+                const isActive = activeView === n.key;
+                return (
+                  <button
+                    key={n.key}
+                    onClick={() => { setActiveView(n.key); onSelect?.(); }}
+                    className={`w-full flex items-center gap-2.5 pl-3.5 pr-3 py-[7px] text-xs font-medium transition-all text-left border-l-2 ${
+                      isActive
+                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300"
+                        : "border-transparent text-fg-muted hover:text-fg hover:bg-surface-raised"
+                    }`}
+                  >
+                    <NavIcon navKey={n.key} />
+                    <span className="truncate">{n.label}</span>
+                  </button>
+                );
+              })}
             </div>
           </div>
         ))}
@@ -2574,18 +2670,20 @@ function Dashboard({
         lg:translate-x-0 lg:static lg:z-auto
       `}>
         {/* Sidebar header */}
-        <div className="flex items-center gap-2.5 px-4 py-4 border-b border-border shrink-0">
-          <span className="text-2xl leading-none">🥑</span>
-          <div className="min-w-0">
-            <p className="text-sm font-bold text-fg leading-tight">Avocado</p>
-            <p className="text-[10px] text-fg-faint">Admin Dashboard</p>
+        <div className="flex items-center gap-2.5 px-4 py-[14px] border-b border-border shrink-0">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-500/20 shrink-0">
+            <span className="text-white font-bold text-sm leading-none select-none">A</span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold text-fg leading-tight tracking-tight">Avocado</p>
+            <p className="text-[10px] text-fg-faint leading-none mt-0.5">Admin Dashboard</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
-            className="ml-auto text-fg-faint hover:text-fg lg:hidden"
+            className="ml-auto text-fg-faint hover:text-fg lg:hidden p-0.5 rounded-md hover:bg-surface-raised transition-colors"
             aria-label="Close sidebar"
           >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
             </svg>
           </button>
@@ -2595,12 +2693,19 @@ function Dashboard({
         <NavList onSelect={() => setSidebarOpen(false)} />
 
         {/* Sidebar footer */}
-        <div className="shrink-0 border-t border-border px-3 py-3 space-y-1.5">
+        <div className="shrink-0 border-t border-border px-3 py-3 space-y-1">
+          {/* GitHub PAT status */}
+          <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg">
+            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasPat ? "bg-emerald-500" : "bg-amber-400 animate-pulse"}`} />
+            <span className={`text-[10px] font-medium truncate ${hasPat ? "text-fg-faint" : "text-amber-600 dark:text-amber-400"}`}>
+              {hasPat ? "GitHub connected" : "No GitHub PAT set"}
+            </span>
+          </div>
           <Link
             href="/"
-            className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-fg-muted hover:text-fg hover:bg-surface-raised transition-colors w-full"
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-fg-muted hover:text-fg hover:bg-surface-raised transition-colors w-full"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
               <polyline points="9 22 9 12 15 12 15 22"/>
             </svg>
@@ -2608,9 +2713,9 @@ function Dashboard({
           </Link>
           <button
             onClick={onLogout}
-            className="flex items-center gap-2 px-2.5 py-2 rounded-lg text-xs text-rose-500 hover:bg-rose-500/10 transition-colors w-full"
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 transition-colors w-full"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
               <polyline points="16 17 21 12 16 7"/>
               <line x1="21" y1="12" x2="9" y2="12"/>
@@ -2624,32 +2729,34 @@ function Dashboard({
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Mobile top bar */}
-        <header className="lg:hidden flex items-center gap-3 px-4 py-3 border-b border-border bg-surface shrink-0 sticky top-0 z-30">
+        <header className="lg:hidden flex items-center gap-3 px-4 py-2.5 border-b border-border bg-surface/80 backdrop-blur-md shrink-0 sticky top-0 z-30">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-fg-muted hover:text-fg"
+            className="text-fg-muted hover:text-fg p-1 rounded-md hover:bg-surface-raised transition-colors"
             aria-label="Open sidebar"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <line x1="3" y1="6" x2="21" y2="6"/>
               <line x1="3" y1="12" x2="21" y2="12"/>
               <line x1="3" y1="18" x2="21" y2="18"/>
             </svg>
           </button>
-          <span className="text-lg leading-none">🥑</span>
-          <p className="text-sm font-semibold text-fg flex-1 truncate">{VIEW_LABELS[activeView]}</p>
+          <div className="flex items-center gap-1.5 flex-1 min-w-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />
+            <p className="text-sm font-semibold text-fg truncate">{VIEW_LABELS[activeView]}</p>
+          </div>
           {lastUpdated && (
             <span className="text-[10px] text-fg-faint tabular-nums hidden sm:inline">
-              {refreshing ? "Refreshing…" : secondsAgo < 10 ? "Just updated" : `${secondsAgo}s ago`}
+              {refreshing ? "Refreshing…" : secondsAgo < 10 ? "Just now" : `${secondsAgo}s ago`}
             </span>
           )}
           <button
             onClick={onRefresh}
             disabled={refreshing}
-            className="text-fg-faint hover:text-fg disabled:opacity-40"
+            className="p-1.5 rounded-md text-fg-faint hover:text-fg hover:bg-surface-raised transition-colors disabled:opacity-40"
             title="Refresh"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
               className={refreshing ? "animate-spin" : ""}>
               <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
@@ -2657,9 +2764,15 @@ function Dashboard({
         </header>
 
         {/* Desktop top bar */}
-        <header className="hidden lg:flex items-center justify-between gap-4 px-6 py-3.5 border-b border-border bg-surface shrink-0">
-          <p className="text-sm font-semibold text-fg">{VIEW_LABELS[activeView]}</p>
-          <div className="flex items-center gap-3">
+        <header className="hidden lg:flex items-center justify-between gap-4 px-6 py-3 border-b border-border bg-surface/90 backdrop-blur-md shrink-0 sticky top-0 z-10">
+          <div className="flex items-center gap-1.5 text-sm min-w-0">
+            <span className="text-fg-faint font-medium">Avocado Admin</span>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint/50 shrink-0">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+            <span className="font-semibold text-fg truncate">{VIEW_LABELS[activeView]}</span>
+          </div>
+          <div className="flex items-center gap-2.5">
             {lastUpdated && (
               <span className="text-[10px] text-fg-faint tabular-nums">
                 {refreshing ? "Refreshing…" : secondsAgo < 10 ? "Just updated" : `Updated ${secondsAgo}s ago`}
@@ -2668,9 +2781,9 @@ function Dashboard({
             <button
               onClick={onRefresh}
               disabled={refreshing}
-              className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg-muted border border-border rounded-lg px-3 py-1.5 transition-colors disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-faint hover:text-fg border border-border hover:border-fg-faint rounded-lg px-2.5 py-1.5 transition-all disabled:opacity-40"
             >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
                 className={refreshing ? "animate-spin" : ""}>
                 <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
               </svg>
@@ -2685,18 +2798,22 @@ function Dashboard({
 
         {/* Period tabs — analytics only */}
         {activeView === "analytics" && (
-          <div className="grid grid-cols-3 gap-1 bg-surface-raised rounded-xl p-1 border border-border sm:w-fit sm:flex sm:grid-cols-none">
+          <div className="w-full sm:w-fit">
+            <div className="grid grid-cols-3 sm:flex gap-1 bg-surface-raised rounded-xl p-1 border border-border">
             {(["week", "month", "all"] as Period[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-colors text-center ${
-                  period === p ? "bg-fg text-bg shadow-sm" : "text-fg-muted hover:text-fg"
+                className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-all text-center ${
+                  period === p
+                    ? "bg-fg text-bg shadow-sm"
+                    : "text-fg-muted hover:text-fg hover:bg-surface"
                 }`}
               >
                 {PERIOD_LABELS[p]}
               </button>
             ))}
+            </div>
           </div>
         )}
 

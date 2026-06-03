@@ -6,6 +6,7 @@ import { useState, useEffect, useRef } from "react";
 import { profile } from "@/data/profile";
 import ThemeToggle from "@/components/ThemeToggle";
 import ReadingProgress from "@/components/blog/ReadingProgress";
+import ColorThemePicker, { ColorThemeSwatches } from "@/components/ColorThemePicker";
 
 const links = [
   {
@@ -154,6 +155,7 @@ export default function Nav() {
             </svg>
             <kbd className="font-sans text-[10px]">⌘K</kbd>
           </button>
+          <ColorThemePicker />
           <ThemeToggle />
           <Link
             href="/admin"
@@ -267,6 +269,7 @@ export default function Nav() {
               Admin
             </Link>
           </nav>
+          <ColorThemeSwatches />
         </div>
       )}
 

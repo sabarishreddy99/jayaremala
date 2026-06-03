@@ -15,7 +15,7 @@ const sourceSerif = Source_Serif_4({
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
-  weight: ["400", "700"],
+  weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
 });
 
@@ -79,6 +79,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} ${playfair.variable} h-full antialiased`}
     >
+      <head>
+        {/* Anti-FOUC: apply saved color-theme before first paint */}
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('color-theme')||'midnight';document.documentElement.setAttribute('data-theme',t);}catch(e){}` }} />
+      </head>
       <body className="min-h-full flex flex-col bg-bg text-fg">
         <ThemeProvider>
           <SiteTracker />

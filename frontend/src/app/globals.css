@@ -125,73 +125,248 @@
 
 /* ── Light mode tokens ─────────────────────────────────── */
 :root {
-  --bg: #fafaf8;
-  --surface: #ffffff;
-  --surface-raised: #f4f4f5;
-  --surface-sunken: #f0f0ee;
-  --border: #e4e4e7;
-  --border-subtle: #f4f4f5;
-  --border-strong: #a1a1aa;
-  --fg: #09090b;
-  --fg-muted: #52525b;
-  --fg-subtle: #71717a;
-  --fg-faint: #a1a1aa;
-  --accent: #4f46e5;
-  --accent-hover: #4338ca;
-  --accent-light: #eef2ff;
-  --accent-fg: #ffffff;
+  /* Warm-neutral palette — cream canvas, warm grays, indigo accent */
+  --bg:             #fafaf9;
+  --surface:        #ffffff;
+  --surface-raised: #f5f4f2;
+  --surface-sunken: #edecea;
+  --border:         #e5e2db;
+  --border-subtle:  #f1f0eb;
+  --border-strong:  #b2ada6;
+  --fg:             #111110;
+  --fg-muted:       #524e48;
+  --fg-subtle:      #706b65;
+  --fg-faint:       #a39d97;
+  --accent:           #4f46e5;
+  --accent-hover:     #4338ca;
+  --accent-light:     #eef2ff;
+  --accent-fg:        #ffffff;
+  --accent-secondary: #8b5cf6;  /* gradient endpoint for label-gradient   */
 }
 
 /* ── Dark mode tokens ──────────────────────────────────── */
 .dark {
-  --bg: #0d0b12;
-  --surface: #18181b;
-  --surface-raised: #27272a;
-  --border: #3f3f46;
-  --border-subtle: #27272a;
-  --border-strong: #71717a;
-  --fg: #fafafa;
-  --fg-muted: #d4d4d8;
-  --fg-subtle: #a1a1aa;
-  --fg-faint: #71717a;
-  --accent: #818cf8;
-  --accent-hover: #a5b4fc;
-  --accent-light: #1e1b4b;
-  --accent-fg: #ffffff;
-  --surface-sunken: #09090b;
+  /* Purple-dark palette — all surfaces unified to the same hue family
+     as --bg; eliminates the zinc-on-purple mismatch of the old tokens  */
+  --bg:             #0d0b12;
+  --surface:        #141120;
+  --surface-raised: #1c192e;
+  --surface-sunken: #090710;
+  --border:         #2d2a40;
+  --border-subtle:  #191728;
+  --border-strong:  #504c6c;
+  --fg:             #f0eeff;
+  --fg-muted:       #cac5e0;
+  --fg-subtle:      #9590b5;
+  --fg-faint:       #5e5a7e;
+  --accent:           #7b72f0;
+  --accent-hover:     #9890f6;
+  --accent-light:     #1e1b42;
+  --accent-fg:        #ffffff;
+  --accent-secondary: #a78bfa;
+}
+
+/* ── Color themes ──────────────────────────────────────────── */
+/* Each theme overrides tokens for light mode. Dark mode is     */
+/* handled by combining .dark with [data-theme="*"] on <html>. */
+/* "Dusk" (default) is already defined above in :root/.dark.   */
+
+/* ── Midnight — clinical whites, pure blacks ── */
+[data-theme="midnight"] {
+  --bg:               #f9f9f9;
+  --surface:          #ffffff;
+  --surface-raised:   #f3f3f3;
+  --surface-sunken:   #ebebeb;
+  --border:           #dfdfdf;
+  --border-subtle:    #efefef;
+  --border-strong:    #b0b0b0;
+  --fg:               #090909;
+  --fg-muted:         #444444;
+  --fg-subtle:        #686868;
+  --fg-faint:         #999999;
+  --accent:           #4f46e5;
+  --accent-hover:     #4338ca;
+  --accent-light:     #eef2ff;
+  --accent-fg:        #ffffff;
+  --accent-secondary: #8b5cf6;
+}
+.dark[data-theme="midnight"],
+[data-theme="midnight"].dark {
+  --bg:               #000000;
+  --surface:          #0c0c0c;
+  --surface-raised:   #181818;
+  --surface-sunken:   #000000;
+  --border:           #262626;
+  --border-subtle:    #161616;
+  --border-strong:    #404040;
+  --fg:               #f8f8f8;
+  --fg-muted:         #d0d0d0;
+  --fg-subtle:        #888888;
+  --fg-faint:         #505050;
+  --accent:           #818cf8;
+  --accent-hover:     #a5b4fc;
+  --accent-light:     #1e1b4b;
+  --accent-fg:        #ffffff;
+  --accent-secondary: #a78bfa;
+}
+
+/* ── Forest — sage greens, emerald accent ── */
+[data-theme="forest"] {
+  --bg:               #f6faf7;
+  --surface:          #ffffff;
+  --surface-raised:   #edf7f0;
+  --surface-sunken:   #e2f2e6;
+  --border:           #c8e8d0;
+  --border-subtle:    #e6f5ea;
+  --border-strong:    #84ba94;
+  --fg:               #0c1a10;
+  --fg-muted:         #2c5038;
+  --fg-subtle:        #4c7058;
+  --fg-faint:         #80a888;
+  --accent:           #059669;
+  --accent-hover:     #047857;
+  --accent-light:     #d1fae5;
+  --accent-fg:        #ffffff;
+  --accent-secondary: #0ea5e9;
+}
+.dark[data-theme="forest"],
+[data-theme="forest"].dark {
+  --bg:               #050e07;
+  --surface:          #0c1a10;
+  --surface-raised:   #122018;
+  --surface-sunken:   #030804;
+  --border:           #182e20;
+  --border-subtle:    #0c1a10;
+  --border-strong:    #2c5038;
+  --fg:               #e8fff0;
+  --fg-muted:         #a8d4b4;
+  --fg-subtle:        #68a878;
+  --fg-faint:         #386448;
+  --accent:           #34d399;
+  --accent-hover:     #6ee7b7;
+  --accent-light:     #064e3b;
+  --accent-fg:        #022c22;
+  --accent-secondary: #22d3ee;
+}
+
+/* ── Ocean — cool blues, electric accent ── */
+[data-theme="ocean"] {
+  --bg:               #f5f9fe;
+  --surface:          #ffffff;
+  --surface-raised:   #ecf3fc;
+  --surface-sunken:   #e0ecf8;
+  --border:           #c4d8f0;
+  --border-subtle:    #e4eef8;
+  --border-strong:    #76a4d8;
+  --fg:               #07101e;
+  --fg-muted:         #1c3a68;
+  --fg-subtle:        #385a88;
+  --fg-faint:         #6488b8;
+  --accent:           #2563eb;
+  --accent-hover:     #1d4ed8;
+  --accent-light:     #dbeafe;
+  --accent-fg:        #ffffff;
+  --accent-secondary: #7c3aed;
+}
+.dark[data-theme="ocean"],
+[data-theme="ocean"].dark {
+  --bg:               #03060f;
+  --surface:          #090f20;
+  --surface-raised:   #0f1830;
+  --surface-sunken:   #020408;
+  --border:           #162640;
+  --border-subtle:    #0b1228;
+  --border-strong:    #264470;
+  --fg:               #e4eeff;
+  --fg-muted:         #9abce8;
+  --fg-subtle:        #5888b8;
+  --fg-faint:         #2c5080;
+  --accent:           #60a5fa;
+  --accent-hover:     #93c5fd;
+  --accent-light:     #1e3a5f;
+  --accent-fg:        #ffffff;
+  --accent-secondary: #a78bfa;
+}
+
+/* ── Ember — warm parchment, golden amber ── */
+[data-theme="ember"] {
+  --bg:               #fdf7ee;
+  --surface:          #ffffff;
+  --surface-raised:   #faeedd;
+  --surface-sunken:   #f4e3c8;
+  --border:           #e8ceaa;
+  --border-subtle:    #f4e8d6;
+  --border-strong:    #c09858;
+  --fg:               #180f04;
+  --fg-muted:         #583c16;
+  --fg-subtle:        #78582e;
+  --fg-faint:         #a87e4c;
+  --accent:           #d97706;
+  --accent-hover:     #b45309;
+  --accent-light:     #fef3c7;
+  --accent-fg:        #ffffff;
+  --accent-secondary: #dc2626;
+}
+.dark[data-theme="ember"],
+[data-theme="ember"].dark {
+  --bg:               #120c04;
+  --surface:          #1c1408;
+  --surface-raised:   #261c0c;
+  --surface-sunken:   #0a0804;
+  --border:           #3a2810;
+  --border-subtle:    #201608;
+  --border-strong:    #6a4820;
+  --fg:               #fff8ee;
+  --fg-muted:         #dec890;
+  --fg-subtle:        #b48e58;
+  --fg-faint:         #6e5428;
+  --accent:           #fbbf24;
+  --accent-hover:     #f59e0b;
+  --accent-light:     #451a03;
+  --accent-fg:        #180f04;
+  --accent-secondary: #f87171;
 }
 
 /* ── Type scale — 5 semantic sizes ─────────────────────── */
 :root {
-  --text-label:   0.625rem;   /* 10px  — section headers, micro-labels   */
-  --text-caption: 0.6875rem;  /* 11px  — secondary info, dates, hints    */
-  --text-body:    0.875rem;   /* 14px  — card text, descriptions         */
-  --text-lead:    1.0625rem;  /* 17px  — bio, primary paragraph text     */
+  /* Semantic type scale — covers the 10–11px micro-UI and main body */
+  --text-nano:    0.625rem;    /* 10px — chips, eyebrows, section labels  */
+  --text-micro:   0.6875rem;  /* 11px — captions, timestamps, hints      */
+  --text-body:    0.9375rem;  /* 15px — card/body text (bumped from 14px)*/
+  --text-lead:    1.0625rem;  /* 17px — intro paragraphs, bios           */
+  /* Aliases kept for backward compatibility */
+  --text-label:   var(--text-nano);
+  --text-caption: var(--text-micro);
 }
 
 @theme inline {
-  --color-background: var(--bg);
-  --color-foreground: var(--fg);
-  /* Semantic color utilities */
-  --color-bg: var(--bg);
-  --color-surface: var(--surface);
+  /* Colors */
+  --color-background:     var(--bg);
+  --color-foreground:     var(--fg);
+  --color-bg:             var(--bg);
+  --color-surface:        var(--surface);
   --color-surface-raised: var(--surface-raised);
-  --color-border: var(--border);
-  --color-border-subtle: var(--border-subtle);
-  --color-border-strong: var(--border-strong);
-  --color-fg: var(--fg);
-  --color-fg-muted: var(--fg-muted);
-  --color-fg-subtle: var(--fg-subtle);
-  --color-fg-faint: var(--fg-faint);
-  --color-accent: var(--accent);
-  --color-accent-hover: var(--accent-hover);
-  --color-accent-light: var(--accent-light);
   --color-surface-sunken: var(--surface-sunken);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-playfair);
-  /* Blog reading font — change NEXT_PUBLIC_BLOG_FONT in .env to swap */
-  --font-blog: var(--font-source-serif);
+  --color-border:         var(--border);
+  --color-border-subtle:  var(--border-subtle);
+  --color-border-strong:  var(--border-strong);
+  --color-fg:             var(--fg);
+  --color-fg-muted:       var(--fg-muted);
+  --color-fg-subtle:      var(--fg-subtle);
+  --color-fg-faint:       var(--fg-faint);
+  --color-accent:         var(--accent);
+  --color-accent-hover:   var(--accent-hover);
+  --color-accent-light:   var(--accent-light);
+  /* Fonts */
+  --font-sans:     var(--font-geist-sans);
+  --font-mono:     var(--font-geist-mono);
+  --font-display:  var(--font-playfair);   /* Playfair Display — headings  */
+  --font-blog:     var(--font-source-serif);
+  /* Type-scale utilities — text-nano, text-micro, text-body, text-lead */
+  --text-nano:  0.625rem;
+  --text-micro: 0.6875rem;
+  --text-body:  0.9375rem;
+  --text-lead:  1.0625rem;
 }
 
 * { box-sizing: border-box; }
@@ -214,6 +389,32 @@ body {
   overflow-x: clip;
   width: 100%;
   max-width: 100%;
+}
+
+/* ── Typography defaults ──────────────────────────────────── */
+/* Applied via @layer base so Tailwind utility classes always  */
+/* win. h1/h2 get Playfair Display; h3/h4 use Geist with good */
+/* tracking; body text gets comfortable line-height by default */
+@layer base {
+  h1, h2 {
+    font-family: var(--font-display), Georgia, serif;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  h3 {
+    font-family: var(--font-sans), system-ui, sans-serif;
+    font-weight: 600;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+  }
+  h4, h5, h6 {
+    font-family: var(--font-sans), system-ui, sans-serif;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+  p {
+    line-height: 1.7;
+  }
 }
 
 /* ── Global focus rings (keyboard nav / WCAG 2.1 AA) ───── */
@@ -276,8 +477,8 @@ a[role="button"]:active {
 }
 .dark .card-lift {
   box-shadow:
-    0 1px 3px 0 rgb(0 0 0 / 0.24),
-    0 1px 2px -1px rgb(0 0 0 / 0.18);
+    0 1px 3px 0 rgb(5 3 15 / 0.5),
+    0 1px 2px -1px rgb(5 3 15 / 0.35);
 }
 .card-lift:active {
   transform: translateY(0px) scale(0.98);
@@ -292,18 +493,39 @@ a[role="button"]:active {
 }
 .dark .card-lift:hover {
   box-shadow:
-    0 4px 16px -2px rgb(0 0 0 / 0.44),
-    0 8px 32px -4px rgb(0 0 0 / 0.36),
-    0 1px 3px 0 rgb(0 0 0 / 0.20);
+    0 4px 16px -2px rgb(5 3 15 / 0.65),
+    0 8px 32px -4px rgb(5 3 15 / 0.50),
+    0 1px 3px 0 rgb(5 3 15 / 0.35);
 }
 
 /* ── Blog prose ───────────────────────────────────────── */
-.prose { color: var(--fg-muted); max-width: 68ch; font-size: 1rem; line-height: 1.8; }
+/* Base prose — Source Serif 4 body, Playfair Display headings */
+.prose { color: var(--fg-muted); max-width: 68ch; font-size: 1.0625rem; line-height: 1.85; }
 
-.prose h1 { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; color: var(--fg); margin-top: 0; margin-bottom: 0.6em; }
-.prose h2 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; color: var(--fg); margin-top: 2.4em; margin-bottom: 0.6em; padding-bottom: 0.4em; border-bottom: 1px solid var(--border); }
-.prose h3 { font-size: 1.1rem; font-weight: 700; color: var(--fg); margin-top: 1.8em; margin-bottom: 0.4em; }
-.prose h4 { font-size: 0.95rem; font-weight: 700; color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 1.6em; margin-bottom: 0.3em; }
+/* Playfair Display for prose headings pairs beautifully with   */
+/* Source Serif 4 body — classic editorial contrast             */
+.prose h1 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 2.1rem; font-weight: 700; letter-spacing: -0.03em;
+  line-height: 1.1; color: var(--fg); margin-top: 0; margin-bottom: 0.65em;
+}
+.prose h2 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.45rem; font-weight: 700; letter-spacing: -0.025em;
+  line-height: 1.2; color: var(--fg);
+  margin-top: 2.5em; margin-bottom: 0.65em;
+  padding-bottom: 0.45em; border-bottom: 1px solid var(--border);
+}
+.prose h3 {
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 1.15rem; font-weight: 600; letter-spacing: -0.015em;
+  line-height: 1.3; color: var(--fg); margin-top: 1.9em; margin-bottom: 0.45em;
+}
+.prose h4 {
+  font-size: 0.875rem; font-weight: 700; color: var(--fg-muted);
+  text-transform: uppercase; letter-spacing: 0.07em;
+  margin-top: 1.7em; margin-bottom: 0.35em;
+}
 
 .prose p { margin-bottom: 1.4em; }
 .prose p:last-child { margin-bottom: 0; }
@@ -603,7 +825,7 @@ figcaption[data-rehype-pretty-code-title] + pre {
 
 /* ── Gradient section micro-labels ─────────────────────── */
 .label-gradient {
-  background: linear-gradient(90deg, var(--accent) 0%, #8b5cf6 100%);
+  background: linear-gradient(90deg, var(--accent) 0%, var(--accent-secondary, #8b5cf6) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

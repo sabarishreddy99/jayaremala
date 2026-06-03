@@ -311,7 +311,7 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
           </div>
           <div className="text-center">
             <h1 className="text-base font-bold text-fg tracking-tight">Avocado Admin</h1>
-            <p className="text-[11px] text-fg-faint mt-0.5">itsjaya.com dashboard</p>
+            <p className="text-[11px] text-fg-faint mt-0.5">jayaremala.com dashboard</p>
           </div>
         </div>
 

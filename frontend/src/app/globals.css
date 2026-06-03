@@ -382,9 +382,11 @@
 /* cascades: HeroName (inline var), base-layer headings, and  */
 /* prose — no per-component edits needed.                     */
 [data-theme="midnight"] {
-  --font-display: var(--font-roboto);  /* hero + h1/h2 */
+  --font-display: var(--font-roboto);  /* section headings (h1/h2) */
   --font-sans:    var(--font-roboto);  /* body + h3 + UI chrome */
-  --font-blog:    var(--font-roboto);  /* article reading */
+  /* --font-blog intentionally NOT overridden — it falls back to its
+     default (Source Serif 4) so blog/reading content keeps the elegant
+     antique serif, per design. */
 }
 [data-theme="midnight"] body {
   font-family: var(--font-roboto), system-ui, Arial, sans-serif;
@@ -392,15 +394,22 @@
   letter-spacing: 0;
 }
 /* Material type rhythm — Roboto wants tighter display tracking,
-   neutral tracking on body, and a hair of positive tracking on
-   the all-caps micro-labels so they don't feel cramped.        */
+   neutral on body, slightly looser on the all-caps micro-labels.    */
 [data-theme="midnight"] h1 { letter-spacing: -0.022em; }
 [data-theme="midnight"] h2 { letter-spacing: -0.014em; }
 [data-theme="midnight"] h3 { letter-spacing: -0.006em; font-weight: 500; }
-/* Comfortable Material body for long-form reading             */
+
+/* Hero name keeps the antique display serif (Playfair Display).        */
+/* Scoping --font-display to the hero subtree means HeroName's inline    */
+/* `var(--font-display)` resolves to Playfair, while every other heading */
+/* on the site stays clean Roboto.                                      */
+[data-theme="midnight"] #hero { --font-display: var(--font-playfair); }
+
+/* Blog/reading prose — match antique's serif rhythm (Source Serif 4     */
+/* via the un-overridden --font-blog).                                  */
 [data-theme="midnight"] .prose {
-  font-size: 1.05rem;
-  line-height: 1.7;
+  font-size: 1.1rem;
+  line-height: 1.9;
 }
 [data-theme="midnight"] .prose a { text-underline-offset: 3px; }
 

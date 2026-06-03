@@ -936,6 +936,25 @@ figcaption[data-rehype-pretty-code-title] + pre {
   box-shadow: 0 -10px 40px -6px rgb(0 0 0 / 0.30);
 }
 
+/* ── Mobile: disable the sticky card-stacking entirely ──────
+   On phones the pinned sections + content-scrubbing fight native
+   momentum scroll and cause "bumps". Below 768px we render them as
+   normal flow blocks for buttery-smooth native scrolling. The JS
+   scroll listener is also skipped on mobile (see StackSection.tsx). */
+@media (max-width: 767px) {
+  .stack-pin {
+    position: static !important;
+    height: auto !important;
+    overflow: visible !important;
+  }
+  .stack-pin > div {
+    transform: none !important;
+  }
+  .stack-spacer {
+    display: none !important;
+  }
+}
+
 /* ── Avocado hero blobs ─────────────────────────────────── */
 @keyframes blob {
   0%, 100% { transform: translate(0px, 0px) scale(1); }

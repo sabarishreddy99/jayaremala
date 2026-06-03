@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Source_Serif_4, Playfair_Display, EB_Garamond } from "next/font/google";
+import { Geist, Geist_Mono, Source_Serif_4, Playfair_Display, EB_Garamond, Roboto } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "@/components/ThemeProvider";
 import SiteTracker from "@/components/SiteTracker";
@@ -22,6 +22,12 @@ const ebGaramond = EB_Garamond({
   variable: "--font-eb-garamond",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
+  style: ["normal", "italic"],
+});
+const roboto = Roboto({
+  variable: "--font-roboto",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "700", "900"],
   style: ["normal", "italic"],
 });
 
@@ -83,11 +89,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} ${playfair.variable} ${ebGaramond.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} ${playfair.variable} ${ebGaramond.variable} ${roboto.variable} h-full antialiased`}
     >
       <head>
         {/* Anti-FOUC: apply saved color-theme before first paint */}
-        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('color-theme')||'antique';document.documentElement.setAttribute('data-theme',t);}catch(e){}` }} />
+        <script dangerouslySetInnerHTML={{ __html: `try{var t=localStorage.getItem('color-theme')||'midnight';document.documentElement.setAttribute('data-theme',t);}catch(e){}` }} />
       </head>
       <body className="min-h-full flex flex-col bg-bg text-fg">
         <ThemeProvider>

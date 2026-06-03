@@ -6,11 +6,11 @@ import { useEffect, useRef, useState } from "react";
 
 export const COLOR_THEMES = [
   {
-    id:    "dusk",
-    label: "Dusk",
-    desc:  "Warm cream · deep purple",
-    light: { bg: "#fafaf9", surface: "#f5f4f2", accent: "#4f46e5" },
-    dark:  { bg: "#0d0b12", surface: "#141120", accent: "#7b72f0" },
+    id:    "antique",
+    label: "Antique",
+    desc:  "Aged parchment · old leather · burgundy",
+    light: { bg: "#f6edd8", surface: "#ede0c0", accent: "#8b1a2e" },
+    dark:  { bg: "#120c04", surface: "#1c1408", accent: "#c8a848" },
   },
   {
     id:    "midnight",
@@ -53,14 +53,14 @@ export function applyColorTheme(id: string) {
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function ColorThemePicker() {
-  const [current, setCurrent] = useState<ColorThemeId>("midnight");
+  const [current, setCurrent] = useState<ColorThemeId>("antique");
   const [open, setOpen]       = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Hydrate from localStorage without FOUC (the inline script in layout.tsx
   // already applied the attribute; here we just sync React state to match)
   useEffect(() => {
-    const saved = (localStorage.getItem(STORAGE_KEY) ?? "midnight") as ColorThemeId;
+    const saved = (localStorage.getItem(STORAGE_KEY) ?? "antique") as ColorThemeId;
     setCurrent(saved);
   }, []);
 
@@ -213,10 +213,10 @@ export default function ColorThemePicker() {
 // ── Mobile swatches (used in mobile drawer) ───────────────────────────────────
 
 export function ColorThemeSwatches() {
-  const [current, setCurrent] = useState<ColorThemeId>("midnight");
+  const [current, setCurrent] = useState<ColorThemeId>("antique");
 
   useEffect(() => {
-    const saved = (localStorage.getItem(STORAGE_KEY) ?? "midnight") as ColorThemeId;
+    const saved = (localStorage.getItem(STORAGE_KEY) ?? "antique") as ColorThemeId;
     setCurrent(saved);
   }, []);
 

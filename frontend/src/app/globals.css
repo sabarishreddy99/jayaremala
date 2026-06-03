@@ -327,6 +327,132 @@
   --accent-secondary: #f87171;
 }
 
+/* ── Antique — aged parchment light · old leather dark ── */
+/* Victorian editorial: deep burgundy accent, aged gold     */
+/* gradient, EB Garamond body font, subtle paper grain.    */
+[data-theme="antique"] {
+  --bg:               #f6edd8;
+  --surface:          #fdf8ee;
+  --surface-raised:   #ede0c0;
+  --surface-sunken:   #e2d4ac;
+  --border:           #c8b48a;
+  --border-subtle:    #e8dcc4;
+  --border-strong:    #8a6840;
+  --fg:               #1c1008;
+  --fg-muted:         #4a3018;
+  --fg-subtle:        #6e5030;
+  --fg-faint:         #9a7858;
+  --accent:           #8b1a2e;
+  --accent-hover:     #6e1424;
+  --accent-light:     #f7e8ea;
+  --accent-fg:        #fdf8ee;
+  --accent-secondary: #a87d0e;
+}
+.dark[data-theme="antique"],
+[data-theme="antique"].dark {
+  --bg:               #120c04;
+  --surface:          #1c1408;
+  --surface-raised:   #261c0c;
+  --surface-sunken:   #0c0804;
+  --border:           #3c2810;
+  --border-subtle:    #201608;
+  --border-strong:    #624030;
+  --fg:               #f4ead2;
+  --fg-muted:         #d0bc90;
+  --fg-subtle:        #9e8060;
+  --fg-faint:         #6a5038;
+  --accent:           #c8a848;
+  --accent-hover:     #e0c060;
+  --accent-light:     #2a1800;
+  --accent-fg:        #120c04;
+  --accent-secondary: #c44028;
+}
+
+/* EB Garamond body font — antique theme only               */
+[data-theme="antique"] body {
+  font-family: var(--font-eb-garamond), Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+}
+
+/* EB Garamond body font — midnight theme                    */
+/* Same editorial serif treatment as antique, but on a       */
+/* clinical black/white palette: NYT-in-dark-mode feel.      */
+[data-theme="midnight"] body {
+  font-family: var(--font-eb-garamond), Georgia, "Times New Roman", serif;
+  font-size: 1rem;
+  line-height: 1.75;
+  letter-spacing: 0.01em;
+}
+[data-theme="midnight"] .prose {
+  font-size: 1.1rem;
+  line-height: 1.9;
+}
+[data-theme="midnight"] .prose a {
+  text-underline-offset: 4px;
+}
+[data-theme="midnight"] .prose blockquote {
+  font-style: italic;
+}
+
+/* Prose in antique theme: generous rhythm, warm link color  */
+[data-theme="antique"] .prose {
+  font-size: 1.1rem;
+  line-height: 1.9;
+}
+[data-theme="antique"] .prose a {
+  color: var(--accent);
+  text-underline-offset: 4px;
+}
+[data-theme="antique"] .prose blockquote {
+  border-left-color: var(--accent);
+  background: var(--accent-light);
+  color: var(--fg-muted);
+  font-style: italic;
+}
+
+/* Warm sepia card shadows — antique theme                  */
+[data-theme="antique"] .card-lift {
+  box-shadow:
+    0 1px 2px 0 rgb(60 28 8 / 0.08),
+    0 1px 4px 0 rgb(60 28 8 / 0.06);
+}
+[data-theme="antique"] .card-lift:hover {
+  box-shadow:
+    0 4px 12px -2px rgb(60 28 8 / 0.14),
+    0 8px 28px -4px rgb(60 28 8 / 0.10),
+    0 1px 3px 0 rgb(60 28 8 / 0.06);
+}
+.dark[data-theme="antique"] .card-lift {
+  box-shadow:
+    0 1px 3px 0 rgb(8 4 0 / 0.55),
+    0 1px 2px -1px rgb(8 4 0 / 0.4);
+}
+.dark[data-theme="antique"] .card-lift:hover {
+  box-shadow:
+    0 4px 16px -2px rgb(8 4 0 / 0.7),
+    0 8px 32px -4px rgb(8 4 0 / 0.55),
+    0 1px 3px 0 rgb(8 4 0 / 0.35);
+}
+
+/* Subtle paper grain texture — antique theme only          */
+/* SVG feTurbulence noise tiles at 200×200px, 4% opacity.  */
+[data-theme="antique"] body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.04;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.dark[data-theme="antique"] body::after {
+  mix-blend-mode: screen;
+  opacity: 0.025;
+}
+
 /* ── Type scale — 5 semantic sizes ─────────────────────── */
 :root {
   /* Semantic type scale — covers the 10–11px micro-UI and main body */
@@ -360,8 +486,9 @@
   /* Fonts */
   --font-sans:     var(--font-geist-sans);
   --font-mono:     var(--font-geist-mono);
-  --font-display:  var(--font-playfair);   /* Playfair Display — headings  */
-  --font-blog:     var(--font-source-serif);
+  --font-display:  var(--font-playfair);      /* Playfair Display — headings */
+  --font-blog:     var(--font-source-serif);  /* Source Serif 4 — long-form  */
+  --font-garamond: var(--font-eb-garamond);   /* EB Garamond — antique theme */
   /* Type-scale utilities — text-nano, text-micro, text-body, text-lead */
   --text-nano:  0.625rem;
   --text-micro: 0.6875rem;

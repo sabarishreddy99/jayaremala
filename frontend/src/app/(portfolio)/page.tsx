@@ -223,17 +223,10 @@ export default function PortfolioHome() {
           <div className="animate-fade-up hidden sm:block" style={{ animationDelay: "360ms" }}>
             <HeroStats stats={profile.heroStats} />
           </div>
-          {/* Mobile: compact 2-col */}
+          {/* Mobile: compact 2-col animated (same count-up as desktop) */}
           {profile.heroStats && profile.heroStats.length >= 2 && (
-            <div className="animate-fade-up grid grid-cols-2 gap-2 sm:hidden" style={{ animationDelay: "360ms" }}>
-              {profile.heroStats.slice(0, 2).map((s) => (
-                <div key={s.label} className="rounded-xl border border-border bg-surface px-3 py-2.5 text-left">
-                  <p className="font-mono font-bold tabular-nums text-lg text-fg leading-none">
-                    {s.value}<span className="text-sm text-fg-subtle">{s.suffix}</span>
-                  </p>
-                  <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-1">{s.label}</p>
-                </div>
-              ))}
+            <div className="animate-fade-up sm:hidden" style={{ animationDelay: "360ms" }}>
+              <HeroStats stats={profile.heroStats.slice(0, 2)} cols={2} />
             </div>
           )}
 

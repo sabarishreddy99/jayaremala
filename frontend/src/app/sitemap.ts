@@ -11,12 +11,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const labEntries = getAllLabEntries();
 
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE}/`,           lastModified: new Date(), changeFrequency: "weekly",  priority: 1.0 },
-    { url: `${BASE}/experience`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/education`,  lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
-    { url: `${BASE}/projects`,   lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/blog`,       lastModified: new Date(), changeFrequency: "weekly",  priority: 0.9 },
-    { url: `${BASE}/lab`,        lastModified: new Date(), changeFrequency: "weekly",  priority: 0.7 },
+    { url: `${BASE}/`,            lastModified: new Date(), changeFrequency: "weekly",  priority: 1.0 },
+    { url: `${BASE}/experience`,  lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE}/education`,   lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/projects`,    lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE}/blog`,        lastModified: new Date(), changeFrequency: "weekly",  priority: 0.9 },
+    { url: `${BASE}/lab`,         lastModified: new Date(), changeFrequency: "weekly",  priority: 0.7 },
+    { url: `${BASE}/gallery`,     lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/now`,         lastModified: new Date(), changeFrequency: "weekly",  priority: 0.6 },
+    { url: `${BASE}/quotes`,      lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
   ];
 
   const blogRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
@@ -33,5 +36,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.6,
   }));
 
-  return [...staticRoutes, ...blogRoutes, ...labRoutes];
+  // Blog tag pages
+  const allTags = [...new Set(posts.flatMap((p) => p.tags))];
+  const tagRoutes: MetadataRoute.Sitemap = allTags.map((tag) => ({
+    url: `${BASE}/blog/tag/${encodeURIComponent(tag)}`,
+    lastModified: new Date(),
+    changeFrequency: "weekly" as const,
+    priority: 0.5,
+  }));
+
+  return [...staticRoutes, ...blogRoutes, ...labRoutes, ...tagRoutes];
 }

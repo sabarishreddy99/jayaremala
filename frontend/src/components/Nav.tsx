@@ -155,21 +155,7 @@ export default function Nav() {
             </svg>
             <kbd className="font-sans text-[10px]">⌘K</kbd>
           </button>
-          <ColorThemePicker />
           <ThemeToggle />
-          <Link
-            href="/admin"
-            title="Admin"
-            className={`p-2 rounded-lg transition-colors ${
-              pathname === "/admin"
-                ? "text-fg bg-surface-raised"
-                : "text-fg-faint hover:text-fg-subtle hover:bg-surface-raised"
-            }`}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-          </Link>
           <Link
             href="/chat"
             className="group ml-2 relative inline-flex items-center px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-sm hover:shadow-md transition-colors duration-200 overflow-hidden"
@@ -188,6 +174,24 @@ export default function Nav() {
               Chat →
             </span>
           </Link>
+
+          {/* Utility buttons — visually separated at the far right */}
+          <div className="flex items-center gap-0.5 ml-2 pl-2 border-l border-border">
+            <ColorThemePicker />
+            <Link
+              href="/admin"
+              title="Admin"
+              className={`p-2 rounded-lg transition-colors ${
+                pathname === "/admin"
+                  ? "text-fg bg-surface-raised"
+                  : "text-fg-faint hover:text-fg-subtle hover:bg-surface-raised"
+              }`}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </Link>
+          </div>
         </nav>
 
         {/* Mobile controls */}

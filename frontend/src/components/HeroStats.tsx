@@ -10,7 +10,7 @@ const FALLBACK_STATS: HeroStat[] = [
   { value: 115, suffix: "GB", label: "Daily Throughput", sub: "Zero data loss" },
 ];
 
-export default function HeroStats({ stats }: { stats?: HeroStat[] }) {
+export default function HeroStats({ stats, cols = 4 }: { stats?: HeroStat[]; cols?: 2 | 4 }) {
   const STATS = (stats && stats.length > 0) ? stats : FALLBACK_STATS;
   const [counts, setCounts] = useState(STATS.map(() => 0));
   const [hovered, setHovered] = useState<number | null>(null);
@@ -36,7 +36,7 @@ export default function HeroStats({ stats }: { stats?: HeroStat[] }) {
   }, []);
 
   return (
-    <div className="grid grid-cols-4 gap-2 sm:gap-3">
+    <div className={`grid gap-2 sm:gap-3 ${cols === 2 ? "grid-cols-2" : "grid-cols-4"}`}>
       {STATS.map((stat, i) => (
         <div
           key={stat.label}

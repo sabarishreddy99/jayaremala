@@ -7,6 +7,7 @@ import Link from "next/link";
 import { mdxComponents } from "@/components/blog/MDXComponents";
 import BlogEngagement from "@/components/blog/BlogEngagement";
 import ShareButtons from "@/components/blog/ShareButtons";
+import BlogViewCount from "@/components/blog/BlogViewCount";
 import ReadingMode from "@/components/blog/ReadingMode";
 import { TableOfContents, MobileTOC } from "@/components/blog/TableOfContents";
 import type { Heading } from "@/components/blog/TableOfContents";
@@ -234,6 +235,7 @@ export default async function BlogPostPage({ params }: Props) {
                 <div className="flex flex-wrap items-center gap-3">
                   <span className="text-sm text-fg-faint">{post.date}</span>
                   <span className="text-sm text-fg-faint">{post.readingTime} min read</span>
+                  <BlogViewCount slug={post.slug} />
                   {post.tags.map((t) => (
                     <Link
                       key={t}

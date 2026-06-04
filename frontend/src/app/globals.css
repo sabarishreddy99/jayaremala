@@ -991,6 +991,8 @@ figcaption[data-rehype-pretty-code-title] + pre {
 .dark[data-theme="midnight"] .hero-section-bg,
 [data-theme="midnight"].dark .hero-section-bg { background-color: var(--surface); }
 
+/* hero-dot-cursor removed — HeroDotGrid now uses a canvas  */
+
 /* ── Hero name — lift shadow + accent glow ──────────────── */
 /* Lift: subtle dark shadow to pop text off the dot bg      */
 .hero-name-lift {

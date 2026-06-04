@@ -15,6 +15,7 @@ import StackSection from "@/components/StackSection";
 import SkillsSection from "@/components/SkillsSection";
 import SkillsConstellation from "@/components/SkillsConstellation";
 import MobileNoBg from "@/components/MobileNoBg";
+import HeroDotGrid from "@/components/HeroDotGrid";
 import SiteVitals from "@/components/SiteVitals";
 import { experience } from "@/data/experience";
 
@@ -114,9 +115,9 @@ export default function PortfolioHome() {
       {/* ── 1 · Hero — not sticky, scrolls away naturally ──────── */}
       <section id="hero" className="relative overflow-x-clip scroll-mt-[50px] hero-section-bg">
 
-        {/* ── Hero background — bg-surface base + visible dot grid ── */}
+        {/* ── Hero background — depth glow + interactive dot grid ── */}
         <div aria-hidden className="pointer-events-none absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-accent/[0.05] via-transparent to-transparent" />
-        <div aria-hidden className="hero-dot-pattern pointer-events-none absolute inset-0 opacity-50" />
+        <HeroDotGrid />
 
         {/* ── Focal hero — single centered column ── */}
         <Inner className="flex flex-col items-center text-center pt-16 sm:pt-24 lg:pt-28 pb-10 gap-5 max-w-3xl">

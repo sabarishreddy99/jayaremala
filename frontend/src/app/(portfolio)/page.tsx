@@ -113,9 +113,9 @@ export default function PortfolioHome() {
       />
 
       {/* ── 1 · Hero — not sticky, scrolls away naturally ──────── */}
-      <section id="hero" className="relative overflow-x-clip scroll-mt-[50px] hero-section-bg">
+      <section id="hero" className="relative isolate overflow-x-clip scroll-mt-[50px] hero-section-bg">
 
-        {/* ── Hero background — depth glow + interactive dot grid ── */}
+        {/* ── Hero background — depth glow + interactive letter grid ── */}
         <div aria-hidden className="pointer-events-none absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-accent/[0.05] via-transparent to-transparent" />
         <HeroDotGrid />
 
@@ -169,7 +169,7 @@ export default function PortfolioHome() {
             </Link>
             <Link
               href="/projects"
-              className="inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-border px-6 py-3 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-border bg-surface dark:bg-surface-raised dark:border-border-strong px-6 py-3 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
             >
               View Projects
             </Link>
@@ -177,7 +177,7 @@ export default function PortfolioHome() {
               href={profile.booking_url ?? "https://calendar.app.google/3sScGpHpeSpvPjpSA"}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-1.5 px-3 py-3 text-sm font-medium text-fg-faint hover:text-fg transition-colors duration-200"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-surface dark:bg-surface-raised px-3 py-3 text-sm font-medium text-fg-faint hover:text-fg transition-colors duration-200"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
                 <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
@@ -198,7 +198,7 @@ export default function PortfolioHome() {
             </a>
             {profile.resume && (
               <a href={profile.resume} target="_blank" rel="noopener noreferrer"
-                className="text-[11px] font-medium text-fg-faint hover:text-fg border border-border/60 rounded-full px-3 py-1 hover:border-fg-muted transition-all">
+                className="text-[11px] font-medium text-fg-faint hover:text-fg bg-surface dark:bg-surface-raised border border-border/60 dark:border-border-strong rounded-full px-3 py-1 hover:border-fg-muted transition-all">
                 Resume ↗
               </a>
             )}
@@ -221,7 +221,7 @@ export default function PortfolioHome() {
           {/* Latest post — single subtle teaser, centered */}
           {latestPost && (
             <div className="flex justify-center mt-6">
-              <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 rounded-full border border-border/60 bg-surface/60 px-3.5 py-1.5 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all">
+              <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 rounded-full border border-border/60 dark:border-border-strong bg-surface dark:bg-surface-raised px-3.5 py-1.5 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all">
                 <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-fg-faint shrink-0">Latest</span>
                 <span className="w-px h-3 bg-border shrink-0" />
                 <span className="text-[11px] text-fg-subtle group-hover:text-accent transition-colors line-clamp-1 max-w-[60vw] sm:max-w-xs">
@@ -250,7 +250,7 @@ export default function PortfolioHome() {
               <a
                 key={s.href}
                 href={s.href}
-                className="rounded-md border border-border bg-surface/60 px-2.5 py-0.5 text-[11px] font-medium text-fg-faint hover:text-fg hover:border-fg-muted transition-colors"
+                className="rounded-md border border-border dark:border-border-strong bg-surface dark:bg-surface-raised px-2.5 py-0.5 text-[11px] font-medium text-fg-faint hover:text-fg hover:border-fg-muted transition-colors"
               >
                 {s.label}
               </a>
@@ -272,6 +272,7 @@ export default function PortfolioHome() {
         <Inner className="pb-6 sm:pb-8">
           <SiteVitals />
         </Inner>
+
       </section>
 
 

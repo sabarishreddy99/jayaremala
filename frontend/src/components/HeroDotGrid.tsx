@@ -8,11 +8,11 @@ const CHARS =
   "0123456789" +
   "+-*/=<>≤≥≠∑∏∫√∞πΔΩ±÷%^~!?{}[]|&";
 
-const GRID = 42;   // px between characters
-const FONT = 11;   // font-size px
-const GLOW = 90;   // illumination radius px
+const GRID = 42;  // px between characters
+const FONT = 11;  // font-size px
+const GLOW = 90;  // illumination radius px
 
-// Deterministic LCG — same seed → same layout every render
+// Deterministic LCG — same seed → same layout on every render/resize
 function lcg(seed: number) {
   let s = seed;
   return () => {
@@ -22,6 +22,15 @@ function lcg(seed: number) {
 }
 
 type Cell = { x: number; y: number; ch: string };
+
+// Read live theme tokens from the <html> element's computed style
+function getThemeColors() {
+  const style = getComputedStyle(document.documentElement);
+  return {
+    fg:     style.getPropertyValue("--fg").trim()     || "#1a1916",
+    accent: style.getPropertyValue("--accent").trim() || "#4f46e5",
+  };
+}
 
 export default function HeroDotGrid() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -53,35 +62,26 @@ export default function HeroDotGrid() {
       }
     }
 
-    function getAccent() {
-      return (
-        getComputedStyle(document.documentElement)
-          .getPropertyValue("--accent")
-          .trim() || "#4f46e5"
-      );
-    }
-
     function draw() {
       ctx!.clearRect(0, 0, w, h);
       ctx!.font         = `${FONT}px "Roboto Mono", monospace`;
       ctx!.textAlign    = "center";
       ctx!.textBaseline = "middle";
 
-      const dark      = document.documentElement.classList.contains("dark");
-      const baseColor = dark ? "#ffffff" : "#000000";
-      const accent    = getAccent();
+      // Re-read tokens on every draw so theme/dark-mode switches reflect instantly
+      const { fg, accent } = getThemeColors();
       const { x: mx, y: my } = mouseRef.current;
 
       for (const { x, y, ch } of cellsRef.current) {
         const d = Math.hypot(x - mx, y - my);
 
         if (d < GLOW) {
-          const t = 1 - d / GLOW;            // 1 at centre → 0 at edge
+          const t = 1 - d / GLOW;             // 1 at centre → 0 at edge
           ctx!.fillStyle   = accent;
           ctx!.globalAlpha = 0.14 + t * 0.76; // 0.14 dim rim → 0.90 bright centre
         } else {
-          ctx!.fillStyle   = baseColor;
-          ctx!.globalAlpha = 0.22;
+          ctx!.fillStyle   = fg;
+          ctx!.globalAlpha = 0.13;
         }
 
         ctx!.fillText(ch, x, y);
@@ -114,12 +114,23 @@ export default function HeroDotGrid() {
       rafRef.current = requestAnimationFrame(draw);
     }
 
+    // Redraw immediately when dark class or data-theme attribute changes
+    const mo = new MutationObserver(() => {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(draw);
+    });
+    mo.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class", "data-theme"],
+    });
+
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
     resize();
 
     window.addEventListener("mousemove", onMove, { passive: true });
     return () => {
+      mo.disconnect();
       ro.disconnect();
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener("mousemove", onMove);
@@ -136,7 +147,7 @@ export default function HeroDotGrid() {
         width: "100%",
         height: "100%",
         pointerEvents: "none",
-        zIndex: 0,
+        zIndex: -1,
       }}
     />
   );

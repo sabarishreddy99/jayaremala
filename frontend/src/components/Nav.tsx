@@ -170,7 +170,7 @@ export default function Nav() {
           className="inline-flex items-center text-sm font-bold tracking-tight text-fg hover:opacity-70 transition-opacity"
           onClick={() => setOpen(false)}
         >
-          Jaya<span className="inline-block w-1.5 h-1.5 rotate-45 bg-indigo-500 dark:bg-indigo-400 mx-0.5 -mb-1" />
+          Jaya<span className="inline-block w-1.5 h-1.5 rotate-45 bg-indigo-500 dark:bg-indigo-400 mx-0.5" />
         </Link>
 
         {/* Desktop nav */}

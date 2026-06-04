@@ -51,8 +51,8 @@ export default function Nav() {
 
   // ── Scroll-hide/show refs ─────────────────────────────────────
   const lastScrollY   = useRef(0);
-  const hideTimer     = useRef<ReturnType<typeof setTimeout>>();
-  const idleTimer     = useRef<ReturnType<typeof setTimeout>>();
+  const hideTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const idleTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
   const openRef       = useRef(open);
   useEffect(() => { openRef.current = open; }, [open]);
 
@@ -93,23 +93,23 @@ export default function Nav() {
 
       if (y <= 10) {
         // At the very top — always reveal immediately
-        clearTimeout(hideTimer.current);
-        clearTimeout(idleTimer.current);
+        clearTimeout(hideTimer.current ?? undefined);
+        clearTimeout(idleTimer.current ?? undefined);
         setNavVisible(true);
       } else if (delta > 6 && !openRef.current) {
         // Scrolling DOWN — hide after a short pause (feels deliberate, not twitchy)
-        clearTimeout(idleTimer.current);
-        clearTimeout(hideTimer.current);
+        clearTimeout(idleTimer.current ?? undefined);
+        clearTimeout(hideTimer.current ?? undefined);
         hideTimer.current = setTimeout(() => setNavVisible(false), 120);
       } else if (delta < -4) {
         // Scrolling UP — reveal immediately
-        clearTimeout(hideTimer.current);
-        clearTimeout(idleTimer.current);
+        clearTimeout(hideTimer.current ?? undefined);
+        clearTimeout(idleTimer.current ?? undefined);
         setNavVisible(true);
       }
 
       // Reveal after the user rests (stops scrolling for 900 ms)
-      clearTimeout(idleTimer.current);
+      clearTimeout(idleTimer.current ?? undefined);
       idleTimer.current = setTimeout(() => setNavVisible(true), 900);
 
       lastScrollY.current = y;
@@ -119,8 +119,8 @@ export default function Nav() {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
       window.removeEventListener("scroll", onScroll);
-      clearTimeout(hideTimer.current);
-      clearTimeout(idleTimer.current);
+      clearTimeout(hideTimer.current ?? undefined);
+      clearTimeout(idleTimer.current ?? undefined);
     };
   }, []);
 

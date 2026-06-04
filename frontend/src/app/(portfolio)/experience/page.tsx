@@ -20,7 +20,7 @@ export default function ExperiencePage() {
   const isActive = experience.some((e) => e.end === "Present");
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-12 sm:py-16">
+    <div className="mx-auto w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl px-4 sm:px-6 xl:px-8 py-12 sm:py-16">
 
       {/* Header */}
       <header className="mb-12 sm:mb-16 relative">

@@ -222,7 +222,7 @@ export default function Footer() {
                     transition-[opacity,transform] duration-700 delay-200 ease-out
                     ${revealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}
       >
-        <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3">
+        <div className="mx-auto flex w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem] flex-wrap items-center justify-between gap-3">
           {/* Left: copyright */}
           <div className="flex flex-col gap-1">
             <span className="font-mono text-[11px] tracking-[0.06em] text-fg-muted">

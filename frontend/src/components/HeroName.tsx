@@ -53,11 +53,14 @@ export default function HeroName({ name }: { name: string }) {
         lineHeight: 1.1,
         letterSpacing: "-0.02em",
         margin: 0,
+        position: "relative",
+        zIndex: 10,
       }}
     >
       {/* Jaya — starts shifted right toward centre, slides to left extreme */}
       <span
         aria-hidden
+        className="hero-name-lift"
         style={{
           display: "inline-block",
           whiteSpace: "nowrap",
@@ -86,17 +89,18 @@ export default function HeroName({ name }: { name: string }) {
           transition: phase === "full" ? "opacity 0.8s ease 0.4s" : "none",
         }}
       >
-        <span style={{ color: "var(--fg)" }}>{words[1]}</span>
-        <span style={{ color: "var(--fg)" }}>{words[2]}</span>
+        <span className="hero-name-lift" style={{ color: "var(--fg)" }}>{words[1]}</span>
+        <span className="hero-name-lift" style={{ color: "var(--fg)" }}>{words[2]}</span>
       </span>
 
       {/* Remala — starts shifted left toward centre, slides to right extreme */}
       <span
         aria-hidden
+        className="hero-name-lift hero-name-glow"
         style={{
           display: "inline-block",
           whiteSpace: "nowrap",
-          color: "#4f46e5",
+          color: "var(--accent)",
           opacity: phase === "hidden" ? 0 : 1,
           transform: `translateX(${phase === "split" ? -shift : 0}px)`,
           transition:

@@ -67,7 +67,7 @@ const jsonLd = {
 /** Shared inner-content constraint */
 function Inner({ children, className = "" }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`mx-auto w-full max-w-6xl px-4 sm:px-6 ${className}`}>
+    <div className={`mx-auto w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem] px-4 sm:px-6 xl:px-8 ${className}`}>
       {children}
     </div>
   );
@@ -285,7 +285,7 @@ export default function PortfolioHome() {
             <h2 className="text-xs font-bold uppercase tracking-widest label-gradient">At a Glance</h2>
           </div>
 
-          <div className="grid gap-8 lg:grid-cols-[1fr_260px]">
+          <div className="grid gap-8 lg:grid-cols-[1fr_260px] xl:grid-cols-[1fr_300px] 2xl:grid-cols-[1fr_340px]">
             <div className="space-y-6">
               <ScrollReveal>
               <p className="text-base sm:text-lg leading-8 text-fg max-w-2xl">
@@ -388,7 +388,7 @@ export default function PortfolioHome() {
                 All projects →
               </Link>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {featured.map((p, i) => (
                 <ScrollReveal key={p.title} delay={i * 80} className="flex" direction="scale">
                   {p.title.startsWith("jayaremala") ? (

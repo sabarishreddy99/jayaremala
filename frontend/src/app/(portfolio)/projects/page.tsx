@@ -20,7 +20,7 @@ export default function ProjectsPage() {
   const awardCount    = projects.filter((p) => p.award).length;
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 sm:px-6 py-12 sm:py-16">
+    <div className="mx-auto w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem] px-4 sm:px-6 xl:px-8 py-12 sm:py-16">
 
       {/* Header */}
       <header className="mb-10 sm:mb-12 relative">

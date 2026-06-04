@@ -147,7 +147,7 @@ export default function Nav() {
       <div className="py-2 px-2 lg:px-4">
         {/* ── The nav pill ── layout never changes; only visual props animate ── */}
         <div
-          className={`relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between
+          className={`relative z-10 mx-auto flex w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem] items-center justify-between
             px-4 py-2 rounded-xl
             bg-surface/90 dark:bg-surface/95 backdrop-blur-[14px]
             transition-[box-shadow] duration-[350ms] ease-out

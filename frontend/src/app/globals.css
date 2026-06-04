@@ -984,10 +984,45 @@ figcaption[data-rehype-pretty-code-title] + pre {
 .animation-delay-2000 { animation-delay: 2s; }
 .animation-delay-4000 { animation-delay: 4s; }
 
-/* ── Hero dot grid ─────────────────────────────────────── */
+/* ── Hero section background ────────────────────────────── */
+/* accent-light everywhere; midnight dark gets surface       */
+/* (accent-light = #1e1b4b there — heavy purple, clashes)   */
+.hero-section-bg { background-color: var(--accent-light); }
+.dark[data-theme="midnight"] .hero-section-bg,
+[data-theme="midnight"].dark .hero-section-bg { background-color: var(--surface); }
+
+/* ── Dot grid (footer + hero shared) ───────────────────── */
 .hero-dot-grid {
   background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
   background-size: 24px 24px;
+}
+
+/* ── Hero dot pattern — border-strong so dots are visible   */
+/*    on bg-surface across all light/dark themes            */
+.hero-dot-pattern {
+  background-image: radial-gradient(circle, var(--border-strong) 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+
+/* ── Hero floating dot grid ─────────────────────────────── */
+/* Animates background-position through a slow multi-        */
+/* directional drift — no layout/paint cost, just compositing */
+@keyframes hero-dot-float {
+  0%   { background-position: 0px 0px; }
+  20%  { background-position: 9px 12px; }
+  45%  { background-position: 18px 5px; }
+  70%  { background-position: 10px -8px; }
+  100% { background-position: 0px 0px; }
+}
+
+.hero-dot-float {
+  background-image: radial-gradient(circle, var(--border) 1px, transparent 1px);
+  background-size: 24px 24px;
+  animation: hero-dot-float 18s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-dot-float { animation: none; }
 }
 
 /* ── Chat textarea — hide scrollbar ─────────────────────── */

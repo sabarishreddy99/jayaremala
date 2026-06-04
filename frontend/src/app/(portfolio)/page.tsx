@@ -9,8 +9,6 @@ import ContactForm from "@/components/ContactForm";
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroName from "@/components/HeroName";
 import HeroStats from "@/components/HeroStats";
-import ParticleBackground from "@/components/ParticleBackground";
-import CursorTrail from "@/components/CursorTrail";
 import ShareSiteChip from "@/components/ShareSiteChip";
 import RagPipelineCard from "@/components/RagPipelineCard";
 import StackSection from "@/components/StackSection";
@@ -114,22 +112,11 @@ export default function PortfolioHome() {
       />
 
       {/* ── 1 · Hero — not sticky, scrolls away naturally ──────── */}
-      {/* isolate creates a local stacking context so the canvas (z:-20) and blobs (z:-10)
-          are painted BELOW the section's normal-flow content without fighting the root context */}
-      <section id="hero" className="relative isolate overflow-x-clip scroll-mt-[50px]">
+      <section id="hero" className="relative overflow-x-clip scroll-mt-[50px] hero-section-bg">
 
-        {/* Particle network — deepest layer in this stacking context */}
-        <ParticleBackground />
-
-        {/* Cursor trail — subtle indigo particles, desktop only, respects reduced-motion */}
-        <CursorTrail />
-
-        {/* Ambient blob layer — desktop only */}
-        <div aria-hidden className="hidden sm:block pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-          <div className="animate-blob absolute -top-32 -right-24 h-[560px] w-[560px] rounded-full bg-indigo-500/10 dark:bg-indigo-400/7 blur-[110px]" />
-          <div className="animate-blob animation-delay-2000 absolute bottom-0 -left-16 h-[420px] w-[420px] rounded-full bg-violet-600/8 dark:bg-violet-500/6 blur-[90px]" />
-          <div className="animate-blob animation-delay-4000 absolute top-1/2 left-[40%] h-[280px] w-[280px] -translate-y-1/2 rounded-full bg-blue-400/6 dark:bg-blue-400/4 blur-[70px]" />
-        </div>
+        {/* ── Hero background — bg-surface base + visible dot grid ── */}
+        <div aria-hidden className="pointer-events-none absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-accent/[0.05] via-transparent to-transparent" />
+        <div aria-hidden className="hero-dot-pattern pointer-events-none absolute inset-0 opacity-50" />
 
         {/* ── Focal hero — single centered column ── */}
         <Inner className="flex flex-col items-center text-center pt-16 sm:pt-24 lg:pt-28 pb-10 gap-5 max-w-3xl">
@@ -248,7 +235,7 @@ export default function PortfolioHome() {
         </Inner>
 
         {/* Section preview strip + scroll hint */}
-        <Inner className="pb-6 sm:pb-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <Inner className="pb-3 sm:pb-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           {/* Section chips — visual scent of what's below */}
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-[10px] text-fg-faint mr-1">Explore</span>
@@ -278,6 +265,11 @@ export default function PortfolioHome() {
               <path d="M6 9l6 6 6-6"/>
             </svg>
           </div>
+        </Inner>
+
+        {/* Site vitals — unique visitors + Avocado questions answered */}
+        <Inner className="pb-6 sm:pb-8">
+          <SiteVitals />
         </Inner>
       </section>
 
@@ -312,8 +304,6 @@ export default function PortfolioHome() {
               </div>
               </ScrollReveal>
 
-              {/* Site vitals — live meta stats */}
-              <SiteVitals />
             </div>
 
             <div className="hidden sm:flex flex-col gap-6 lg:pt-1">

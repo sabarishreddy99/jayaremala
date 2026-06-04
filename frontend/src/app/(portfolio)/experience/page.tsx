@@ -85,13 +85,20 @@ export default function ExperiencePage() {
 
             {/* Timeline dot */}
             <div className="absolute left-0 top-1 h-[22px] w-[22px] rounded-full bg-indigo-600 shadow-sm ring-2 ring-indigo-200 dark:ring-indigo-800 flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rounded-full bg-white" />
+              <div className="w-1.5 h-1.5 rotate-45 bg-white" />
             </div>
 
             <ScrollReveal delay={Math.min(i * 70, 280)} className="w-full">
-              <div className="group relative rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden">
+              <div className="group relative rounded-xl rounded-br-none border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden">
                 {/* Hover sweep */}
                 <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                {/* Corner bracket accents */}
+                <svg className="absolute top-2.5 left-2.5 text-border/50 group-hover:text-indigo-400/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                  <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <svg className="absolute bottom-2.5 right-2.5 text-border/50 group-hover:text-indigo-400/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                  <path d="M1 9 L9 9 L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
 
                 {/* Header row */}
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
@@ -100,7 +107,7 @@ export default function ExperiencePage() {
                     <p className="text-sm font-medium text-accent">{job.company}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="inline-block rounded-full bg-surface-raised px-3 py-0.5 text-[11px] font-medium text-fg-muted">
+                    <span className="inline-block rounded-md bg-surface-raised px-3 py-0.5 text-[11px] font-medium text-fg-muted">
                       {job.start} – {job.end}
                     </span>
                     <p className="text-[11px] text-fg-faint mt-0.5">{job.location}</p>

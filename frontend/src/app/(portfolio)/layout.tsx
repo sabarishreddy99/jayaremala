@@ -1,7 +1,6 @@
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import AvocadoChatButton from "@/components/AvocadoChatButton";
-import MobileAvocadoFAB from "@/components/MobileAvocadoFAB";
 import ScrollToTop from "@/components/ScrollToTop";
 import SearchModal from "@/components/SearchModal";
 import IntroScreen from "@/components/IntroScreen";
@@ -20,7 +19,6 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
       <SearchModal items={getSearchIndex()} />
       <main className="flex-1"><PageTransition>{children}</PageTransition></main>
       <Footer />
-      <MobileAvocadoFAB />
       <AvocadoChatButton />
       <ScrollToTop />
     </>

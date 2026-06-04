@@ -1,179 +1,279 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const SESSION_KEY  = "avocado_popup_shown";   // sessionStorage — once per browser session
-const DISMISS_KEY  = "avocado_popup_snoozed"; // localStorage  — timestamp, snooze 7 days on ×
+const SESSION_KEY = "avocado_popup_shown";
+const SNOOZE_KEY  = "avocado_popup_snoozed";
 
-function shouldAutoShow(): boolean {
+function shouldAutoShow() {
   if (typeof window === "undefined") return false;
-  // Don't re-show within the same browser session
   if (sessionStorage.getItem(SESSION_KEY)) return false;
-  // Don't re-show if user explicitly dismissed within the last 7 days
-  const snoozed = localStorage.getItem(DISMISS_KEY);
-  if (snoozed && Date.now() - Number(snoozed) < 7 * 24 * 60 * 60 * 1000) return false;
+  const ts = localStorage.getItem(SNOOZE_KEY);
+  if (ts && Date.now() - Number(ts) < 7 * 24 * 60 * 60 * 1000) return false;
   return true;
 }
 
 export default function AvocadoChatButton() {
   const pathname = usePathname();
-  const [mounted, setMounted]                 = useState(false);
-  const [visible, setVisible]                 = useState(false);
-  const [permanentlyClosed, setPermanentlyClosed] = useState(false);
-  const [hoverKey, setHoverKey]               = useState(0);
-  const autoHideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [mounted, setMounted]     = useState(false);
+  const [show, setShow]           = useState(false); // card is in DOM
+  const [closing, setClosing]     = useState(false); // exit animation playing
+  const [scrolled, setScrolled]   = useState(false); // mobile visibility gate
+  const autoTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
-  /* Auto-show once per session, 4 s after mount */
+  // On mobile (< md = 768px) hide the FAB until the user scrolls
   useEffect(() => {
-    if (!mounted || permanentlyClosed) return;
-    if (!shouldAutoShow()) return;
-    const t = setTimeout(() => {
-      setVisible(true);
-      sessionStorage.setItem(SESSION_KEY, "1"); // mark shown for this session
-    }, 4000);
-    return () => clearTimeout(t);
-  }, [mounted, permanentlyClosed]);
+    const onScroll = () => setScrolled(window.scrollY > 80);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
-  /* Auto-hide after 8 s of being visible */
-  useEffect(() => {
-    if (!visible) return;
-    if (autoHideTimer.current) clearTimeout(autoHideTimer.current);
-    autoHideTimer.current = setTimeout(() => setVisible(false), 8000);
-    return () => { if (autoHideTimer.current) clearTimeout(autoHideTimer.current); };
-  }, [visible]);
+  const openCard = useCallback(() => {
+    setClosing(false);
+    setShow(true);
+  }, []);
 
-  const handleHoverEnter = () => {
-    if (!permanentlyClosed) setVisible(true);
-    setHoverKey((k) => k + 1);
-  };
+  const closeCard = useCallback(() => {
+    setClosing(true);
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => {
+      setShow(false);
+      setClosing(false);
+    }, 220);
+  }, []);
 
-  const handleClose = (e: React.MouseEvent) => {
+  const toggle = () => (show && !closing ? closeCard() : openCard());
+
+  const snooze = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setVisible(false);
-    setPermanentlyClosed(true);
-    // Snooze for 7 days
-    localStorage.setItem(DISMISS_KEY, String(Date.now()));
+    closeCard();
+    localStorage.setItem(SNOOZE_KEY, String(Date.now()));
   };
 
-  const hidden = pathname.startsWith("/blog") || pathname.startsWith("/lab") || pathname === "/quotes";
+  // Auto-show once per session, 5 s after mount
+  useEffect(() => {
+    if (!mounted) return;
+    if (!shouldAutoShow()) return;
+    autoTimer.current = setTimeout(() => {
+      openCard();
+      sessionStorage.setItem(SESSION_KEY, "1");
+      // Auto-hide after 9 s
+      autoTimer.current = setTimeout(closeCard, 9000);
+    }, 5000);
+    return () => { if (autoTimer.current) clearTimeout(autoTimer.current); };
+  }, [mounted, openCard, closeCard]);
+
+  useEffect(() => () => { if (closeTimer.current) clearTimeout(closeTimer.current); }, []);
+
+  const hidden =
+    pathname.startsWith("/blog") ||
+    pathname.startsWith("/lab")  ||
+    pathname === "/quotes";
+
   if (!mounted || hidden) return null;
 
   return (
-    <div className="hidden md:block fixed bottom-7 right-7 z-50">
-      <div className="flex flex-col items-end gap-3">
+    <div className={`fixed bottom-6 right-5 sm:bottom-8 sm:right-8 z-50 flex flex-col items-end gap-3
+      transition-[opacity,transform] duration-300 ease-out
+      md:opacity-100 md:translate-y-0 md:pointer-events-auto
+      ${scrolled
+        ? "opacity-100 translate-y-0 pointer-events-auto"
+        : "opacity-0 translate-y-4 pointer-events-none"
+      }`}>
 
-        {/* ── Popup card ── */}
-        {visible && (
-          <div className="animate-bubble-in">
+      {/* ── Popup card ─────────────────────────────────────────────── */}
+      {show && (
+        <div className={closing ? "animate-bubble-out" : "animate-bubble-in"}>
+          <div
+            className="relative w-72 rounded-2xl overflow-hidden"
+            style={{
+              background: "var(--surface)",
+              boxShadow:
+                "0 20px 60px -12px rgba(0,0,0,0.16), 0 8px 24px -8px rgba(0,0,0,0.08)",
+            }}
+          >
+            {/* Dot grid — same density and colour as the footer */}
             <div
-              className="relative w-64 rounded-2xl border border-border bg-surface overflow-hidden"
-              style={{ boxShadow: "0 12px 48px rgba(0,0,0,0.10), 0 3px 14px rgba(79,70,229,0.08)" }}
-            >
-              {/* Accent stripe */}
-              <div className="h-[2px] w-full bg-gradient-to-r from-indigo-500 via-violet-400 to-indigo-500" />
+              aria-hidden
+              className="hero-dot-grid absolute inset-0 pointer-events-none opacity-[0.28]"
+            />
 
-              <div className="p-4">
-                {/* Header */}
-                <div className="flex items-center justify-between mb-2.5">
-                  <div className="flex items-center gap-2.5">
-                    <div
-                      className="relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full"
-                      style={{ background: "radial-gradient(circle at 38% 32%, #7ed957, #2d7d1e)" }}
+            {/* Very subtle top tint */}
+            <div
+              aria-hidden
+              className="absolute inset-x-0 top-0 h-24 pointer-events-none"
+              style={{
+                background:
+                  "linear-gradient(to bottom, color-mix(in srgb, var(--accent) 5%, transparent) 0%, transparent 100%)",
+              }}
+            />
+
+            <div className="relative z-10 p-5">
+
+              {/* ── Header ── */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  {/* Icon pill */}
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full"
+                    style={{ background: "color-mix(in srgb, var(--accent) 10%, transparent)" }}
+                  >
+                    <svg
+                      width="16" height="16" viewBox="0 0 24 24"
+                      fill="none" stroke="var(--accent)"
+                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                     >
-                      <svg viewBox="0 0 100 120" className="h-4 w-4" fill="none">
-                        <path d="M50 8 C30 8 16 26 16 50 C16 82 30 112 50 112 C70 112 84 82 84 50 C84 26 70 8 50 8Z" fill="#1a5216"/>
-                        <path d="M50 17 C34 17 25 33 25 52 C25 78 36 103 50 103 C64 103 75 78 75 52 C75 33 66 17 50 17Z" fill="#9fd654"/>
-                        <ellipse cx="50" cy="70" rx="17" ry="22" fill="#7a4f2d"/>
-                        <ellipse cx="50" cy="70" rx="13" ry="18" fill="#a06842"/>
-                      </svg>
-                      <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-surface bg-green-500" />
-                    </div>
-                    <div>
-                      <p className="text-[12px] font-bold leading-none text-fg">Avocado</p>
-                      <p className="mt-0.5 text-[10px] font-medium leading-none text-green-500 dark:text-green-400">Online</p>
-                    </div>
+                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
                   </div>
 
-                  <button
-                    onClick={handleClose}
-                    className="flex h-5 w-5 items-center justify-center rounded-full text-base leading-none text-fg-faint transition-colors hover:bg-surface-raised hover:text-fg"
-                    aria-label="Dismiss"
-                  >
-                    ×
-                  </button>
+                  <div>
+                    <p className="text-[13px] font-semibold leading-none text-fg">
+                      Ask Avocado
+                    </p>
+                    <div className="flex items-center gap-1.5 mt-1.5">
+                      <span className="h-1.5 w-1.5 rounded-full bg-green-500 animate-pulse shrink-0" />
+                      <span className="font-mono text-[9px] tracking-[0.1em] uppercase text-fg-subtle">
+                        Online
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                {/* Message */}
-                <p className="mb-3.5 text-[12px] leading-relaxed text-fg-muted">
-                  Ask me anything about Jaya — his projects, experience, or what makes him unique.
-                </p>
-
-                {/* CTA */}
-                <Link
-                  href="/chat"
-                  className="flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-[12px] font-semibold text-white shadow-sm transition-opacity hover:opacity-90"
-                  style={{ background: "linear-gradient(135deg, #4f46e5, #6366f1)" }}
+                {/* Close */}
+                <button
+                  onClick={snooze}
+                  aria-label="Dismiss"
+                  className="mt-0.5 flex h-6 w-6 items-center justify-center rounded-md
+                             text-fg-faint hover:text-fg hover:bg-surface-raised transition-colors"
                 >
-                  Start chatting
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M18 6L6 18M6 6l12 12"/>
                   </svg>
-                </Link>
+                </button>
               </div>
+
+              {/* Divider */}
+              <div
+                aria-hidden
+                className="mb-3.5 h-px bg-gradient-to-r from-transparent via-border to-transparent"
+              />
+
+              {/* Message */}
+              <p className="text-[12px] leading-[1.7] text-fg-muted mb-4">
+                Ask me anything about Jaya — his projects, experience, or what makes him unique.
+              </p>
+
+              {/* CTA */}
+              <Link
+                href="/chat"
+                onClick={closeCard}
+                className="group flex items-center justify-between w-full rounded-xl
+                           px-4 py-2.5 text-[12px] font-semibold text-white
+                           transition-opacity duration-150 hover:opacity-90
+                           active:scale-[0.98] transition-transform"
+                style={{
+                  background:
+                    "linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%)",
+                }}
+              >
+                Start chatting
+                <svg
+                  width="12" height="12" viewBox="0 0 24 24"
+                  fill="none" stroke="currentColor" strokeWidth="2.5"
+                  className="transition-transform duration-200 group-hover:translate-x-0.5"
+                >
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </Link>
             </div>
-
-            {/* Triangle tail */}
-            <div
-              className="absolute -bottom-[9px] right-[26px] h-4 w-4 rotate-45 border-b border-r border-border bg-surface"
-              aria-hidden
-            />
           </div>
-        )}
+        </div>
+      )}
 
-        {/* ── Floating avocado button ── */}
-        <Link
-          href="/chat"
-          onMouseEnter={handleHoverEnter}
+      {/* ── FAB ── dot-texture circle with animated layers ──────── */}
+      {/* Wrapper is NOT overflow-hidden so the breathing ring can bleed outside */}
+      <div className="relative flex items-center justify-center">
+
+        {/* Breathing outer ring — same accent colour, very low opacity */}
+        <span
+          aria-hidden
+          className="fab-ring-pulse absolute rounded-full pointer-events-none"
+          style={{
+            inset: "-6px",
+            border: "1.5px solid var(--accent)",
+          }}
+        />
+
+        {/* The button itself — overflow-hidden clips the rotating dot grid */}
+        <button
+          onClick={toggle}
           aria-label="Ask Avocado AI"
-          className="motion-safe:animate-avo-float motion-safe:animate-avo-glow group relative flex h-[60px] w-[60px] items-center justify-center rounded-full transition-transform duration-200 hover:scale-110 active:scale-95"
-          style={{ background: "radial-gradient(circle at 36% 30%, #7ed957, #2d7d1e)" }}
+          aria-expanded={show && !closing}
+          className="relative flex h-14 w-14 items-center justify-center rounded-full
+                     overflow-hidden
+                     bg-surface border border-border/60
+                     shadow-[0_4px_20px_-6px_rgba(0,0,0,0.14)]
+                     dark:shadow-[0_4px_20px_-6px_rgba(0,0,0,0.45)]
+                     hover:border-accent/40
+                     hover:shadow-[0_6px_28px_-6px_rgba(0,0,0,0.18)]
+                     dark:hover:shadow-[0_6px_28px_-6px_rgba(0,0,0,0.55)]
+                     transition-all duration-200 hover:scale-105 active:scale-95"
         >
-          <span
-            className="absolute inset-[-4px] rounded-full opacity-0 transition-opacity duration-300 group-hover:opacity-100 pointer-events-none"
-            style={{ boxShadow: "0 0 0 3px rgba(100,200,60,0.35)" }}
+          {/* ── Layer 1: slowly rotating dot grid (footer texture) ── */}
+          <div
             aria-hidden
+            className="fab-dot-rotate hero-dot-grid absolute inset-0 pointer-events-none opacity-[0.42]"
           />
-          <svg
-            key={hoverKey}
-            viewBox="0 0 100 120"
-            className={`relative z-10 h-[38px] w-8 drop-shadow-sm${hoverKey > 0 ? " avo-3d-svg" : ""}`}
-            fill="none"
+
+          {/* ── Layer 2: radial vignette — brightens centre, dims edges ── */}
+          <div
             aria-hidden
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(circle at center, transparent 28%, color-mix(in srgb, var(--surface) 65%, transparent) 100%)",
+            }}
+          />
+
+          {/* ── Layer 3: very subtle accent glow at top-left (light source) ── */}
+          <div
+            aria-hidden
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background:
+                "radial-gradient(circle at 35% 30%, color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 65%)",
+            }}
+          />
+
+          {/* ── Icon — chat bubble ↔ close ── */}
+          <span
+            className="relative z-10 text-accent"
+            style={{
+              transition: "transform 0.32s cubic-bezier(0.22,1,0.36,1)",
+              transform: show && !closing ? "rotate(90deg) scale(0.88)" : "rotate(0deg) scale(1)",
+            }}
           >
-            <path d="M50 8 C30 8 16 26 16 50 C16 82 30 112 50 112 C70 112 84 82 84 50 C84 26 70 8 50 8Z" fill="#1a5216"/>
-            <circle cx="37" cy="31" r="3.2" fill="#133d10" opacity="0.55"/>
-            <circle cx="63" cy="27" r="2.8" fill="#133d10" opacity="0.5"/>
-            <circle cx="27" cy="54" r="2.4" fill="#133d10" opacity="0.42"/>
-            <circle cx="73" cy="57" r="2.8" fill="#133d10" opacity="0.42"/>
-            <circle cx="40" cy="68" r="1.8" fill="#133d10" opacity="0.32"/>
-            <circle cx="67" cy="82" r="2.2" fill="#133d10" opacity="0.32"/>
-            <path d="M50 17 C34 17 25 33 25 52 C25 78 36 103 50 103 C64 103 75 78 75 52 C75 33 66 17 50 17Z" fill="#9fd654"/>
-            <path d="M40 24 C34 33 32 44 34 55" stroke="rgba(255,255,255,0.38)" strokeWidth="4.5" strokeLinecap="round"/>
-            <ellipse cx="50" cy="70" rx="17" ry="22" fill="#7a4f2d"/>
-            <ellipse cx="50" cy="70" rx="13" ry="18" fill="#a06842"/>
-            <ellipse cx="44" cy="63" rx="4.5" ry="5.5" fill="rgba(255,255,255,0.2)" transform="rotate(-10 44 63)"/>
-          </svg>
-          <span
-            className="absolute inset-0 rounded-full pointer-events-none"
-            style={{ background: "radial-gradient(ellipse at 40% 25%, rgba(255,255,255,0.22) 0%, transparent 65%)" }}
-            aria-hidden
-          />
-        </Link>
+            {show && !closing ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M18 6L6 18M6 6l12 12"/>
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+            )}
+          </span>
+        </button>
       </div>
     </div>
   );

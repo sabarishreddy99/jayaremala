@@ -47,6 +47,14 @@ export default function Nav() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [navVisible, setNavVisible] = useState(true);
+
+  // ── Scroll-hide/show refs ─────────────────────────────────────
+  const lastScrollY   = useRef(0);
+  const hideTimer     = useRef<ReturnType<typeof setTimeout>>();
+  const idleTimer     = useRef<ReturnType<typeof setTimeout>>();
+  const openRef       = useRef(open);
+  useEffect(() => { openRef.current = open; }, [open]);
 
   // ── Magnetic spotlight indicator ──────────────────────────────
   const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
@@ -77,28 +85,92 @@ export default function Nav() {
   }, [activeIdx]);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 12);
+    const onScroll = () => {
+      const y     = window.scrollY;
+      const delta = y - lastScrollY.current;
+
+      setScrolled(y > 48);
+
+      if (y <= 10) {
+        // At the very top — always reveal immediately
+        clearTimeout(hideTimer.current);
+        clearTimeout(idleTimer.current);
+        setNavVisible(true);
+      } else if (delta > 6 && !openRef.current) {
+        // Scrolling DOWN — hide after a short pause (feels deliberate, not twitchy)
+        clearTimeout(idleTimer.current);
+        clearTimeout(hideTimer.current);
+        hideTimer.current = setTimeout(() => setNavVisible(false), 120);
+      } else if (delta < -4) {
+        // Scrolling UP — reveal immediately
+        clearTimeout(hideTimer.current);
+        clearTimeout(idleTimer.current);
+        setNavVisible(true);
+      }
+
+      // Reveal after the user rests (stops scrolling for 900 ms)
+      clearTimeout(idleTimer.current);
+      idleTimer.current = setTimeout(() => setNavVisible(true), 900);
+
+      lastScrollY.current = y;
+    };
+
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      clearTimeout(hideTimer.current);
+      clearTimeout(idleTimer.current);
+    };
   }, []);
 
   return (
     <header
-      className={`sticky top-0 z-40 relative transition-all duration-300 ${
-        scrolled
-          ? "bg-surface/90 backdrop-blur-md border-b border-border shadow-sm"
-          : "bg-bg border-b border-transparent"
+      className={`sticky top-0 z-40 relative will-change-transform ${
+        navVisible
+          /* Reveal: spring easing — feels like it "settles" into place */
+          ? "translate-y-0 transition-transform duration-[480ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+          /* Hide: quick ease-in — snaps away crisply */
+          : "-translate-y-[110%] transition-transform duration-[220ms] ease-in"
       }`}
     >
-      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 sm:px-6 py-3.5">
+
+      {/* ── Gradient scrim ── softly bleeds the page bg colour downward,
+           creating a visual "air gap" between the nav and page content   */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-full h-16"
+        style={{ background: "linear-gradient(to bottom, var(--bg) 0%, transparent 100%)" }}
+      />
+
+      {/* ── Floating wrapper — gap on all screen sizes ── */}
+      <div className="py-2 px-2 lg:px-4">
+        {/* ── The nav pill ── layout never changes; only visual props animate ── */}
+        <div
+          className={`relative z-10 mx-auto flex w-full max-w-6xl items-center justify-between
+            px-4 py-2 rounded-xl
+            bg-surface/90 dark:bg-surface/95 backdrop-blur-[14px]
+            transition-[box-shadow] duration-[350ms] ease-out
+            ${scrolled
+              ? "[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.10),_0_2px_8px_-2px_rgb(0_0_0/0.06)] dark:[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.45),_0_2px_8px_-2px_rgb(0_0_0/0.25)]"
+              : "shadow-none"
+            }`}
+        >
+          {/* Dot grid: its OWN overflow-hidden+rounded wrapper so it clips to pill
+              corners without clipping the color-picker dropdown that lives outside */}
+          <div
+            aria-hidden
+            className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none"
+          >
+            <div className="hero-dot-grid absolute inset-0 opacity-[0.18]" />
+          </div>
         {/* Logo */}
         <Link
           href="/"
           className="inline-flex items-center text-sm font-bold tracking-tight text-fg hover:opacity-70 transition-opacity"
           onClick={() => setOpen(false)}
         >
-          Jaya<span className="inline-block w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 mx-0.5 -mb-1" />
+          Jaya<span className="inline-block w-1.5 h-1.5 rotate-45 bg-indigo-500 dark:bg-indigo-400 mx-0.5 -mb-1" />
         </Link>
 
         {/* Desktop nav */}
@@ -227,55 +299,61 @@ export default function Nav() {
             )}
           </button>
         </div>
-      </div>
+        </div>{/* ↑ pill */}
 
-      {/* Mobile drawer */}
-      {open && (
-        <div className="md:hidden border-t border-border-subtle bg-surface px-4 pb-4 pt-2">
-          <nav className="flex flex-col gap-1">
-            {links.map((l) => (
-              <Link
-                key={l.href}
-                href={l.href}
+        {/* ── Mobile drawer — floats below pill, same glass treatment ── */}
+        {open && (
+          <div className="md:hidden mt-1.5 rounded-xl overflow-hidden
+            bg-surface/92 backdrop-blur-[14px]
+            [box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.10),_0_2px_8px_-2px_rgb(0_0_0/0.06)]
+            dark:[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.45),_0_2px_8px_-2px_rgb(0_0_0/0.25)]">
+            <nav className="flex flex-col gap-0.5 px-2 pt-2 pb-2">
+              {links.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  onClick={() => setOpen(false)}
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                    pathname.startsWith(l.href)
+                      ? "bg-surface-raised text-fg font-medium"
+                      : "text-fg-muted hover:bg-surface-raised hover:text-indigo-600 dark:hover:text-indigo-400"
+                  }`}
+                >
+                  <span className={`shrink-0 ${pathname.startsWith(l.href) ? "text-accent" : "text-fg-faint"}`}>
+                    {l.icon}
+                  </span>
+                  {l.label}
+                </Link>
+              ))}
+              <a
+                href={profile.resume}
+                target="_blank"
+                rel="noopener noreferrer"
                 onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                  pathname.startsWith(l.href)
-                    ? "bg-surface-raised text-fg font-medium"
-                    : "text-fg-muted hover:bg-surface-raised hover:text-indigo-600 dark:hover:text-indigo-400"
-                }`}
+                className="px-3 py-2.5 rounded-lg text-sm text-fg-muted hover:bg-surface-raised transition-colors flex items-center gap-1.5"
               >
-                <span className={`shrink-0 ${pathname.startsWith(l.href) ? "text-accent" : "text-fg-faint"}`}>
-                  {l.icon}
-                </span>
-                {l.label}
+                Resume
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                </svg>
+              </a>
+              <Link
+                href="/admin"
+                onClick={() => setOpen(false)}
+                className="px-3 py-2.5 rounded-lg text-sm text-fg-faint hover:bg-surface-raised transition-colors flex items-center gap-2"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Admin
               </Link>
-            ))}
-            <a
-              href={profile.resume}
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setOpen(false)}
-              className="px-3 py-2.5 rounded-lg text-sm text-fg-muted hover:bg-surface-raised transition-colors flex items-center gap-1.5"
-            >
-              Resume
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M7 17L17 7M17 7H7M17 7v10"/>
-              </svg>
-            </a>
-            <Link
-              href="/admin"
-              onClick={() => setOpen(false)}
-              className="px-3 py-2.5 rounded-lg text-sm text-fg-faint hover:bg-surface-raised transition-colors flex items-center gap-2"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-              Admin
-            </Link>
-          </nav>
-          <ColorThemeSwatches />
-        </div>
-      )}
+            </nav>
+            <div className="px-3 py-2.5">
+              <ColorThemeSwatches />
+            </div>
+          </div>
+        )}
+      </div>{/* ↑ floating wrapper */}
 
       {/* Reading progress — only on individual blog/lab posts */}
       {/^\/(blog|lab)\/.+/.test(pathname) && <ReadingProgress />}

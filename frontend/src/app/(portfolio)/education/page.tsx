@@ -84,11 +84,18 @@ export default function EducationPage() {
           {education.map((edu, i) => (
             <div key={i} className="sm:pl-10 relative">
               {/* Timeline dot */}
-              <div className="hidden sm:flex absolute left-0 top-3 -translate-x-1/2 w-3 h-3 rounded-full bg-surface border-2 border-amber-400 dark:border-amber-500 ring-2 ring-amber-100 dark:ring-amber-900" />
+              <div className="hidden sm:flex absolute left-0 top-3 -translate-x-1/2 w-3 h-3 rotate-45 bg-surface border-2 border-amber-400 dark:border-amber-500 ring-2 ring-amber-100 dark:ring-amber-900" />
 
-              <div className="group relative rounded-2xl border border-border bg-surface p-6 sm:p-7 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all overflow-hidden">
+              <div className="group relative rounded-xl rounded-br-none border border-border bg-surface p-6 sm:p-7 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all overflow-hidden">
                 {/* Hover sweep */}
                 <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-400 to-orange-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                {/* Corner bracket accents */}
+                <svg className="absolute top-2.5 left-2.5 text-border/50 group-hover:text-amber-400/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                  <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                <svg className="absolute bottom-2.5 right-2.5 text-border/50 group-hover:text-amber-400/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                  <path d="M1 9 L9 9 L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
 
                 {/* Top row: institution + period */}
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
@@ -99,11 +106,11 @@ export default function EducationPage() {
                     <p className="text-xs text-fg-faint mt-0.5">{edu.school}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="rounded-full bg-surface-raised px-3 py-0.5 text-[11px] font-medium text-fg-muted whitespace-nowrap">
+                    <span className="rounded-md bg-surface-raised px-3 py-0.5 text-[11px] font-medium text-fg-muted whitespace-nowrap">
                       {edu.start} – {edu.end}
                     </span>
                     {edu.gpa && (
-                      <span className="rounded-full bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 px-3 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                      <span className="rounded-md bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 px-3 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">
                         GPA {edu.gpa}
                       </span>
                     )}

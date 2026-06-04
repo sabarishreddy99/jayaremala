@@ -23,7 +23,14 @@ function formatDate(iso: string) {
 
 function TestimonialCard({ item }: { item: Testimonial }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface p-6 sm:p-7 flex flex-col shadow-sm flex-shrink-0">
+    <div className="rounded-xl rounded-br-none border border-border bg-surface p-6 sm:p-7 flex flex-col shadow-sm flex-shrink-0 relative overflow-hidden">
+      {/* Corner bracket accents */}
+      <svg className="absolute top-2.5 left-2.5 text-border/50 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+        <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+      <svg className="absolute bottom-2.5 right-2.5 text-border/50 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+        <path d="M1 9 L9 9 L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
       <svg
         className="shrink-0 text-accent/30 mb-4"
         width="28" height="21" viewBox="0 0 32 24" fill="currentColor"

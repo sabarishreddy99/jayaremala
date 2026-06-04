@@ -181,7 +181,7 @@ export default function PortfolioHome() {
             </Link>
             <Link
               href="/projects"
-              className="inline-flex items-center justify-center gap-1.5 rounded-full border-2 border-border px-6 py-3 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
+              className="inline-flex items-center justify-center gap-1.5 rounded-xl border-2 border-border px-6 py-3 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
             >
               View Projects
             </Link>
@@ -262,7 +262,7 @@ export default function PortfolioHome() {
               <a
                 key={s.href}
                 href={s.href}
-                className="rounded-full border border-border bg-surface/60 px-2.5 py-0.5 text-[11px] font-medium text-fg-faint hover:text-fg hover:border-fg-muted transition-colors"
+                className="rounded-md border border-border bg-surface/60 px-2.5 py-0.5 text-[11px] font-medium text-fg-faint hover:text-fg hover:border-fg-muted transition-colors"
               >
                 {s.label}
               </a>
@@ -289,7 +289,7 @@ export default function PortfolioHome() {
           <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
             style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>01</span>
           <div className="flex items-center gap-2.5 mb-8">
-            <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500 shrink-0" />
+            <div className="w-0.5 h-4 bg-gradient-to-b from-indigo-500 to-violet-500 shrink-0" />
             <h2 className="text-xs font-bold uppercase tracking-widest label-gradient">At a Glance</h2>
           </div>
 
@@ -321,7 +321,7 @@ export default function PortfolioHome() {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Previously</p>
                 <div className="flex flex-wrap gap-2">
                   {profile.prev_domain.split(",").map((d) => (
-                    <span key={d} className="rounded-full border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-subtle">
+                    <span key={d} className="rounded-md border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-subtle">
                       {d.trim()}
                     </span>
                   ))}
@@ -332,11 +332,11 @@ export default function PortfolioHome() {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Excited in</p>
                 <div className="flex flex-wrap gap-2">
                   {profile.interested_domain.split(",").map((d) => (
-                    <span key={d} className="rounded-full border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-subtle">
+                    <span key={d} className="rounded-md border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-subtle">
                       {d.trim()}
                     </span>
                   ))}
-                  <span className="rounded-full border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-faint italic">& more</span>
+                  <span className="rounded-md border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-faint italic">& more</span>
                 </div>
               </div>
 
@@ -391,7 +391,7 @@ export default function PortfolioHome() {
               style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>02</span>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2.5">
-                <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-blue-500 to-cyan-500 shrink-0" />
+                <div className="w-0.5 h-4 bg-gradient-to-b from-blue-500 to-cyan-500 shrink-0" />
                 <h2 className="text-xs font-bold uppercase tracking-widest label-gradient">Featured Projects</h2>
               </div>
               <Link href="/projects" className="text-xs font-medium text-accent hover:text-accent-hover">
@@ -411,8 +411,15 @@ export default function PortfolioHome() {
                       sourceLinks={p.sourceLinks}
                     />
                   ) : (
-                    <div className="group relative flex-1 rounded-2xl border border-border bg-surface p-5 space-y-3 hover:border-border-strong card-lift overflow-hidden">
+                    <div className="group relative flex-1 rounded-xl rounded-br-none border border-border bg-surface p-5 space-y-3 hover:border-border-strong card-lift overflow-hidden">
                       <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${p.award ? "from-amber-500 to-orange-500" : "from-blue-500 to-cyan-500"} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
+                      {/* Corner bracket accents — ridealso-style geometric marks */}
+                      <svg className="absolute top-2.5 left-2.5 text-border/50 group-hover:text-accent/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                        <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <svg className="absolute bottom-2.5 right-2.5 text-border/50 group-hover:text-accent/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                        <path d="M1 9 L9 9 L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
                       <div className="flex items-start justify-between gap-2">
                         <h3 className="font-semibold text-fg text-sm leading-snug group-hover:text-accent transition-colors">{p.title}</h3>
                         {p.award && (
@@ -472,7 +479,7 @@ export default function PortfolioHome() {
           {/* Interactive skills ↔ projects constellation — desktop only */}
           <div className="hidden lg:block mt-12 pt-10 border-t border-border">
             <div className="flex items-center gap-2.5 mb-6">
-              <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-violet-500 to-indigo-500 shrink-0" />
+              <div className="w-0.5 h-4 bg-gradient-to-b from-violet-500 to-indigo-500 shrink-0" />
               <h3 className="text-xs font-bold uppercase tracking-widest label-gradient">Skills in Action</h3>
             </div>
             <SkillsConstellation />

@@ -117,7 +117,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
 
       {/* Empty state */}
       {filtered.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-border bg-surface p-10 text-center">
+        <div className="rounded-xl border border-dashed border-border bg-surface p-10 text-center">
           <p className="text-sm text-fg-faint">
             No projects match{query ? ` "${query}"` : ""}{activeTag ? ` tagged "${activeTag}"` : ""}.
           </p>
@@ -144,13 +144,20 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
             return (
               <ScrollReveal key={i} delay={Math.min((i % 3) * 80, 160)} className="flex">
                 <div
-                  className="group relative flex flex-col flex-1 rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden"
+                  className="group relative flex flex-col flex-1 rounded-xl rounded-br-none border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden"
                   onMouseMove={onTiltMove}
                   onMouseLeave={onTiltLeave}
                   style={{ transition: "transform 0.2s cubic-bezier(0.16,1,0.3,1), border-color 0.2s, box-shadow 0.2s", willChange: "transform" }}
                 >
                   {/* Hover sweep */}
                   <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${sweepClass} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
+                  {/* Corner bracket accents — ridealso-style geometric marks */}
+                  <svg className="absolute top-2.5 left-2.5 text-border/50 group-hover:text-accent/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                    <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                  <svg className="absolute bottom-2.5 right-2.5 text-border/50 group-hover:text-accent/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                    <path d="M1 9 L9 9 L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
 
                   {/* Title + badges */}
                   <div className="flex items-start justify-between gap-2 mb-3">

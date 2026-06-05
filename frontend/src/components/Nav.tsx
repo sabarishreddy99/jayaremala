@@ -161,7 +161,7 @@ export default function Nav() {
             aria-hidden
             className="absolute inset-0 overflow-hidden pointer-events-none"
           >
-            <div className={`hero-dot-grid absolute inset-0 transition-opacity duration-[400ms] ${scrolled ? "opacity-[0.18]" : "opacity-0"}`} />
+            <div className={`hero-dot-grid absolute inset-0 transition-opacity duration-400 ${scrolled ? "opacity-[0.18]" : "opacity-0"}`} />
           </div>
         {/* Logo */}
         <Link

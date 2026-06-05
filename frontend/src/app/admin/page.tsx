@@ -72,7 +72,7 @@ function StatCard({
     indigo: "text-indigo-600 dark:text-indigo-400",
   }[color];
   return (
-    <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5 flex flex-col gap-1">
+    <div className="rounded border border-border bg-surface p-4 sm:p-5 flex flex-col gap-1">
       <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-fg-faint">{label}</p>
       <p className={`text-2xl sm:text-3xl font-bold tabular-nums ${accent}`}>{typeof value === "number" ? fmt(value) : value}</p>
       {sub && <p className="text-[10px] sm:text-[11px] text-fg-faint leading-snug">{sub}</p>}
@@ -141,7 +141,7 @@ function TrendsPanel({ trends }: { trends?: { visitors: DailyCount[]; conversati
         const total = s.data.reduce((a, d) => a + d.count, 0);
         const peak = Math.max(0, ...s.data.map((d) => d.count));
         return (
-          <div key={s.label} className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+          <div key={s.label} className="rounded border border-border bg-surface p-4 sm:p-5">
             <div className="flex items-center justify-between mb-2">
               <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">{s.label} · 30 days</h2>
               <span className="text-[11px] text-fg-faint tabular-nums">{fmt(total)} total · peak {peak}/day</span>
@@ -193,12 +193,12 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
   }
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+    <div className="rounded border border-border bg-surface p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <div className="flex items-center gap-2.5">
           <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Avocado Model Health</h2>
           {total > 0 && (
-            <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+            <span className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[10px] font-semibold ${
               healthy
                 ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
                 : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
@@ -218,7 +218,7 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
         <button
           onClick={reingest}
           disabled={reingesting}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-[11px] font-medium text-fg-muted hover:text-fg hover:border-fg-muted transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 rounded border border-border bg-surface-raised px-3 py-1.5 text-[11px] font-medium text-fg-muted hover:text-fg hover:border-fg-muted transition-colors disabled:opacity-50"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
             className={reingesting ? "animate-spin" : ""}>
@@ -260,7 +260,7 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
       )}
 
       {reingestMsg && (
-        <p className="mt-3 text-[11px] text-fg-muted bg-surface-raised border border-border rounded-lg px-3 py-2">{reingestMsg}</p>
+        <p className="mt-3 text-[11px] text-fg-muted bg-surface-raised border border-border rounded px-3 py-2">{reingestMsg}</p>
       )}
     </div>
   );
@@ -306,7 +306,7 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
       <div className="relative w-full max-w-sm space-y-7">
         {/* Brand mark */}
         <div className="flex flex-col items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <div className="w-11 h-11 rounded bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-indigo-500/25">
             <span className="text-white font-bold text-lg leading-none select-none">A</span>
           </div>
           <div className="text-center">
@@ -318,7 +318,7 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
         {/* Card */}
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-border bg-surface p-6 space-y-4 shadow-xl shadow-black/10"
+          className="rounded border border-border bg-surface p-6 space-y-4 shadow-xl shadow-black/10"
         >
           <div className="space-y-1.5">
             <label className="block text-[11px] font-semibold uppercase tracking-wider text-fg-faint">
@@ -330,7 +330,7 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 placeholder="Enter ADMIN_TOKEN…"
-                className="w-full rounded-xl border border-border bg-bg px-3 py-2.5 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/10 transition-all font-mono pr-16"
+                className="w-full rounded border border-border bg-bg px-3 py-2.5 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/10 transition-all font-mono pr-16"
                 autoFocus
               />
               <button
@@ -345,7 +345,7 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
           </div>
 
           {error && (
-            <div className="rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 px-3 py-2.5 flex items-start gap-2">
+            <div className="rounded border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/30 px-3 py-2.5 flex items-start gap-2">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-rose-500 shrink-0 mt-0.5">
                 <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
               </svg>
@@ -356,7 +356,7 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
           <button
             type="submit"
             disabled={!token || loading}
-            className="w-full rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-2.5 text-sm font-semibold hover:from-indigo-500 hover:to-violet-500 transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
+            className="w-full rounded bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-2.5 text-sm font-semibold hover:from-indigo-500 hover:to-violet-500 transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -437,7 +437,7 @@ function SiteGuide() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+    <div className="rounded border border-border bg-surface overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-surface-raised transition-colors"
@@ -467,7 +467,7 @@ function SiteGuide() {
                 <div key={s.heading}>
                   <p className="text-[11px] font-bold uppercase tracking-wider text-accent mb-1.5">{s.heading}</p>
                   {s.note && <p className="text-[11px] text-fg-faint mb-1.5 italic">{s.note}</p>}
-                  <pre className="bg-zinc-950 text-zinc-300 text-[11px] leading-relaxed rounded-xl p-3.5 overflow-x-auto font-mono whitespace-pre-wrap break-words">
+                  <pre className="bg-zinc-950 text-zinc-300 text-[11px] leading-relaxed rounded p-3.5 overflow-x-auto font-mono whitespace-pre-wrap break-words">
                     {s.code}
                   </pre>
                 </div>
@@ -476,7 +476,7 @@ function SiteGuide() {
           </div>
 
           {/* Quick card */}
-          <div className="rounded-xl border border-border bg-surface-raised p-4">
+          <div className="rounded border border-border bg-surface-raised p-4">
             <p className="text-[11px] font-bold uppercase tracking-wider text-fg-faint mb-3">Quick card</p>
             <div className="space-y-1.5 font-mono text-[10px] text-fg-muted">
               {[
@@ -505,7 +505,7 @@ function SiteGuide() {
           </div>
 
           {/* Appendix */}
-          <div className="rounded-xl border border-border bg-surface p-5 space-y-8">
+          <div className="rounded border border-border bg-surface p-5 space-y-8">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-fg-faint mb-0.5">Appendix</p>
               <h3 className="text-sm font-bold text-fg">Project Maintenance</h3>
@@ -531,13 +531,13 @@ function SiteGuide() {
                 { what: "Skills & tools — categories and items",             file: "backend/data/knowledge/skills.json",       fields: "category, items[]" },
                 { what: "Testimonials — name, role, company, quote",         file: "backend/data/knowledge/testimonials.json", fields: "name, designation, company, linkedin, description, givenAt, source" },
               ].map(({ what, file, fields }) => (
-                <div key={file} className="border border-border-subtle rounded-lg p-2.5 space-y-1">
+                <div key={file} className="border border-border-subtle rounded p-2.5 space-y-1">
                   <p className="text-[11px] font-semibold text-fg-muted">{what}</p>
                   <p className="font-mono text-[10px] text-accent break-all">{file}</p>
                   <p className="text-[10px] text-fg-faint leading-relaxed">{fields}</p>
                 </div>
               ))}
-              <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded-lg p-2.5 space-y-1">
+              <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded p-2.5 space-y-1">
                 <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
                   <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                   Resume link is hardcoded in Nav.tsx
@@ -563,13 +563,13 @@ function SiteGuide() {
                 { what: "Post images",                     file: "frontend/public/blog/",                       fields: "Place image files here. Reference as /blog/filename.jpg in MDX." },
                 { what: "Auto-generated chatbot index",    file: "backend/data/knowledge/blog.json",            fields: "Do not edit — auto-generated by scripts/sync-knowledge.mjs. GH Actions commits it on push; Railway re-ingests on deploy." },
               ].map(({ what, file, fields }) => (
-                <div key={file} className="border border-border-subtle rounded-lg p-2.5 space-y-1">
+                <div key={file} className="border border-border-subtle rounded p-2.5 space-y-1">
                   <p className="text-[11px] font-semibold text-fg-muted">{what}</p>
                   <p className="font-mono text-[10px] text-accent break-all">{file}</p>
                   <p className="text-[10px] text-fg-faint leading-relaxed">{fields}</p>
                 </div>
               ))}
-              <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded-lg p-2.5 space-y-1">
+              <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded p-2.5 space-y-1">
                 <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">publishedAt vs date</p>
                 <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed">
                   <span className="font-mono">publishedAt</span> is the sort key — set it once and never change it.{" "}
@@ -588,18 +588,18 @@ function SiteGuide() {
                 Lab is for living, in-progress project documentation — architecture, decisions, and progress logs updated as the project evolves. Files live at <span className="font-mono bg-surface-raised px-1 rounded">frontend/src/content/lab/[slug].mdx</span>. Filename = URL slug.
               </p>
               <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-2">Frontmatter (required)</p>
-              <pre className="bg-zinc-950 text-zinc-300 text-[11px] leading-relaxed rounded-xl p-3.5 overflow-x-auto font-mono whitespace-pre-wrap break-words">{`---\ntitle: "My Project"\nstatus: "active"        # active | paused | shipped\ndescription: "One-line summary shown on lab index card."\nstartedAt: "2026-01-01"\nupdatedAt: "2026-04-22"  # ← update this every time you edit\ntech: [Next.js, FastAPI, PostgreSQL]\n---`}</pre>
+              <pre className="bg-zinc-950 text-zinc-300 text-[11px] leading-relaxed rounded p-3.5 overflow-x-auto font-mono whitespace-pre-wrap break-words">{`---\ntitle: "My Project"\nstatus: "active"        # active | paused | shipped\ndescription: "One-line summary shown on lab index card."\nstartedAt: "2026-01-01"\nupdatedAt: "2026-04-22"  # ← update this every time you edit\ntech: [Next.js, FastAPI, PostgreSQL]\n---`}</pre>
               {[
                 { what: "status: active",  detail: "Green badge with pulse animation. Sorted to top of lab index. Use while actively building." },
                 { what: "status: paused",  detail: "Amber badge. Sorted second. Use when work is on hold." },
                 { what: "status: shipped", detail: "Indigo badge. Sorted last. Use when the project is complete and deployed." },
               ].map(({ what, detail }) => (
-                <div key={what} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                <div key={what} className="border border-border-subtle rounded p-2.5 space-y-0.5">
                   <p className="font-mono text-[11px] font-semibold text-fg-muted">{what}</p>
                   <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
                 </div>
               ))}
-              <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded-lg p-2.5">
+              <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded p-2.5">
                 <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">Always update updatedAt</p>
                 <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed mt-0.5">The lab index card shows &quot;last updated [date]&quot;. Set it to today&apos;s date every time you make changes or the card will show a stale date.</p>
               </div>
@@ -611,13 +611,13 @@ function SiteGuide() {
                 { what: '<Decision date="2026-01-10" title="Why X over Y">…</Decision>', detail: "Timeline entry with indigo dot. Use for architectural decisions and technology choices." },
                 { what: '<Update date="2026-04-22">…</Update>',                 detail: "Lighter timeline entry with zinc dot. Use for progress notes and milestone completions." },
               ].map(({ what, detail }) => (
-                <div key={what} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                <div key={what} className="border border-border-subtle rounded p-2.5 space-y-0.5">
                   <p className="font-mono text-[10px] font-semibold text-accent break-all">{what}</p>
                   <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
                 </div>
               ))}
               <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-2">Architecture diagrams</p>
-              <pre className="bg-zinc-950 text-zinc-300 text-[11px] leading-relaxed rounded-xl p-3.5 overflow-x-auto font-mono whitespace-pre-wrap break-words">{`\`\`\`arch\n┌─────────────┐     ┌─────────────┐\n│  Frontend   │────▶│   Backend   │\n└─────────────┘     └─────────────┘\n\`\`\``}</pre>
+              <pre className="bg-zinc-950 text-zinc-300 text-[11px] leading-relaxed rounded p-3.5 overflow-x-auto font-mono whitespace-pre-wrap break-words">{`\`\`\`arch\n┌─────────────┐     ┌─────────────┐\n│  Frontend   │────▶│   Backend   │\n└─────────────┘     └─────────────┘\n\`\`\``}</pre>
               <p className="text-[10px] text-fg-faint italic leading-relaxed">
                 Always use fenced <span className="font-mono bg-surface-raised px-1 rounded">```arch</span> blocks for diagrams — never a JSX component. Characters like <span className="font-mono bg-surface-raised px-1 rounded">&lt;</span>, <span className="font-mono bg-surface-raised px-1 rounded">&gt;</span>, and <span className="font-mono bg-surface-raised px-1 rounded">{"{}"}</span> inside JSX children cause an MDX acorn parse error.
               </p>
@@ -638,7 +638,7 @@ function SiteGuide() {
                 { what: "Chatbot re-ingest (hash-based)", detail: "Backend computes SHA-256 of all knowledge JSON files at startup. Re-ingests only when the hash changes — fast startup if nothing changed. Hash stored at chroma_db/.ingest_hash." },
                 { what: "Static site deployment",        detail: "Frontend builds as a static export and deploys to GitHub Pages (sabarishreddy99.github.io). Backend deploys to Railway. Both trigger on push to main." },
               ].map(({ what, detail }) => (
-                <div key={what} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                <div key={what} className="border border-border-subtle rounded p-2.5 space-y-0.5">
                   <p className="text-[11px] font-semibold text-fg-muted">{what}</p>
                   <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
                 </div>
@@ -659,7 +659,7 @@ function SiteGuide() {
                 { what: "Persistence on Railway",                detail: "Without a volume, counts reset on every deploy. Add a Volume (Pro plan) mounted at /data and set ANALYTICS_DB_PATH=/data/analytics.db in backend environment variables." },
                 { what: "API endpoints",                         detail: "POST /blog/{slug}/view · POST /blog/{slug}/clap (body: {count}) · GET /blog/{slug}/stats · GET /blog/stats/summary" },
               ].map(({ what, detail }) => (
-                <div key={what} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                <div key={what} className="border border-border-subtle rounded p-2.5 space-y-0.5">
                   <p className="text-[11px] font-semibold text-fg-muted">{what}</p>
                   <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
                 </div>
@@ -681,7 +681,7 @@ function SiteGuide() {
                 { what: "RAG pipeline",                     detail: "Hybrid: ChromaDB dense (all-MiniLM-L6-v2 embeddings) + BM25 lexical → RRF merge → cross-encoder rerank (ms-marco-MiniLM-L-6-v2). Retrieves top 5 chunks → fed as context to Gemini." },
                 { what: "Startup warmup",                   detail: "Embedding model and cross-encoder load at startup. First response may be ~1–2s slower. Models download once and cache in Railway's ephemeral storage." },
               ].map(({ what, detail }) => (
-                <div key={what} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                <div key={what} className="border border-border-subtle rounded p-2.5 space-y-0.5">
                   <p className="text-[11px] font-semibold text-fg-muted">{what}</p>
                   <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
                 </div>
@@ -705,7 +705,7 @@ function SiteGuide() {
                 { key: "APP_ENV",                   detail: "dev or prod. Default: dev. Controls logging and debug behavior." },
                 { key: "ADMIN_TOKEN",               detail: "Bearer token for the /stats/admin endpoint. Generate with: openssl rand -hex 32. Required to access this dashboard." },
               ].map(({ key, detail }) => (
-                <div key={key} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                <div key={key} className="border border-border-subtle rounded p-2.5 space-y-0.5">
                   <p className="font-mono text-[11px] font-semibold text-accent">{key}</p>
                   <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
                 </div>
@@ -715,7 +715,7 @@ function SiteGuide() {
                 { key: "NEXT_PUBLIC_API_BASE_URL", detail: "Backend URL the browser calls. Set to your Railway backend URL in production. Required — chat and blog stats break without it." },
                 { key: "NEXT_PUBLIC_BLOG_FONT",    detail: "Blog reading font. Default: Source_Serif_4. Must match the font statically imported in frontend/src/app/layout.tsx." },
               ].map(({ key, detail }) => (
-                <div key={key} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">
+                <div key={key} className="border border-border-subtle rounded p-2.5 space-y-0.5">
                   <p className="font-mono text-[11px] font-semibold text-accent">{key}</p>
                   <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
                 </div>
@@ -1457,14 +1457,14 @@ function BlogEditor() {
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2">
           <button onClick={newPost}
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-fg-faint hover:text-fg border border-border rounded-lg px-3 py-1.5 transition-colors">
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-fg-faint hover:text-fg border border-border rounded px-3 py-1.5 transition-colors">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 5v14M5 12h14"/></svg>
             New post
           </button>
           {drafts.length > 0 && (
             <div className="relative">
               <button onClick={() => setShowDraftMenu(!showDraftMenu)}
-                className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg border border-border rounded-lg px-3 py-1.5 transition-colors">
+                className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg border border-border rounded px-3 py-1.5 transition-colors">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
                 </svg>
@@ -1472,7 +1472,7 @@ function BlogEditor() {
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${showDraftMenu ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
               </button>
               {showDraftMenu && (
-                <div className="absolute left-0 top-full mt-1 z-30 w-72 bg-surface border border-border rounded-xl shadow-2xl py-1 overflow-hidden">
+                <div className="absolute left-0 top-full mt-1 z-30 w-72 bg-surface border border-border rounded shadow-2xl py-1 overflow-hidden">
                   {drafts.map((d) => (
                     <div key={d.id} className="flex items-center gap-2 px-3 py-2 hover:bg-surface-raised transition-colors group">
                       <button onClick={() => loadDraftEntry(d)} className="flex-1 text-left min-w-0">
@@ -1498,14 +1498,14 @@ function BlogEditor() {
             </span>
           )}
           <button onClick={() => persistDraft(currentDraftId)}
-            className="text-xs text-fg-faint hover:text-fg border border-border rounded-lg px-3 py-1.5 transition-colors">
+            className="text-xs text-fg-faint hover:text-fg border border-border rounded px-3 py-1.5 transition-colors">
             Save draft
           </button>
         </div>
       </div>
 
       {/* ── Published Posts ─────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+      <div className="rounded border border-border bg-surface overflow-hidden">
         <button
           onClick={() => setShowPublishedPosts(!showPublishedPosts)}
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-raised transition-colors"
@@ -1532,7 +1532,7 @@ function BlogEditor() {
               <button
                 onClick={loadPublishedPosts}
                 disabled={loadingPosts || !githubPat.trim()}
-                className="inline-flex items-center gap-1.5 text-xs font-medium border border-border rounded-lg px-3 py-1.5 text-fg-muted hover:text-fg hover:border-indigo-400 transition-colors disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 text-xs font-medium border border-border rounded px-3 py-1.5 text-fg-muted hover:text-fg hover:border-indigo-400 transition-colors disabled:opacity-40"
               >
                 {loadingPosts ? (
                   <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Loading…</>
@@ -1554,7 +1554,7 @@ function BlogEditor() {
             {publishedPosts.length > 0 && (
               <div className="space-y-1.5">
                 {publishedPosts.map((post) => (
-                  <div key={post.slug} className="flex items-center gap-3 px-4 py-3 rounded-xl border border-border bg-bg hover:bg-surface-raised transition-colors group">
+                  <div key={post.slug} className="flex items-center gap-3 px-4 py-3 rounded border border-border bg-bg hover:bg-surface-raised transition-colors group">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-fg truncate">/blog/<span className="text-accent">{post.slug}</span></p>
                       <p className="text-[10px] font-mono text-fg-faint">{post.name}</p>
@@ -1562,7 +1562,7 @@ function BlogEditor() {
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => loadPostForEdit(post.slug)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-border text-[11px] font-medium text-fg-muted hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-border text-[11px] font-medium text-fg-muted hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
                       >
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -1576,13 +1576,13 @@ function BlogEditor() {
                           <button
                             onClick={() => deletePost(post.slug, post.sha)}
                             disabled={deletingSlug === post.slug}
-                            className="px-2 py-1 rounded-lg bg-rose-600 text-white text-[10px] font-semibold hover:bg-rose-700 disabled:opacity-50 transition-colors"
+                            className="px-2 py-1 rounded bg-rose-600 text-white text-[10px] font-semibold hover:bg-rose-700 disabled:opacity-50 transition-colors"
                           >
                             {deletingSlug === post.slug ? "…" : "Yes, delete"}
                           </button>
                           <button
                             onClick={() => setConfirmDeleteSlug(null)}
-                            className="px-2 py-1 rounded-lg border border-border text-[10px] text-fg-faint hover:text-fg transition-colors"
+                            className="px-2 py-1 rounded border border-border text-[10px] text-fg-faint hover:text-fg transition-colors"
                           >
                             Cancel
                           </button>
@@ -1590,7 +1590,7 @@ function BlogEditor() {
                       ) : (
                         <button
                           onClick={() => setConfirmDeleteSlug(post.slug)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg border border-border text-[11px] font-medium text-fg-faint hover:border-rose-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                          className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-border text-[11px] font-medium text-fg-faint hover:border-rose-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
                         >
                           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                             <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
@@ -1613,12 +1613,12 @@ function BlogEditor() {
       </div>
 
       {/* ── Post header card (title + description + tags + slug) ─────────────── */}
-      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+      <div className="rounded border border-border bg-surface overflow-hidden">
         <div className="p-5 sm:p-7 space-y-4">
 
           {/* Editing existing post indicator */}
           {editingExisting && (
-            <div className="flex items-center gap-2 text-[11px] bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl px-3 py-2 text-amber-700 dark:text-amber-400">
+            <div className="flex items-center gap-2 text-[11px] bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded px-3 py-2 text-amber-700 dark:text-amber-400">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
                 <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                 <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
@@ -1655,7 +1655,7 @@ function BlogEditor() {
           <div>
             <div className="flex flex-wrap items-center gap-1.5 min-h-[28px]">
               {tags.map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[11px] font-medium rounded-full px-2.5 py-0.5">
+                <span key={tag} className="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[11px] font-medium rounded-sm px-2.5 py-0.5">
                   #{tag}
                   <button onClick={() => removeTag(tag)} className="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-200 leading-none ml-0.5">×</button>
                 </span>
@@ -1674,7 +1674,7 @@ function BlogEditor() {
               <div className="flex flex-wrap gap-1 mt-2">
                 {suggestedTags.slice(0, 8).map((t) => (
                   <button key={t} onClick={() => addTag(t)}
-                    className="text-[10px] text-fg-faint hover:text-indigo-600 dark:hover:text-indigo-400 border border-border rounded-full px-2 py-0.5 transition-colors hover:border-indigo-300 dark:hover:border-indigo-700">
+                    className="text-[10px] text-fg-faint hover:text-indigo-600 dark:hover:text-indigo-400 border border-border rounded-sm px-2 py-0.5 transition-colors hover:border-indigo-300 dark:hover:border-indigo-700">
                     + {t}
                   </button>
                 ))}
@@ -1712,10 +1712,10 @@ function BlogEditor() {
                 <span className="text-[10px] font-semibold uppercase tracking-widest text-fg-faint w-20 shrink-0">OG Image</span>
                 <input type="text" value={ogImage} onChange={(e) => setOgImage(e.target.value)}
                   placeholder="/blog/cover.jpg"
-                  className="flex-1 bg-bg border border-border rounded-lg px-2 py-1 text-xs text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
+                  className="flex-1 bg-bg border border-border rounded px-2 py-1 text-xs text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors" />
                 {uploadedImages.length > 0 && (
                   <select onChange={(e) => { if (e.target.value) setOgImage(e.target.value); e.target.value = ""; }}
-                    className="shrink-0 bg-bg border border-border rounded-lg px-2 py-1 text-xs text-fg-muted focus:outline-none">
+                    className="shrink-0 bg-bg border border-border rounded px-2 py-1 text-xs text-fg-muted focus:outline-none">
                     <option value="">Pick uploaded…</option>
                     {uploadedImages.map((img) => <option key={img.url} value={img.url}>{img.name}</option>)}
                   </select>
@@ -1729,7 +1729,7 @@ function BlogEditor() {
 
       {/* ── Template picker ───────────────────────────────────────────────────── */}
       {showTemplates && !content && (
-        <div className="rounded-2xl border border-dashed border-border bg-surface-raised/40 p-6">
+        <div className="rounded border border-dashed border-border bg-surface-raised/40 p-6">
           <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-4 text-center">Start with a template — or just type below</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {POST_TEMPLATES.map((t) => {
@@ -1742,8 +1742,8 @@ function BlogEditor() {
               return (
                 <button key={t.id}
                   onClick={() => { setContent(t.content); setShowTemplates(false); setActivePanel("write"); requestAnimationFrame(() => textareaRef.current?.focus()); }}
-                  className="rounded-xl border border-border bg-surface p-4 text-left hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group">
-                  <div className="w-7 h-7 rounded-lg bg-surface-raised flex items-center justify-center mb-2.5 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/40 transition-colors">
+                  className="rounded border border-border bg-surface p-4 text-left hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group">
+                  <div className="w-7 h-7 rounded bg-surface-raised flex items-center justify-center mb-2.5 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/40 transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-fg-faint group-hover:text-indigo-500 transition-colors">
                       {tmplIcons[t.icon]}
                     </svg>
@@ -1764,7 +1764,7 @@ function BlogEditor() {
       )}
 
       {/* ── Editor ───────────────────────────────────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+      <div className="rounded border border-border bg-surface overflow-hidden">
 
         {/* Toolbar */}
         <div className="border-b border-border bg-surface-raised px-3 py-2 flex items-center gap-1 flex-wrap">
@@ -1883,10 +1883,10 @@ function BlogEditor() {
 
             <div className="p-4 space-y-3">
               {/* Upload drop zone */}
-              <label className={`flex flex-col items-center justify-center rounded-xl border-2 border-dashed py-6 px-4 cursor-pointer transition-all ${
+              <label className={`flex flex-col items-center justify-center rounded border-2 border-dashed py-6 px-4 cursor-pointer transition-all ${
                 uploadingImg ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 cursor-wait" : "border-border hover:border-indigo-400 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/20"
               }`}>
-                <div className="w-9 h-9 rounded-xl bg-surface-raised border border-border flex items-center justify-center mb-2">
+                <div className="w-9 h-9 rounded bg-surface-raised border border-border flex items-center justify-center mb-2">
                   {uploadingImg ? (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin text-fg-faint"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
                   ) : (
@@ -1910,7 +1910,7 @@ function BlogEditor() {
               )}
 
               {imgResult && (
-                <div className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${imgResult.ok ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300" : "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300"}`}>
+                <div className={`flex items-center gap-2 px-3 py-1.5 rounded text-xs ${imgResult.ok ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300" : "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300"}`}>
                   {imgResult.ok ? "✓" : "✗"} {imgResult.message}
                   <button onClick={() => setImgResult(null)} className="ml-auto opacity-60 hover:opacity-100 leading-none text-sm">×</button>
                 </div>
@@ -1922,10 +1922,10 @@ function BlogEditor() {
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-fg-faint">Choose how to place each image in your post</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {uploadedImages.map((img) => (
-                      <div key={img.url} className="rounded-xl border border-border bg-surface overflow-hidden">
+                      <div key={img.url} className="rounded border border-border bg-surface overflow-hidden">
                         <div className="flex items-start gap-3 p-3">
                           {/* Icon tile — thumbnail would be broken pre-deploy */}
-                          <div className="shrink-0 w-14 h-14 rounded-lg bg-surface-raised border border-border flex items-center justify-center">
+                          <div className="shrink-0 w-14 h-14 rounded bg-surface-raised border border-border flex items-center justify-center">
                             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-fg-faint"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                           </div>
                           <div className="flex-1 min-w-0">
@@ -1940,7 +1940,7 @@ function BlogEditor() {
                                   onChange={(e) => setCaptionInput(e.target.value)}
                                   placeholder="Caption (optional) — press Enter to insert"
                                   autoFocus
-                                  className="w-full bg-bg border border-border rounded-lg px-2 py-1 text-xs text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 transition-colors"
+                                  className="w-full bg-bg border border-border rounded px-2 py-1 text-xs text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 transition-colors"
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") {
                                       insertBlock(captionInput.trim() ? `![${img.name}](${img.url} "${captionInput.trim()}")` : `![${img.name}](${img.url})`);
@@ -1955,13 +1955,13 @@ function BlogEditor() {
                                       insertBlock(captionInput.trim() ? `![${img.name}](${img.url} "${captionInput.trim()}")` : `![${img.name}](${img.url})`);
                                       setInsertingFor(null); setCaptionInput("");
                                     }}
-                                    className="flex-1 px-2 py-1 rounded-lg bg-indigo-600 text-white text-[10px] font-semibold hover:bg-indigo-700 transition-colors"
+                                    className="flex-1 px-2 py-1 rounded bg-indigo-600 text-white text-[10px] font-semibold hover:bg-indigo-700 transition-colors"
                                   >
                                     Insert ✓
                                   </button>
                                   <button
                                     onClick={() => { setInsertingFor(null); setCaptionInput(""); }}
-                                    className="px-2 py-1 rounded-lg border border-border text-[10px] text-fg-faint hover:text-fg transition-colors"
+                                    className="px-2 py-1 rounded border border-border text-[10px] text-fg-faint hover:text-fg transition-colors"
                                   >
                                     Cancel
                                   </button>
@@ -2051,7 +2051,7 @@ function BlogEditor() {
       </div>
 
       {/* ── Format Reference (collapsible) ───────────────────────────────────── */}
-      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+      <div className="rounded border border-border bg-surface overflow-hidden">
         <button onClick={() => setShowFormatRef(!showFormatRef)}
           className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-surface-raised transition-colors">
           <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint flex items-center gap-2">
@@ -2072,7 +2072,7 @@ function BlogEditor() {
                 </div>
                 <div className="space-y-1.5">
                   {section.items.map((item) => (
-                    <div key={item.label} className="rounded-xl border border-border-subtle bg-bg hover:border-border transition-colors overflow-hidden">
+                    <div key={item.label} className="rounded border border-border-subtle bg-bg hover:border-border transition-colors overflow-hidden">
                       <div className="flex items-start justify-between gap-2 px-3 pt-2.5 pb-1">
                         <p className="text-[11px] font-semibold text-fg-muted">{item.label}</p>
                         <button onClick={() => copySnippet(item.syntax)}
@@ -2095,7 +2095,7 @@ function BlogEditor() {
       </div>
 
       {/* ── Publish section (collapsible with checklist) ──────────────────────── */}
-      <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+      <div className="rounded border border-border bg-surface overflow-hidden">
         <button onClick={() => setShowPublish(!showPublish)}
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-raised transition-colors">
           <div className="flex items-center gap-2">
@@ -2153,14 +2153,14 @@ function BlogEditor() {
                   value={githubPat}
                   onChange={(e) => { setGithubPat(e.target.value); setPatSaved(false); }}
                   placeholder="ghp_… (needs repo write scope)"
-                  className="flex-1 min-w-0 rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
+                  className="flex-1 min-w-0 rounded border border-border bg-bg px-3 py-2 text-sm text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
                 />
                 <button onClick={() => setPatVisible(!patVisible)}
-                  className="shrink-0 px-3 rounded-xl border border-border text-fg-faint hover:text-fg text-xs transition-colors">
+                  className="shrink-0 px-3 rounded border border-border text-fg-faint hover:text-fg text-xs transition-colors">
                   {patVisible ? "Hide" : "Show"}
                 </button>
                 <button onClick={savePat}
-                  className="shrink-0 px-4 rounded-xl bg-fg text-bg text-xs font-semibold hover:opacity-80 transition-opacity">
+                  className="shrink-0 px-4 rounded bg-fg text-bg text-xs font-semibold hover:opacity-80 transition-opacity">
                   {patSaved ? "Saved ✓" : "Save"}
                 </button>
               </div>
@@ -2173,7 +2173,7 @@ function BlogEditor() {
 
             {/* Result */}
             {result && (
-              <div className={`rounded-xl border px-4 py-3 text-sm flex items-start gap-2 ${result.ok ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" : "border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300"}`}>
+              <div className={`rounded border px-4 py-3 text-sm flex items-start gap-2 ${result.ok ? "border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" : "border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300"}`}>
                 <span className="shrink-0 font-bold">{result.ok ? "✓" : "✗"}</span>
                 <span>
                   {result.message}
@@ -2193,7 +2193,7 @@ function BlogEditor() {
               <button
                 onClick={publish}
                 disabled={publishing || !allValid}
-                className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/50 hover:-translate-y-px transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0"
+                className="inline-flex items-center gap-2 rounded bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/50 hover:-translate-y-px transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0"
               >
                 {publishing ? (
                   <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Publishing…</>
@@ -2346,14 +2346,14 @@ function QuotesEditor() {
     saveToGitHub(updated);
   }
 
-  const inputCls = "w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 transition-colors";
+  const inputCls = "w-full rounded border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 transition-colors";
   const labelCls = "block text-[11px] font-semibold text-fg-muted mb-1";
 
   return (
     <div className="space-y-6">
 
       {/* PAT + Load */}
-      <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
+      <div className="rounded border border-border bg-surface p-5 space-y-4">
         <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">GitHub Access</h2>
         <div className="flex gap-2">
           <div className="relative flex-1">
@@ -2375,7 +2375,7 @@ function QuotesEditor() {
           <button
             onClick={loadFromGitHub}
             disabled={loading || !githubPat.trim()}
-            className="shrink-0 px-4 py-2 rounded-xl bg-fg text-bg text-xs font-semibold hover:opacity-80 disabled:opacity-40 transition-opacity"
+            className="shrink-0 px-4 py-2 rounded bg-fg text-bg text-xs font-semibold hover:opacity-80 disabled:opacity-40 transition-opacity"
           >
             {loading ? "Loading…" : "Load"}
           </button>
@@ -2388,7 +2388,7 @@ function QuotesEditor() {
       </div>
 
       {/* Add new quote */}
-      <div className="rounded-2xl border border-border bg-surface p-5 space-y-4">
+      <div className="rounded border border-border bg-surface p-5 space-y-4">
         <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Add New Quote</h2>
         <div>
           <label className={labelCls}>Quote text *</label>
@@ -2428,7 +2428,7 @@ function QuotesEditor() {
         <button
           onClick={addQuote}
           disabled={!newText.trim() || !newAuthor.trim() || saving || !githubPat.trim()}
-          className="w-full rounded-xl bg-indigo-600 text-white py-2 text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+          className="w-full rounded bg-indigo-600 text-white py-2 text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors"
         >
           {saving ? "Saving…" : "Add Quote → GitHub"}
         </button>
@@ -2441,7 +2441,7 @@ function QuotesEditor() {
 
       {/* Existing quotes list */}
       {quotes.length > 0 && (
-        <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+        <div className="rounded border border-border bg-surface overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">{quotes.length} Quotes</h2>
           </div>
@@ -2496,10 +2496,10 @@ function QuotesEditor() {
                         />
                         <span className="text-xs font-medium text-indigo-500">Featured on home</span>
                       </label>
-                      <button onClick={() => saveEdit(q.id)} disabled={saving} className="px-3 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors">
+                      <button onClick={() => saveEdit(q.id)} disabled={saving} className="px-3 py-1.5 rounded bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors">
                         {saving ? "…" : "Save"}
                       </button>
-                      <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded-lg border border-border text-xs text-fg-faint hover:text-fg transition-colors">
+                      <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded border border-border text-xs text-fg-faint hover:text-fg transition-colors">
                         Cancel
                       </button>
                     </div>
@@ -2511,7 +2511,7 @@ function QuotesEditor() {
                         <span className="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">{q.category}</span>
                         {q.favorite && <svg width="10" height="10" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>}
                         {q.featured && (
-                          <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                          <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
                             Featured
                           </span>
                         )}
@@ -2526,7 +2526,7 @@ function QuotesEditor() {
                         onClick={() => toggleFeatured(q.id)}
                         disabled={saving}
                         title={q.featured ? "Remove from home" : "Feature on home"}
-                        className={`text-[10px] px-2 py-1 rounded-lg transition-colors disabled:opacity-40 ${
+                        className={`text-[10px] px-2 py-1 rounded transition-colors disabled:opacity-40 ${
                           q.featured
                             ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-950/60"
                             : "text-fg-faint hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
@@ -2542,14 +2542,14 @@ function QuotesEditor() {
                       </button>
                       <button
                         onClick={() => startEdit(q)}
-                        className="text-[10px] text-fg-faint hover:text-fg px-2 py-1 rounded-lg hover:bg-surface-raised transition-colors"
+                        className="text-[10px] text-fg-faint hover:text-fg px-2 py-1 rounded hover:bg-surface-raised transition-colors"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => deleteQuote(q.id)}
                         disabled={saving}
-                        className="text-[10px] text-rose-500 hover:text-rose-600 px-2 py-1 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-40"
+                        className="text-[10px] text-rose-500 hover:text-rose-600 px-2 py-1 rounded hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors disabled:opacity-40"
                       >
                         Delete
                       </button>
@@ -2718,7 +2718,7 @@ function Dashboard({
       `}>
         {/* Sidebar header */}
         <div className="flex items-center gap-2.5 px-4 py-[14px] border-b border-border shrink-0">
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-500/20 shrink-0">
+          <div className="w-8 h-8 rounded bg-gradient-to-br from-emerald-500 to-indigo-600 flex items-center justify-center shadow-sm shadow-indigo-500/20 shrink-0">
             <span className="text-white font-bold text-sm leading-none select-none">A</span>
           </div>
           <div className="min-w-0 flex-1">
@@ -2742,7 +2742,7 @@ function Dashboard({
         {/* Sidebar footer */}
         <div className="shrink-0 border-t border-border px-3 py-3 space-y-1">
           {/* GitHub PAT status */}
-          <div className="flex items-center gap-2 px-2.5 py-2 rounded-lg">
+          <div className="flex items-center gap-2 px-2.5 py-2 rounded">
             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasPat ? "bg-emerald-500" : "bg-amber-400 animate-pulse"}`} />
             <span className={`text-[10px] font-medium truncate ${hasPat ? "text-fg-faint" : "text-amber-600 dark:text-amber-400"}`}>
               {hasPat ? "GitHub connected" : "No GitHub PAT set"}
@@ -2750,7 +2750,7 @@ function Dashboard({
           </div>
           <Link
             href="/"
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-fg-muted hover:text-fg hover:bg-surface-raised transition-colors w-full"
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded text-xs text-fg-muted hover:text-fg hover:bg-surface-raised transition-colors w-full"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -2760,7 +2760,7 @@ function Dashboard({
           </Link>
           <button
             onClick={onLogout}
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-xs text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 transition-colors w-full"
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded text-xs text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 transition-colors w-full"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -2828,7 +2828,7 @@ function Dashboard({
             <button
               onClick={onRefresh}
               disabled={refreshing}
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-faint hover:text-fg border border-border hover:border-fg-faint rounded-lg px-2.5 py-1.5 transition-all disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-faint hover:text-fg border border-border hover:border-fg-faint rounded px-2.5 py-1.5 transition-all disabled:opacity-40"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
                 className={refreshing ? "animate-spin" : ""}>
@@ -2846,12 +2846,12 @@ function Dashboard({
         {/* Period tabs — analytics only */}
         {activeView === "analytics" && (
           <div className="w-full sm:w-fit">
-            <div className="grid grid-cols-3 sm:flex gap-1 bg-surface-raised rounded-xl p-1 border border-border">
+            <div className="grid grid-cols-3 sm:flex gap-1 bg-surface-raised rounded p-1 border border-border">
             {(["week", "month", "all"] as Period[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-all text-center ${
+                className={`px-3 sm:px-4 py-1.5 rounded text-xs font-medium transition-all text-center ${
                   period === p
                     ? "bg-fg text-bg shadow-sm"
                     : "text-fg-muted hover:text-fg hover:bg-surface"
@@ -2931,7 +2931,7 @@ function Dashboard({
         <div className="grid lg:grid-cols-2 gap-6">
 
           {/* Top questions */}
-          <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+          <div className="rounded border border-border bg-surface p-4 sm:p-5">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-4">Top Questions</h2>
             {topQs.length === 0 ? (
               <p className="text-sm text-fg-faint">No questions logged yet.</p>
@@ -2943,7 +2943,7 @@ function Dashboard({
                     <span className="text-xs text-fg-muted leading-relaxed flex-1 min-w-0 truncate" title={q.text}>
                       {q.text}
                     </span>
-                    <span className="text-[10px] font-semibold tabular-nums bg-surface-raised border border-border rounded-full px-2 py-0.5 text-fg-muted shrink-0">
+                    <span className="text-[10px] font-semibold tabular-nums bg-surface-raised border border-border rounded-sm px-2 py-0.5 text-fg-muted shrink-0">
                       {q.count}
                     </span>
                   </li>
@@ -2953,21 +2953,21 @@ function Dashboard({
           </div>
 
           {/* Feedback breakdown */}
-          <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5 space-y-4 sm:space-y-5">
+          <div className="rounded border border-border bg-surface p-4 sm:p-5 space-y-4 sm:space-y-5">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Response Feedback</h2>
             <div className="grid grid-cols-3 gap-2">
-              <div className="rounded-xl bg-surface-raised border border-border p-2.5 text-center">
+              <div className="rounded bg-surface-raised border border-border p-2.5 text-center">
                 <p className="text-xl sm:text-2xl font-bold text-fg">{feedback.total}</p>
                 <p className="text-[9px] sm:text-[10px] text-fg-faint mt-0.5">Total rated</p>
               </div>
-              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2.5 text-center">
+              <div className="rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2.5 text-center">
                 <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">{feedback.positive}</p>
                 <p className="text-[9px] sm:text-[10px] text-emerald-700 dark:text-emerald-500 mt-0.5 flex items-center justify-center gap-0.5">
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
                   Positive
                 </p>
               </div>
-              <div className="rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2.5 text-center">
+              <div className="rounded bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2.5 text-center">
                 <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">{feedback.negative}</p>
                 <p className="text-[9px] sm:text-[10px] text-rose-700 dark:text-rose-500 mt-0.5 flex items-center justify-center gap-0.5">
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
@@ -3003,7 +3003,7 @@ function Dashboard({
         </div>
 
         {/* Visitor Experience Ratings */}
-        <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+        <div className="rounded border border-border bg-surface p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Visitor Experience</h2>
             {exp.total > 0 && (
@@ -3047,7 +3047,7 @@ function Dashboard({
         </div>
 
         {/* Site visitors breakdown */}
-        <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+        <div className="rounded border border-border bg-surface p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Site Visitors</h2>
             <span className="text-[11px] text-fg-faint">all unique IPs, hashed — every page load</span>
@@ -3056,7 +3056,7 @@ function Dashboard({
             {(["week", "month", "all"] as Period[]).map((p) => {
               const sv = stats.site_visitors[p];
               return (
-                <div key={p} className={`rounded-xl border p-3 text-center ${p === period ? "border-accent bg-accent/5" : "border-border bg-surface-raised"}`}>
+                <div key={p} className={`rounded border p-3 text-center ${p === period ? "border-accent bg-accent/5" : "border-border bg-surface-raised"}`}>
                   <p className="text-xl sm:text-2xl font-bold tabular-nums text-fg">{fmt(sv.unique_visitors)}</p>
                   <p className="text-[9px] sm:text-[10px] text-fg-faint mt-0.5">{PERIOD_LABELS[p]}</p>
                   <p className="text-[9px] text-fg-faint">{fmt(sv.total_visits)} loads</p>
@@ -3082,7 +3082,7 @@ function Dashboard({
         </div>
 
         {/* Blog table */}
-        <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+        <div className="rounded border border-border bg-surface overflow-hidden">
           <div className="px-4 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Blog Performance</h2>
             <div className="flex items-center gap-3 text-[11px] text-fg-faint">
@@ -3126,7 +3126,7 @@ function Dashboard({
         </div>
 
         {/* Location breakdown */}
-        <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+        <div className="rounded border border-border bg-surface p-4 sm:p-5">
           <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-4">Visitor Locations</h2>
           <div className="grid lg:grid-cols-2 gap-6">
             {([["Site Visitors", siteLocations], ["Chat Users", chatLocations]] as [string, LocationStat[]][]).map(([label, locs]) => (
@@ -3157,7 +3157,7 @@ function Dashboard({
         </div>
 
         {/* Page visits */}
-        <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+        <div className="rounded border border-border bg-surface p-4 sm:p-5">
           <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-4">Top Pages</h2>
           {pages.length === 0 ? (
             <p className="text-xs text-fg-faint">No page data yet.</p>
@@ -3182,7 +3182,7 @@ function Dashboard({
         </div>
 
         {/* Blog engagement — session-based opens + revisits */}
-        <div className="rounded-2xl border border-border bg-surface overflow-hidden">
+        <div className="rounded border border-border bg-surface overflow-hidden">
           <div className="px-4 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Blog Engagement</h2>
             <div className="flex items-center gap-3 text-[11px] text-fg-faint">

@@ -18,7 +18,7 @@ export function TextInput({
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors disabled:opacity-40"
+      className="w-full rounded border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors disabled:opacity-40"
     />
   );
 }
@@ -35,7 +35,7 @@ export function TextArea({
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       disabled={disabled}
-      className="w-full resize-none rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors disabled:opacity-40"
+      className="w-full resize-none rounded border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors disabled:opacity-40"
     />
   );
 }
@@ -47,7 +47,7 @@ export function Toggle({
     <button
       type="button"
       onClick={() => onChange(!checked)}
-      className={`inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${
+      className={`inline-flex items-center gap-2 rounded-sm px-3 py-1.5 text-xs font-medium border transition-colors ${
         checked
           ? "bg-indigo-500/10 border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300"
           : "border-border text-fg-muted hover:border-fg-muted"
@@ -62,7 +62,7 @@ export function Toggle({
 export function ResultBanner({ result }: { result: { ok: boolean; message: string } | null }) {
   if (!result) return null;
   return (
-    <p className={`text-xs rounded-lg px-3 py-2 ${
+    <p className={`text-xs rounded px-3 py-2 ${
       result.ok
         ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
         : "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800"
@@ -75,7 +75,7 @@ export function ResultBanner({ result }: { result: { ok: boolean; message: strin
 export function DirtyBadge({ dirty }: { dirty: boolean }) {
   if (!dirty) return null;
   return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
+    <span className="inline-flex items-center gap-1 rounded-sm bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
       <span className="w-1 h-1 rounded-full bg-amber-400 inline-block" />
       Unsaved changes
     </span>
@@ -97,14 +97,14 @@ export function GithubPATRow({
           value={pat}
           onChange={e => updatePat(e.target.value)}
           placeholder="ghp_…"
-          className="flex-1 rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
+          className="flex-1 rounded border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
         />
         <button onClick={() => setPatVisible(!patVisible)}
-          className="px-3 py-2 rounded-xl border border-border text-xs text-fg-muted hover:text-fg transition-colors">
+          className="px-3 py-2 rounded border border-border text-xs text-fg-muted hover:text-fg transition-colors">
           {patVisible ? "Hide" : "Show"}
         </button>
         <button onClick={onLoad} disabled={!pat.trim() || loading}
-          className="px-3 py-2 rounded-xl border border-border text-xs text-fg-muted hover:text-fg transition-colors disabled:opacity-40">
+          className="px-3 py-2 rounded border border-border text-xs text-fg-muted hover:text-fg transition-colors disabled:opacity-40">
           {loading ? "Loading…" : "Load"}
         </button>
       </div>
@@ -124,7 +124,7 @@ export function SaveRow({
       <button
         onClick={onSave}
         disabled={!pat.trim() || !loaded || saving || !dirty}
-        className="rounded-xl bg-fg text-bg px-5 py-2 text-sm font-semibold hover:opacity-80 transition-opacity disabled:opacity-40"
+        className="rounded bg-fg text-bg px-5 py-2 text-sm font-semibold hover:opacity-80 transition-opacity disabled:opacity-40"
       >
         {saving ? "Saving…" : label}
       </button>

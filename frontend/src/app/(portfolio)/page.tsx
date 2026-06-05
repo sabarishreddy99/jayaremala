@@ -90,6 +90,97 @@ function HighlightNumbers({ text }: { text: string }) {
 }
 
 
+const EXPLORE_PAGES = [
+  {
+    href: "/experience",
+    label: "Experience",
+    desc: "Work history & roles",
+    accent: "from-blue-500 to-cyan-500",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/education",
+    label: "Education",
+    desc: "Degrees & institutions",
+    accent: "from-violet-500 to-purple-500",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/projects",
+    label: "Projects",
+    desc: "What I've shipped",
+    accent: "from-emerald-500 to-teal-500",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/lab",
+    label: "Lab",
+    desc: "Building in public",
+    accent: "from-rose-500 to-pink-500",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0H5a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4m-6 0h6"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/blog",
+    label: "Blog",
+    desc: "Notes & deep dives",
+    accent: "from-amber-500 to-yellow-400",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/gallery",
+    label: "Gallery",
+    desc: "Moments & visuals",
+    accent: "from-indigo-500 to-blue-400",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/quotes",
+    label: "Quotes",
+    desc: "Lines that stuck",
+    accent: "from-fuchsia-500 to-violet-500",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zm14.017 0v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-3.983v-10h9.983z"/>
+      </svg>
+    ),
+  },
+  {
+    href: "/now",
+    label: "Now",
+    desc: "What I'm up to",
+    accent: "from-cyan-500 to-sky-400",
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
+      </svg>
+    ),
+  },
+] as const;
+
 const CARD_PALETTES = [
   "from-blue-500 to-cyan-500",
   "from-violet-500 to-purple-500",
@@ -343,7 +434,38 @@ export default function PortfolioHome() {
               </div>
             </div>
           </div>
-          <div className="mt-10 pt-5 border-t border-border flex items-center justify-end">
+          {/* ── Explore tabs — all pages at a glance ── */}
+          <div className="mt-10 pt-8 border-t border-border">
+            <div className="flex items-center gap-3 mb-5">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint shrink-0">Quick Explore</p>
+              <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" aria-hidden />
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+              {EXPLORE_PAGES.map(({ href, label, desc, accent, icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className="group relative flex flex-col gap-2.5 p-3 rounded-sm border border-border bg-surface hover:bg-surface-raised hover:border-border-strong transition-all overflow-hidden"
+                >
+                  {/* Sweep bar */}
+                  <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${accent} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
+                  {/* Icon */}
+                  <span className="text-fg-faint group-hover:text-accent transition-colors">{icon}</span>
+                  {/* Label + desc */}
+                  <div className="flex-1">
+                    <p className="text-xs font-semibold text-fg leading-tight">{label}</p>
+                    <p className="text-[10px] text-fg-faint leading-tight mt-0.5">{desc}</p>
+                  </div>
+                  {/* Arrow */}
+                  <svg className="self-end text-fg-faint/40 group-hover:text-accent transition-colors" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-6 pt-5 border-t border-border flex items-center justify-end">
             <a href="#projects" className="inline-flex items-center gap-1.5 text-[11px] text-fg-faint hover:text-fg transition-colors">
               See what I&apos;ve built
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>

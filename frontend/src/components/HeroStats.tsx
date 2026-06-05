@@ -42,7 +42,7 @@ export default function HeroStats({ stats, cols = 4 }: { stats?: HeroStat[]; col
           key={stat.label}
           onMouseEnter={() => setHovered(i)}
           onMouseLeave={() => setHovered(null)}
-          className={`group relative rounded-xl border bg-surface p-3 sm:p-4 overflow-hidden cursor-default select-none transition-all duration-300 ${
+          className={`group relative rounded border bg-surface p-3 sm:p-4 overflow-hidden cursor-default select-none transition-all duration-300 ${
             hovered === i
               ? "border-indigo-300 dark:border-indigo-600 shadow-md shadow-indigo-500/10 dark:shadow-indigo-500/8"
               : "border-border hover:border-indigo-200 dark:hover:border-indigo-800"

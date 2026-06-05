@@ -64,14 +64,14 @@ export default function LabList({ entries }: { entries: LabMeta[] }) {
         <div className="flex flex-wrap gap-2 mb-8">
           <button
             onClick={() => setActiveStatus(null)}
-            className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-1.5 border transition-all duration-150 ${
+            className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-sm px-3.5 py-1.5 border transition-all duration-150 ${
               !activeStatus
                 ? "bg-fg text-bg border-fg shadow-sm"
                 : "bg-surface border-border text-fg-faint hover:text-fg"
             }`}
           >
             All
-            <span className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${
+            <span className={`text-[10px] font-semibold rounded-sm px-1.5 py-0.5 ${
               !activeStatus ? "bg-bg/20 text-bg" : "bg-surface-raised text-fg-faint"
             }`}>{entries.length}</span>
           </button>
@@ -84,13 +84,13 @@ export default function LabList({ entries }: { entries: LabMeta[] }) {
               <button
                 key={status}
                 onClick={() => setActiveStatus(activeStatus === status ? null : status)}
-                className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-1.5 border transition-all duration-150 ${
+                className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-sm px-3.5 py-1.5 border transition-all duration-150 ${
                   isActive ? s.pillActive : "bg-surface border-border text-fg-faint hover:text-fg"
                 }`}
               >
                 <span className={`w-1.5 h-1.5 rounded-full ${isActive ? "bg-white/80" : s.dot}`} />
                 {s.label}
-                <span className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${
+                <span className={`text-[10px] font-semibold rounded-sm px-1.5 py-0.5 ${
                   isActive ? "bg-white/20 text-white" : "bg-surface-raised text-fg-faint"
                 }`}>{count}</span>
               </button>
@@ -107,7 +107,7 @@ export default function LabList({ entries }: { entries: LabMeta[] }) {
             <li key={entry.slug}>
               <Link
                 href={`/lab/${entry.slug}`}
-                className={`group relative block rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:shadow-md transition-all overflow-hidden ${s.leftBorder}`}
+                className={`group relative block rounded-sm border border-border bg-surface p-5 sm:p-6 hover:shadow-md transition-all overflow-hidden ${s.leftBorder}`}
               >
                 {/* Hover sweep bar */}
                 <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${s.sweep} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
@@ -117,7 +117,7 @@ export default function LabList({ entries }: { entries: LabMeta[] }) {
                   <h2 className="text-base font-bold text-fg group-hover:text-accent transition-colors leading-snug">
                     {entry.title}
                   </h2>
-                  <span className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-semibold ${s.bg} ${s.text}`}>
+                  <span className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border text-[10px] font-semibold ${s.bg} ${s.text}`}>
                     <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
                     {s.label}
                   </span>
@@ -129,7 +129,7 @@ export default function LabList({ entries }: { entries: LabMeta[] }) {
                 <div className="flex items-end justify-between gap-3">
                   <div className="flex flex-wrap gap-1.5">
                     {entry.tech.map((t) => (
-                      <span key={t} className="rounded-md bg-surface-raised px-2 py-0.5 text-[10px] font-mono font-medium text-fg-subtle border border-border">
+                      <span key={t} className="rounded-sm bg-surface-raised px-2 py-0.5 text-[10px] font-mono font-medium text-fg-subtle border border-border">
                         {t}
                       </span>
                     ))}

@@ -89,8 +89,8 @@ export default function NowPage() {
       {/* Header */}
       <div className="mb-10">
         <div className="flex items-center gap-2.5 mb-4">
-          <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500 shrink-0" />
-          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Now</h2>
+          <div className="w-[3px] h-5 rounded-full bg-gradient-to-b from-indigo-500 to-violet-500 shrink-0" />
+          <h2 className="text-sm font-bold uppercase tracking-wider text-fg-faint">Now</h2>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-fg mb-3">What I&apos;m up to</h1>
         <p className="text-sm text-fg-subtle leading-relaxed max-w-md">

@@ -50,7 +50,7 @@ export default async function LabEntryPage({ params }: Props) {
       <article>
         <header className="mb-10 pb-8 border-b border-border">
           <div className="flex flex-wrap items-center gap-3 mb-3">
-            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[10px] font-semibold ${s.bg} ${s.text}`}>
+            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border text-[10px] font-semibold ${s.bg} ${s.text}`}>
               <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
               {s.label}
             </span>
@@ -66,7 +66,7 @@ export default async function LabEntryPage({ params }: Props) {
 
           <div className="flex flex-wrap gap-1.5">
             {entry.tech.map((t) => (
-              <span key={t} className="rounded-md bg-surface-raised px-2.5 py-1 text-[11px] font-mono font-medium text-fg-muted border border-border">
+              <span key={t} className="rounded-sm bg-surface-raised px-2.5 py-1 text-[11px] font-mono font-medium text-fg-muted border border-border">
                 {t}
               </span>
             ))}
@@ -76,7 +76,7 @@ export default async function LabEntryPage({ params }: Props) {
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="rounded-md bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors inline-flex items-center gap-1"
+                className="rounded-sm bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800 px-2.5 py-1 text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors inline-flex items-center gap-1"
               >
                 {link.label}
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

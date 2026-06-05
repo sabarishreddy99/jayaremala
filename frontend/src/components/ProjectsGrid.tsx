@@ -60,7 +60,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
           placeholder="Search by title, tech, or keyword…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-xl border border-border bg-surface pl-9 pr-9 py-2.5 text-base sm:text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
+          className="w-full rounded border border-border bg-surface pl-9 pr-9 py-2.5 text-base sm:text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
         />
         {query && (
           <button
@@ -80,14 +80,14 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
         <div className="flex flex-wrap gap-2 mb-8">
           <button
             onClick={() => setActiveTag(null)}
-            className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-1.5 border transition-all duration-150 ${
+            className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-sm px-3.5 py-1.5 border transition-all duration-150 ${
               !activeTag
                 ? "bg-fg text-bg border-fg shadow-sm"
                 : "bg-surface border-border text-fg-faint hover:text-fg"
             }`}
           >
             All
-            <span className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${
+            <span className={`text-[10px] font-semibold rounded-sm px-1.5 py-0.5 ${
               !activeTag ? "bg-bg/20 text-bg" : "bg-surface-raised text-fg-faint"
             }`}>{projects.length}</span>
           </button>
@@ -99,14 +99,14 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                 key={tag}
                 onClick={() => setActiveTag(activeTag === tag ? null : tag)}
                 aria-pressed={isActive}
-                className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-1.5 border transition-all duration-150 ${
+                className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-sm px-3.5 py-1.5 border transition-all duration-150 ${
                   isActive
                     ? "bg-accent text-white border-accent shadow-sm"
                     : "bg-surface border-border text-fg-faint hover:text-fg hover:border-accent/50"
                 }`}
               >
                 {tag}
-                <span className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${
+                <span className={`text-[10px] font-semibold rounded-sm px-1.5 py-0.5 ${
                   isActive ? "bg-white/20 text-white" : "bg-surface-raised text-fg-faint"
                 }`}>{count}</span>
               </button>
@@ -117,7 +117,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
 
       {/* Empty state */}
       {filtered.length === 0 && (
-        <div className="rounded-xl border border-dashed border-border bg-surface p-10 text-center">
+        <div className="rounded border border-dashed border-border bg-surface p-10 text-center">
           <p className="text-sm text-fg-faint">
             No projects match{query ? ` "${query}"` : ""}{activeTag ? ` tagged "${activeTag}"` : ""}.
           </p>
@@ -144,7 +144,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
             return (
               <ScrollReveal key={i} delay={Math.min((i % 3) * 80, 160)} className="flex">
                 <div
-                  className="group relative flex flex-col flex-1 rounded-xl rounded-br-none border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden"
+                  className="group relative flex flex-col flex-1 rounded rounded-br-none border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden"
                   onMouseMove={onTiltMove}
                   onMouseLeave={onTiltLeave}
                   style={{ transition: "transform 0.2s cubic-bezier(0.16,1,0.3,1), border-color 0.2s, box-shadow 0.2s", willChange: "transform" }}
@@ -166,12 +166,12 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                     </h2>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       {isAward && (
-                        <span className="text-[10px] font-semibold rounded-full bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 px-2 py-0.5 whitespace-nowrap">
+                        <span className="text-[10px] font-semibold rounded-sm bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 px-2 py-0.5 whitespace-nowrap">
                           🏆 Winner
                         </span>
                       )}
                       {p.featured && !isAward && (
-                        <span className="text-[10px] font-semibold rounded-full bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 px-2 py-0.5">
+                        <span className="text-[10px] font-semibold rounded-sm bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 px-2 py-0.5">
                           Featured
                         </span>
                       )}
@@ -186,7 +186,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                       <button
                         key={t}
                         onClick={() => setActiveTag(activeTag === t ? null : t)}
-                        className={`rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                        className={`rounded-sm border px-2 py-0.5 text-[10px] font-medium transition-colors ${
                           activeTag === t
                             ? "bg-accent border-accent text-white"
                             : "bg-surface-raised border-border text-fg-muted hover:border-accent hover:text-accent"
@@ -198,7 +198,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                   </div>
 
                   {p.note && (
-                    <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900 rounded-lg px-3 py-2 mb-3 leading-relaxed">
+                    <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900 rounded-sm px-3 py-2 mb-3 leading-relaxed">
                       {p.note}
                     </p>
                   )}
@@ -212,7 +212,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded-full bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:opacity-80 transition-opacity"
+                          className="inline-flex items-center gap-1 rounded-sm bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:opacity-80 transition-opacity"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {link.label}

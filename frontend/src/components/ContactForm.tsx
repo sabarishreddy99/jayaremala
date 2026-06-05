@@ -51,7 +51,7 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number)
 
   return (
     <div
-      className={`flex items-start gap-3 rounded-2xl border px-4 py-3.5 shadow-lg transition-all duration-300 ${s.wrapper} ${
+      className={`flex items-start gap-3 rounded border px-4 py-3.5 shadow-lg transition-all duration-300 ${s.wrapper} ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
       }`}
     >
@@ -133,10 +133,11 @@ export default function ContactForm() {
         ))}
       </div>
 
-      <section className="rounded-2xl border border-border bg-surface-raised p-6 sm:p-8">
+      <section className="rounded border border-border bg-surface-raised p-6 sm:p-8">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-rose-500 to-pink-500 shrink-0" />
-          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Get in Touch</h2>
+          <div className="w-[3px] h-5 rounded-full bg-gradient-to-b from-rose-500 to-pink-500 shrink-0" />
+          <h2 className="text-sm font-bold uppercase tracking-wider text-fg-faint">Get in Touch</h2>
+          <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" aria-hidden />
         </div>
 
         {submitted ? (
@@ -166,9 +167,9 @@ export default function ContactForm() {
           href={profile.booking_url ?? "https://calendar.app.google/3sScGpHpeSpvPjpSA"}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2.5 rounded-2xl border border-border bg-surface hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm px-5 py-3.5 mb-8 transition-all duration-200 group w-full sm:w-auto"
+          className="inline-flex items-center gap-2.5 rounded border border-border bg-surface hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm px-5 py-3.5 mb-8 transition-all duration-200 group w-full sm:w-auto"
         >
-          <span className="flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 shrink-0 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-950 transition-colors">
+          <span className="flex items-center justify-center w-8 h-8 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 shrink-0 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-950 transition-colors">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
             </svg>
@@ -186,7 +187,7 @@ export default function ContactForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-xs font-medium text-fg-subtle mb-1.5 block">Name</label>
-              <div className="rounded-xl border border-border bg-surface-raised px-4 py-3 focus-within:border-indigo-300 dark:focus-within:border-indigo-600 focus-within:bg-surface focus-within:shadow-sm transition-all">
+              <div className="rounded border border-border bg-surface-raised px-4 py-3 focus-within:border-indigo-300 dark:focus-within:border-indigo-600 focus-within:bg-surface focus-within:shadow-sm transition-all">
                 <input
                   required
                   type="text"
@@ -199,7 +200,7 @@ export default function ContactForm() {
             </div>
             <div>
               <label className="text-xs font-medium text-fg-subtle mb-1.5 block">Email</label>
-              <div className="rounded-xl border border-border bg-surface-raised px-4 py-3 focus-within:border-indigo-300 dark:focus-within:border-indigo-600 focus-within:bg-surface focus-within:shadow-sm transition-all">
+              <div className="rounded border border-border bg-surface-raised px-4 py-3 focus-within:border-indigo-300 dark:focus-within:border-indigo-600 focus-within:bg-surface focus-within:shadow-sm transition-all">
                 <input
                   required
                   type="email"
@@ -229,7 +230,7 @@ export default function ContactForm() {
           <button
             type="submit"
             disabled={sending}
-            className="rounded-full bg-fg text-bg px-6 py-2.5 text-sm font-semibold hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="rounded bg-fg text-bg px-6 py-2.5 text-sm font-semibold hover:opacity-80 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {sending ? (
               <>
@@ -247,7 +248,7 @@ export default function ContactForm() {
         <div className="border-t border-border-subtle pt-5 flex flex-wrap gap-3">
           <a
             href={`mailto:${profile.email}`}
-            className="rounded-full border-2 border-fg bg-fg px-5 py-2 text-sm font-semibold text-bg hover:opacity-80 transition-opacity"
+            className="rounded border-2 border-fg bg-fg px-5 py-2 text-sm font-semibold text-bg hover:opacity-80 transition-opacity"
           >
             {profile.email}
           </a>
@@ -256,7 +257,7 @@ export default function ContactForm() {
               href={profile.linkedin}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full border-2 border-border px-5 py-2 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors"
+              className="rounded border-2 border-border px-5 py-2 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors"
             >
               LinkedIn
             </a>
@@ -266,7 +267,7 @@ export default function ContactForm() {
               href={profile.github}
               target="_blank"
               rel="noopener noreferrer"
-              className="rounded-full border-2 border-border px-5 py-2 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors"
+              className="rounded border-2 border-border px-5 py-2 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors"
             >
               GitHub
             </a>
@@ -275,7 +276,7 @@ export default function ContactForm() {
             href={profile.resume}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded-full border-2 border-indigo-200 dark:border-indigo-800 bg-accent-light px-5 py-2 text-sm font-semibold text-accent hover:border-accent hover:opacity-90 transition-all inline-flex items-center gap-1.5"
+            className="rounded border-2 border-indigo-200 dark:border-indigo-800 bg-accent-light px-5 py-2 text-sm font-semibold text-accent hover:border-accent hover:opacity-90 transition-all inline-flex items-center gap-1.5"
           >
             Download Resume
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

@@ -58,17 +58,17 @@ export default function ProjectsPage() {
 
         {/* Stat chips */}
         <div className="flex flex-wrap gap-2 mt-4">
-          <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+          <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
             {projects.length} projects
           </span>
           {featuredCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-full px-3 py-1">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 rounded-sm px-3 py-1">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400" />
               {featuredCount} featured
             </span>
           )}
           {awardCount > 0 && (
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-full px-3 py-1">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-sm px-3 py-1">
               🏆 {awardCount} award-winning
             </span>
           )}

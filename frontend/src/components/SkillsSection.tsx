@@ -26,12 +26,13 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
   return (
     <>
       {/* Header */}
-      <div className="flex items-center justify-between mb-6 min-h-[1.5rem]">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Skills & Tools</h2>
+      <div className="flex items-center gap-2.5 mb-6">
+        <h2 className="text-sm font-bold uppercase tracking-wider text-fg-faint shrink-0">Skills & Tools</h2>
+        <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" aria-hidden />
         {activeSkill && (
           <button
             onClick={() => setActiveSkill(null)}
-            className="inline-flex items-center gap-1 text-[10px] font-medium text-fg-faint hover:text-fg transition-colors"
+            className="inline-flex items-center gap-1 text-[10px] font-medium text-fg-faint hover:text-fg transition-colors shrink-0"
           >
             <span className="text-accent font-semibold">{activeSkill}</span>
             <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
@@ -45,7 +46,7 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
       {/* Skills grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {skills.map((group) => (
-          <div key={group.category} className="rounded-2xl border border-border bg-surface-raised p-5 h-full">
+          <div key={group.category} className="rounded border border-border bg-surface-raised p-5 h-full">
             <p className="text-[11px] font-bold uppercase tracking-wider text-accent mb-3">{group.category}</p>
             <div className="flex flex-wrap gap-1.5">
               {group.items.map((item) => {
@@ -60,7 +61,7 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
                     key={item}
                     onClick={() => toggle(item)}
                     title={hasMatch ? `See projects using ${item}` : `${item} (not in featured projects)`}
-                    className={`rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all duration-150 cursor-pointer
+                    className={`rounded-sm border px-2.5 py-0.5 text-xs font-medium transition-all duration-150 cursor-pointer
                       ${isActive
                         ? "border-indigo-500 bg-indigo-600 text-white shadow-sm shadow-indigo-500/40 scale-105"
                         : isDimmed
@@ -88,7 +89,7 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">
                   Featured projects using
                 </p>
-                <span className="rounded-full bg-indigo-600 text-white px-2.5 py-0.5 text-[10px] font-semibold">
+                <span className="rounded-sm bg-indigo-600 text-white px-2.5 py-0.5 text-[10px] font-semibold">
                   {activeSkill}
                 </span>
               </div>
@@ -96,13 +97,13 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
                 {matching.map((p) => (
                   <div
                     key={p.title}
-                    className="rounded-xl border border-indigo-200 dark:border-indigo-800 bg-surface p-4
+                    className="rounded border border-indigo-200 dark:border-indigo-800 bg-surface p-4
                                ring-1 ring-indigo-300/20 dark:ring-indigo-700/20"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <h3 className="text-sm font-semibold text-fg leading-snug">{p.title}</h3>
                       {p.award && (
-                        <span className="text-[10px] font-semibold rounded-full bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-1.5 py-0.5 whitespace-nowrap shrink-0">
+                        <span className="text-[10px] font-semibold rounded-sm bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-1.5 py-0.5 whitespace-nowrap shrink-0">
                           🏆 {p.award}
                         </span>
                       )}
@@ -112,7 +113,7 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
                       {p.tags.slice(0, 5).map((t) => (
                         <span
                           key={t}
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium
+                          className={`rounded-sm px-2 py-0.5 text-[10px] font-medium
                             ${t.toLowerCase() === activeSkill.toLowerCase()
                               ? "bg-indigo-600 text-white"
                               : "bg-surface-raised text-fg-muted"}`}

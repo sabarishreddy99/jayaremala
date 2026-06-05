@@ -6,7 +6,6 @@ import { useState, useEffect, useRef } from "react";
 import { profile } from "@/data/profile";
 import ThemeToggle from "@/components/ThemeToggle";
 import ReadingProgress from "@/components/blog/ReadingProgress";
-import ColorThemePicker, { ColorThemeSwatches } from "@/components/ColorThemePicker";
 
 const links = [
   {
@@ -148,21 +147,21 @@ export default function Nav() {
         {/* ── The nav pill ── layout never changes; only visual props animate ── */}
         <div
           className={`relative z-10 mx-auto flex w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem] items-center justify-between
-            px-4 py-2 rounded-xl
-            bg-surface/90 dark:bg-surface/95 backdrop-blur-[14px]
-            transition-[box-shadow] duration-[350ms] ease-out
+            px-4 py-2
+            backdrop-blur-[14px]
+            transition-[background-color,box-shadow] duration-[400ms] ease-out
             ${scrolled
-              ? "[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.10),_0_2px_8px_-2px_rgb(0_0_0/0.06)] dark:[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.45),_0_2px_8px_-2px_rgb(0_0_0/0.25)]"
-              : "shadow-none"
+              ? "bg-surface/90 dark:bg-surface/95 [box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.10),_0_2px_8px_-2px_rgb(0_0_0/0.06)] dark:[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.45),_0_2px_8px_-2px_rgb(0_0_0/0.25)]"
+              : "bg-transparent shadow-none"
             }`}
         >
           {/* Dot grid: its OWN overflow-hidden+rounded wrapper so it clips to pill
               corners without clipping the color-picker dropdown that lives outside */}
           <div
             aria-hidden
-            className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none"
+            className="absolute inset-0 overflow-hidden pointer-events-none"
           >
-            <div className="hero-dot-grid absolute inset-0 opacity-[0.18]" />
+            <div className={`hero-dot-grid absolute inset-0 transition-opacity duration-[400ms] ${scrolled ? "opacity-[0.18]" : "opacity-0"}`} />
           </div>
         {/* Logo */}
         <Link
@@ -183,7 +182,7 @@ export default function Nav() {
             {/* The gliding spotlight */}
             <span
               aria-hidden
-              className="pointer-events-none absolute top-1/2 -translate-y-1/2 h-8 rounded-lg
+              className="pointer-events-none absolute top-1/2 -translate-y-1/2 h-8
                          bg-gradient-to-b from-indigo-50 to-indigo-100/60
                          dark:from-indigo-950/70 dark:to-indigo-900/30
                          ring-1 ring-indigo-200/60 dark:ring-indigo-800/50
@@ -219,7 +218,7 @@ export default function Nav() {
           {/* Cmd+K search trigger */}
           <button
             onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }))}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface-raised px-2.5 py-1.5 text-xs text-fg-faint hover:text-fg hover:border-fg-muted transition-colors"
+            className="inline-flex items-center gap-2 rounded border border-border bg-surface-raised px-2.5 py-1.5 text-xs text-fg-faint hover:text-fg hover:border-fg-muted transition-colors"
             aria-label="Search"
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -230,7 +229,7 @@ export default function Nav() {
           <ThemeToggle />
           <Link
             href="/chat"
-            className="group ml-2 relative inline-flex items-center px-4 py-1.5 rounded-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-sm hover:shadow-md transition-colors duration-200 overflow-hidden"
+            className="group ml-2 relative inline-flex items-center px-4 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-sm hover:shadow-md transition-colors duration-200 overflow-hidden"
           >
             {/* Default — swipes out left on hover */}
             <span className="flex items-center gap-2 transition-all duration-300 ease-in-out group-hover:-translate-x-10 group-hover:opacity-0">
@@ -249,11 +248,10 @@ export default function Nav() {
 
           {/* Utility buttons — visually separated at the far right */}
           <div className="flex items-center gap-0.5 ml-2 pl-2 border-l border-border">
-            <ColorThemePicker />
             <Link
               href="/admin"
               title="Admin"
-              className={`p-2 rounded-lg transition-colors ${
+              className={`p-2 rounded transition-colors ${
                 pathname === "/admin"
                   ? "text-fg bg-surface-raised"
                   : "text-fg-faint hover:text-fg-subtle hover:bg-surface-raised"
@@ -270,7 +268,7 @@ export default function Nav() {
         <div className="md:hidden flex items-center gap-1">
           <button
             onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }))}
-            className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs transition-all duration-300 ${
+            className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition-all duration-300 ${
               scrolled
                 ? "border border-border bg-surface-raised text-fg-faint hover:text-fg hover:border-fg-muted"
                 : "border border-transparent text-fg-subtle hover:text-fg"
@@ -284,7 +282,7 @@ export default function Nav() {
           </button>
           <ThemeToggle />
           <button
-            className="p-2 rounded-lg text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
+            className="p-2 rounded text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
             onClick={() => setOpen(!open)}
             aria-label="Toggle menu"
           >
@@ -303,7 +301,7 @@ export default function Nav() {
 
         {/* ── Mobile drawer — floats below pill, same glass treatment ── */}
         {open && (
-          <div className="md:hidden mt-1.5 rounded-xl overflow-hidden
+          <div className="md:hidden mt-1.5 overflow-hidden
             bg-surface/92 backdrop-blur-[14px]
             [box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.10),_0_2px_8px_-2px_rgb(0_0_0/0.06)]
             dark:[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.45),_0_2px_8px_-2px_rgb(0_0_0/0.25)]">
@@ -313,7 +311,7 @@ export default function Nav() {
                   key={l.href}
                   href={l.href}
                   onClick={() => setOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors ${
                     pathname.startsWith(l.href)
                       ? "bg-surface-raised text-fg font-medium"
                       : "text-fg-muted hover:bg-surface-raised hover:text-indigo-600 dark:hover:text-indigo-400"
@@ -330,7 +328,7 @@ export default function Nav() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2.5 rounded-lg text-sm text-fg-muted hover:bg-surface-raised transition-colors flex items-center gap-1.5"
+                className="px-3 py-2.5 rounded text-sm text-fg-muted hover:bg-surface-raised transition-colors flex items-center gap-1.5"
               >
                 Resume
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -340,7 +338,7 @@ export default function Nav() {
               <Link
                 href="/admin"
                 onClick={() => setOpen(false)}
-                className="px-3 py-2.5 rounded-lg text-sm text-fg-faint hover:bg-surface-raised transition-colors flex items-center gap-2"
+                className="px-3 py-2.5 rounded text-sm text-fg-faint hover:bg-surface-raised transition-colors flex items-center gap-2"
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
@@ -348,9 +346,6 @@ export default function Nav() {
                 Admin
               </Link>
             </nav>
-            <div className="px-3 py-2.5">
-              <ColorThemeSwatches />
-            </div>
           </div>
         )}
       </div>{/* ↑ floating wrapper */}

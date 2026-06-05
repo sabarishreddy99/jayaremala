@@ -28,7 +28,7 @@ function CardShareButton({ slug, title }: { slug: string; title: string }) {
       onClick={share}
       aria-label={copied ? "Link copied!" : "Share post"}
       title={copied ? "Link copied!" : "Share post"}
-      className="flex items-center gap-1 shrink-0 rounded-lg px-2 py-1
+      className="flex items-center gap-1 shrink-0 rounded px-2 py-1
                  text-fg-faint hover:text-accent hover:bg-surface-raised
                  transition-colors text-[10px] font-medium"
     >
@@ -71,7 +71,7 @@ export function BlogIndexStats({ summary }: { summary: Summary | null }) {
   return (
     <div className="flex flex-wrap items-center gap-2 mt-4 mb-8">
       {summary.total_views > 0 && (
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
           </svg>
@@ -79,7 +79,7 @@ export function BlogIndexStats({ summary }: { summary: Summary | null }) {
         </span>
       )}
       {summary.total_claps > 0 && (
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
             <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/>
             <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
@@ -87,7 +87,7 @@ export function BlogIndexStats({ summary }: { summary: Summary | null }) {
           {formatCount(summary.total_claps)} claps
         </span>
       )}
-      <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+      <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
         {summary.posts.length} posts
       </span>
     </div>
@@ -163,7 +163,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
           placeholder="Search posts…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className="w-full rounded-xl border border-border bg-surface pl-9 pr-9 py-2.5 text-base sm:text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
+          className="w-full rounded border border-border bg-surface pl-9 pr-9 py-2.5 text-base sm:text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
         />
         {query && (
           <button
@@ -183,7 +183,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
         <div className="flex flex-wrap gap-2 mb-8">
           <button
             onClick={() => setActiveTag(null)}
-            className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
+            className={`rounded-sm px-3 py-1 text-[11px] font-medium transition-colors ${
               !activeTag
                 ? "bg-fg text-bg"
                 : "border border-border bg-surface text-fg-muted hover:border-fg-muted hover:text-fg"
@@ -195,7 +195,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
             <button
               key={tag}
               onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-              className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
+              className={`rounded-sm px-3 py-1 text-[11px] font-medium transition-colors ${
                 activeTag === tag
                   ? "bg-accent text-white border border-accent"
                   : "border border-border bg-surface text-fg-muted hover:border-accent hover:text-accent"
@@ -209,7 +209,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
 
       {/* Empty state */}
       {filtered.length === 0 && (
-        <div className="rounded-2xl border border-dashed border-border bg-surface p-10 text-center">
+        <div className="rounded border border-dashed border-border bg-surface p-10 text-center">
           <p className="text-sm text-fg-faint">
             No posts match{query ? ` "${query}"` : ""}{activeTag ? ` in #${activeTag}` : ""}.
           </p>
@@ -229,7 +229,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
           <li key={p.slug}>
             <Link
               href={`/blog/${p.slug}`}
-              className="group relative block rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden"
+              className="group relative block rounded border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden"
             >
               {/* Hover sweep bar */}
               <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
@@ -241,7 +241,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
                 <div className="flex flex-col items-end gap-1.5 shrink-0">
                   <span className="text-[11px] text-fg-faint">{p.date}</span>
                   {p.readingTime && (
-                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-fg-faint bg-surface-raised border border-border rounded-full px-2 py-0.5">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-medium text-fg-faint bg-surface-raised border border-border rounded-sm px-2 py-0.5">
                       {p.readingTime} min
                     </span>
                   )}
@@ -272,7 +272,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
               <div className="flex items-center justify-between gap-2">
                 <div className="flex flex-wrap gap-1.5">
                   {p.tags.map((t) => (
-                    <span key={t} className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
+                    <span key={t} className="rounded-sm bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
                       #{t}
                     </span>
                   ))}

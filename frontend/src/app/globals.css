@@ -123,258 +123,54 @@
 }
 .animate-float-up { animation: float-up 0.8s ease-out forwards; }
 
-/* ── Light mode tokens ─────────────────────────────────── */
+/* ── Light mode tokens — Editorial Newspaper ───────────── */
+/* Cool blue-slate off-white: quality newsprint under        */
+/* natural light. Ink colors are deep blue-black, not harsh  */
+/* neutral. Borders carry the column-rule weight of print.   */
 :root {
-  /* Warm-neutral palette — cream canvas, warm grays, indigo accent */
-  --bg:             #fafaf9;
-  --surface:        #ffffff;
-  --surface-raised: #f5f4f2;
-  --surface-sunken: #edecea;
-  --border:         #e5e2db;
-  --border-subtle:  #f1f0eb;
-  --border-strong:  #b2ada6;
-  --fg:             #111110;
-  --fg-muted:       #524e48;
-  --fg-subtle:      #706b65;
-  --fg-faint:       #a39d97;
-  --accent:           #4f46e5;
-  --accent-hover:     #4338ca;
-  --accent-light:     #eef2ff;
-  --accent-fg:        #ffffff;
-  --accent-secondary: #8b5cf6;  /* gradient endpoint for label-gradient   */
-}
-
-/* ── Dark mode tokens ──────────────────────────────────── */
-.dark {
-  /* Purple-dark palette — all surfaces unified to the same hue family
-     as --bg; eliminates the zinc-on-purple mismatch of the old tokens  */
-  --bg:             #0d0b12;
-  --surface:        #141120;
-  --surface-raised: #1c192e;
-  --surface-sunken: #090710;
-  --border:         #2d2a40;
-  --border-subtle:  #191728;
-  --border-strong:  #504c6c;
-  --fg:             #f0eeff;
-  --fg-muted:       #cac5e0;
-  --fg-subtle:      #9590b5;
-  --fg-faint:       #5e5a7e;
-  --accent:           #7b72f0;
-  --accent-hover:     #9890f6;
-  --accent-light:     #1e1b42;
-  --accent-fg:        #ffffff;
-  --accent-secondary: #a78bfa;
-}
-
-/* ── Color themes ──────────────────────────────────────────── */
-/* Each theme overrides tokens for light mode. Dark mode is     */
-/* handled by combining .dark with [data-theme="*"] on <html>. */
-/* "Dusk" (default) is already defined above in :root/.dark.   */
-
-/* ── Midnight — clinical whites, pure blacks ── */
-[data-theme="midnight"] {
-  --bg:               #f9f9f9;
-  --surface:          #ffffff;
-  --surface-raised:   #f3f3f3;
-  --surface-sunken:   #ebebeb;
-  --border:           #dfdfdf;
-  --border-subtle:    #efefef;
-  --border-strong:    #b0b0b0;
-  --fg:               #090909;
-  --fg-muted:         #444444;
-  --fg-subtle:        #686868;
-  --fg-faint:         #999999;
+  --bg:             #eff1f6;
+  --surface:        #f6f8fb;
+  --surface-raised: #e6eaf0;
+  --surface-sunken: #dce1e8;
+  --border:         #c2c9d4;
+  --border-subtle:  #d8dfe8;
+  --border-strong:  #8a97a8;
+  --fg:             #0d1520;
+  --fg-muted:       #2c3d50;
+  --fg-subtle:      #4a5e72;
+  --fg-faint:       #8898a8;
   --accent:           #4f46e5;
   --accent-hover:     #4338ca;
   --accent-light:     #eef2ff;
   --accent-fg:        #ffffff;
   --accent-secondary: #8b5cf6;
 }
-.dark[data-theme="midnight"],
-[data-theme="midnight"].dark {
-  --bg:               #000000;
-  --surface:          #0c0c0c;
-  --surface-raised:   #181818;
-  --surface-sunken:   #000000;
-  --border:           #262626;
-  --border-subtle:    #161616;
-  --border-strong:    #404040;
-  --fg:               #f8f8f8;
-  --fg-muted:         #d0d0d0;
-  --fg-subtle:        #888888;
-  --fg-faint:         #505050;
+
+/* ── Dark mode tokens — Pure Black ──────────────────────── */
+/* True black backgrounds — OLED-ready, maximum ink contrast. */
+.dark {
+  --bg:             #000000;
+  --surface:        #0c0c0c;
+  --surface-raised: #181818;
+  --surface-sunken: #000000;
+  --border:         #252525;
+  --border-subtle:  #161616;
+  --border-strong:  #3a3a3a;
+  --fg:             #f0f0f0;
+  --fg-muted:       #cccccc;
+  --fg-subtle:      #888888;
+  --fg-faint:       #484848;
   --accent:           #818cf8;
   --accent-hover:     #a5b4fc;
-  --accent-light:     #1e1b4b;
+  --accent-light:     #1a1a2e;
   --accent-fg:        #ffffff;
   --accent-secondary: #a78bfa;
 }
 
-/* ── Forest — sage greens, emerald accent ── */
-[data-theme="forest"] {
-  --bg:               #f6faf7;
-  --surface:          #ffffff;
-  --surface-raised:   #edf7f0;
-  --surface-sunken:   #e2f2e6;
-  --border:           #c8e8d0;
-  --border-subtle:    #e6f5ea;
-  --border-strong:    #84ba94;
-  --fg:               #0c1a10;
-  --fg-muted:         #2c5038;
-  --fg-subtle:        #4c7058;
-  --fg-faint:         #80a888;
-  --accent:           #059669;
-  --accent-hover:     #047857;
-  --accent-light:     #d1fae5;
-  --accent-fg:        #ffffff;
-  --accent-secondary: #0ea5e9;
-}
-.dark[data-theme="forest"],
-[data-theme="forest"].dark {
-  --bg:               #050e07;
-  --surface:          #0c1a10;
-  --surface-raised:   #122018;
-  --surface-sunken:   #030804;
-  --border:           #182e20;
-  --border-subtle:    #0c1a10;
-  --border-strong:    #2c5038;
-  --fg:               #e8fff0;
-  --fg-muted:         #a8d4b4;
-  --fg-subtle:        #68a878;
-  --fg-faint:         #386448;
-  --accent:           #34d399;
-  --accent-hover:     #6ee7b7;
-  --accent-light:     #064e3b;
-  --accent-fg:        #022c22;
-  --accent-secondary: #22d3ee;
-}
-
-/* ── Ocean — cool blues, electric accent ── */
-[data-theme="ocean"] {
-  --bg:               #f5f9fe;
-  --surface:          #ffffff;
-  --surface-raised:   #ecf3fc;
-  --surface-sunken:   #e0ecf8;
-  --border:           #c4d8f0;
-  --border-subtle:    #e4eef8;
-  --border-strong:    #76a4d8;
-  --fg:               #07101e;
-  --fg-muted:         #1c3a68;
-  --fg-subtle:        #385a88;
-  --fg-faint:         #6488b8;
-  --accent:           #2563eb;
-  --accent-hover:     #1d4ed8;
-  --accent-light:     #dbeafe;
-  --accent-fg:        #ffffff;
-  --accent-secondary: #7c3aed;
-}
-.dark[data-theme="ocean"],
-[data-theme="ocean"].dark {
-  --bg:               #03060f;
-  --surface:          #090f20;
-  --surface-raised:   #0f1830;
-  --surface-sunken:   #020408;
-  --border:           #162640;
-  --border-subtle:    #0b1228;
-  --border-strong:    #264470;
-  --fg:               #e4eeff;
-  --fg-muted:         #9abce8;
-  --fg-subtle:        #5888b8;
-  --fg-faint:         #2c5080;
-  --accent:           #60a5fa;
-  --accent-hover:     #93c5fd;
-  --accent-light:     #1e3a5f;
-  --accent-fg:        #ffffff;
-  --accent-secondary: #a78bfa;
-}
-
-/* ── Ember — warm parchment, golden amber ── */
-[data-theme="ember"] {
-  --bg:               #fdf7ee;
-  --surface:          #ffffff;
-  --surface-raised:   #faeedd;
-  --surface-sunken:   #f4e3c8;
-  --border:           #e8ceaa;
-  --border-subtle:    #f4e8d6;
-  --border-strong:    #c09858;
-  --fg:               #180f04;
-  --fg-muted:         #583c16;
-  --fg-subtle:        #78582e;
-  --fg-faint:         #a87e4c;
-  --accent:           #d97706;
-  --accent-hover:     #b45309;
-  --accent-light:     #fef3c7;
-  --accent-fg:        #ffffff;
-  --accent-secondary: #dc2626;
-}
-.dark[data-theme="ember"],
-[data-theme="ember"].dark {
-  --bg:               #120c04;
-  --surface:          #1c1408;
-  --surface-raised:   #261c0c;
-  --surface-sunken:   #0a0804;
-  --border:           #3a2810;
-  --border-subtle:    #201608;
-  --border-strong:    #6a4820;
-  --fg:               #fff8ee;
-  --fg-muted:         #dec890;
-  --fg-subtle:        #b48e58;
-  --fg-faint:         #6e5428;
-  --accent:           #fbbf24;
-  --accent-hover:     #f59e0b;
-  --accent-light:     #451a03;
-  --accent-fg:        #180f04;
-  --accent-secondary: #f87171;
-}
-
-/* ── Antique — aged parchment light · old leather dark ── */
-/* Victorian editorial: deep burgundy accent, aged gold     */
-/* gradient, EB Garamond body font, subtle paper grain.    */
-[data-theme="antique"] {
-  --bg:               #f6edd8;
-  --surface:          #fdf8ee;
-  --surface-raised:   #ede0c0;
-  --surface-sunken:   #e2d4ac;
-  --border:           #c8b48a;
-  --border-subtle:    #e8dcc4;
-  --border-strong:    #8a6840;
-  --fg:               #1c1008;
-  --fg-muted:         #4a3018;
-  --fg-subtle:        #6e5030;
-  --fg-faint:         #9a7858;
-  --accent:           #8b1a2e;
-  --accent-hover:     #6e1424;
-  --accent-light:     #f7e8ea;
-  --accent-fg:        #fdf8ee;
-  --accent-secondary: #a87d0e;
-}
-.dark[data-theme="antique"],
-[data-theme="antique"].dark {
-  --bg:               #120c04;
-  --surface:          #1c1408;
-  --surface-raised:   #261c0c;
-  --surface-sunken:   #0c0804;
-  --border:           #3c2810;
-  --border-subtle:    #201608;
-  --border-strong:    #624030;
-  --fg:               #f4ead2;
-  --fg-muted:         #d0bc90;
-  --fg-subtle:        #9e8060;
-  --fg-faint:         #6a5038;
-  --accent:           #c8a848;
-  --accent-hover:     #e0c060;
-  --accent-light:     #2a1800;
-  --accent-fg:        #120c04;
-  --accent-secondary: #c44028;
-}
-
-/* EB Garamond body font — antique theme only               */
-[data-theme="antique"] body {
-  font-family: var(--font-eb-garamond), Georgia, "Times New Roman", serif;
-  font-size: 1rem;
-  line-height: 1.75;
-  letter-spacing: 0.01em;
-}
+/* ── Color theme — Midnight only ───────────────────────────── */
+/* All palettes except Midnight removed. :root and .dark above  */
+/* ARE the palette. The data-theme="midnight" attribute is kept  */
+/* for the Roboto font overrides defined below.                  */
 
 /* Midnight — Google's Roboto + Material Design hierarchy     */
 /* Redefining the font vars (same pattern as the colour       */
@@ -413,63 +209,6 @@
 }
 [data-theme="midnight"] .prose a { text-underline-offset: 3px; }
 
-/* Prose in antique theme: generous rhythm, warm link color  */
-[data-theme="antique"] .prose {
-  font-size: 1.1rem;
-  line-height: 1.9;
-}
-[data-theme="antique"] .prose a {
-  color: var(--accent);
-  text-underline-offset: 4px;
-}
-[data-theme="antique"] .prose blockquote {
-  border-left-color: var(--accent);
-  background: var(--accent-light);
-  color: var(--fg-muted);
-  font-style: italic;
-}
-
-/* Warm sepia card shadows — antique theme                  */
-[data-theme="antique"] .card-lift {
-  box-shadow:
-    0 1px 2px 0 rgb(60 28 8 / 0.08),
-    0 1px 4px 0 rgb(60 28 8 / 0.06);
-}
-[data-theme="antique"] .card-lift:hover {
-  box-shadow:
-    0 4px 12px -2px rgb(60 28 8 / 0.14),
-    0 8px 28px -4px rgb(60 28 8 / 0.10),
-    0 1px 3px 0 rgb(60 28 8 / 0.06);
-}
-.dark[data-theme="antique"] .card-lift {
-  box-shadow:
-    0 1px 3px 0 rgb(8 4 0 / 0.55),
-    0 1px 2px -1px rgb(8 4 0 / 0.4);
-}
-.dark[data-theme="antique"] .card-lift:hover {
-  box-shadow:
-    0 4px 16px -2px rgb(8 4 0 / 0.7),
-    0 8px 32px -4px rgb(8 4 0 / 0.55),
-    0 1px 3px 0 rgb(8 4 0 / 0.35);
-}
-
-/* Subtle paper grain texture — antique theme only          */
-/* SVG feTurbulence noise tiles at 200×200px, 4% opacity.  */
-[data-theme="antique"] body::after {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 9998;
-  opacity: 0.04;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-.dark[data-theme="antique"] body::after {
-  mix-blend-mode: screen;
-  opacity: 0.025;
-}
-
 /* ── Type scale — 5 semantic sizes ─────────────────────── */
 :root {
   /* Semantic type scale — covers the 10–11px micro-UI and main body */
@@ -505,7 +244,7 @@
   --font-mono:     var(--font-geist-mono);
   --font-display:  var(--font-playfair);      /* Playfair Display — headings */
   --font-blog:     var(--font-source-serif);  /* Source Serif 4 — long-form  */
-  --font-garamond: var(--font-eb-garamond);   /* EB Garamond — antique theme */
+  --font-garamond: var(--font-eb-garamond);   /* EB Garamond — editorial serif */
   /* Type-scale utilities — text-nano, text-micro, text-body, text-lead */
   --text-nano:  0.625rem;
   --text-micro: 0.6875rem;
@@ -533,6 +272,23 @@ body {
   overflow-x: clip;
   width: 100%;
   max-width: 100%;
+}
+
+/* ── Paper grain — subtle newsprint texture ──────────────── */
+/* Very fine noise overlay on all pages, like quality paper   */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9998;
+  opacity: 0.028;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.dark body::after {
+  mix-blend-mode: screen;
+  opacity: 0.018;
 }
 
 /* ── Typography defaults ──────────────────────────────────── */
@@ -949,10 +705,10 @@ figcaption[data-rehype-pretty-code-title] + pre {
 
 /* ── Section stacking depth shadow ─────────────────────── */
 .stack-sect {
-  box-shadow: 0 -10px 40px -6px rgb(0 0 0 / 0.08);
+  box-shadow: 0 -16px 48px -8px rgb(0 0 0 / 0.12);
 }
 .dark .stack-sect {
-  box-shadow: 0 -10px 40px -6px rgb(0 0 0 / 0.30);
+  box-shadow: 0 -16px 48px -8px rgb(0 0 0 / 0.50);
 }
 
 /* ── Mobile: disable the sticky card-stacking entirely ──────
@@ -984,12 +740,18 @@ figcaption[data-rehype-pretty-code-title] + pre {
 .animation-delay-2000 { animation-delay: 2s; }
 .animation-delay-4000 { animation-delay: 4s; }
 
-/* ── Hero section background ────────────────────────────── */
-/* accent-light everywhere; midnight dark gets surface       */
-/* (accent-light = #1e1b4b there — heavy purple, clashes)   */
-.hero-section-bg { background-color: var(--accent-light); }
-.dark[data-theme="midnight"] .hero-section-bg,
-[data-theme="midnight"].dark .hero-section-bg { background-color: var(--surface); }
+/* ── Hero section background ─────────────────────────────── */
+/* Light: deeper cool gradient — crisper editorial contrast   */
+/* Dark: subtle depth gradient from slightly elevated surface */
+.hero-section-bg {
+  background: linear-gradient(
+    155deg,
+    hsl(216, 28%, 89%) 0%,
+    hsl(220, 22%, 93%) 50%,
+    var(--bg) 100%
+  );
+}
+.dark .hero-section-bg { background: var(--bg); }
 
 /* hero-dot-cursor removed — HeroDotGrid now uses a canvas  */
 

@@ -6,39 +6,11 @@ import { useEffect, useRef, useState } from "react";
 
 export const COLOR_THEMES = [
   {
-    id:    "antique",
-    label: "Antique",
-    desc:  "Aged parchment · old leather · burgundy",
-    light: { bg: "#f6edd8", surface: "#ede0c0", accent: "#8b1a2e" },
-    dark:  { bg: "#120c04", surface: "#1c1408", accent: "#c8a848" },
-  },
-  {
     id:    "midnight",
     label: "Midnight",
-    desc:  "Clinical white · pure black",
-    light: { bg: "#f9f9f9", surface: "#f3f3f3", accent: "#4f46e5" },
-    dark:  { bg: "#000000", surface: "#0c0c0c", accent: "#818cf8" },
-  },
-  {
-    id:    "forest",
-    label: "Forest",
-    desc:  "Sage green · deep emerald",
-    light: { bg: "#f6faf7", surface: "#edf7f0", accent: "#059669" },
-    dark:  { bg: "#050e07", surface: "#0c1a10", accent: "#34d399" },
-  },
-  {
-    id:    "ocean",
-    label: "Ocean",
-    desc:  "Cool azure · deep navy",
-    light: { bg: "#f5f9fe", surface: "#ecf3fc", accent: "#2563eb" },
-    dark:  { bg: "#03060f", surface: "#090f20", accent: "#60a5fa" },
-  },
-  {
-    id:    "ember",
-    label: "Ember",
-    desc:  "Warm parchment · dark ember",
-    light: { bg: "#fdf7ee", surface: "#faeedd", accent: "#d97706" },
-    dark:  { bg: "#120c04", surface: "#1c1408", accent: "#fbbf24" },
+    desc:  "Editorial newspaper — cool blue-slate",
+    light: { bg: "#eff1f6", surface: "#e6eaf0", accent: "#4f46e5" },
+    dark:  { bg: "#000000", surface: "#181818", accent: "#818cf8" },
   },
 ] as const;
 

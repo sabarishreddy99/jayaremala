@@ -59,17 +59,17 @@ export default function EducationPage() {
         {/* Stat chips */}
         <div className="flex flex-wrap gap-2 mt-4">
           {primaryGPA && (
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-full px-3 py-1">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 rounded-sm px-3 py-1">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
               GPA {primaryGPA}
             </span>
           )}
           {gradYear && (
-            <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+            <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
               Class of {gradYear}
             </span>
           )}
-          <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+          <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
             {education.length} institution{education.length !== 1 ? "s" : ""}
           </span>
         </div>
@@ -86,7 +86,7 @@ export default function EducationPage() {
               {/* Timeline dot */}
               <div className="hidden sm:flex absolute left-0 top-3 -translate-x-1/2 w-3 h-3 rotate-45 bg-surface border-2 border-amber-400 dark:border-amber-500 ring-2 ring-amber-100 dark:ring-amber-900" />
 
-              <div className="group relative rounded-xl rounded-br-none border border-border bg-surface p-6 sm:p-7 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all overflow-hidden">
+              <div className="group relative rounded rounded-br-none border border-border bg-surface p-6 sm:p-7 hover:border-amber-300 dark:hover:border-amber-700 hover:shadow-md transition-all overflow-hidden">
                 {/* Hover sweep */}
                 <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-400 to-orange-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 {/* Corner bracket accents */}
@@ -106,11 +106,11 @@ export default function EducationPage() {
                     <p className="text-xs text-fg-faint mt-0.5">{edu.school}</p>
                   </div>
                   <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                    <span className="rounded-md bg-surface-raised px-3 py-0.5 text-[11px] font-medium text-fg-muted whitespace-nowrap">
+                    <span className="rounded-sm bg-surface-raised px-3 py-0.5 text-[11px] font-medium text-fg-muted whitespace-nowrap">
                       {edu.start} – {edu.end}
                     </span>
                     {edu.gpa && (
-                      <span className="rounded-md bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 px-3 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">
+                      <span className="rounded-sm bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-800 px-3 py-0.5 text-[11px] font-semibold text-amber-700 dark:text-amber-400 whitespace-nowrap">
                         GPA {edu.gpa}
                       </span>
                     )}

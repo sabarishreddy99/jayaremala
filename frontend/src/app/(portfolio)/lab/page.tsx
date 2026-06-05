@@ -19,7 +19,7 @@ export default function LabPage() {
           aria-hidden
         />
 
-        <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-3">Build Log · In the Open</p>
+        <p className="text-xs font-bold uppercase tracking-wider text-fg-faint mb-3">Build Log · In the Open</p>
 
         {/* Title with decorative glyph */}
         <div className="flex items-baseline gap-4 mb-2">
@@ -38,18 +38,18 @@ export default function LabPage() {
         {staticEntries.length > 0 && (
           <div className="flex flex-wrap gap-2 mt-4">
             {activeCount > 0 && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-full px-3 py-1">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-sm px-3 py-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                 {activeCount} active
               </span>
             )}
             {shippedCount > 0 && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-full px-3 py-1">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-sm px-3 py-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
                 {shippedCount} shipped
               </span>
             )}
-            <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+            <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
               {staticEntries.length} experiment{staticEntries.length !== 1 ? "s" : ""}
             </span>
           </div>

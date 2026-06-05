@@ -59,16 +59,16 @@ export default function ExperiencePage() {
         {/* Stat chips */}
         <div className="flex flex-wrap gap-2 mt-4">
           {isActive && (
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-full px-3 py-1">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-sm px-3 py-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Currently active
             </span>
           )}
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-full px-3 py-1">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-sm px-3 py-1">
             <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
             {experience.length} roles
           </span>
-          <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
+          <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
             {uniqueCompanies} companies
           </span>
         </div>
@@ -89,7 +89,7 @@ export default function ExperiencePage() {
             </div>
 
             <ScrollReveal delay={Math.min(i * 70, 280)} className="w-full">
-              <div className="group relative rounded-xl rounded-br-none border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden">
+              <div className="group relative rounded rounded-br-none border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden">
                 {/* Hover sweep */}
                 <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 {/* Corner bracket accents */}
@@ -107,7 +107,7 @@ export default function ExperiencePage() {
                     <p className="text-sm font-medium text-accent">{job.company}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="inline-block rounded-md bg-surface-raised px-3 py-0.5 text-[11px] font-medium text-fg-muted">
+                    <span className="inline-block rounded-sm bg-surface-raised px-3 py-0.5 text-[11px] font-medium text-fg-muted">
                       {job.start} – {job.end}
                     </span>
                     <p className="text-[11px] text-fg-faint mt-0.5">{job.location}</p>
@@ -117,7 +117,7 @@ export default function ExperiencePage() {
                 {job.tech && (
                   <div className="flex flex-wrap gap-1.5 mb-4">
                     {job.tech.split(", ").map((t) => (
-                      <span key={t} className="rounded-full bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[10px] font-medium text-accent">
+                      <span key={t} className="rounded-sm bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[10px] font-medium text-accent">
                         {t}
                       </span>
                     ))}

@@ -113,9 +113,9 @@ export default function PortfolioHome() {
       />
 
       {/* ── 1 · Hero — not sticky, scrolls away naturally ──────── */}
-      <section id="hero" className="relative isolate overflow-x-clip scroll-mt-[50px] hero-section-bg">
+      <section id="hero" className="relative overflow-x-clip scroll-mt-[50px] hero-section-bg">
 
-        {/* ── Hero background — depth glow + interactive letter grid ── */}
+        {/* ── Hero background — interactive dot grid ── */}
         <div aria-hidden className="pointer-events-none absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-accent/[0.05] via-transparent to-transparent" />
         <HeroDotGrid />
 

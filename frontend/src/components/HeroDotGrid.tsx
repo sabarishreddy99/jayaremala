@@ -2,39 +2,23 @@
 
 import { useRef, useEffect } from "react";
 
-// Characters to scatter — math operators, letters, digits
-const CHARS =
-  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz" +
-  "0123456789" +
-  "+-*/=<>≤≥≠∑∏∫√∞πΔΩ±÷%^~!?{}[]|&";
+const GRID   = 24;   // px between dots — matches hero-dot-pattern CSS
+const RADIUS = 1.5;  // dot radius px
+const GLOW   = 80;   // mouse influence radius px
 
-const GRID = 42;  // px between characters
-const FONT = 11;  // font-size px
-const GLOW = 90;  // illumination radius px
-
-// Deterministic LCG — same seed → same layout on every render/resize
-function lcg(seed: number) {
-  let s = seed;
-  return () => {
-    s = (Math.imul(s, 1664525) + 1013904223) | 0;
-    return (s >>> 0) / 4294967296;
-  };
-}
-
-type Cell = { x: number; y: number; ch: string };
-
-// Read live theme tokens from the <html> element's computed style
 function getThemeColors() {
   const style = getComputedStyle(document.documentElement);
   return {
-    fg:     style.getPropertyValue("--fg").trim()     || "#1a1916",
-    accent: style.getPropertyValue("--accent").trim() || "#4f46e5",
+    fg:     style.getPropertyValue("--border-strong").trim() || "#d4d4d4",
+    accent: style.getPropertyValue("--accent").trim()        || "#4f46e5",
   };
 }
 
+type Dot = { x: number; y: number };
+
 export default function HeroDotGrid() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const cellsRef  = useRef<Cell[]>([]);
+  const dotsRef   = useRef<Dot[]>([]);
   const mouseRef  = useRef({ x: -9999, y: -9999 });
   const rafRef    = useRef(0);
 
@@ -46,45 +30,38 @@ export default function HeroDotGrid() {
 
     let w = 0, h = 0;
 
-    function buildCells() {
-      const rand = lcg(42);
-      cellsRef.current = [];
+    function buildDots() {
+      dotsRef.current = [];
       const cols = Math.ceil(w / GRID) + 1;
       const rows = Math.ceil(h / GRID) + 1;
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          cellsRef.current.push({
-            x:  c * GRID + rand() * 16 - 8,
-            y:  r * GRID + rand() * 16 - 8,
-            ch: CHARS[Math.floor(rand() * CHARS.length)],
-          });
+          dotsRef.current.push({ x: c * GRID, y: r * GRID });
         }
       }
     }
 
     function draw() {
       ctx!.clearRect(0, 0, w, h);
-      ctx!.font         = `${FONT}px "Roboto Mono", monospace`;
-      ctx!.textAlign    = "center";
-      ctx!.textBaseline = "middle";
-
-      // Re-read tokens on every draw so theme/dark-mode switches reflect instantly
       const { fg, accent } = getThemeColors();
       const { x: mx, y: my } = mouseRef.current;
 
-      for (const { x, y, ch } of cellsRef.current) {
+      for (const { x, y } of dotsRef.current) {
         const d = Math.hypot(x - mx, y - my);
 
+        ctx!.beginPath();
+        ctx!.arc(x, y, RADIUS, 0, Math.PI * 2);
+
         if (d < GLOW) {
-          const t = 1 - d / GLOW;             // 1 at centre → 0 at edge
+          const t = 1 - d / GLOW;
           ctx!.fillStyle   = accent;
-          ctx!.globalAlpha = 0.14 + t * 0.76; // 0.14 dim rim → 0.90 bright centre
+          ctx!.globalAlpha = 0.15 + t * 0.75;
         } else {
           ctx!.fillStyle   = fg;
-          ctx!.globalAlpha = 0.13;
+          ctx!.globalAlpha = 0.5;
         }
 
-        ctx!.fillText(ch, x, y);
+        ctx!.fill();
       }
 
       ctx!.globalAlpha = 1;
@@ -98,7 +75,7 @@ export default function HeroDotGrid() {
       canvas!.width  = Math.round(w * dpr);
       canvas!.height = Math.round(h * dpr);
       ctx!.setTransform(dpr, 0, 0, dpr, 0, 0);
-      buildCells();
+      buildDots();
       draw();
     }
 
@@ -114,7 +91,12 @@ export default function HeroDotGrid() {
       rafRef.current = requestAnimationFrame(draw);
     }
 
-    // Redraw immediately when dark class or data-theme attribute changes
+    function onLeave() {
+      mouseRef.current = { x: -9999, y: -9999 };
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = requestAnimationFrame(draw);
+    }
+
     const mo = new MutationObserver(() => {
       cancelAnimationFrame(rafRef.current);
       rafRef.current = requestAnimationFrame(draw);
@@ -128,12 +110,14 @@ export default function HeroDotGrid() {
     ro.observe(canvas);
     resize();
 
-    window.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("mousemove", onMove,  { passive: true });
+    window.addEventListener("mouseleave", onLeave, { passive: true });
     return () => {
       mo.disconnect();
       ro.disconnect();
       cancelAnimationFrame(rafRef.current);
       window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseleave", onLeave);
     };
   }, []);
 
@@ -147,7 +131,7 @@ export default function HeroDotGrid() {
         width: "100%",
         height: "100%",
         pointerEvents: "none",
-        zIndex: -1,
+        zIndex: 0,
       }}
     />
   );

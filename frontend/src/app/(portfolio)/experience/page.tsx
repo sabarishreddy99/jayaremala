@@ -27,7 +27,7 @@ export default function ExperiencePage() {
         <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-3">Career · Timeline</p>
 
         <div className="flex items-baseline gap-3 mb-2">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Experience</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-fg">Experience</h1>
           <span className="text-2xl sm:text-3xl select-none text-fg-faint" aria-hidden>◈</span>
         </div>
 

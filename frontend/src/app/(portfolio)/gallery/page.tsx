@@ -25,7 +25,7 @@ export default function GalleryPage() {
         />
         <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-3">Moments · Milestones</p>
         <div className="flex items-baseline gap-4 mb-2">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Gallery</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-fg">Gallery</h1>
           <span
             className="text-2xl sm:text-3xl select-none"
             style={{ background: "linear-gradient(135deg, #8b5cf6, #6366f1)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", backgroundClip: "text" }}

@@ -23,7 +23,7 @@ export default function LabPage() {
 
         {/* Title with decorative glyph */}
         <div className="flex items-baseline gap-4 mb-2">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Lab</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-fg">Lab</h1>
           <code className="text-lg sm:text-xl font-mono text-fg-faint select-none" aria-hidden>⬡</code>
         </div>
 

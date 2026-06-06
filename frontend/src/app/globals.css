@@ -195,11 +195,8 @@
 [data-theme="midnight"] h2 { letter-spacing: -0.014em; }
 [data-theme="midnight"] h3 { letter-spacing: -0.006em; font-weight: 500; }
 
-/* Hero name keeps the antique display serif (Playfair Display).        */
-/* Scoping --font-display to the hero subtree means HeroName's inline    */
-/* `var(--font-display)` resolves to Playfair, while every other heading */
-/* on the site stays clean Roboto.                                      */
-[data-theme="midnight"] #hero { --font-display: var(--font-playfair); }
+/* Hero name: HeroName uses var(--font-cormorant) inline — unaffected   */
+/* by --font-display, so it stays Cormorant Garamond in all themes.     */
 
 /* Blog/reading prose — match antique's serif rhythm (Source Serif 4     */
 /* via the un-overridden --font-blog).                                  */
@@ -292,19 +289,20 @@ body::after {
 }
 
 /* ── Typography defaults ──────────────────────────────────── */
-/* Applied via @layer base so Tailwind utility classes always  */
-/* win. h1/h2 get Playfair Display; h3/h4 use Geist with good */
-/* tracking; body text gets comfortable line-height by default */
+/* Applied via @layer base; Tailwind utility classes always win. */
+/* h1 gets Playfair Display for formal editorial page headings;  */
+/* h2–h6 use Geist Sans for clean UI readability. Prose headings */
+/* override via .prose rules; HeroName sets Cormorant inline.    */
 @layer base {
   h1 {
     font-family: var(--font-display), Georgia, serif;
-    line-height: 1.05;
-    letter-spacing: -0.035em;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
   }
   h2 {
-    font-family: var(--font-display), Georgia, serif;
-    line-height: 1.1;
-    letter-spacing: -0.025em;
+    font-family: var(--font-sans), system-ui, sans-serif;
+    line-height: 1.2;
+    letter-spacing: -0.012em;
   }
   h3 {
     font-family: var(--font-sans), system-ui, sans-serif;

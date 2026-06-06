@@ -319,7 +319,7 @@ export default function PortfolioHome() {
           {latestPost && (
             <div className="flex justify-center mt-6">
               <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 rounded-sm border border-border/60 dark:border-border-strong bg-surface dark:bg-surface-raised px-3.5 py-1.5 hover:border-border-strong transition-all">
-                <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-fg-faint shrink-0">Latest</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-fg-faint shrink-0">Latest</span>
                 <span className="w-px h-3 bg-border shrink-0" />
                 <span className="text-[11px] text-fg-subtle group-hover:text-accent transition-colors line-clamp-1 max-w-[60vw] sm:max-w-xs">
                   {latestPost.title}

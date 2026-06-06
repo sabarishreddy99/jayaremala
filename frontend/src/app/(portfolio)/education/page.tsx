@@ -35,7 +35,7 @@ export default function EducationPage() {
 
         {/* Title with gradient glyph */}
         <div className="flex items-baseline gap-4 mb-2">
-          <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Education</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold text-fg">Education</h1>
           <span
             className="text-2xl sm:text-3xl select-none"
             style={{

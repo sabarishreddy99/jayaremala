@@ -425,6 +425,7 @@ export default function ChatInterface() {
             {getTimeGreeting()}! I&apos;m Avocado, his AI assistant.
           </p>
 
+
           {/* Audience personas — tailor tone + what Avocado leads with */}
           <div className="mt-5 flex flex-col items-center gap-2">
             <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-faint/70">

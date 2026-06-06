@@ -10,13 +10,22 @@ documents removed from the source are deleted from ChromaDB. This keeps
 startup fast as blog/lab content grows — adding one post embeds one document.
 """
 
+import gc
 import hashlib
 import json
 import logging
 import re
+import time
 from pathlib import Path
 
 from app.rag.store import EMBED_MODEL, build_bm25_index, clear_query_cache, get_collection, reset_collection
+
+# Number of documents sent to the embedding model per ChromaDB upsert call.
+# BAAI/bge-base-en-v1.5 holds ~440 MB of ONNX weights; embedding all docs in
+# one shot spikes peak RAM to ~1.5 GB on a 2 GB server. Batching to 16 keeps
+# each forward pass small, and gc.collect() between batches frees intermediate
+# tensors before the next one loads.
+_INGEST_BATCH_SIZE = 16
 
 logger = logging.getLogger(__name__)
 
@@ -727,6 +736,7 @@ def run_ingest(force: bool = False) -> dict:
     if force:
         logger.info("Force reingest — wiping ChromaDB collection for clean rebuild")
         reset_collection()
+        gc.collect()  # free old collection memory before re-embedding
     elif stored_model != EMBED_MODEL:
         logger.info(
             "Embedding model changed (%s → %s) — resetting ChromaDB collection for full reingest",
@@ -755,13 +765,27 @@ def run_ingest(force: bool = False) -> dict:
         logger.info("Deleted %d stale documents: %s", len(to_delete), to_delete)
 
     if to_upsert:
-        ids = [d[0] for d in to_upsert]
-        texts = [d[1] for d in to_upsert]
-        metadatas = [
-            {"type": d[2], "id": d[0], "entity_type": _entity_type(d[0], d[2])}
-            for d in to_upsert
-        ]
-        collection.upsert(ids=ids, documents=texts, metadatas=metadatas)
+        # Batch upserts to cap peak RAM per embedding forward pass.
+        # Each batch = one call to the ONNX model; gc.collect() + a short sleep
+        # between batches lets the GC free intermediate tensors before the next
+        # batch loads, keeping peak memory well under the server limit.
+        for batch_start in range(0, len(to_upsert), _INGEST_BATCH_SIZE):
+            batch = to_upsert[batch_start : batch_start + _INGEST_BATCH_SIZE]
+            collection.upsert(
+                ids=[d[0] for d in batch],
+                documents=[d[1] for d in batch],
+                metadatas=[
+                    {"type": d[2], "id": d[0], "entity_type": _entity_type(d[0], d[2])}
+                    for d in batch
+                ],
+            )
+            gc.collect()
+            time.sleep(0.05)  # yield to other threads between batches
+            logger.debug(
+                "Embedded batch %d/%d",
+                min(batch_start + _INGEST_BATCH_SIZE, len(to_upsert)),
+                len(to_upsert),
+            )
         clear_query_cache()
         logger.info("Upserted %d documents (%d new, %d updated)", len(to_upsert), added, updated)
     else:

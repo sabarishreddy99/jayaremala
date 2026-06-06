@@ -74,6 +74,7 @@ def build_graph() -> None:
                     if len(word) > 3:
                         _skill_to_docs.setdefault(word, []).append(doc_id)
 
+
     # ── Projects → skill tags ─────────────────────────────────────────────────
     proj_path = DATA_DIR / "projects.json"
     if proj_path.exists():

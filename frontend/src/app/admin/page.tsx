@@ -176,15 +176,44 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
   async function reingest() {
     setReingesting(true);
     setReingestMsg(null);
+    const token = localStorage.getItem("avocado_admin_token") ?? "";
+
     try {
-      const token = localStorage.getItem("avocado_admin_token") ?? "";
+      // Kick off the background reingest — returns immediately with {status:"started"}
       const res = await fetch(`${API_BASE_URL}/admin/reingest?force=true`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`${res.status}`);
-      const d = await res.json();
-      setReingestMsg(`Full rebuild complete — ${d.added ?? 0} embedded · ${d.total ?? 0} total in ChromaDB`);
+      const kick = await res.json();
+      if (kick.status === "already_running") {
+        setReingestMsg("Already running — check back in a moment.");
+        setReingesting(false);
+        return;
+      }
+
+      // Poll /admin/reingest/status every 2s until done
+      await new Promise<void>((resolve, reject) => {
+        const interval = setInterval(async () => {
+          try {
+            const sr = await fetch(`${API_BASE_URL}/admin/reingest/status`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!sr.ok) { clearInterval(interval); reject(new Error(`${sr.status}`)); return; }
+            const s = await sr.json();
+            if (!s.running) {
+              clearInterval(interval);
+              if (s.error) { reject(new Error(s.error)); return; }
+              const d = s.result ?? {};
+              setReingestMsg(`Full rebuild complete — ${d.added ?? 0} embedded · ${d.total ?? 0} total in ChromaDB`);
+              resolve();
+            }
+          } catch (err) {
+            clearInterval(interval);
+            reject(err);
+          }
+        }, 2000);
+      });
     } catch (e) {
       setReingestMsg(`Failed${e instanceof Error ? ` (${e.message})` : ""} — check ADMIN_TOKEN & backend`);
     } finally {

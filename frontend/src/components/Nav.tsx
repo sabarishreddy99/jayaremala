@@ -125,7 +125,7 @@ export default function Nav() {
 
   return (
     <header
-      className={`sticky top-0 z-40 relative will-change-transform ${
+      className={`sticky top-0 z-40 relative will-change-transform bg-bg ${
         navVisible
           /* Reveal: spring easing — feels like it "settles" into place */
           ? "translate-y-0 transition-transform duration-[480ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
@@ -148,10 +148,9 @@ export default function Nav() {
         <div
           className={`relative z-10 mx-auto flex w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem] items-center justify-between
             px-4 py-2
-            backdrop-blur-[14px]
-            transition-[background-color,box-shadow] duration-[400ms] ease-out
+            transition-[background-color,box-shadow] duration-400 ease-out
             ${scrolled
-              ? "bg-surface/90 dark:bg-surface/95 [box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.10),_0_2px_8px_-2px_rgb(0_0_0/0.06)] dark:[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.45),_0_2px_8px_-2px_rgb(0_0_0/0.25)]"
+              ? "bg-bg dark:bg-surface [box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.08),0_2px_8px_-2px_rgb(0_0_0/0.04)] dark:[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.45),0_2px_8px_-2px_rgb(0_0_0/0.25)]"
               : "bg-transparent shadow-none"
             }`}
         >
@@ -183,10 +182,8 @@ export default function Nav() {
             <span
               aria-hidden
               className="pointer-events-none absolute top-1/2 -translate-y-1/2 h-8
-                         bg-gradient-to-b from-indigo-50 to-indigo-100/60
-                         dark:from-indigo-950/70 dark:to-indigo-900/30
-                         ring-1 ring-indigo-200/60 dark:ring-indigo-800/50
-                         shadow-[0_2px_12px_-2px_rgb(99_102_241_/_0.25)]"
+                         bg-surface-raised dark:bg-surface-raised
+                         ring-1 ring-border dark:ring-border"
               style={{
                 left: spot.left,
                 width: spot.width,
@@ -204,9 +201,9 @@ export default function Nav() {
                   onMouseEnter={() => setHoverIdx(i)}
                   className={`relative z-10 inline-flex items-center px-3 py-1.5 text-sm whitespace-nowrap transition-colors duration-200 ${
                     active
-                      ? "text-indigo-700 dark:text-indigo-300 font-medium"
+                      ? "text-fg font-semibold"
                       : hoverIdx === i
-                      ? "text-indigo-700 dark:text-indigo-300"
+                      ? "text-fg"
                       : "text-fg-subtle"
                   }`}
                 >
@@ -314,7 +311,7 @@ export default function Nav() {
                   className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors ${
                     pathname.startsWith(l.href)
                       ? "bg-surface-raised text-fg font-medium"
-                      : "text-fg-muted hover:bg-surface-raised hover:text-indigo-600 dark:hover:text-indigo-400"
+                      : "text-fg-muted hover:bg-surface-raised hover:text-fg"
                   }`}
                 >
                   <span className={`shrink-0 ${pathname.startsWith(l.href) ? "text-accent" : "text-fg-faint"}`}>

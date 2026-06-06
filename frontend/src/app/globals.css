@@ -128,17 +128,17 @@
 /* natural light. Ink colors are deep blue-black, not harsh  */
 /* neutral. Borders carry the column-rule weight of print.   */
 :root {
-  --bg:             #eff1f6;
-  --surface:        #f6f8fb;
-  --surface-raised: #e6eaf0;
-  --surface-sunken: #dce1e8;
-  --border:         #c2c9d4;
-  --border-subtle:  #d8dfe8;
-  --border-strong:  #8a97a8;
-  --fg:             #0d1520;
-  --fg-muted:       #2c3d50;
-  --fg-subtle:      #4a5e72;
-  --fg-faint:       #8898a8;
+  --bg:             #fcfbf7;
+  --surface:        #f5f4f0;
+  --surface-raised: #eceae6;
+  --surface-sunken: #e3e0da;
+  --border:         #c6c2bb;
+  --border-subtle:  #dedad3;
+  --border-strong:  #978f87;
+  --fg:             #181410;
+  --fg-muted:       #3a342c;
+  --fg-subtle:      #5a5248;
+  --fg-faint:       #8c867e;
   --accent:           #4f46e5;
   --accent-hover:     #4338ca;
   --accent-light:     #eef2ff;

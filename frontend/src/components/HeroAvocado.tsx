@@ -219,7 +219,7 @@ export default function HeroAvocado() {
           type="submit"
           disabled={streaming || !input.trim()}
           aria-label="Ask"
-          className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-white transition-colors hover:bg-indigo-700 disabled:opacity-40"
+          className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent text-white transition-colors hover:bg-accent-hover disabled:opacity-40"
         >
           {streaming ? (
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin">

@@ -24,30 +24,11 @@ export default function ExperiencePage() {
 
       {/* Header */}
       <header className="mb-12 sm:mb-16 relative">
-        {/* Decorative bloom */}
-        <div
-          className="absolute -top-8 -right-8 w-72 h-72 rounded-full blur-3xl pointer-events-none -z-10"
-          style={{ background: "radial-gradient(circle, rgba(99,102,241,0.12) 0%, rgba(139,92,246,0.06) 60%, transparent 100%)" }}
-          aria-hidden
-        />
-
         <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-3">Career · Timeline</p>
 
-        {/* Title with gradient glyph */}
-        <div className="flex items-baseline gap-4 mb-2">
+        <div className="flex items-baseline gap-3 mb-2">
           <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg">Experience</h1>
-          <span
-            className="text-2xl sm:text-3xl select-none"
-            style={{
-              background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-            aria-hidden
-          >
-            ◈
-          </span>
+          <span className="text-2xl sm:text-3xl select-none text-fg-faint" aria-hidden>◈</span>
         </div>
 
         {profile.page_experience && (
@@ -59,16 +40,16 @@ export default function ExperiencePage() {
         {/* Stat chips */}
         <div className="flex flex-wrap gap-2 mt-4">
           {isActive && (
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-sm px-3 py-1">
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-full px-3 py-1">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Currently active
             </span>
           )}
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-sm px-3 py-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-accent bg-accent-light border border-border rounded-full px-3 py-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
             {experience.length} roles
           </span>
-          <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
+          <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
             {uniqueCompanies} companies
           </span>
         </div>
@@ -80,23 +61,23 @@ export default function ExperiencePage() {
           <li key={i} className="relative pl-8 pb-12 last:pb-0">
             {/* Timeline line — gradient fades toward bottom */}
             {i < experience.length - 1 && (
-              <div className="absolute left-[10px] top-5 bottom-0 w-px bg-gradient-to-b from-indigo-300 dark:from-indigo-700 to-border" />
+              <div className="absolute left-[10px] top-5 bottom-0 w-px bg-gradient-to-b from-border-strong to-border" />
             )}
 
             {/* Timeline dot */}
-            <div className="absolute left-0 top-1 h-[22px] w-[22px] rounded-full bg-indigo-600 shadow-sm ring-2 ring-indigo-200 dark:ring-indigo-800 flex items-center justify-center">
-              <div className="w-1.5 h-1.5 rotate-45 bg-white" />
+            <div className="absolute left-0 top-1 h-[22px] w-[22px] rounded-full bg-accent ring-2 ring-border flex items-center justify-center">
+              <div className="w-1.5 h-1.5 rotate-45 bg-accent-fg" />
             </div>
 
             <ScrollReveal delay={Math.min(i * 70, 280)} className="w-full">
-              <div className="group relative rounded rounded-br-none border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden">
+              <div className="group relative rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-border-strong transition-all overflow-hidden card-lift">
                 {/* Hover sweep */}
-                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                <div className="absolute inset-x-0 top-0 h-px bg-fg/20 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 {/* Corner bracket accents */}
-                <svg className="absolute top-2.5 left-2.5 text-border/50 group-hover:text-indigo-400/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                <svg className="absolute top-2.5 left-2.5 text-border/50 group-hover:text-accent/30 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
                   <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
-                <svg className="absolute bottom-2.5 right-2.5 text-border/50 group-hover:text-indigo-400/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
+                <svg className="absolute bottom-2.5 right-2.5 text-border/50 group-hover:text-accent/30 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
                   <path d="M1 9 L9 9 L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
 
@@ -107,7 +88,7 @@ export default function ExperiencePage() {
                     <p className="text-sm font-medium text-accent">{job.company}</p>
                   </div>
                   <div className="text-right shrink-0">
-                    <span className="inline-block rounded-sm bg-surface-raised px-3 py-0.5 text-[11px] font-medium text-fg-muted">
+                    <span className="inline-block rounded-full border border-border px-3 py-0.5 text-[11px] font-medium text-fg-muted">
                       {job.start} – {job.end}
                     </span>
                     <p className="text-[11px] text-fg-faint mt-0.5">{job.location}</p>
@@ -117,7 +98,7 @@ export default function ExperiencePage() {
                 {job.tech && (
                   <div className="flex flex-wrap gap-1.5 mb-4">
                     {job.tech.split(", ").map((t) => (
-                      <span key={t} className="rounded-sm bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2 py-0.5 text-[10px] font-medium text-accent">
+                      <span key={t} className="rounded-full border border-border px-2.5 py-0.5 text-[10px] font-medium text-fg-subtle tracking-wide">
                         {t}
                       </span>
                     ))}
@@ -127,7 +108,7 @@ export default function ExperiencePage() {
                 <ul className="space-y-2.5">
                   {job.bullets.map((b, j) => (
                     <li key={j} className="flex gap-2.5 text-sm text-fg-muted leading-relaxed">
-                      <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-indigo-400" />
+                      <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-border-strong" />
                       {b}
                     </li>
                   ))}

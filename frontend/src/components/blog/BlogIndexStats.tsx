@@ -71,7 +71,7 @@ export function BlogIndexStats({ summary }: { summary: Summary | null }) {
   return (
     <div className="flex flex-wrap items-center gap-2 mt-4 mb-8">
       {summary.total_views > 0 && (
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
           </svg>
@@ -79,7 +79,7 @@ export function BlogIndexStats({ summary }: { summary: Summary | null }) {
         </span>
       )}
       {summary.total_claps > 0 && (
-        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
+        <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
             <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/>
             <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
@@ -87,7 +87,7 @@ export function BlogIndexStats({ summary }: { summary: Summary | null }) {
           {formatCount(summary.total_claps)} claps
         </span>
       )}
-      <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-sm px-3 py-1">
+      <span className="inline-flex items-center text-[11px] font-medium text-fg-muted bg-surface border border-border rounded-full px-3 py-1">
         {summary.posts.length} posts
       </span>
     </div>
@@ -183,7 +183,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
         <div className="flex flex-wrap gap-2 mb-8">
           <button
             onClick={() => setActiveTag(null)}
-            className={`rounded-sm px-3 py-1 text-[11px] font-medium transition-colors ${
+            className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
               !activeTag
                 ? "bg-fg text-bg"
                 : "border border-border bg-surface text-fg-muted hover:border-fg-muted hover:text-fg"
@@ -195,7 +195,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
             <button
               key={tag}
               onClick={() => setActiveTag(activeTag === tag ? null : tag)}
-              className={`rounded-sm px-3 py-1 text-[11px] font-medium transition-colors ${
+              className={`rounded-full px-3 py-1 text-[11px] font-medium transition-colors ${
                 activeTag === tag
                   ? "bg-accent text-white border border-accent"
                   : "border border-border bg-surface text-fg-muted hover:border-accent hover:text-accent"
@@ -229,13 +229,13 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
           <li key={p.slug}>
             <Link
               href={`/blog/${p.slug}`}
-              className="group relative block rounded border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden"
+              className="group relative block rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-border-strong transition-all overflow-hidden card-lift"
             >
               {/* Hover sweep bar */}
-              <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-indigo-500 to-violet-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+              <div className="absolute inset-x-0 top-0 h-px bg-fg/20 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
 
               <div className="flex items-start justify-between gap-4 mb-2">
-                <h2 className="text-base font-bold text-fg group-hover:text-accent transition-colors leading-snug">
+                <h2 className="flex-1 min-w-0 text-base font-bold text-fg group-hover:text-accent transition-colors leading-snug">
                   {p.title}
                 </h2>
                 <div className="flex flex-col items-end gap-1.5 shrink-0">

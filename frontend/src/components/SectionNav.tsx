@@ -92,9 +92,9 @@ export default function SectionNav() {
                 aria-label={`Go to ${label}`}
                 title={label}
                 className={`relative z-10 rounded-full flex-shrink-0 transition-all duration-300
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/50
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/50
                   ${isActive
-                    ? "w-2.5 h-2.5 bg-indigo-500 shadow-[0_0_0_3px_rgba(99,102,241,0.20)]"
+                    ? "w-2.5 h-2.5 bg-accent shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_20%,transparent)]"
                     : "w-1.5 h-1.5 bg-fg-faint/35 hover:bg-fg-faint/75"
                   }`}
               />

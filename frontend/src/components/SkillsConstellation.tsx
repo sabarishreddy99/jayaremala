@@ -162,8 +162,8 @@ export default function SkillsConstellation() {
 
       {/* Legend */}
       <div className="flex items-center justify-center gap-4 mt-2 text-[10px] text-fg-faint">
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-violet-500" /> Project</span>
-        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-indigo-500" /> Experience</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-accent/60" /> Project</span>
+        <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-accent" /> Experience</span>
         <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-amber-500" /> Award ★</span>
         <span>· hover a skill to see where it&apos;s been used</span>
       </div>

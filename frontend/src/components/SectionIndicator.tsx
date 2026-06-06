@@ -78,7 +78,7 @@ export default function SectionIndicator() {
             <span
               className={`rounded-full transition-all duration-300 ease-out
                           ${isActive
-                            ? "w-5 h-1.5 bg-indigo-500 dark:bg-indigo-400"
+                            ? "w-5 h-1.5 bg-accent"
                             : "w-1.5 h-1.5 bg-border-strong hover:bg-fg-faint"
                           }`}
             />

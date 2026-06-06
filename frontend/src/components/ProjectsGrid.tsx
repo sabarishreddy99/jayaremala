@@ -80,14 +80,14 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
         <div className="flex flex-wrap gap-2 mb-8">
           <button
             onClick={() => setActiveTag(null)}
-            className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-sm px-3.5 py-1.5 border transition-all duration-150 ${
+            className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-1.5 border transition-all duration-150 ${
               !activeTag
-                ? "bg-fg text-bg border-fg shadow-sm"
-                : "bg-surface border-border text-fg-faint hover:text-fg"
+                ? "bg-fg text-bg border-fg"
+                : "bg-surface border-border text-fg-faint hover:text-fg hover:border-border-strong"
             }`}
           >
             All
-            <span className={`text-[10px] font-semibold rounded-sm px-1.5 py-0.5 ${
+            <span className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${
               !activeTag ? "bg-bg/20 text-bg" : "bg-surface-raised text-fg-faint"
             }`}>{projects.length}</span>
           </button>
@@ -99,14 +99,14 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                 key={tag}
                 onClick={() => setActiveTag(activeTag === tag ? null : tag)}
                 aria-pressed={isActive}
-                className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-sm px-3.5 py-1.5 border transition-all duration-150 ${
+                className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-1.5 border transition-all duration-150 ${
                   isActive
-                    ? "bg-accent text-white border-accent shadow-sm"
-                    : "bg-surface border-border text-fg-faint hover:text-fg hover:border-accent/50"
+                    ? "bg-accent text-white border-accent"
+                    : "bg-surface border-border text-fg-faint hover:text-fg hover:border-border-strong"
                 }`}
               >
                 {tag}
-                <span className={`text-[10px] font-semibold rounded-sm px-1.5 py-0.5 ${
+                <span className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${
                   isActive ? "bg-white/20 text-white" : "bg-surface-raised text-fg-faint"
                 }`}>{count}</span>
               </button>
@@ -135,22 +135,17 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((p, i) => {
             const isAward = Boolean(p.award);
-            const sweepClass = isAward
-              ? "from-amber-500 to-orange-500"
-              : p.featured
-              ? "from-blue-500 to-cyan-500"
-              : "from-indigo-500 to-violet-500";
 
             return (
               <ScrollReveal key={i} delay={Math.min((i % 3) * 80, 160)} className="flex">
                 <div
-                  className="group relative flex flex-col flex-1 rounded rounded-br-none border border-border bg-surface p-5 sm:p-6 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md transition-all overflow-hidden"
+                  className="group relative flex flex-col flex-1 rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-border-strong transition-all overflow-hidden card-lift"
                   onMouseMove={onTiltMove}
                   onMouseLeave={onTiltLeave}
                   style={{ transition: "transform 0.2s cubic-bezier(0.16,1,0.3,1), border-color 0.2s, box-shadow 0.2s", willChange: "transform" }}
                 >
                   {/* Hover sweep */}
-                  <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${sweepClass} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
+                  <div className={`absolute inset-x-0 top-0 h-px ${isAward ? "bg-gradient-to-r from-amber-500 to-orange-400" : "bg-fg/20"} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
                   {/* Corner bracket accents — ridealso-style geometric marks */}
                   <svg className="absolute top-2.5 left-2.5 text-border/50 group-hover:text-accent/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
                     <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -171,7 +166,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                         </span>
                       )}
                       {p.featured && !isAward && (
-                        <span className="text-[10px] font-semibold rounded-sm bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-400 px-2 py-0.5">
+                        <span className="text-[10px] font-semibold rounded-sm bg-surface-raised border border-border text-fg-subtle px-2 py-0.5">
                           Featured
                         </span>
                       )}
@@ -186,10 +181,10 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                       <button
                         key={t}
                         onClick={() => setActiveTag(activeTag === t ? null : t)}
-                        className={`rounded-sm border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                        className={`rounded-full border px-2.5 py-0.5 text-[10px] font-medium tracking-wide transition-colors ${
                           activeTag === t
                             ? "bg-accent border-accent text-white"
-                            : "bg-surface-raised border-border text-fg-muted hover:border-accent hover:text-accent"
+                            : "border-border text-fg-subtle hover:border-accent/50 hover:text-accent"
                         }`}
                       >
                         {t}
@@ -212,7 +207,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                           href={link.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 rounded-sm bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:opacity-80 transition-opacity"
+                          className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:border-accent/50 transition-colors"
                           onClick={(e) => e.stopPropagation()}
                         >
                           {link.label}

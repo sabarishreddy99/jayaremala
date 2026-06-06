@@ -178,14 +178,14 @@ export default function ChatMessage({ message, streaming }: Props) {
 
   return (
     <div className="flex justify-start gap-3">
-      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-base mt-0.5" title="Avocado">
+      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-accent flex items-center justify-center text-base mt-0.5" title="Avocado">
         🥑
       </div>
       <div className="relative min-w-0 flex-1 max-w-[calc(100%-2.5rem)] pl-3.5">
         {/* Left accent bar — refined pull-quote marker for Avocado's replies */}
         <span
           aria-hidden
-          className="absolute left-0 top-1 bottom-1 w-[2px] rounded-full bg-gradient-to-b from-indigo-500 via-violet-500 to-indigo-400 opacity-70"
+          className="absolute left-0 top-1 bottom-1 w-[2px] rounded-full bg-gradient-to-b from-accent to-accent/20 opacity-60"
         />
         {/* Plain text — no card, no border, no shadow (minimalist) */}
         <div className="text-[15px] leading-[1.7] text-fg pt-0.5">

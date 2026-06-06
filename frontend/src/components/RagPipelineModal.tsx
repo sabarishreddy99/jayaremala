@@ -130,7 +130,7 @@ function Node({
       onClick={() => onActivate(active ? null : node)}
       className={`w-full flex items-center gap-2.5 rounded-xl border px-4 py-2.5 text-left transition-all duration-150
         ${active
-          ? "border-indigo-400 dark:border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 shadow-sm"
+          ? "border-accent/50 bg-accent-light/20 dark:bg-accent-light/10"
           : "border-border bg-surface-raised/60 hover:border-border-strong"
         }`}
     >

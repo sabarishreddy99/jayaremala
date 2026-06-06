@@ -122,7 +122,7 @@ export default function MobileAvocadoFAB() {
       <button
         onClick={() => setOpen(true)}
         aria-label="Open site navigation"
-        className={`md:hidden fixed bottom-6 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg shadow-indigo-500/25 active:scale-95 transition-all duration-300 ${
+        className={`md:hidden fixed bottom-6 right-5 z-50 flex h-12 w-12 items-center justify-center rounded-full shadow-lg active:scale-95 transition-all duration-300 ${
           scrolled || open
             ? "opacity-100 translate-y-0 pointer-events-auto"
             : "opacity-0 translate-y-3 pointer-events-none"
@@ -166,7 +166,7 @@ export default function MobileAvocadoFAB() {
           <div>
             <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-fg-faint mb-0.5">Pages</p>
             <p className="text-base font-bold text-fg leading-none">
-              Jaya<span className="text-indigo-500">.</span>
+              Jaya<span className="text-accent">.</span>
             </p>
           </div>
           <button
@@ -195,11 +195,11 @@ export default function MobileAvocadoFAB() {
                 {...linkProps}
                 className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 border transition-all duration-150
                   ${active
-                    ? "bg-indigo-50 dark:bg-indigo-950/50 border-indigo-200 dark:border-indigo-800 text-indigo-600 dark:text-indigo-400"
-                    : "border-border bg-surface-raised text-fg-muted hover:border-indigo-200 dark:hover:border-indigo-800 hover:text-fg"
+                    ? "bg-accent-light border-border text-accent"
+                    : "border-border bg-surface-raised text-fg-muted hover:border-border-strong hover:text-fg"
                   }`}
               >
-                <span className={active ? "text-indigo-500" : "text-fg-faint"}>
+                <span className={active ? "text-accent" : "text-fg-faint"}>
                   {item.icon}
                 </span>
                 <span className="text-sm font-medium leading-none">{item.label}</span>

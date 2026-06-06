@@ -412,7 +412,7 @@ export default function ChatInterface() {
         {/* Avatar + greeting — minimal */}
         <div className="flex flex-col items-center px-4 sm:px-6 pt-10 sm:pt-16 pb-4 text-center">
           <div className="relative mb-3">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-2xl">
+            <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-2xl">
               🥑
             </div>
             <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-bg" />
@@ -441,8 +441,8 @@ export default function ChatInterface() {
                     aria-pressed={selected}
                     className={`rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-all duration-150 ${
                       selected
-                        ? "border-indigo-400 bg-indigo-600 text-white shadow-sm"
-                        : "border-border bg-surface/60 text-fg-muted hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-accent"
+                        ? "border-accent bg-accent text-white"
+                        : "border-border bg-surface/60 text-fg-muted hover:border-accent/50 hover:text-accent"
                     }`}
                   >
                     {p.label}
@@ -467,7 +467,7 @@ export default function ChatInterface() {
                 onClick={() => setPrefill(p.full)}
                 className="group rounded-xl border border-border/60 bg-surface/50 px-4 py-3
                            text-[13px] text-center text-fg-muted
-                           hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-accent hover:bg-surface
+                           hover:border-accent/50 hover:text-accent hover:bg-surface
                            active:scale-[0.98] transition-all duration-150"
               >
                 {p.label}
@@ -496,12 +496,12 @@ export default function ChatInterface() {
         className={`shrink-0 px-3 sm:px-10 pt-2 transition-all duration-500 ${sessionRestored ? "opacity-100 max-h-12" : "opacity-0 max-h-0 overflow-hidden pointer-events-none"}`}
       >
         <div className="mx-auto max-w-2xl lg:max-w-3xl">
-          <div className="flex items-center gap-2 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-indigo-50/60 dark:bg-indigo-950/30 px-3 py-2">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-indigo-400 shrink-0">
+          <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-accent shrink-0">
               <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
               <path d="M3 3v5h5"/>
             </svg>
-            <p className="text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
+            <p className="text-[11px] text-fg-muted font-medium">
               Conversation restored — pick up where you left off.
             </p>
           </div>
@@ -558,7 +558,7 @@ export default function ChatInterface() {
         aria-hidden
         className={`shrink-0 h-0.5 w-full transition-all duration-700 ${
           streaming
-            ? "opacity-80 bg-gradient-to-r from-indigo-500 via-violet-400 to-indigo-500"
+            ? "opacity-80 bg-gradient-to-r from-accent via-accent/60 to-accent"
             : backendStatus === "warming"
             ? "opacity-50 bg-amber-400"
             : "opacity-0"
@@ -607,7 +607,7 @@ export default function ChatInterface() {
                           style={{ animationDelay: `${idx * 60}ms` }}
                           className="w-full text-left rounded-lg border border-border bg-surface/70
                                      px-3 py-2 text-[11px] text-fg-muted
-                                     hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-accent
+                                     hover:border-accent/50 hover:text-accent
                                      hover:bg-surface transition-all duration-150
                                      opacity-0 animate-[fadeUp_0.4s_ease_forwards]"
                         >

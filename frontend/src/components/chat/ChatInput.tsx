@@ -95,7 +95,7 @@ export default function ChatInput({ onSend, disabled, prefill, onPrefillConsumed
       className={`
         flex items-center gap-2 rounded-full border bg-surface px-3 py-2
         transition-all duration-200 shadow-sm
-        ${disabled ? "border-border opacity-60" : "border-border focus-within:[box-shadow:0_0_0_3px_var(--bg),0_0_0_5px_rgb(99_102_241_/_0.45)]"}
+        ${disabled ? "border-border opacity-60" : "border-border focus-within:[box-shadow:0_0_0_3px_var(--bg),0_0_0_5px_color-mix(in_srgb,var(--accent)_45%,transparent)]"}
       `}
     >
       {/* Voice button */}
@@ -152,7 +152,7 @@ export default function ChatInput({ onSend, disabled, prefill, onPrefillConsumed
           shrink-0 w-9 h-9 rounded-full flex items-center justify-center
           transition-all duration-200
           ${hasContent && !disabled
-            ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
+            ? "bg-accent hover:bg-accent-hover text-white shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
             : "bg-surface-raised text-fg-faint cursor-not-allowed"
           }
         `}

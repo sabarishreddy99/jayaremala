@@ -20,7 +20,7 @@ export default function RagPipelineCard({ title, description, tags, award, note,
 
   return (
     <>
-      <div className="flex-1 rounded-sm border border-border bg-surface p-5 space-y-3 hover:border-indigo-300 dark:hover:border-indigo-700 card-lift transition-all">
+      <div className="flex-1 rounded-2xl border border-border bg-surface p-5 space-y-3 hover:border-border-strong card-lift transition-all">
 
         {/* ── Standard card content ── */}
         <div className="flex items-start justify-between gap-2">
@@ -36,7 +36,7 @@ export default function RagPipelineCard({ title, description, tags, award, note,
 
         <div className="flex flex-wrap gap-1.5">
           {tags.slice(0, 4).map((t) => (
-            <span key={t} className="rounded-sm bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-muted">
+            <span key={t} className="rounded-full border border-border px-2.5 py-0.5 text-[10px] font-medium text-fg-subtle tracking-wide">
               {t}
             </span>
           ))}
@@ -63,7 +63,7 @@ export default function RagPipelineCard({ title, description, tags, award, note,
         {/* ── Pipeline modal trigger ── */}
         <button
           onClick={() => setModalOpen(true)}
-          className="flex w-full items-center gap-1.5 border-t border-border pt-3 text-[10px] font-semibold text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors"
+          className="flex w-full items-center gap-1.5 border-t border-border pt-3 text-[10px] font-semibold text-accent hover:text-accent-hover transition-colors"
         >
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>

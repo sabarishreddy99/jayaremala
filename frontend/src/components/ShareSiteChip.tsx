@@ -36,7 +36,7 @@ export default function ShareSiteChip() {
       className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium transition-colors ${
         copied
           ? "border-green-400/60 bg-green-500/10 text-green-600 dark:text-green-400"
-          : "border-border dark:border-border-strong bg-surface dark:bg-surface-raised text-fg-faint hover:text-accent hover:border-indigo-300 dark:hover:border-indigo-700"
+          : "border-border dark:border-border-strong bg-surface dark:bg-surface-raised text-fg-faint hover:text-accent hover:border-accent/50"
       }`}
     >
       {copied ? (

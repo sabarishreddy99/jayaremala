@@ -222,7 +222,7 @@ export default function PortfolioHome() {
         <div className="flex-1 flex flex-col justify-center">
 
         {/* ── Focal hero — single centered column ── */}
-        <Inner className="flex flex-col items-center text-center py-8 sm:py-10 gap-5 max-w-3xl">
+        <Inner className="flex flex-col items-center text-center py-16 sm:py-24 gap-8 max-w-5xl">
 
           {/* Status badge */}
           {(() => {
@@ -251,7 +251,7 @@ export default function PortfolioHome() {
 
           {/* Tagline — one balanced line, constrained for readability */}
           <p
-            className="animate-fade-up text-base sm:text-xl font-medium text-fg-muted leading-relaxed max-w-xl text-balance"
+            className="animate-fade-up text-xl sm:text-2xl font-light text-fg-muted leading-relaxed max-w-2xl text-balance"
             style={{ animationDelay: "140ms" }}
           >
             {profile.tagline}
@@ -264,23 +264,23 @@ export default function PortfolioHome() {
           >
             <Link
               href="/chat"
-              className="inline-flex items-center justify-center gap-1.5 rounded bg-indigo-600 hover:bg-indigo-700 px-6 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-200"
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-fg text-bg px-8 py-3.5 text-sm font-medium hover:opacity-75 transition-opacity duration-200"
             >
               Ask Avocado
-              <span className="opacity-80">✦</span>
             </Link>
             <Link
               href="/projects"
-              className="inline-flex items-center justify-center gap-1.5 rounded border-2 border-border bg-surface dark:bg-surface-raised dark:border-border-strong px-6 py-3 text-sm font-semibold text-fg-muted hover:border-fg hover:text-fg transition-colors duration-200"
+              className="group inline-flex items-center gap-1.5 text-sm font-medium text-fg-muted hover:text-fg transition-colors duration-200"
             >
               View Projects
+              <span className="group-hover:translate-x-0.5 transition-transform duration-200">→</span>
             </Link>
           </div>
 
           {/* Minimal social row */}
           <div className="animate-fade-up flex items-center justify-center gap-4 mt-0.5" style={{ animationDelay: "300ms" }}>
             <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
-              className="text-fg-faint hover:text-indigo-500 dark:hover:text-indigo-400 transition-colors">
+              className="text-fg-faint hover:text-accent transition-colors">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
             </a>
             <a href={profile.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub"
@@ -318,7 +318,7 @@ export default function PortfolioHome() {
           {/* Latest post — single subtle teaser, centered */}
           {latestPost && (
             <div className="flex justify-center mt-6">
-              <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 rounded-sm border border-border/60 dark:border-border-strong bg-surface dark:bg-surface-raised px-3.5 py-1.5 hover:border-indigo-300 dark:hover:border-indigo-700 transition-all">
+              <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 rounded-sm border border-border/60 dark:border-border-strong bg-surface dark:bg-surface-raised px-3.5 py-1.5 hover:border-border-strong transition-all">
                 <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-fg-faint shrink-0">Latest</span>
                 <span className="w-px h-3 bg-border shrink-0" />
                 <span className="text-[11px] text-fg-subtle group-hover:text-accent transition-colors line-clamp-1 max-w-[60vw] sm:max-w-xs">
@@ -348,26 +348,25 @@ export default function PortfolioHome() {
 
       {/* ── 2 · At a Glance ── z-[2] ───────────────────────────── */}
       <StackSection z={2} seamless id="about">
-<Inner className="py-16 sm:py-20 relative">
+<Inner className="py-20 sm:py-28 relative">
           {/* Ghost number */}
           <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
             style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>01</span>
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-[3px] h-5 bg-gradient-to-b from-indigo-500 to-violet-500 shrink-0 rounded-full" />
-            <h2 className="text-sm font-bold uppercase tracking-wider label-gradient">At a Glance</h2>
-            <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" aria-hidden />
+          <div className="flex items-center gap-4 mb-10">
+            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-faint shrink-0">At a Glance</h2>
+            <div className="flex-1 h-px bg-border" aria-hidden />
           </div>
 
           <div className="grid gap-8 lg:grid-cols-[1fr_260px] xl:grid-cols-[1fr_300px] 2xl:grid-cols-[1fr_340px]">
             <div className="space-y-6">
               <ScrollReveal>
-              <p className="text-lg sm:text-xl leading-9 text-fg max-w-2xl">
+              <p className="text-xl sm:text-2xl font-light leading-[1.75] text-fg-muted max-w-2xl">
                 <HighlightNumbers text={profile.bio} />
               </p>
               </ScrollReveal>
 
               <ScrollReveal delay={80}>
-              <div className="hanging-quote border-l-2 border-accent/40 pl-4 max-w-2xl">
+              <div className="hanging-quote border-l border-border-strong pl-4 max-w-2xl">
                 <p className="text-sm sm:text-base leading-7 text-fg-muted italic">{profile.obsession}</p>
               </div>
               </ScrollReveal>
@@ -445,10 +444,10 @@ export default function PortfolioHome() {
                 <Link
                   key={href}
                   href={href}
-                  className="group relative flex flex-col gap-2.5 p-3 rounded-sm border border-border bg-surface hover:bg-surface-raised hover:border-border-strong transition-all overflow-hidden"
+                  className="group relative flex flex-col gap-2.5 p-4 rounded-2xl border border-border bg-surface hover:bg-surface-raised hover:border-border-strong transition-all overflow-hidden"
                 >
                   {/* Sweep bar */}
-                  <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${accent} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
+                  <div className="absolute inset-x-0 top-0 h-px bg-fg/20 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                   {/* Icon */}
                   <span className="text-fg-faint group-hover:text-accent transition-colors">{icon}</span>
                   {/* Label + desc */}
@@ -477,14 +476,13 @@ export default function PortfolioHome() {
       {/* ── 3 · Featured Projects ── z-[3] ─────────────────────── */}
       {featured.length > 0 && (
         <StackSection z={3} id="projects">
-          <Inner className="py-16 sm:py-20 relative">
+          <Inner className="py-20 sm:py-28 relative">
             {/* Ghost number */}
             <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
               style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>02</span>
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="w-[3px] h-5 bg-gradient-to-b from-blue-500 to-cyan-500 shrink-0 rounded-full" />
-                <h2 className="text-sm font-bold uppercase tracking-wider label-gradient">Featured Projects</h2>
+              <div className="flex items-center gap-4">
+                <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-faint shrink-0">Featured Projects</h2>
               </div>
               <Link href="/projects" className="text-xs font-medium text-accent hover:text-accent-hover">
                 All projects →
@@ -503,8 +501,8 @@ export default function PortfolioHome() {
                       sourceLinks={p.sourceLinks}
                     />
                   ) : (
-                    <div className="group relative flex-1 rounded-sm rounded-br-none border border-border bg-surface p-5 space-y-3 hover:border-border-strong card-lift overflow-hidden">
-                      <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${p.award ? "from-amber-500 to-orange-500" : CARD_PALETTES[i % CARD_PALETTES.length]} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
+                    <div className="group relative flex-1 rounded-2xl border border-border bg-surface p-6 space-y-3 hover:border-border-strong card-lift overflow-hidden">
+                      <div className={`absolute inset-x-0 top-0 h-px ${p.award ? "bg-gradient-to-r from-amber-500 to-orange-400" : "bg-fg/20"} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
                       {/* Corner bracket accents — ridealso-style geometric marks */}
                       <svg className="absolute top-2.5 left-2.5 text-border/50 group-hover:text-accent/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
                         <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -523,7 +521,7 @@ export default function PortfolioHome() {
                       <p className="text-xs leading-5 text-fg-subtle">{p.description}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {p.tags.slice(0, 4).map((t) => (
-                          <span key={t} className="rounded-sm bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-muted">
+                          <span key={t} className="rounded-full border border-border px-2.5 py-0.5 text-[10px] font-medium text-fg-subtle tracking-wide">
                             {t}
                           </span>
                         ))}
@@ -537,7 +535,7 @@ export default function PortfolioHome() {
                         {p.sourceLinks && p.sourceLinks.length > 0
                           ? p.sourceLinks.map((link) => (
                               <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer"
-                                className="inline-flex items-center gap-1 rounded-sm bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:opacity-80 transition-opacity">
+                                className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:border-accent/50 transition-colors">
                                 {link.label}
                                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
                               </a>
@@ -561,7 +559,7 @@ export default function PortfolioHome() {
 
       {/* ── 4 · Skills ── z-[4] ────────────────────────────────── */}
       <StackSection z={4} id="skills">
-        <Inner className="py-16 sm:py-20 relative">
+        <Inner className="py-20 sm:py-28 relative">
           {/* Ghost number */}
           <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
             style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>03</span>
@@ -569,10 +567,9 @@ export default function PortfolioHome() {
 
           {/* Interactive skills ↔ projects constellation — desktop only */}
           <div className="hidden lg:block mt-12 pt-10 border-t border-border">
-            <div className="flex items-center gap-3 mb-6">
-              <div className="w-[3px] h-5 bg-gradient-to-b from-violet-500 to-indigo-500 shrink-0 rounded-full" />
-              <h3 className="text-sm font-bold uppercase tracking-wider label-gradient">Skills in Action</h3>
-              <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" aria-hidden />
+            <div className="flex items-center gap-4 mb-6">
+              <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-faint shrink-0">Skills in Action</h3>
+              <div className="flex-1 h-px bg-border" aria-hidden />
             </div>
             <SkillsConstellation />
           </div>
@@ -588,7 +585,7 @@ export default function PortfolioHome() {
 
       {/* ── 5 · Testimonials ── z-[5] ──────────────────────────── */}
       <StackSection z={5} id="testimonials">
-        <Inner className="py-16 sm:py-20 relative">
+        <Inner className="py-20 sm:py-28 relative">
           {/* Ghost number */}
           <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
             style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>04</span>
@@ -604,7 +601,7 @@ export default function PortfolioHome() {
 
       {/* ── 6 · Contact ── z-[6] ───────────────────────────────── */}
       <StackSection z={6} className="pb-16 sm:pb-24" id="contact">
-        <Inner className="py-16 sm:py-20 relative">
+        <Inner className="py-20 sm:py-28 relative">
           {/* Ghost number */}
           <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
             style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>05</span>

@@ -168,10 +168,10 @@ export default function BlogEngagement({ slug }: { slug: string }) {
               relative w-12 h-12 rounded-full border-2 flex items-center justify-center text-xl
               transition-all duration-150
               ${atMax
-                ? "border-indigo-300 dark:border-indigo-700 bg-accent-light cursor-default opacity-60"
-                : "border-border bg-surface hover:border-indigo-400 hover:bg-accent-light cursor-pointer active:scale-90"
+                ? "border-border-strong bg-accent-light cursor-default opacity-60"
+                : "border-border bg-surface hover:border-accent/50 hover:bg-accent-light cursor-pointer active:scale-90"
               }
-              ${burst ? "scale-125 border-indigo-500 bg-accent-light" : "scale-100"}
+              ${burst ? "scale-125 border-accent bg-accent-light" : "scale-100"}
             `}
           >
             👏

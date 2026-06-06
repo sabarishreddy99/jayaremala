@@ -37,7 +37,7 @@ export default function RichCards({ content }: { content: string }) {
           <div
             key={p.title}
             className="group rounded-xl border border-border bg-surface/70 p-3
-                       hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-surface
+                       hover:border-border-strong hover:bg-surface
                        transition-colors duration-150"
           >
             {/* Title + award (the highlight metric) */}

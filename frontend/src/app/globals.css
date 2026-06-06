@@ -296,24 +296,30 @@ body::after {
 /* win. h1/h2 get Playfair Display; h3/h4 use Geist with good */
 /* tracking; body text gets comfortable line-height by default */
 @layer base {
-  h1, h2 {
+  h1 {
+    font-family: var(--font-display), Georgia, serif;
+    line-height: 1.05;
+    letter-spacing: -0.035em;
+  }
+  h2 {
     font-family: var(--font-display), Georgia, serif;
     line-height: 1.1;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.025em;
   }
   h3 {
     font-family: var(--font-sans), system-ui, sans-serif;
     font-weight: 600;
-    line-height: 1.3;
-    letter-spacing: -0.01em;
+    line-height: 1.25;
+    letter-spacing: -0.015em;
   }
   h4, h5, h6 {
     font-family: var(--font-sans), system-ui, sans-serif;
     font-weight: 600;
-    line-height: 1.4;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
   }
   p {
-    line-height: 1.7;
+    line-height: 1.8;
   }
 }
 
@@ -367,13 +373,11 @@ a[role="button"]:active {
 
 /* ── Card depth + lift ─────────────────────────────────────── */
 .card-lift {
-  box-shadow:
-    0 1px 2px 0 rgb(0 0 0 / 0.04),
-    0 1px 4px 0 rgb(0 0 0 / 0.04);
+  box-shadow: none;
   transition:
-    box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-    transform   0.22s cubic-bezier(0.16, 1, 0.3, 1),
-    border-color 0.22s ease;
+    box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    transform   0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.3s ease;
 }
 .dark .card-lift {
   box-shadow:
@@ -381,15 +385,12 @@ a[role="button"]:active {
     0 1px 2px -1px rgb(5 3 15 / 0.35);
 }
 .card-lift:active {
-  transform: translateY(0px) scale(0.98);
+  transform: translateY(0px) scale(0.99);
   transition-duration: 75ms;
 }
 .card-lift:hover {
-  transform: translateY(-2px);
-  box-shadow:
-    0 4px 12px -2px rgb(0 0 0 / 0.08),
-    0 8px 28px -4px rgb(0 0 0 / 0.07),
-    0 1px 3px 0 rgb(0 0 0 / 0.04);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.08);
 }
 .dark .card-lift:hover {
   box-shadow:
@@ -744,12 +745,7 @@ figcaption[data-rehype-pretty-code-title] + pre {
 /* Light: deeper cool gradient — crisper editorial contrast   */
 /* Dark: subtle depth gradient from slightly elevated surface */
 .hero-section-bg {
-  background: linear-gradient(
-    155deg,
-    hsl(216, 28%, 89%) 0%,
-    hsl(220, 22%, 93%) 50%,
-    var(--bg) 100%
-  );
+  background: linear-gradient(155deg, var(--surface) 0%, var(--bg) 100%);
 }
 .dark .hero-section-bg { background: var(--bg); }
 

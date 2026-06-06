@@ -75,7 +75,7 @@ export default function ChatCloseButton() {
         aria-label="Back to portfolio"
         className="md:hidden flex h-9 w-9 items-center justify-center rounded-full
                    border border-border bg-surface/80 backdrop-blur-sm
-                   text-fg-muted hover:text-fg hover:border-indigo-300 dark:hover:border-indigo-700
+                   text-fg-muted hover:text-fg hover:border-border-strong
                    hover:bg-surface active:scale-90
                    transition-all duration-150 shadow-sm"
       >
@@ -97,15 +97,15 @@ export default function ChatCloseButton() {
           className={`inline-flex items-center gap-2.5 rounded-xl border px-3.5 py-2 shadow-sm
                       backdrop-blur-md transition-all duration-200
                       ${expanded
-                        ? "border-indigo-300 dark:border-indigo-700 bg-surface shadow-md"
-                        : "border-border bg-surface/80 hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-surface hover:shadow-md"
+                        ? "border-border-strong bg-surface shadow-md"
+                        : "border-border bg-surface/80 hover:border-border-strong hover:bg-surface hover:shadow-md"
                       }`}
         >
           <svg
             width="13" height="13" viewBox="0 0 24 24"
             fill="none" stroke="currentColor" strokeWidth="2.5"
             strokeLinecap="round" strokeLinejoin="round"
-            className={`shrink-0 transition-all duration-150 ${expanded ? "text-indigo-500 dark:text-indigo-400 -translate-x-0.5" : "text-fg-faint"}`}
+            className={`shrink-0 transition-all duration-150 ${expanded ? "text-accent -translate-x-0.5" : "text-fg-faint"}`}
           >
             <path d="M19 12H5M12 19l-7-7 7-7" />
           </svg>

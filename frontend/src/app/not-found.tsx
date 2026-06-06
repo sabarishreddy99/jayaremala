@@ -246,10 +246,10 @@ export default function NotFound() {
             <Link
               key={link.href}
               href={link.href}
-              className="group flex items-center gap-3.5 rounded-2xl border border-border bg-surface px-4 py-3.5 transition-all duration-200 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-md"
+              className="group flex items-center gap-3.5 rounded-2xl border border-border bg-surface px-4 py-3.5 transition-all duration-200 hover:border-border-strong hover:shadow-sm card-lift"
             >
               {/* Icon pill */}
-              <div className="w-9 h-9 rounded-xl bg-surface-raised flex items-center justify-center text-fg-subtle shrink-0 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/60 group-hover:text-accent transition-colors duration-200">
+              <div className="w-9 h-9 rounded-xl bg-surface-raised flex items-center justify-center text-fg-subtle shrink-0 group-hover:bg-surface-sunken group-hover:text-accent transition-colors duration-200">
                 {link.icon}
               </div>
 
@@ -273,7 +273,7 @@ export default function NotFound() {
           {/* Ask Avocado — full-width, matches nav button style */}
           <Link
             href="/chat"
-            className="group sm:col-span-2 flex items-center gap-3.5 rounded-2xl bg-indigo-600 hover:bg-indigo-700 px-4 py-4 transition-all duration-200 shadow-sm hover:shadow-md"
+            className="group sm:col-span-2 flex items-center gap-3.5 rounded-2xl bg-fg hover:opacity-80 px-4 py-4 transition-all duration-200 shadow-sm hover:shadow-md"
           >
             <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center text-white shrink-0 group-hover:bg-white/20 transition-colors duration-200">
               <IconMessageAI />

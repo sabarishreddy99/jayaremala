@@ -172,16 +172,16 @@ export default function NavSuggestions({ links }: { links: NavLink[] }) {
             href={l.href}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-[11px] font-medium text-indigo-600 hover:bg-indigo-100 hover:border-indigo-400 transition-all"
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-surface px-3 py-1 text-[11px] font-medium text-accent hover:border-accent/50 transition-all"
           >
-            {l.icon && <span className="text-indigo-400 text-[10px]">{l.icon}</span>}
+            {l.icon && <span className="text-accent/70 text-[10px]">{l.icon}</span>}
             {l.label}
           </a>
         ) : (
           <Link
             key={l.href}
             href={l.href}
-            className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-raised px-3 py-1 text-[11px] font-medium text-fg-muted hover:bg-accent-light hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-accent transition-all"
+            className="inline-flex items-center gap-1 rounded-full border border-border bg-surface-raised px-3 py-1 text-[11px] font-medium text-fg-muted hover:bg-accent-light hover:border-accent/50 hover:text-accent transition-all"
           >
             {l.icon && <span className="text-zinc-400 text-[10px]">{l.icon}</span>}
             {l.label}

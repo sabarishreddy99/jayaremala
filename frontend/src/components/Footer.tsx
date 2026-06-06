@@ -2,17 +2,13 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { usePathname } from "next/navigation";
 import { profile } from "@/data/profile";
-import BlogGuideDrawer from "@/components/blog/BlogGuideDrawer";
 import LiquidWave from "@/components/LiquidWave";
 
 // ── Footer ────────────────────────────────────────────────────────────────────
 export default function Footer() {
   const [revealed, setRevealed] = useState(false);
   const footerRef = useRef<HTMLElement>(null);
-  const pathname = usePathname();
-  const showGuide = pathname.startsWith("/blog") || pathname.startsWith("/lab");
 
   useEffect(() => {
     const el = footerRef.current;
@@ -55,10 +51,10 @@ export default function Footer() {
         <div className="mx-auto flex w-full max-w-6xl xl:max-w-7xl 2xl:max-w-360 flex-wrap items-center justify-between gap-3">
           {/* Left: copyright */}
           <div className="flex flex-col gap-1">
-            <span className="font-mono text-[11px] tracking-[0.06em] text-fg-muted">
+            <span className="font-mono text-[11px] tracking-[0.06em] text-fg/60">
               © {new Date().getFullYear()} Jaya Sabarish Reddy Remala
             </span>
-            <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-fg-subtle">
+            <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-fg/35">
               Updated{" "}
               {new Date().toLocaleDateString("en-US", {
                 month: "short",
@@ -75,8 +71,8 @@ export default function Footer() {
                 href={profile.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
-                           hover:text-fg transition-colors duration-200"
+                className="font-mono text-[11px] tracking-[0.06em] text-fg/45
+                           hover:text-fg/80 transition-colors duration-200"
               >
                 GitHub
               </a>
@@ -86,24 +82,23 @@ export default function Footer() {
                 href={profile.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
-                           hover:text-fg transition-colors duration-200"
+                className="font-mono text-[11px] tracking-[0.06em] text-fg/45
+                           hover:text-fg/80 transition-colors duration-200"
               >
                 LinkedIn
               </a>
             )}
             <a
               href={`mailto:${profile.email}`}
-              className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
-                         hover:text-fg transition-colors duration-200"
+              className="font-mono text-[11px] tracking-[0.06em] text-fg/45
+                         hover:text-fg/80 transition-colors duration-200"
             >
               Email
             </a>
-            {showGuide && <BlogGuideDrawer />}
             <Link
               href="/chat"
-              className="font-mono text-[11px] tracking-[0.06em] text-accent
-                         hover:text-accent-hover transition-colors duration-200"
+              className="font-mono text-[11px] tracking-[0.06em] text-fg/45
+                         hover:text-fg/80 transition-colors duration-200"
             >
               Avocado ✦
             </Link>

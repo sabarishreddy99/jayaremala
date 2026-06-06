@@ -65,7 +65,7 @@ export default function LoadingGame() {
           </svg>
 
           {/* Avocado avatar */}
-          <div className="relative z-10 w-7 h-7 rounded-full bg-indigo-600 flex items-center justify-center text-base select-none">
+          <div className="relative z-10 w-7 h-7 rounded-full bg-accent flex items-center justify-center text-base select-none">
             🥑
           </div>
         </div>

@@ -274,7 +274,7 @@ export default async function BlogPostPage({ params }: Props) {
                   <Link
                     key={p.slug}
                     href={`/blog/${p.slug}`}
-                    className="group block rounded-xl border border-border bg-surface p-4 hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all"
+                    className="group block rounded-xl border border-border bg-surface p-4 hover:border-border-strong transition-all card-lift"
                   >
                     <h3 className="text-sm font-semibold text-fg group-hover:text-accent transition-colors leading-snug mb-1.5">
                       {p.title}

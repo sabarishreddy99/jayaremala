@@ -165,10 +165,11 @@ export default function Nav() {
         {/* Logo */}
         <Link
           href="/"
-          className="inline-flex items-center text-sm font-bold tracking-tight text-fg hover:opacity-70 transition-opacity"
+          className="inline-flex items-center gap-1 text-xl font-normal tracking-widest text-fg hover:opacity-70 transition-opacity"
+          style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
           onClick={() => setOpen(false)}
         >
-          Jaya<span className="inline-block w-1.5 h-1.5 rotate-45 bg-indigo-500 dark:bg-indigo-400 mx-0.5" />
+          Jaya
         </Link>
 
         {/* Desktop nav */}
@@ -226,19 +227,12 @@ export default function Nav() {
           <ThemeToggle />
           <Link
             href="/chat"
-            className="group ml-2 relative inline-flex items-center px-4 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium shadow-sm hover:shadow-md transition-colors duration-200 overflow-hidden"
+            className="group ml-2 relative inline-flex items-center px-5 py-1.5 rounded-full bg-fg text-bg text-sm font-medium hover:opacity-75 transition-opacity duration-200 overflow-hidden"
           >
-            {/* Default — swipes out left on hover */}
             <span className="flex items-center gap-2 transition-all duration-300 ease-in-out group-hover:-translate-x-10 group-hover:opacity-0">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 opacity-80">
-                <circle cx="11" cy="11" r="8" />
-                <path d="m21 21-4.35-4.35" />
-              </svg>
               Ask Avocado
-              <span className="avocado-icon leading-none">🥑</span>
             </span>
-            {/* Hover reveal — slides in from right */}
-            <span className="absolute inset-0 flex items-center justify-center translate-x-10 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-in-out text-sm font-medium tracking-wide">
+            <span className="absolute inset-0 flex items-center justify-center translate-x-10 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 transition-all duration-300 ease-in-out text-sm font-medium">
               Chat →
             </span>
           </Link>

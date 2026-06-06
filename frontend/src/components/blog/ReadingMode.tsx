@@ -48,9 +48,9 @@ export default function ReadingMode() {
           aria-label="Exit focus mode (Esc)"
           className="fixed bottom-6 right-24 z-[10000]
                      inline-flex items-center gap-1.5 rounded-full
-                     bg-indigo-600 border border-indigo-500 text-white
+                     bg-fg border border-fg text-bg
                      px-3.5 py-2 text-[10px] font-semibold uppercase tracking-widest
-                     shadow-xl hover:bg-indigo-700 transition-all duration-200 select-none"
+                     shadow-xl hover:opacity-80 transition-all duration-200 select-none"
         >
           <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
             <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/>

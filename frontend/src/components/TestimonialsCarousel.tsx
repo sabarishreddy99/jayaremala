@@ -23,7 +23,7 @@ function formatDate(iso: string) {
 
 function TestimonialCard({ item }: { item: Testimonial }) {
   return (
-    <div className="rounded-sm rounded-br-none border border-border bg-surface p-6 sm:p-7 flex flex-col shadow-sm flex-shrink-0 relative overflow-hidden">
+    <div className="rounded-2xl border border-border bg-surface p-6 sm:p-7 flex flex-col flex-shrink-0 relative overflow-hidden">
       {/* Corner bracket accents */}
       <svg className="absolute top-2.5 left-2.5 text-border/50 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
         <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -121,7 +121,7 @@ export default function TestimonialsCarousel() {
       {/* ── Mobile: header + inline nav arrows (always visible at top, never clipped) */}
       <div className="flex items-center justify-between mb-4 sm:hidden">
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <div className="w-[3px] h-5 rounded-full bg-gradient-to-b from-emerald-500 to-teal-500 shrink-0" />
+          <div className="w-[3px] h-5 rounded-full bg-border-strong shrink-0" />
           <h2 className="text-sm font-bold uppercase tracking-wider text-fg-faint">Testimonials</h2>
           <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" aria-hidden />
         </div>

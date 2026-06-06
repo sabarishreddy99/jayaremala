@@ -63,11 +63,11 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
                     title={hasMatch ? `See projects using ${item}` : `${item} (not in featured projects)`}
                     className={`rounded-sm border px-2.5 py-0.5 text-xs font-medium transition-all duration-150 cursor-pointer
                       ${isActive
-                        ? "border-indigo-500 bg-indigo-600 text-white shadow-sm shadow-indigo-500/40 scale-105"
+                        ? "border-accent bg-accent text-white shadow-sm scale-105"
                         : isDimmed
                           ? "border-border bg-surface text-fg-faint opacity-40 hover:opacity-70 hover:border-border-strong hover:text-fg-subtle"
                           : hasMatch
-                            ? "border-border bg-surface text-fg-muted hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-fg hover:bg-indigo-50/50 dark:hover:bg-indigo-950/30"
+                            ? "border-border bg-surface text-fg-muted hover:border-accent/50 hover:text-accent"
                             : "border-border bg-surface text-fg-muted hover:border-border-strong hover:text-fg"
                       }`}
                   >
@@ -89,7 +89,7 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
                 <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">
                   Featured projects using
                 </p>
-                <span className="rounded-sm bg-indigo-600 text-white px-2.5 py-0.5 text-[10px] font-semibold">
+                <span className="rounded-full bg-accent text-white px-2.5 py-0.5 text-[10px] font-semibold">
                   {activeSkill}
                 </span>
               </div>
@@ -97,8 +97,7 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
                 {matching.map((p) => (
                   <div
                     key={p.title}
-                    className="rounded border border-indigo-200 dark:border-indigo-800 bg-surface p-4
-                               ring-1 ring-indigo-300/20 dark:ring-indigo-700/20"
+                    className="rounded-2xl border border-border bg-surface p-4"
                   >
                     <div className="flex items-start justify-between gap-2 mb-1.5">
                       <h3 className="text-sm font-semibold text-fg leading-snug">{p.title}</h3>
@@ -113,9 +112,9 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
                       {p.tags.slice(0, 5).map((t) => (
                         <span
                           key={t}
-                          className={`rounded-sm px-2 py-0.5 text-[10px] font-medium
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium
                             ${t.toLowerCase() === activeSkill.toLowerCase()
-                              ? "bg-indigo-600 text-white"
+                              ? "bg-accent text-white"
                               : "bg-surface-raised text-fg-muted"}`}
                         >
                           {t}

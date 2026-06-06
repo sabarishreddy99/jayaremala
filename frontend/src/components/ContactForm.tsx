@@ -135,7 +135,7 @@ export default function ContactForm() {
 
       <section className="rounded border border-border bg-surface-raised p-6 sm:p-8">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="w-[3px] h-5 rounded-full bg-gradient-to-b from-rose-500 to-pink-500 shrink-0" />
+          <div className="w-[3px] h-5 rounded-full bg-border-strong shrink-0" />
           <h2 className="text-sm font-bold uppercase tracking-wider text-fg-faint">Get in Touch</h2>
           <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" aria-hidden />
         </div>
@@ -167,9 +167,9 @@ export default function ContactForm() {
           href={profile.booking_url ?? "https://calendar.app.google/3sScGpHpeSpvPjpSA"}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2.5 rounded border border-border bg-surface hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm px-5 py-3.5 mb-8 transition-all duration-200 group w-full sm:w-auto"
+          className="inline-flex items-center gap-2.5 rounded-xl border border-border bg-surface hover:border-border-strong hover:shadow-sm px-5 py-3.5 mb-8 transition-all duration-200 group w-full sm:w-auto"
         >
-          <span className="flex items-center justify-center w-8 h-8 rounded bg-indigo-50 dark:bg-indigo-950/50 text-indigo-500 shrink-0 group-hover:bg-indigo-100 dark:group-hover:bg-indigo-950 transition-colors">
+          <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-surface-raised text-fg-muted shrink-0 group-hover:bg-surface-sunken transition-colors">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
             </svg>
@@ -187,7 +187,7 @@ export default function ContactForm() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="text-xs font-medium text-fg-subtle mb-1.5 block">Name</label>
-              <div className="rounded border border-border bg-surface-raised px-4 py-3 focus-within:border-indigo-300 dark:focus-within:border-indigo-600 focus-within:bg-surface focus-within:shadow-sm transition-all">
+              <div className="rounded border border-border bg-surface-raised px-4 py-3 focus-within:border-accent focus-within:bg-surface focus-within:shadow-sm transition-all">
                 <input
                   required
                   type="text"
@@ -200,7 +200,7 @@ export default function ContactForm() {
             </div>
             <div>
               <label className="text-xs font-medium text-fg-subtle mb-1.5 block">Email</label>
-              <div className="rounded border border-border bg-surface-raised px-4 py-3 focus-within:border-indigo-300 dark:focus-within:border-indigo-600 focus-within:bg-surface focus-within:shadow-sm transition-all">
+              <div className="rounded border border-border bg-surface-raised px-4 py-3 focus-within:border-accent focus-within:bg-surface focus-within:shadow-sm transition-all">
                 <input
                   required
                   type="email"
@@ -215,7 +215,7 @@ export default function ContactForm() {
 
           <div>
             <label className="text-xs font-medium text-fg-subtle mb-1.5 block">Message</label>
-            <div className="rounded-xl border border-border bg-surface-raised px-4 py-3 focus-within:border-indigo-300 dark:focus-within:border-indigo-600 focus-within:bg-surface focus-within:shadow-sm transition-all">
+            <div className="rounded-xl border border-border bg-surface-raised px-4 py-3 focus-within:border-accent focus-within:bg-surface focus-within:shadow-sm transition-all">
               <textarea
                 required
                 rows={4}
@@ -276,7 +276,7 @@ export default function ContactForm() {
             href={profile.resume}
             target="_blank"
             rel="noopener noreferrer"
-            className="rounded border-2 border-indigo-200 dark:border-indigo-800 bg-accent-light px-5 py-2 text-sm font-semibold text-accent hover:border-accent hover:opacity-90 transition-all inline-flex items-center gap-1.5"
+            className="rounded-full border border-border px-5 py-2 text-sm font-semibold text-accent hover:border-accent/60 transition-all inline-flex items-center gap-1.5"
           >
             Download Resume
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

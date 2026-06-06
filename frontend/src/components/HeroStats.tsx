@@ -44,13 +44,13 @@ export default function HeroStats({ stats, cols = 4 }: { stats?: HeroStat[]; col
           onMouseLeave={() => setHovered(null)}
           className={`group relative rounded border bg-surface p-3 sm:p-4 overflow-hidden cursor-default select-none transition-all duration-300 ${
             hovered === i
-              ? "border-indigo-300 dark:border-indigo-600 shadow-md shadow-indigo-500/10 dark:shadow-indigo-500/8"
-              : "border-border hover:border-indigo-200 dark:hover:border-indigo-800"
+              ? "border-border-strong shadow-sm"
+              : "border-border hover:border-border-strong"
           }`}
         >
           {/* Hover glow */}
           <div
-            className="absolute inset-0 bg-gradient-to-br from-indigo-500/6 via-transparent to-violet-500/4 transition-opacity duration-300"
+            className="absolute inset-0 bg-gradient-to-br from-accent/4 via-transparent to-accent/2 transition-opacity duration-300"
             style={{ opacity: hovered === i ? 1 : 0 }}
           />
 

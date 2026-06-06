@@ -215,7 +215,7 @@ export default function IntroScreen() {
 
         {/* Time greeting — Context & Personalisation ──────────────── */}
         <div className="mb-6 flex items-center gap-2.5 opacity-0 animate-[fadeUp_0.6s_ease_0.15s_forwards]">
-          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 dark:bg-indigo-400 animate-pulse" aria-hidden />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" aria-hidden />
           <span className="text-[11px] font-bold uppercase tracking-[0.24em] text-fg-faint">
             {getGreeting()} — Portfolio
           </span>
@@ -257,9 +257,9 @@ export default function IntroScreen() {
             href="/chat"
             onClick={(e) => { e.stopPropagation(); dismiss(); }}
             className="group inline-flex items-center gap-2.5 rounded-full
-                       bg-indigo-600 hover:bg-indigo-700
-                       px-7 py-3.5 text-sm font-semibold text-white
-                       shadow-lg hover:shadow-xl hover:shadow-indigo-500/25
+                       bg-fg hover:opacity-80
+                       px-7 py-3.5 text-sm font-semibold text-bg
+                       shadow-lg
                        transition-all duration-200 active:scale-95"
           >
             <span className="text-base leading-none" aria-hidden>🥑</span>
@@ -285,7 +285,7 @@ export default function IntroScreen() {
               onClick={(e) => { e.stopPropagation(); dismiss(); }}
               className="rounded-full border border-border/70 bg-surface/60 backdrop-blur-sm
                          px-3.5 py-1.5 text-[11px] font-medium text-fg-muted
-                         hover:border-indigo-300 dark:hover:border-indigo-700 hover:text-accent
+                         hover:border-border-strong hover:text-accent
                          transition-all duration-150 active:scale-95"
             >
               {link.label}
@@ -331,7 +331,7 @@ export default function IntroScreen() {
       {dragY > 0 && (
         <div
           aria-hidden
-          className="absolute bottom-0 left-0 h-0.5 bg-indigo-500/60 rounded-full transition-none"
+          className="absolute bottom-0 left-0 h-0.5 bg-accent/60 rounded-full transition-none"
           style={{ width: `${Math.min((dragY / 90) * 100, 100)}%` }}
         />
       )}

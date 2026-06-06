@@ -1,5 +1,6 @@
 import GalleryGrid from "@/components/GalleryGrid";
 import { gallery } from "@/data/gallery";
+import { profile } from "@/data/profile";
 
 export const metadata = {
   title: "Gallery",
@@ -32,9 +33,11 @@ export default function GalleryPage() {
             aria-hidden
           >◆</span>
         </div>
-        <p className="text-sm text-fg-subtle max-w-xl leading-relaxed">
-          A visual log of achievements, events, and milestones along the way.
-        </p>
+        {profile.page_gallery && (
+          <p className="text-sm text-fg-subtle max-w-xl leading-relaxed">
+            {profile.page_gallery}
+          </p>
+        )}
       </header>
 
       <GalleryGrid items={gallery} />

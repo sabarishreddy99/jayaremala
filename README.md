@@ -76,8 +76,9 @@ Personal AI-assisted portfolio for **Jaya Sabarish Reddy Remala**. Two entry poi
 │  ┌────────────────────────────────────────────────────────────────────────┐  │
 │  │  Knowledge Base  backend/data/knowledge/                               │  │
 │  │  profile.json  experience.json  education.json  projects.json          │  │
-│  │  skills.json   testimonials.json   quotes.json                         │  │
-│  │  blog.json  lab.json  (auto-regenerated from content.db)               │  │
+│  │  skills.json   testimonials.json   gallery.json                        │  │
+│  │  quotes.json   blog.json   lab.json                                    │  │
+│  │  (quotes·blog·lab JSON auto-regenerated from content.db on write)      │  │
 │  └────────────────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────────────────┘
                │
@@ -159,16 +160,21 @@ User message
 
 | Type | Source | Strategy |
 |---|---|---|
-| `profile` | profile.json | 3 docs: overview, bio, contact |
+| `profile` | profile.json | 6 docs: overview, bio, contact, focus/obsession, now block, availability |
 | `experience` | experience.json | Overview + one doc per bullet per role |
 | `education` | education.json | Overview + one doc per highlight per degree |
 | `project` | projects.json | Overview + tech stack per project |
 | `skills` | skills.json | One doc per category + one aggregated |
-| `faq` | Hard-coded in ingest.py | Pre-answers common recruiter questions |
+| `testimonial` | testimonials.json | One doc per recommendation |
+| `quote` | quotes.json (auto-regenerated from content.db) | One doc per curated quote |
+| `gallery` | gallery.json | One doc per milestone or achievement |
+| `faq` | Dynamically built in `_build_faq_documents()` + `_build_system_faq_documents()` | Per-employer summaries, awards, education, resume, contact, blog/lab/quotes live counts, portfolio architecture — no hardcoded personal content |
 | `blog` | blog.json (auto-regenerated from content.db) | One doc per post (title + description + 2k body chars) |
 | `lab` | lab.json (auto-regenerated from content.db) | One doc per entry (title + description + 3k body chars) |
 
-All documents store a fine-grained `entity_type` metadata field (`experience_overview`, `experience_bullet`, `project_tech`, `education_highlight`, etc.) enabling the graph expansion and future metadata-filtered queries.
+Total: **~124 atomic documents** across 11 types. All personal content is generated dynamically from the JSON files — adding a new job, project, blog post, or quote is reflected in the knowledge base automatically on the next ingest.
+
+All documents store a fine-grained `entity_type` metadata field (`experience_overview`, `experience_bullet`, `project_tech`, `education_highlight`, `faq_company`, `quote`, `gallery`, etc.) enabling the graph expansion and future metadata-filtered queries.
 
 ### Incremental per-document ingest
 
@@ -181,7 +187,9 @@ On every startup, `run_ingest()` diffs the current document set against `.doc_ha
 | Removed document | `collection.delete()` — purged from ChromaDB |
 | Unchanged document | Skipped — no embedding call, no I/O |
 
-Adding one blog post embeds one document, not the entire corpus. A forced full re-embed is available via `POST /admin/reingest?force=true` (requires `ADMIN_TOKEN` bearer token).
+Before building the document list, `run_ingest()` calls `_sync_content_db()` — a lazy-import function that calls `regenerate_blog_json()`, `regenerate_lab_json()`, and `regenerate_quotes_json()` in sequence, syncing content.db → JSON before the diff runs. This ensures the knowledge base always reflects the live content.db state, not a stale snapshot.
+
+Adding one blog post embeds one document, not the entire corpus. A forced full re-embed via `POST /admin/reingest?force=true` (requires `ADMIN_TOKEN` bearer token) wipes ChromaDB with `reset_collection()` and rebuilds all 124 documents from scratch — useful after structural changes to ingest.py.
 
 **Embedding model change detection**: If the stored `EMBED_MODEL` name in `.doc_hashes.json` differs from the current constant, `reset_collection()` wipes the ChromaDB collection and a full reingest runs automatically. No manual ChromaDB deletion needed when switching embedding models.
 
@@ -200,7 +208,7 @@ GEMINI_FALLBACK_MODELS fallbacks   (gemini-2.0-flash, gemini-2.0-flash-lite, gem
 
 Blog posts, lab entries, and quotes are stored in `content.db` (SQLite on Lightsail SSD). The `/content/*` API exposes public GET endpoints and token-gated write endpoints.
 
-After every write, a background task regenerates the corresponding JSON file and calls `run_ingest()` so ChromaDB stays in sync with zero user-visible latency (only changed documents are re-embedded).
+After every write, a background task calls the appropriate `regenerate_*_json()` function (`regenerate_blog_json()`, `regenerate_lab_json()`, or `regenerate_quotes_json()`) and then `run_ingest()` so ChromaDB stays in sync with zero user-visible latency (only changed documents are re-embedded).
 
 The database is seeded from existing JSON files on first startup — no manual migration needed.
 
@@ -332,6 +340,8 @@ Daily S3 backup → s3://itsjaya-backups-analytics/analytics_db/
 | `/lab` | Living system design docs index |
 | `/lab/[slug]` | Individual system design entry |
 | `/quotes` | Curated quotes by category (Philosophy, Engineering, Science, etc.) |
+| `/gallery` | Photo grid — milestones, events, and achievements |
+| `/now` | What Jaya is currently building, learning, and reading |
 | `/admin` | Stats dashboard + content editors (no-index, token-gated) |
 
 All portfolio routes share a layout via the `(portfolio)` route group — adds no URL segment.
@@ -344,8 +354,8 @@ Next.js outputs a fully static site (`output: "export"`) deployed to GitHub Page
 
 | Component | Responsibility |
 |---|---|
-| `BlogPostList` | Client component — owns summary fetch + renders post cards with per-post stats |
-| `BlogIndexStats` | Client component — total claps + views in blog header |
+| `BlogIndexStats` | Card grid with sort controls (Latest / Oldest / Popular), tag filter with horizontal scroll on mobile, and per-post stats. Fetches engagement summary from `/blog/stats/summary`. |
+| `BlogCoverSVG` | Deterministic SVG cover art generated from slug — 4 pattern types (dot constellation, sine waves, geometric rings, circuit traces) selected by FNV-1a hash. All colours use CSS custom properties for light/dark mode. |
 | `BlogEngagement` | Client component on each post page — records view on mount, clap button with 1.5s debounce batching, max 50 claps/user/post, float-up animation |
 | `BlogGuideDrawer` | Floating button — MDX reference + live stats dashboard (`/stats/overview`) with 7d/30d/1y/all-time period table + per-post breakdown |
 
@@ -366,17 +376,22 @@ itsjaya/
 │   │   │   ├── (portfolio)/lab/page.tsx    Lab index
 │   │   │   ├── (portfolio)/lab/[slug]/     Lab entry
 │   │   │   ├── (portfolio)/quotes/page.tsx QuotesFeed
+│   │   │   ├── (portfolio)/gallery/page.tsx Photo grid — milestones + achievements
+│   │   │   ├── (portfolio)/now/page.tsx    Current status (building/learning/reading)
 │   │   │   └── admin/                      Stats dashboard + content editors
 │   │   ├── components/
 │   │   │   ├── chat/                       ChatInterface, ChatMessage, ChatInput
-│   │   │   ├── blog/                       BlogEngagement, BlogIndexStats,
-│   │   │   │                               BlogPostList, BlogGuideDrawer
+│   │   │   ├── blog/                       BlogIndexStats (card grid + sort + SVG art),
+│   │   │   │                               BlogCoverSVG (4-pattern FNV-1a),
+│   │   │   │                               BlogEngagement, BlogGuideDrawer
 │   │   │   ├── lab/                        LabMDXComponents (Status, Decision,
 │   │   │   │                               Update, Stack, Metric, ArchBlock)
 │   │   │   ├── admin/                      ContentBlogEditor, ContentLabEditor,
 │   │   │   │                               ContentQuotesEditor, KnowledgeBaseEditor,
-│   │   │   │                               AvailabilityEditor, KnowledgeDataView
-│   │   │   └── QuotesFeed.tsx              Quotes page client component
+│   │   │   │                               AvailabilityEditor, KnowledgeDataView,
+│   │   │   │                               ProfileEditor (all page descriptions editable)
+│   │   │   ├── GalleryGrid.tsx             Photo grid client component
+│   │   │   └── QuotesClient.tsx            Quotes feed with category filter
 │   │   ├── data/knowledge/                 Synced JSON copies (do not edit)
 │   │   ├── data/*.ts                       Typed re-exports
 │   │   ├── lib/blog.ts                     MDX loader, sorts by publishedAt
@@ -399,15 +414,18 @@ itsjaya/
 │   │   ├── routers/content.py              /content/* CRUD (blog, lab, quotes)
 │   │   ├── routers/stats.py                /stats · /stats/overview · /stats/admin
 │   │   ├── rag/store.py                    ChromaDB + BM25 + RRF (fastembed ONNX, bge-base-en-v1.5 768-dim)
-│   │   ├── rag/ingest.py                   Incremental ingest — per-doc hash diff, auto-wipe on model change
+│   │   ├── rag/ingest.py                   Per-doc hash diff · auto-wipe on model change ·
+│   │   │                                   _sync_content_db() · _build_faq_documents() (fully dynamic)
+│   │   │                                   _build_system_faq_documents() · ~124 docs / 11 types
 │   │   ├── rag/graph.py                    Static knowledge graph — build_graph() + expand_context()
 │   │   ├── db/analytics.py                 Chat + site analytics (period-aware, geo lookup)
 │   │   ├── db/blog_stats.py                Blog views + claps (period-aware)
-│   │   └── db/content.py                   Blog/lab/quotes CRUD + JSON regeneration
+│   │   └── db/content.py                   Blog/lab/quotes CRUD + regenerate_blog_json()
+│   │                                       regenerate_lab_json() · regenerate_quotes_json()
 │   ├── data/knowledge/                     Single source of truth (edit here)
 │   │   ├── profile.json  experience.json  education.json  projects.json
-│   │   ├── skills.json   testimonials.json   quotes.json
-│   │   └── blog.json  lab.json  (auto-regenerated — do not edit)
+│   │   ├── skills.json   testimonials.json   gallery.json
+│   │   └── quotes.json  blog.json  lab.json  (quotes·blog·lab auto-regenerated from content.db)
 │   └── Dockerfile                          python:3.11-slim
 │
 ├── infra/

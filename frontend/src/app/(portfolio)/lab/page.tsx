@@ -1,5 +1,6 @@
 import { getAllLabEntries } from "@/lib/lab";
 import LabSectionDynamic from "@/components/lab/LabSectionDynamic";
+import { profile } from "@/data/profile";
 
 export const metadata = { title: "Lab — Jaya Sabarish Reddy Remala" };
 
@@ -29,10 +30,11 @@ export default function LabPage() {
 
         <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-3">Building in public</p>
 
-        <p className="text-sm text-fg-subtle max-w-xl leading-relaxed">
-          Live system designs, technical decisions, and progress logs for projects I&apos;m actively working on.
-          Updated as things evolve — not a polished writeup, a working document.
-        </p>
+        {profile.page_lab && (
+          <p className="text-sm text-fg-subtle max-w-xl leading-relaxed">
+            {profile.page_lab}
+          </p>
+        )}
 
         {/* Stat chips — derived from staticEntries; updates after API hydrates */}
         {staticEntries.length > 0 && (

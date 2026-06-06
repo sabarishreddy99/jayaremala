@@ -1,5 +1,6 @@
 import { getAllPosts } from "@/lib/blog";
 import BlogSectionDynamic from "@/components/blog/BlogSectionDynamic";
+import { profile } from "@/data/profile";
 
 export const metadata = {
   title: "Blog",
@@ -34,10 +35,11 @@ export default function BlogIndexPage() {
           Inspire <em className="not-italic text-fg-faint">n</em> [One]
         </p>
 
-        <p className="text-sm text-fg-subtle max-w-xl leading-relaxed">
-          Notes on building AI systems, Machine Learning, distributed infrastructure,
-          software craft, navigating life, chaos and more.
-        </p>
+        {profile.page_blog && (
+          <p className="text-sm text-fg-subtle max-w-xl leading-relaxed">
+            {profile.page_blog}
+          </p>
+        )}
 
       </header>
 

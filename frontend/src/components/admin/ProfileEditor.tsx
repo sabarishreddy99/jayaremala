@@ -12,6 +12,7 @@ interface ProfileFields {
   location: string; email: string; phone: string; github: string; linkedin: string; resume: string;
   booking_url: string;
   page_experience: string; page_education: string; page_projects: string; contact_description: string;
+  page_blog: string; page_lab: string; page_gallery: string; page_quotes: string;
 }
 
 const DEFAULT: ProfileFields = {
@@ -20,6 +21,7 @@ const DEFAULT: ProfileFields = {
   location: "", email: "", phone: "", github: "", linkedin: "", resume: "",
   booking_url: "",
   page_experience: "", page_education: "", page_projects: "", contact_description: "",
+  page_blog: "", page_lab: "", page_gallery: "", page_quotes: "",
 };
 
 const SECTIONS: { heading: string; fields: { key: keyof ProfileFields; label: string; multiline?: boolean; placeholder?: string }[] }[] = [
@@ -54,6 +56,10 @@ const SECTIONS: { heading: string; fields: { key: keyof ProfileFields; label: st
       { key: "page_education",  label: "Education page sub-heading"  },
       { key: "page_projects",   label: "Projects page sub-heading"   },
       { key: "contact_description", label: "Contact section description", multiline: true },
+      { key: "page_blog",    label: "Blog page description",    multiline: true },
+      { key: "page_lab",     label: "Lab page description",     multiline: true },
+      { key: "page_gallery", label: "Gallery page description", multiline: true },
+      { key: "page_quotes",  label: "Quotes page description",  multiline: true },
     ],
   },
   {
@@ -105,6 +111,10 @@ export default function ProfileEditor() {
       page_education:      profile.page_education      ?? "",
       page_projects:       profile.page_projects       ?? "",
       contact_description: profile.contact_description ?? "",
+      page_blog:           profile.page_blog           ?? "",
+      page_lab:            profile.page_lab            ?? "",
+      page_gallery:        profile.page_gallery        ?? "",
+      page_quotes:         profile.page_quotes         ?? "",
     });
     setDirty(false);
   }

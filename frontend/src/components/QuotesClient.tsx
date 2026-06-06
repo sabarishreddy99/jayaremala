@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import type { Quote, QuoteCategory } from "@/data/quotes";
+import { profile } from "@/data/profile";
 
 // ── Category config ──────────────────────────────────────────────────────────
 
@@ -208,9 +209,11 @@ export default function QuotesClient({ quotes }: { quotes: Quote[] }) {
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-fg mb-2">
           Favorite Quotes
         </h1>
-        <p className="text-sm text-fg-subtle mb-6 max-w-lg">
-          Words that shaped how I think, build, and live. Collected across books, talks, and late-night reading sessions.
-        </p>
+        {profile.page_quotes && (
+          <p className="text-sm text-fg-subtle mb-6 max-w-lg">
+            {profile.page_quotes}
+          </p>
+        )}
 
         {/* Stats chips */}
         <div className="flex flex-wrap gap-2">

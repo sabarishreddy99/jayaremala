@@ -3,8 +3,8 @@ title: "itsjaya — AI Portfolio"
 status: "active"
 description: "AI-powered personal portfolio with a RAG chatbot (Avocado), MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade — not a toy."
 startedAt: "2025-11-01"
-updatedAt: "2026-05-28"
-tech: [Next.js 16, FastAPI, ChromaDB, Gemini 2.5 Flash, BAAI/bge-base-en-v1.5, HyDE, BM25, Knowledge Graph, SQLite, SlowAPI, AWS Lightsail, Nginx, S3, GitHub Pages, GitHub Actions]
+updatedAt: "2026-06-06"
+tech: [Next.js 16, React 19, Tailwind CSS v4, TypeScript, FastAPI, ChromaDB, Gemini 2.5 Flash, BAAI/bge-base-en-v1.5, HyDE, BM25, RRF, Knowledge Graph, FNV-1a Hash, SQLite, SlowAPI, AWS Lightsail, Nginx, S3, GitHub Pages, GitHub Actions]
 links:
   - label: GitHub
     url: https://github.com/sabarishreddy99/jayaremala
@@ -119,9 +119,9 @@ An AI-backed portfolio inverts this. The visitor asks in natural language, the s
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │  Knowledge Base  backend/data/knowledge/                         │   │
 │  │  profile.json · experience.json · education.json                 │   │
-│  │  projects.json · skills.json · testimonials.json                 │   │
-│  │  quotes.json · lab.json (auto-regenerated from content.db)       │   │
-│  │  blog.json   (auto-regenerated from content.db)                  │   │
+│  │  projects.json · skills.json · testimonials.json · gallery.json  │   │
+│  │  quotes.json · blog.json · lab.json                              │   │
+│  │  (quotes · blog · lab auto-regenerated from content.db)          │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────────────┘
                   │
@@ -374,19 +374,22 @@ Restore (disaster recovery):
 Blog posts, lab entries, and quotes are stored in `content.db` and served via the `/content/*` API. Public `GET` endpoints return live data. Write endpoints require a `Bearer ADMIN_TOKEN` header.
 
 After every write, a background task:
-1. Regenerates the corresponding JSON file (`blog.json` or `lab.json`) in `backend/data/knowledge/`
+1. Calls the matching `regenerate_*_json()` function (`regenerate_blog_json()`, `regenerate_lab_json()`, or `regenerate_quotes_json()`) to sync content.db → JSON in `backend/data/knowledge/`
 2. Calls `run_ingest()` — only changed documents are re-embedded (incremental ingest), zero user-visible latency
+
+`run_ingest()` itself also calls `_sync_content_db()` at startup (lazy-imports all three regenerate functions), so the JSON files are always current before the hash diff runs.
 
 ```
 POST /content/blog   (ADMIN_TOKEN)
   body: { slug, title, date, published_at, description, tags, content, published }
   → creates row in content.db
-  → background: regenerate blog.json → run_ingest()
+  → background: regenerate_blog_json() → run_ingest()
 
 PUT /content/blog/{slug}   → update row → regenerate → re-ingest
 DELETE /content/blog/{slug} → delete row → regenerate → re-ingest
 
-/content/lab/* and /content/quotes/* follow the same pattern.
+/content/lab/* → regenerate_lab_json() → run_ingest()
+/content/quotes/* → regenerate_quotes_json() → run_ingest()
 ```
 
 The database is seeded on first startup from the existing JSON files in `backend/data/knowledge/` — existing content migrates automatically with no manual step.
@@ -409,6 +412,8 @@ jayaremala.com  (GitHub Pages — static export, no basePath)
 ├── /lab                 Living system design index
 ├── /lab/[slug]          This page
 ├── /quotes              Curated quotes — QuotesFeed with categories
+├── /gallery             Photo grid — milestones, events, and achievements
+├── /now                 What I'm currently building, learning, reading
 └── /admin               Stats dashboard + content editors (no-index)
 
 All portfolio routes share layout via (portfolio) route group.
@@ -536,13 +541,37 @@ Chatbot lives outside — no nav, no footer, full screen.
   Gemini 2.5 Flash hits 503 and 429 capacity limits at peak times. A portfolio chatbot that returns an error on the first message is worse than no chatbot. The fallback chain retries through three additional models automatically. The frontend shows which model answered via a green pill badge — transparent without reading as a failure.
 </Decision>
 
-<Decision date="2026-02-15" title="12 hard-coded FAQ documents as the highest-ROI knowledge addition">
-  The questions that matter most in the first 30 seconds — "What makes Jaya stand out?", "How do I hire him?" — are not well-served by retrieval from raw experience data. The 12 FAQ documents are handwritten answers to the highest-probability recruiter questions, loaded into ChromaDB as their own document type. When one is retrieved, Gemini gets the answer already formed. These 12 documents have more impact on response quality than any pipeline improvement.
+<Decision date="2026-02-15" title="Synthesised FAQ documents — highest-ROI knowledge addition (later made fully dynamic)">
+  The questions that matter most in the first 30 seconds — "What makes Jaya stand out?", "How do I hire him?" — are not well-served by retrieval from raw experience data alone. Pre-synthesised FAQ documents answer these at query time instead of requiring Gemini to infer them from scattered bullet points. When a FAQ doc is retrieved, Gemini gets the answer already formed.
+
+  Initially these were 12 handwritten static strings in `ingest.py`. The failure mode: add a new job and `faq_nyu_work` silently becomes stale. Avocado continues citing the old role count, old company list, old achievements — not what's in the JSON files.
+
+  Replaced (2026-06-06) with `_build_faq_documents()` and `_build_system_faq_documents()` — all personal-content FAQs (`faq_who`, `faq_experience_summary`, `faq_projects_summary`, `faq_education_summary`, `faq_awards`, `faq_resume`, `faq_contact_hire`, `faq_blog`, `faq_lab`, `faq_quotes_collection`) are now generated at ingest time from the live JSON files. Per-employer documents (`faq_company_*`) replace the manually maintained `faq_nyu_work` / `faq_shell_wipro` — one doc per experience entry, stable IDs, auto-created and auto-deleted as experience.json changes. Blog, lab, and quotes FAQs include live counts. Architecture FAQs (pipeline, deployment, data persistence) remain in `_build_system_faq_documents()` — they describe the tech stack, not personal data, so they change when the infrastructure changes, not when content changes.
 </Decision>
 
 ---
 
 ## Progress Log
+
+<Update date="2026-06-06">
+  Knowledge base is now fully dynamic — no hardcoded personal content anywhere in `ingest.py`. Replaced 22 hardcoded FAQ strings with two builder functions: `_build_faq_documents(p, exp_list, edu_list, proj_list, skills_list)` generates 16 personal-content FAQ docs at ingest time from the live JSON files (per-employer `faq_company_*` docs replace the manually maintained `faq_nyu_work` / `faq_shell_wipro`; blog/lab/quotes counts read from live JSON), and `_build_system_faq_documents()` holds 8 architecture docs that describe the tech stack rather than personal data. Added `regenerate_quotes_json()` to `content.py` (mirrors the existing `regenerate_blog_json()` / `regenerate_lab_json()` pattern) so all three content types sync content.db → JSON before every ingest via `_sync_content_db()`. Total knowledge base: **124 atomic documents across 11 types**. Adding a new job, project, blog post, or quote now automatically flows into the knowledge base on the next ingest — no file edits in `ingest.py` required.
+</Update>
+
+<Update date="2026-06-06">
+  Full typography audit across all routes. Calibrated h1 letter-spacing (`-0.02em`) and line-height (`1.1`) for correct appearance at 30–36px page heading sizes — the previous values were tuned for the 80px+ hero and looked over-compressed at normal heading scale. h2 base switched from Playfair Display to Geist Sans (`-0.012em` tracking): 95% of h2 elements in the site are UI card headings at 14–16px where serif makes no sense. Prose h2s inside `.prose` blocks are protected by an explicit `font-family` override that runs after the base layer. Removed a dead `[data-theme="midnight"] #hero` rule left over from before HeroName was rewritten.
+</Update>
+
+<Update date="2026-06-06">
+  Blog index redesigned as a 2-column card grid (`sm:grid-cols-2`). Each card has an `aspect-2/1` cover — an `<img>` if the post has an image field, otherwise `BlogCoverSVG`. The SVG generator uses an FNV-1a hash on the slug to deterministically select one of four patterns: dot constellation (grid + dots + connecting edges + radial gradient focal point), sine waves (7 overlapping waves + accent rings), geometric rings (16 circles and rotated rectangles + concentric focal rings), circuit traces (L-shaped PCB-style paths + circular nodes + square pads). All SVG elements use `style={{ fill: "var(--accent)" }}` so patterns adapt to light and dark mode automatically. Each card also shows a reading-time badge, tag chips, post title, description, and a footer row with publish date, view/clap counts, and a share button.
+</Update>
+
+<Update date="2026-06-06">
+  Sort controls added to the blog index: Latest (publishedAt desc), Oldest (publishedAt asc), Popular (engagement score = views + claps × 3). Three pill buttons with directional icons, `aria-pressed` state, and active highlight. Tag filter row switches from `flex-wrap` (creates a tall multi-row tag cloud on small screens) to `flex-nowrap overflow-x-auto` on mobile, reverting to `sm:flex-wrap sm:overflow-x-visible` on tablet+. All filter/sort buttons have `shrink-0` to prevent compression inside the horizontal scroll container.
+</Update>
+
+<Update date="2026-06-06">
+  Admin page descriptions extended to full coverage. ProfileEditor now manages description paragraphs for every page on the site. Blog, Lab, Gallery, and Quotes pages previously had hardcoded description strings in their component files. Those are replaced with `{profile.page_blog}`, `{profile.page_lab}`, `{profile.page_gallery}`, `{profile.page_quotes}` — four new optional string fields added to `profile.json`, `Profile` TypeScript interface, and the ProfileEditor "Page Descriptions" section. Every visible text element on the site is now editable from admin without a code change.
+</Update>
 
 <Update date="2026-05-28">
   Added Content CRUD API (`/content/*`). Blog posts, lab entries, and quotes are now stored in `content.db` (SQLite on Lightsail SSD). Public GET endpoints; write endpoints require ADMIN_TOKEN bearer auth. After every write, a background task regenerates the corresponding JSON and calls run_ingest() — only changed documents are re-embedded.
@@ -646,8 +675,8 @@ Chatbot lives outside — no nav, no footer, full screen.
 
 - Cross-encoder reranking (`cross-encoder/ms-marco-MiniLM-L-6-v2`) — scaffolded in `rerank_cross_encoder()`, gated on Lightsail upgrade to 4GB ($20/month) for the ~250MB RAM headroom
 - Entity-aware ChromaDB pre-filtering using the metadata fields (entity_type, company_key, project_key)
-- Reading time estimate on blog cards
-- Search within blog posts
+- Full-text search within blog posts (cmd+K modal already has site-wide search; per-post content search is the next layer)
 - Avocado voice input (Web Speech API — already prototyped)
 - Monitoring dashboard (uptime + response time over time)
 - S3 backup for `content.db` alongside `analytics.db`
+- Blog image upload via admin (currently images require a git commit to `frontend/public/blog/`)

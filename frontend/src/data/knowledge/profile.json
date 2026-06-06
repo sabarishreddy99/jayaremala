@@ -19,6 +19,10 @@
   "page_education": "Academic foundations that underpin the systems I build.",
   "page_projects": "Things I've built — production systems, hackathon winners, and side projects.",
   "contact_description": "Open to software engineering roles in AI/ML infrastructure, distributed systems, and full-stack. Healthcare, frontier research, and energy tech are my focus but excited by any hard problem.",
+  "page_blog": "Notes on building AI systems, Machine Learning, distributed infrastructure, software craft, navigating life, chaos and more.",
+  "page_lab": "Live system designs, technical decisions, and progress logs for projects I'm actively working on. Updated as things evolve — not a polished writeup, a working document.",
+  "page_gallery": "A visual log of achievements, events, and milestones along the way.",
+  "page_quotes": "Words that shaped how I think, build, and live. Collected across books, talks, and late-night reading sessions.",
   "availability": {
     "open": true,
     "label": "Open to work",

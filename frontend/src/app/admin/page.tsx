@@ -178,13 +178,13 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
     setReingestMsg(null);
     try {
       const token = localStorage.getItem("avocado_admin_token") ?? "";
-      const res = await fetch(`${API_BASE_URL}/admin/reingest`, {
+      const res = await fetch(`${API_BASE_URL}/admin/reingest?force=true`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(`${res.status}`);
       const d = await res.json();
-      setReingestMsg(`Done — +${d.added ?? 0} added · ${d.updated ?? 0} updated · ${d.deleted ?? 0} removed · ${d.total ?? 0} total`);
+      setReingestMsg(`Full rebuild complete — ${d.added ?? 0} embedded · ${d.total ?? 0} total in ChromaDB`);
     } catch (e) {
       setReingestMsg(`Failed${e instanceof Error ? ` (${e.message})` : ""} — check ADMIN_TOKEN & backend`);
     } finally {
@@ -224,7 +224,7 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
             className={reingesting ? "animate-spin" : ""}>
             <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
           </svg>
-          {reingesting ? "Re-ingesting…" : "Re-ingest knowledge base"}
+          {reingesting ? "Rebuilding…" : "Full re-ingest knowledge base"}
         </button>
       </div>
 

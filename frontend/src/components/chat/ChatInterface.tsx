@@ -422,7 +422,7 @@ export default function ChatInterface() {
             Ask me anything about Jaya
           </h1>
           <p className="mt-1.5 text-xs text-fg-faint">
-            {getTimeGreeting()} — I&apos;m Avocado, his AI assistant.
+            {getTimeGreeting()}! I&apos;m Avocado, his AI assistant.
           </p>
 
           {/* Audience personas — tailor tone + what Avocado leads with */}

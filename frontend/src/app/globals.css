@@ -648,6 +648,33 @@ figcaption[data-rehype-pretty-code-title] + pre {
 }
 .fab-ring-pulse { animation: fab-ring-pulse 3.6s ease-in-out infinite; }
 
+/* ── Hero hang tag ── */
+.hero-tag-anchor {
+  transform: translateX(-50%);
+}
+@media (max-width: 640px) {
+  .hero-tag-anchor {
+    transform: translateX(-150%);
+  }
+}
+
+@keyframes hero-tag-appear {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes hero-tag-swing-in {
+  0%   { transform: rotate(-22deg); }
+  52%  { transform: rotate(-2deg);  }
+  70%  { transform: rotate(-9deg);  }
+  84%  { transform: rotate(-4deg);  }
+  93%  { transform: rotate(-5.5deg);}
+  100% { transform: rotate(-5deg);  }
+}
+@keyframes hero-tag-sway {
+  0%, 100% { transform: rotate(-5deg); }
+  50%       { transform: rotate(-2deg); }
+}
+
 @keyframes confetti-burst {
   0%   { opacity: 1; transform: translate(0, 0) rotate(0deg) scale(1); }
   100% { opacity: 0; transform: translate(var(--tx, 0px), var(--ty, -50px)) rotate(var(--rot, 360deg)) scale(0.25); }

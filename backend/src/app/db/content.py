@@ -487,3 +487,23 @@ def regenerate_lab_json() -> None:
     path = _DATA_DIR / "lab.json"
     path.write_text(json.dumps(output, indent=2, ensure_ascii=False))
     logger.info("Regenerated lab.json (%d entries)", len(output))
+
+
+def regenerate_quotes_json() -> None:
+    """Rewrite backend/data/knowledge/quotes.json from content.db."""
+    quotes = list_quotes()
+    output = []
+    for q in quotes:
+        output.append({
+            "id": q["quote_id"],
+            "text": q["text"],
+            "author": q["author"],
+            "source": q.get("source") or "",
+            "category": q.get("category", "Philosophy"),
+            "favorite": bool(q.get("favorite")),
+            "featured": bool(q.get("featured")),
+            "addedAt": q.get("added_at", ""),
+        })
+    path = _DATA_DIR / "quotes.json"
+    path.write_text(json.dumps(output, indent=2, ensure_ascii=False))
+    logger.info("Regenerated quotes.json (%d quotes)", len(output))

@@ -251,7 +251,7 @@ export default function PortfolioHome() {
 
           {/* Tagline — one balanced line, constrained for readability */}
           <p
-            className="animate-fade-up text-xl sm:text-2xl font-light text-fg-muted leading-relaxed max-w-2xl text-balance"
+            className="animate-fade-up text-xl sm:text-2xl font-light text-fg-muted leading-relaxed w-full max-w-2xl text-balance text-center mt-6 sm:mt-0"
             style={{ animationDelay: "140ms" }}
           >
             {profile.tagline}

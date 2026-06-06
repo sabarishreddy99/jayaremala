@@ -42,6 +42,10 @@ export interface Profile {
   page_education?: string;
   page_projects?: string;
   contact_description?: string;
+  page_blog?: string;
+  page_lab?: string;
+  page_gallery?: string;
+  page_quotes?: string;
   currently?: string;
   now?: NowBlock;
   availability?: Availability;

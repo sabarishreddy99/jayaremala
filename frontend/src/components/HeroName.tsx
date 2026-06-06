@@ -1,42 +1,20 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-
-type Phase = "hidden" | "split" | "full";
+import { useEffect, useState } from "react";
 
 export default function HeroName({ name }: { name: string }) {
-  const words = name.split(" "); // ["Jaya", "Sabarish", "Reddy", "Remala"]
-  const midRef = useRef<HTMLSpanElement>(null);
-  const [phase, setPhase] = useState<Phase>("hidden");
-  const [shift, setShift] = useState(0);
+  const words = name.split(" ");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    const mid = midRef.current;
-    if (!mid) return;
-
-    if (
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-      window.innerWidth < 640
-    ) {
-      setPhase("full");
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setReady(true);
       return;
     }
-
-    // shift = half the natural rendered width of "Sabarish Reddy".
-    // Jaya shifts right by this amount, Remala shifts left by this amount,
-    // so they appear close together near the visual centre of the full name.
-    // Then on "full" they spring outward to their real positions — the extremes.
-    setShift(mid.offsetWidth / 2);
-
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => {
-        setPhase("split");
-        setTimeout(() => setPhase("full"), 650);
-      })
-    );
+    requestAnimationFrame(() => requestAnimationFrame(() => setReady(true)));
   }, []);
 
-  const ease = "cubic-bezier(0.76, 0, 0.24, 1)";
+  const ease = "cubic-bezier(0.16, 1, 0.3, 1)";
 
   return (
     <h1
@@ -46,72 +24,47 @@ export default function HeroName({ name }: { name: string }) {
         flexWrap: "wrap",
         alignItems: "baseline",
         justifyContent: "center",
-        columnGap: "0.28em",
-        fontFamily: "var(--font-display)",
-        fontSize: "clamp(2.8rem, 8.5vw, 7rem)",
-        fontWeight: 700,
-        lineHeight: 1.05,
-        letterSpacing: "-0.03em",
+        columnGap: "0.22em",
+        rowGap: "0.1em",
+        fontFamily: "var(--font-cormorant), Georgia, serif",
+        fontSize: "clamp(3rem, 9vw, 7.5rem)",
+        fontWeight: 600,
+        lineHeight: 1.0,
+        letterSpacing: "0.01em",
         margin: 0,
-        position: "relative",
-        zIndex: 10,
       }}
     >
-      {/* Jaya — starts shifted right toward centre, slides to left extreme */}
-      <span
-        aria-hidden
-        className="hero-name-lift"
-        style={{
-          display: "inline-block",
-          whiteSpace: "nowrap",
-          color: "var(--fg)",
-          opacity: phase === "hidden" ? 0 : 1,
-          transform: `translateX(${phase === "split" ? shift : 0}px)`,
-          transition:
-            phase === "full"
-              ? `transform 1.1s ${ease}, opacity 0.6s ease`
-              : "opacity 0.45s ease",
-          willChange: "transform",
-        }}
-      >
-        {words[0]}
-      </span>
-
-      {/* Sabarish Reddy — invisible during split, fades in as the name opens up */}
-      <span
-        ref={midRef}
-        aria-hidden
-        style={{
-          display: "inline-flex",
-          columnGap: "0.28em",
-          whiteSpace: "nowrap",
-          opacity: phase === "full" ? 1 : 0,
-          transition: phase === "full" ? "opacity 0.8s ease 0.4s" : "none",
-        }}
-      >
-        <span className="hero-name-lift" style={{ color: "var(--fg)" }}>{words[1]}</span>
-        <span className="hero-name-lift" style={{ color: "var(--fg)" }}>{words[2]}</span>
-      </span>
-
-      {/* Remala — starts shifted left toward centre, slides to right extreme */}
-      <span
-        aria-hidden
-        className="hero-name-lift hero-name-glow"
-        style={{
-          display: "inline-block",
-          whiteSpace: "nowrap",
-          color: "var(--accent)",
-          opacity: phase === "hidden" ? 0 : 1,
-          transform: `translateX(${phase === "split" ? -shift : 0}px)`,
-          transition:
-            phase === "full"
-              ? `transform 1.1s ${ease}, opacity 0.6s ease`
-              : "opacity 0.45s ease",
-          willChange: "transform",
-        }}
-      >
-        {words[3]}
-      </span>
+      {words.map((word, i) => {
+        const isLast = i === words.length - 1;
+        const delay = i * 90;
+        return (
+          <span
+            key={word}
+            aria-hidden
+            style={{
+              display: "inline-block",
+              overflow: "hidden",
+              lineHeight: 1.2,
+              paddingBottom: "0.05em",
+            }}
+          >
+            <span
+              style={{
+                display: "inline-block",
+                color: isLast ? "var(--accent)" : "var(--fg)",
+                transform: ready ? "translateY(0)" : "translateY(108%)",
+                opacity: ready ? 1 : 0,
+                transition: ready
+                  ? `transform 1s ${ease} ${delay}ms, opacity 0.5s ease ${delay}ms`
+                  : "none",
+                willChange: "transform",
+              }}
+            >
+              {word}
+            </span>
+          </span>
+        );
+      })}
     </h1>
   );
 }

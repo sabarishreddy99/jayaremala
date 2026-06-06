@@ -5,7 +5,9 @@ import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import { profile } from "@/data/profile";
 import ThemeToggle from "@/components/ThemeToggle";
+import SoundToggle from "@/components/SoundToggle";
 import ReadingProgress from "@/components/blog/ReadingProgress";
+import { playClick } from "@/lib/sound";
 
 const links = [
   {
@@ -167,7 +169,7 @@ export default function Nav() {
           href="/"
           className="inline-flex items-center gap-1 text-xl font-normal tracking-widest text-fg hover:opacity-70 transition-opacity"
           style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
-          onClick={() => setOpen(false)}
+          onClick={() => { setOpen(false); playClick("ui"); }}
         >
           Jaya
         </Link>
@@ -200,6 +202,7 @@ export default function Nav() {
                   href={l.href}
                   ref={(el) => { linkRefs.current[i] = el; }}
                   onMouseEnter={() => setHoverIdx(i)}
+                  onClick={() => playClick("nav")}
                   className={`relative z-10 inline-flex items-center px-3 py-1.5 text-sm whitespace-nowrap transition-colors duration-200 ${
                     active
                       ? "text-fg font-semibold"
@@ -215,7 +218,7 @@ export default function Nav() {
           </div>
           {/* Cmd+K search trigger */}
           <button
-            onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }))}
+            onClick={() => { playClick("ui"); window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })); }}
             className="inline-flex items-center gap-2 rounded border border-border bg-surface-raised px-2.5 py-1.5 text-xs text-fg-faint hover:text-fg hover:border-fg-muted transition-colors"
             aria-label="Search"
           >
@@ -224,9 +227,11 @@ export default function Nav() {
             </svg>
             <kbd className="font-sans text-[10px]">⌘K</kbd>
           </button>
+          <SoundToggle />
           <ThemeToggle />
           <Link
             href="/chat"
+            onClick={() => playClick("primary")}
             className="group ml-2 relative inline-flex items-center px-5 py-1.5 rounded-full bg-fg text-bg text-sm font-medium hover:opacity-75 transition-opacity duration-200 overflow-hidden"
           >
             <span className="flex items-center gap-2 transition-all duration-300 ease-in-out group-hover:-translate-x-10 group-hover:opacity-0">
@@ -258,7 +263,7 @@ export default function Nav() {
         {/* Mobile controls */}
         <div className="md:hidden flex items-center gap-1">
           <button
-            onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true }))}
+            onClick={() => { playClick("ui"); window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })); }}
             className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition-all duration-300 ${
               scrolled
                 ? "border border-border bg-surface-raised text-fg-faint hover:text-fg hover:border-fg-muted"
@@ -271,10 +276,11 @@ export default function Nav() {
             </svg>
             <span>Search</span>
           </button>
+          <SoundToggle />
           <ThemeToggle />
           <button
             className="p-2 rounded text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
-            onClick={() => setOpen(!open)}
+            onClick={() => { setOpen(!open); playClick("ui"); }}
             aria-label="Toggle menu"
           >
             {open ? (
@@ -301,7 +307,7 @@ export default function Nav() {
                 <Link
                   key={l.href}
                   href={l.href}
-                  onClick={() => setOpen(false)}
+                  onClick={() => { setOpen(false); playClick("nav"); }}
                   className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors ${
                     pathname.startsWith(l.href)
                       ? "bg-surface-raised text-fg font-medium"

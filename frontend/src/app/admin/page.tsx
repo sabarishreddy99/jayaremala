@@ -223,7 +223,7 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
 
   return (
     <div className="rounded border border-border bg-surface p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap gap-y-2">
         <div className="flex items-center gap-2.5">
           <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Avocado Model Health</h2>
           {total > 0 && (
@@ -247,7 +247,7 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
         <button
           onClick={reingest}
           disabled={reingesting}
-          className="inline-flex items-center gap-1.5 rounded border border-border bg-surface-raised px-3 py-1.5 text-[11px] font-medium text-fg-muted hover:text-fg hover:border-fg-muted transition-colors disabled:opacity-50"
+          className="inline-flex items-center justify-center gap-1.5 rounded border border-border bg-surface-raised px-3 py-1.5 text-[11px] font-medium text-fg-muted hover:text-fg hover:border-fg-muted transition-colors disabled:opacity-50 w-full sm:w-auto"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
             className={reingesting ? "animate-spin" : ""}>
@@ -2709,7 +2709,7 @@ function Dashboard({
                   <button
                     key={n.key}
                     onClick={() => { setActiveView(n.key); onSelect?.(); }}
-                    className={`w-full flex items-center gap-2.5 pl-3.5 pr-3 py-[7px] text-xs font-medium transition-all text-left border-l-2 ${
+                    className={`w-full flex items-center gap-2.5 pl-3.5 pr-3 py-2.5 text-xs font-medium transition-all text-left border-l-2 ${
                       isActive
                         ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300"
                         : "border-transparent text-fg-muted hover:text-fg hover:bg-surface-raised"
@@ -2769,35 +2769,8 @@ function Dashboard({
         <NavList onSelect={() => setSidebarOpen(false)} />
 
         {/* Sidebar footer */}
-        <div className="shrink-0 border-t border-border px-3 py-3 space-y-1">
-          {/* GitHub PAT status */}
-          <div className="flex items-center gap-2 px-2.5 py-2 rounded">
-            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasPat ? "bg-emerald-500" : "bg-amber-400 animate-pulse"}`} />
-            <span className={`text-[10px] font-medium truncate ${hasPat ? "text-fg-faint" : "text-amber-600 dark:text-amber-400"}`}>
-              {hasPat ? "GitHub connected" : "No GitHub PAT set"}
-            </span>
-          </div>
-          <Link
-            href="/"
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded text-xs text-fg-muted hover:text-fg hover:bg-surface-raised transition-colors w-full"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-              <polyline points="9 22 9 12 15 12 15 22"/>
-            </svg>
-            View site
-          </Link>
-          <button
-            onClick={onLogout}
-            className="flex items-center gap-2 px-2.5 py-1.5 rounded text-xs text-rose-500 hover:bg-rose-500/10 hover:text-rose-400 transition-colors w-full"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-              <polyline points="16 17 21 12 16 7"/>
-              <line x1="21" y1="12" x2="9" y2="12"/>
-            </svg>
-            Sign out
-          </button>
+        <div className="shrink-0 px-4 pt-2 pb-3 border-t border-border" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
+          <p className="text-[9px] text-fg-faint/60 tracking-wide">jayaremala.com</p>
         </div>
       </aside>
 
@@ -2805,10 +2778,10 @@ function Dashboard({
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Mobile top bar */}
-        <header className="lg:hidden flex items-center gap-3 px-4 py-2.5 border-b border-border bg-surface/80 backdrop-blur-md shrink-0 sticky top-0 z-30">
+        <header className="lg:hidden flex items-center gap-3 px-4 border-b border-border bg-surface/80 backdrop-blur-md shrink-0 sticky top-0 z-30" style={{ paddingTop: 'max(0.625rem, env(safe-area-inset-top))', paddingBottom: '0.625rem' }}>
           <button
             onClick={() => setSidebarOpen(true)}
-            className="text-fg-muted hover:text-fg p-1 rounded-md hover:bg-surface-raised transition-colors"
+            className="text-fg-muted hover:text-fg p-2 -ml-1 rounded-md hover:bg-surface-raised transition-colors"
             aria-label="Open sidebar"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -2837,6 +2810,35 @@ function Dashboard({
               <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
           </button>
+          <span className="w-px h-4 bg-border shrink-0" />
+          {/* GitHub status dot */}
+          <span
+            className={`w-2 h-2 rounded-full shrink-0 ${hasPat ? "bg-emerald-500" : "bg-amber-400 animate-pulse"}`}
+            title={hasPat ? "GitHub PAT connected" : "No GitHub PAT set"}
+          />
+          {/* View site */}
+          <Link
+            href="/"
+            className="p-1.5 rounded-md text-fg-faint hover:text-fg hover:bg-surface-raised transition-colors"
+            title="View site"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </Link>
+          {/* Sign out */}
+          <button
+            onClick={onLogout}
+            className="p-1.5 rounded-md text-rose-500 hover:bg-rose-500/10 transition-colors"
+            title="Sign out"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+          </button>
         </header>
 
         {/* Desktop top bar */}
@@ -2848,9 +2850,9 @@ function Dashboard({
             </svg>
             <span className="font-semibold text-fg truncate">{VIEW_LABELS[activeView]}</span>
           </div>
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             {lastUpdated && (
-              <span className="text-[10px] text-fg-faint tabular-nums">
+              <span className="text-[10px] text-fg-faint tabular-nums mr-0.5">
                 {refreshing ? "Refreshing…" : secondsAgo < 10 ? "Just updated" : `Updated ${secondsAgo}s ago`}
               </span>
             )}
@@ -2865,12 +2867,42 @@ function Dashboard({
               </svg>
               Refresh
             </button>
+            <span className="w-px h-4 bg-border shrink-0" />
+            {/* GitHub PAT status */}
+            <span
+              className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1.5 rounded ${hasPat ? "text-fg-faint" : "text-amber-600 dark:text-amber-400"}`}
+              title={hasPat ? "GitHub PAT connected — editors ready" : "No GitHub PAT set — editors will not load"}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasPat ? "bg-emerald-500" : "bg-amber-400 animate-pulse"}`} />
+              {hasPat ? "GitHub" : "No PAT"}
+            </span>
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-faint hover:text-fg border border-border hover:border-fg-faint rounded px-2.5 py-1.5 transition-all"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                <polyline points="9 22 9 12 15 12 15 22"/>
+              </svg>
+              View site
+            </Link>
+            <button
+              onClick={onLogout}
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-rose-500 hover:text-rose-400 border border-rose-200 dark:border-rose-800 hover:border-rose-300 dark:hover:border-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded px-2.5 py-1.5 transition-all"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                <polyline points="16 17 21 12 16 7"/>
+                <line x1="21" y1="12" x2="9" y2="12"/>
+              </svg>
+              Sign out
+            </button>
           </div>
         </header>
 
         {/* Content */}
         <main className="flex-1 overflow-y-auto">
-          <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 space-y-6">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 space-y-6" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
 
         {/* Period tabs — analytics only */}
         {activeView === "analytics" && (
@@ -2914,7 +2946,7 @@ function Dashboard({
         {activeView === "analytics" && (<>
 
         {/* Top stat cards */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           <StatCard
             label="Site Visitors"
             value={site.unique_visitors}
@@ -3123,7 +3155,7 @@ function Dashboard({
             <p className="px-5 py-6 text-sm text-fg-faint">No blog data yet.</p>
           ) : (
             <div className="overflow-x-auto">
-            <table className="w-full text-xs">
+            <table className="w-full text-xs min-w-[320px]">
               <thead>
                 <tr className="border-b border-border">
                   <th className="text-left px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Post</th>
@@ -3170,7 +3202,7 @@ function Dashboard({
                       const pct = Math.round((l.unique_visitors / maxV) * 100);
                       return (
                         <div key={l.country} className="flex items-center gap-2">
-                          <span className="text-[11px] text-fg-muted w-28 shrink-0 truncate">{l.country}</span>
+                          <span className="text-[11px] text-fg-muted w-20 sm:w-28 shrink-0 truncate">{l.country}</span>
                           <div className="flex-1 h-1.5 bg-surface-raised rounded-full overflow-hidden">
                             <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
                           </div>
@@ -3197,7 +3229,7 @@ function Dashboard({
                 const pct = Math.round((p.sessions / maxS) * 100);
                 return (
                   <div key={p.page} className="flex items-center gap-3">
-                    <span className="font-mono text-[10px] text-fg-muted w-36 shrink-0 truncate" title={p.page}>{p.page}</span>
+                    <span className="font-mono text-[10px] text-fg-muted w-24 sm:w-36 shrink-0 truncate" title={p.page}>{p.page}</span>
                     <div className="flex-1 h-1.5 bg-surface-raised rounded-full overflow-hidden">
                       <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pct}%` }} />
                     </div>
@@ -3223,7 +3255,7 @@ function Dashboard({
             <p className="px-5 py-6 text-sm text-fg-faint">No blog session data yet — populates as readers open posts.</p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-xs">
+              <table className="w-full text-xs min-w-[440px]">
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Post</th>

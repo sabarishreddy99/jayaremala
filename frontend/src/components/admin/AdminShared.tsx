@@ -97,14 +97,14 @@ export function GithubPATRow({
           value={pat}
           onChange={e => updatePat(e.target.value)}
           placeholder="ghp_…"
-          className="flex-1 rounded border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
+          className="flex-1 min-w-0 rounded border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
         />
         <button onClick={() => setPatVisible(!patVisible)}
-          className="px-3 py-2 rounded border border-border text-xs text-fg-muted hover:text-fg transition-colors">
+          className="shrink-0 min-w-[52px] px-3 py-2 rounded border border-border text-xs text-fg-muted hover:text-fg transition-colors">
           {patVisible ? "Hide" : "Show"}
         </button>
         <button onClick={onLoad} disabled={!pat.trim() || loading}
-          className="px-3 py-2 rounded border border-border text-xs text-fg-muted hover:text-fg transition-colors disabled:opacity-40">
+          className="shrink-0 min-w-[52px] px-3 py-2 rounded border border-border text-xs text-fg-muted hover:text-fg transition-colors disabled:opacity-40">
           {loading ? "Loading…" : "Load"}
         </button>
       </div>
@@ -139,11 +139,11 @@ export function MoveButtons({
   return (
     <div className="flex gap-0.5">
       <button onClick={() => onMove(-1)} disabled={idx === 0}
-        className="p-1 rounded text-fg-faint hover:text-fg disabled:opacity-30 transition-colors" title="Move up">
+        className="p-1.5 rounded text-fg-faint hover:text-fg disabled:opacity-30 transition-colors" title="Move up">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 15l-6-6-6 6"/></svg>
       </button>
       <button onClick={() => onMove(1)} disabled={idx === total - 1}
-        className="p-1 rounded text-fg-faint hover:text-fg disabled:opacity-30 transition-colors" title="Move down">
+        className="p-1.5 rounded text-fg-faint hover:text-fg disabled:opacity-30 transition-colors" title="Move down">
         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M6 9l6 6 6-6"/></svg>
       </button>
     </div>

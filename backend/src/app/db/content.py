@@ -446,6 +446,44 @@ def delete_quote(quote_id: str) -> bool:
 
 # ── JSON regeneration helpers (used by content router after CRUD) ──────────────
 
+def sync_blog_json_to_db() -> None:
+    """Upsert any blog posts present in blog.json but missing from content.db.
+
+    blog.json is updated by GH Actions (sync-knowledge.mjs) whenever an MDX
+    post is pushed. content.db is only seeded from it on first startup, so new
+    MDX posts would otherwise never reach ChromaDB. This bridges the gap by
+    inserting new slugs on every ingest without touching existing rows.
+    """
+    path = _DATA_DIR / "blog.json"
+    if not path.exists():
+        return
+    posts = json.loads(path.read_text())
+    added = 0
+    with _conn() as conn:
+        existing = {row[0] for row in conn.execute("SELECT slug FROM blog_posts").fetchall()}
+        for post in posts:
+            slug = post.get("slug", "")
+            if not slug or slug in existing:
+                continue
+            conn.execute(
+                """INSERT OR IGNORE INTO blog_posts
+                   (slug, title, date, published_at, description, tags, content, published)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, 1)""",
+                (
+                    slug,
+                    post.get("title", ""),
+                    post.get("date", ""),
+                    post.get("publishedAt", post.get("date", "")),
+                    post.get("description", ""),
+                    json.dumps(post.get("tags", [])),
+                    post.get("content", "")[:2000],
+                ),
+            )
+            added += 1
+    if added:
+        logger.info("sync_blog_json_to_db: inserted %d new post(s) from blog.json → content.db", added)
+
+
 def regenerate_blog_json() -> None:
     """Rewrite backend/data/knowledge/blog.json from content.db so run_ingest() stays current."""
     posts = list_blog_posts(include_drafts=False)
@@ -465,6 +503,45 @@ def regenerate_blog_json() -> None:
     path = _DATA_DIR / "blog.json"
     path.write_text(json.dumps(output, indent=2, ensure_ascii=False))
     logger.info("Regenerated blog.json (%d posts)", len(output))
+
+
+def sync_lab_json_to_db() -> None:
+    """Upsert any lab entries present in lab.json but missing from content.db.
+
+    Same gap as blog: lab.json is updated by GH Actions whenever an MDX lab
+    entry is pushed, but content.db is only seeded on first startup. New entries
+    would otherwise be invisible to ChromaDB until the table is wiped.
+    """
+    path = _DATA_DIR / "lab.json"
+    if not path.exists():
+        return
+    entries = json.loads(path.read_text())
+    added = 0
+    with _conn() as conn:
+        existing = {row[0] for row in conn.execute("SELECT slug FROM lab_entries").fetchall()}
+        for entry in entries:
+            slug = entry.get("slug", "")
+            if not slug or slug in existing:
+                continue
+            conn.execute(
+                """INSERT OR IGNORE INTO lab_entries
+                   (slug, title, status, description, started_at, updated_at, tech, links, content)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    slug,
+                    entry.get("title", ""),
+                    entry.get("status", "active"),
+                    entry.get("description", ""),
+                    entry.get("startedAt", ""),
+                    entry.get("updatedAt", ""),
+                    json.dumps(entry.get("tech", [])),
+                    json.dumps(entry.get("links", [])),
+                    entry.get("content", "")[:3000],
+                ),
+            )
+            added += 1
+    if added:
+        logger.info("sync_lab_json_to_db: inserted %d new entry/entries from lab.json → content.db", added)
 
 
 def regenerate_lab_json() -> None:

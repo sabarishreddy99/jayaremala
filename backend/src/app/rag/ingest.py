@@ -198,7 +198,14 @@ def _sync_content_db() -> None:
     Lazy imports avoid circular dependency (content.py also imports run_ingest).
     """
     try:
-        from app.db.content import regenerate_blog_json, regenerate_lab_json, regenerate_quotes_json  # noqa: PLC0415
+        from app.db.content import (  # noqa: PLC0415
+            regenerate_blog_json, regenerate_lab_json, regenerate_quotes_json,
+            sync_blog_json_to_db, sync_lab_json_to_db,
+        )
+        # Step 1: pull any new MDX-pushed content from JSON files → content.db
+        sync_blog_json_to_db()
+        sync_lab_json_to_db()
+        # Step 2: regenerate all JSON files from the now-complete content.db
         regenerate_blog_json()
         regenerate_lab_json()
         regenerate_quotes_json()

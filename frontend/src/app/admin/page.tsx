@@ -154,120 +154,49 @@ function TrendsPanel({ trends }: { trends?: { visitors: DailyCount[]; conversati
   );
 }
 
-// ── Model health + reingest ────────────────────────────────────────────────────
+// ── Model health ──────────────────────────────────────────────────────────────
 
 function ModelHealthPanel({ models }: { models: { model: string; count: number; avg_ms: number }[] }) {
-  const [reingesting, setReingesting] = useState(false);
-  const [reingestMsg, setReingestMsg] = useState<string | null>(null);
-
   const total = models.reduce((s, m) => s + m.count, 0);
-  const primary = models[0];           // most-used = the one actually serving
+  const primary = models[0];
   const primaryShare = total > 0 && primary ? Math.round((primary.count / total) * 100) : 0;
-  // Weighted avg response time across all models that reported a latency
   const lats = models.filter((m) => m.avg_ms > 0);
   const avgMs = lats.length
     ? Math.round(lats.reduce((s, m) => s + m.avg_ms * m.count, 0) / lats.reduce((s, m) => s + m.count, 0))
     : 0;
-  // Healthy = one model dominates (no fallback churn). Mixed = quota/429 problems.
   const healthy = primaryShare >= 85;
-
   const COLORS = ["bg-indigo-500", "bg-violet-500", "bg-amber-500", "bg-rose-500", "bg-sky-500", "bg-zinc-400"];
-
-  async function reingest() {
-    setReingesting(true);
-    setReingestMsg(null);
-    const token = localStorage.getItem("avocado_admin_token") ?? "";
-
-    try {
-      // Kick off the background reingest — returns immediately with {status:"started"}
-      const res = await fetch(`${API_BASE_URL}/admin/reingest?force=true`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error(`${res.status}`);
-      const kick = await res.json();
-      if (kick.status === "already_running") {
-        setReingestMsg("Already running — check back in a moment.");
-        setReingesting(false);
-        return;
-      }
-
-      // Poll /admin/reingest/status every 2s until done
-      await new Promise<void>((resolve, reject) => {
-        const interval = setInterval(async () => {
-          try {
-            const sr = await fetch(`${API_BASE_URL}/admin/reingest/status`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!sr.ok) { clearInterval(interval); reject(new Error(`${sr.status}`)); return; }
-            const s = await sr.json();
-            if (!s.running) {
-              clearInterval(interval);
-              if (s.error) { reject(new Error(s.error)); return; }
-              const d = s.result ?? {};
-              setReingestMsg(`Full rebuild complete — ${d.added ?? 0} embedded · ${d.total ?? 0} total in ChromaDB`);
-              resolve();
-            }
-          } catch (err) {
-            clearInterval(interval);
-            reject(err);
-          }
-        }, 2000);
-      });
-    } catch (e) {
-      setReingestMsg(`Failed${e instanceof Error ? ` (${e.message})` : ""} — check ADMIN_TOKEN & backend`);
-    } finally {
-      setReingesting(false);
-    }
-  }
 
   return (
     <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
-      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap gap-y-2">
-        <div className="flex items-center gap-2.5">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Avocado Model Health</h2>
-          {total > 0 && (
-            <span className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[10px] font-semibold ${
-              healthy
-                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
-                : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
-            }`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${healthy ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`} />
-              {healthy ? "Healthy" : "Fallback churn"}
-            </span>
-          )}
-          {avgMs > 0 && (
-            <span className={`text-[11px] font-semibold tabular-nums ${avgMs <= 4000 ? "text-emerald-600 dark:text-emerald-400" : avgMs <= 9000 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}`}>
-              ~{(avgMs / 1000).toFixed(1)}s avg
-            </span>
-          )}
-        </div>
-
-        {/* Reingest button */}
-        <button
-          onClick={reingest}
-          disabled={reingesting}
-          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-[11px] font-medium text-fg-muted hover:text-fg hover:border-fg-muted transition-colors disabled:opacity-50 w-full sm:w-auto"
-        >
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-            className={reingesting ? "animate-spin" : ""}>
-            <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-          {reingesting ? "Rebuilding…" : "Full re-ingest knowledge base"}
-        </button>
+      <div className="flex items-center gap-2.5 mb-4">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Avocado Model Health</h2>
+        {total > 0 && (
+          <span className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[10px] font-semibold ${
+            healthy
+              ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+              : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800"
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full ${healthy ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`} />
+            {healthy ? "Healthy" : "Fallback churn"}
+          </span>
+        )}
+        {avgMs > 0 && (
+          <span className={`text-[11px] font-semibold tabular-nums ${avgMs <= 4000 ? "text-emerald-600 dark:text-emerald-400" : avgMs <= 9000 ? "text-amber-600 dark:text-amber-400" : "text-rose-600 dark:text-rose-400"}`}>
+            ~{(avgMs / 1000).toFixed(1)}s avg
+          </span>
+        )}
       </div>
 
       {total === 0 ? (
         <p className="text-sm text-fg-faint">No responses recorded yet for this period.</p>
       ) : (
         <>
-          {/* Stacked usage bar */}
           <div className="flex h-2.5 w-full rounded-full overflow-hidden mb-3">
             {models.map((m, i) => (
               <div key={m.model} className={COLORS[i % COLORS.length]} style={{ width: `${(m.count / total) * 100}%` }} title={`${m.model}: ${m.count}`} />
             ))}
           </div>
-          {/* Legend */}
           <ul className="grid sm:grid-cols-2 gap-x-6 gap-y-1.5">
             {models.map((m, i) => (
               <li key={m.model} className="flex items-center gap-2 text-xs min-w-0">
@@ -287,9 +216,242 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
           )}
         </>
       )}
+    </div>
+  );
+}
 
-      {reingestMsg && (
-        <p className="mt-3 text-[11px] text-fg-muted bg-surface-raised border border-border rounded-lg px-3 py-2.5">{reingestMsg}</p>
+// ── Prune analytics panel ─────────────────────────────────────────────────────
+
+type PruneResult = {
+  blog_views_removed: number;
+  blog_claps_removed: number;
+  blog_sessions_removed: number;
+  page_visits_removed: number;
+  total_removed: number;
+  live_blogs: number;
+  live_labs: number;
+};
+
+function PruneAnalyticsPanel() {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<PruneResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [lastRun, setLastRun] = useState<string | null>(null);
+
+  async function handlePrune() {
+    setRunning(true);
+    setResult(null);
+    setError(null);
+    const token = localStorage.getItem("avocado_admin_token") ?? "";
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/prune-analytics`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data: PruneResult = await res.json();
+      setResult(data);
+      setLastRun(new Date().toLocaleTimeString());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unknown error");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  const nothingRemoved = result && result.total_removed === 0;
+
+  return (
+    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-4 mb-3">
+        <div className="min-w-0">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle mb-1">Refresh Metrics</h2>
+          <p className="text-[11px] text-fg-muted leading-relaxed">
+            Cross-checks live content against stored analytics and removes orphaned rows — views, claps, sessions, and page visits for any blog or lab entry that no longer exists.
+          </p>
+        </div>
+        <button
+          onClick={handlePrune}
+          disabled={running}
+          className="shrink-0 inline-flex items-center gap-2 rounded-lg border border-border bg-surface-raised px-4 py-2 text-sm font-medium text-fg-muted hover:text-fg hover:border-fg-muted transition-colors disabled:opacity-50"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            className={running ? "animate-spin" : ""}>
+            <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+            <path d="M21 3v5h-5"/>
+            <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+            <path d="M8 16H3v5"/>
+          </svg>
+          {running ? "Checking…" : "Refresh Metrics"}
+        </button>
+      </div>
+
+      {result && (
+        <div className={`rounded-lg border px-3 py-2.5 ${
+          nothingRemoved
+            ? "bg-surface-raised border-border"
+            : "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800"
+        }`}>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-2">
+            <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold ${
+              nothingRemoved ? "text-fg-muted" : "text-amber-700 dark:text-amber-400"
+            }`}>
+              {nothingRemoved ? (
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M20 6L9 17l-5-5"/>
+                </svg>
+              ) : (
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+                </svg>
+              )}
+              {nothingRemoved ? "Already clean" : `${result.total_removed} orphaned row${result.total_removed !== 1 ? "s" : ""} removed`}
+              {lastRun && <span className="font-normal opacity-60">· {lastRun}</span>}
+            </span>
+            <span className="text-[11px] text-fg-faint ml-auto">
+              {result.live_blogs} blog{result.live_blogs !== 1 ? "s" : ""} · {result.live_labs} lab{result.live_labs !== 1 ? "s" : ""} retained
+            </span>
+          </div>
+          {!nothingRemoved && (
+            <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-[10px] tabular-nums text-fg-muted">
+              {result.blog_views_removed > 0    && <span><span className="font-semibold text-fg">{result.blog_views_removed}</span> views</span>}
+              {result.blog_claps_removed > 0    && <span><span className="font-semibold text-fg">{result.blog_claps_removed}</span> claps</span>}
+              {result.blog_sessions_removed > 0 && <span><span className="font-semibold text-fg">{result.blog_sessions_removed}</span> sessions</span>}
+              {result.page_visits_removed > 0   && <span><span className="font-semibold text-fg">{result.page_visits_removed}</span> page visits</span>}
+            </div>
+          )}
+        </div>
+      )}
+
+      {error && (
+        <p className="mt-2 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 px-3 py-2 text-[11px] text-rose-700 dark:text-rose-400">{error}</p>
+      )}
+    </div>
+  );
+}
+
+// ── Reingest panel ─────────────────────────────────────────────────────────────
+
+const REINGEST_SOURCES = [
+  "Profile", "Experience", "Education", "Projects",
+  "Skills", "Testimonials", "Gallery", "Blog", "Lab", "Quotes", "FAQ",
+];
+
+type ReingestResult = { added: number; updated: number; unchanged: number; deleted: number; total: number };
+
+function ReingestPanel() {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<ReingestResult | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [lastRun, setLastRun] = useState<string | null>(null);
+
+  async function handleReingest() {
+    setRunning(true);
+    setResult(null);
+    setError(null);
+    const token = localStorage.getItem("avocado_admin_token") ?? "";
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/reingest?force=true`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const kick = await res.json();
+      if (kick.status === "already_running") {
+        setError("Already running — check back in a moment.");
+        setRunning(false);
+        return;
+      }
+      await new Promise<void>((resolve, reject) => {
+        const iv = setInterval(async () => {
+          try {
+            const sr = await fetch(`${API_BASE_URL}/admin/reingest/status`, {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (!sr.ok) { clearInterval(iv); reject(new Error(`HTTP ${sr.status}`)); return; }
+            const s = await sr.json();
+            if (!s.running) {
+              clearInterval(iv);
+              if (s.error) { reject(new Error(s.error)); return; }
+              setResult(s.result ?? {});
+              setLastRun(new Date().toLocaleTimeString());
+              resolve();
+            }
+          } catch (err) { clearInterval(iv); reject(err); }
+        }, 2000);
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Unknown error — check ADMIN_TOKEN & backend logs");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+      {/* Header row */}
+      <div className="flex items-start justify-between gap-4 mb-4">
+        <div className="min-w-0">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle mb-1">Avocado Knowledge Base</h2>
+          <p className="text-[11px] text-fg-muted leading-relaxed">
+            Re-reads every content source and rebuilds the RAG vector index from scratch. Run this after any content change to make Avocado aware of it immediately.
+          </p>
+        </div>
+        <button
+          onClick={handleReingest}
+          disabled={running}
+          className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-hover transition-colors disabled:opacity-50 shadow-sm shadow-accent/20"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+            className={running ? "animate-spin" : ""}>
+            <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          {running ? "Indexing…" : "Rebuild Index"}
+        </button>
+      </div>
+
+      {/* Content source chips */}
+      <div className="flex flex-wrap gap-1.5 mb-4">
+        {REINGEST_SOURCES.map((src) => (
+          <span key={src} className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+            running
+              ? "animate-pulse bg-accent/5 border-accent/20 text-accent"
+              : result
+              ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
+              : "bg-surface-raised border-border text-fg-muted"
+          }`}>
+            {result && (
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 6L9 17l-5-5"/>
+              </svg>
+            )}
+            {src}
+          </span>
+        ))}
+      </div>
+
+      {/* Result */}
+      {result && (
+        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-3 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+            Sync complete
+            {lastRun && <span className="font-normal text-emerald-600/70 dark:text-emerald-500/70">· {lastRun}</span>}
+          </span>
+          <div className="ml-auto flex items-center gap-3 text-[11px] tabular-nums text-fg-muted">
+            <span><span className="font-semibold text-fg">{result.added}</span> added</span>
+            <span><span className="font-semibold text-fg">{result.updated}</span> updated</span>
+            {result.deleted > 0 && <span><span className="font-semibold text-rose-600 dark:text-rose-400">{result.deleted}</span> removed</span>}
+            <span><span className="font-semibold text-fg">{result.unchanged}</span> unchanged</span>
+            <span className="border-l border-border pl-3"><span className="font-semibold text-fg">{result.total}</span> total in ChromaDB</span>
+          </div>
+        </div>
+      )}
+
+      {error && (
+        <p className="rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 px-3 py-2 text-[11px] text-rose-700 dark:text-rose-400">{error}</p>
       )}
     </div>
   );
@@ -2985,8 +3147,14 @@ function Dashboard({
         {/* 30-day trends */}
         <TrendsPanel trends={stats.trends} />
 
-        {/* Avocado model health + operations */}
+        {/* Avocado model health */}
         <ModelHealthPanel models={models} />
+
+        {/* Knowledge base reingest */}
+        <ReingestPanel />
+
+        {/* Metrics cleanup */}
+        <PruneAnalyticsPanel />
 
         {/* Questions + Feedback */}
         <div className="grid lg:grid-cols-2 gap-6">

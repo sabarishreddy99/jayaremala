@@ -195,6 +195,44 @@ def get_blog_engagement_stats(period: str = "all") -> dict:
         return {"total_opens": 0, "posts": []}
 
 
+def prune_orphaned_stats(valid_slugs: set[str]) -> dict[str, int]:
+    """Delete blog analytics rows whose slug is not in `valid_slugs`.
+
+    Pass the full set of currently live blog slugs (including drafts).
+    If `valid_slugs` is empty every row is deleted.
+    Returns counts of removed rows per table.
+    """
+    removed = {"views": 0, "claps": 0, "sessions": 0}
+    try:
+        with _connect() as conn:
+            if valid_slugs:
+                ph = ",".join("?" * len(valid_slugs))
+                sl = list(valid_slugs)
+                removed["views"]    = conn.execute(f"DELETE FROM blog_views    WHERE slug NOT IN ({ph})", sl).rowcount
+                removed["claps"]    = conn.execute(f"DELETE FROM blog_claps    WHERE slug NOT IN ({ph})", sl).rowcount
+                removed["sessions"] = conn.execute(f"DELETE FROM blog_sessions WHERE slug NOT IN ({ph})", sl).rowcount
+            else:
+                removed["views"]    = conn.execute("DELETE FROM blog_views").rowcount
+                removed["claps"]    = conn.execute("DELETE FROM blog_claps").rowcount
+                removed["sessions"] = conn.execute("DELETE FROM blog_sessions").rowcount
+        logger.info("Pruned orphaned blog analytics: %s", removed)
+    except Exception as exc:
+        logger.warning("prune_orphaned_stats failed: %s", exc)
+    return removed
+
+
+def delete_post_stats(slug: str) -> None:
+    """Remove all views, claps, and sessions for a deleted blog post."""
+    try:
+        with _connect() as conn:
+            conn.execute("DELETE FROM blog_views    WHERE slug=?", (slug,))
+            conn.execute("DELETE FROM blog_claps    WHERE slug=?", (slug,))
+            conn.execute("DELETE FROM blog_sessions WHERE slug=?", (slug,))
+        logger.info("Deleted blog analytics for slug=%s", slug)
+    except Exception as exc:
+        logger.warning("delete_post_stats failed: %s", exc)
+
+
 def get_summary(period: str = "all") -> dict:
     """Returns blog stats. period filters views only.
 

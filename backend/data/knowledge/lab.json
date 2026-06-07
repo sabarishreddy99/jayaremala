@@ -5,29 +5,23 @@
     "status": "active",
     "description": "AI-powered personal portfolio with a RAG chatbot (Avocado), MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade — not a toy.",
     "startedAt": "2025-11-01",
-    "updatedAt": "2026-06-06",
+    "updatedAt": "2026-05-22",
     "tech": [
       "Next.js 16",
-      "React 19",
-      "Tailwind CSS v4",
-      "TypeScript",
       "FastAPI",
       "ChromaDB",
       "Gemini 2.5 Flash",
       "BAAI/bge-base-en-v1.5",
-      "HyDE",
       "BM25",
-      "RRF",
       "Knowledge Graph",
-      "FNV-1a Hash",
       "SQLite",
-      "SlowAPI",
       "AWS Lightsail",
       "Nginx",
       "S3",
       "GitHub Pages",
       "GitHub Actions"
     ],
-    "content": "Overview\n\nMost portfolios are static pages someone scrolls past in 30 seconds. This one starts a conversation.\n\nAvocado is an AI assistant backed by a hybrid RAG pipeline. It answers questions about experience, projects, skills, and blog posts in real time — with tokens streaming directly to the browser. Ask it \"what's your strongest AI project?\" and it retrieves the most relevant knowledge chunks, reranks them, and streams a grounded answer through Gemini.\n\nThe portfolio half is a full static Next.js site — experience, education, projects, and a blog with per-post views and claps tracked in SQLite. The whole system auto-deploys on every  with zero manual steps. Content (blog posts, lab entries, quotes) can also be managed via a token-gated admin panel without any git commits.\n\nWhy build it this way\n\nA traditional portfolio is a one-way broadcast. You decide what to highlight, the visitor reads what you chose, end of story. The problem is that the actual question someone wants answered — \"does this person have experience with distributed caching?\" — almost never aligns with the section you happened to emphasise.\n\nAn AI-backed portfolio inverts this. The visitor asks in natural language, the system surfaces the most relevant evidence, and Gemini synthesises an answer grounded in real data. The net effect is that a 30-second scroll becomes a conversation that can go as deep as the person wants.\n\nProgress Log\n\nWhat's next\n\nCross-encoder reranking () — scaffolded in , gated on Lightsail upgrade to 4GB ($20/month) for the ~250MB RAM headroom\nEntity-aware ChromaDB pre-filtering using the metadata fields (entity_type, company_key, project_key)\nFull-text search within blog posts (cmd+K modal already has site-wide search; per-post content search is the next layer)\nAvocado voice input (Web Speech API — already prototyped)\nMonitoring dashboard (uptime + response time over time)\nS3 backup for  alongside \nBlog image upload via admin (currently images require a git commit to )"
+    "links": [],
+    "content": "Overview\n\nMost portfolios are static pages someone scrolls past in 30 seconds. This one starts a conversation.\n\nAvocado is an AI assistant backed by a hybrid RAG pipeline. It answers questions about experience, projects, skills, and blog posts in real time — with tokens streaming directly to the browser. Ask it \"what's your strongest AI project?\" and it retrieves the most relevant knowledge chunks, reranks them, and streams a grounded answer through Gemini.\n\nThe portfolio half is a full static Next.js site — experience, education, projects, and a blog with per-post views and claps tracked in SQLite. The whole system auto-deploys on every  with zero manual steps.\n\nWhy build it this way\n\nA traditional portfolio is a one-way broadcast. You decide what to highlight, the visitor reads what you chose, end of story. The problem is that the actual question someone wants answered — \"does this person have experience with distributed caching?\" — almost never aligns with the section you happened to emphasise.\n\nAn AI-backed portfolio inverts this. The visitor asks in natural language, the system surfaces the most relevant evidence, and Gemini synthesises an answer grounded in real data. The net effect is that a 30-second scroll becomes a conversation that can go as deep as the person wants.\n\nProgress Log\n\nWhat's next\n\nCross-encoder reranking () — already scaffolded in , gated on Lightsail upgrade to 4GB ($20/month) for the ~250MB RAM headroom\nEntity-aware ChromaDB pre-filtering using the metadata fields added this session (entity_type, future company_key, project_key)\nReading time estimate on blog cards\nSearch within blog posts\nAvocado voice input (Web Speech API — already prototyped)\nMonitoring dashboard (uptime + response time over time)"
   }
 ]

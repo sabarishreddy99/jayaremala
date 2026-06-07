@@ -56,3 +56,36 @@ def reingest_status() -> dict:
         "result": _reingest_state["result"],
         "error": _reingest_state["error"],
     }
+
+
+@router.post("/prune-analytics", dependencies=[Depends(_require_token)])
+def prune_analytics() -> dict:
+    """Remove analytics rows for blog posts and lab entries that no longer exist in content.db.
+
+    Reads the current live slug lists from content.db, then deletes orphaned rows from:
+    - blog_views, blog_claps, blog_sessions (by slug)
+    - site_visits for /blog/* and /lab/* paths
+
+    Safe to call at any time — read-then-delete, no destructive side effects on live content.
+    """
+    from app.db import content as content_db
+    from app.db.blog_stats import prune_orphaned_stats
+    from app.db.analytics import prune_orphaned_page_visits
+
+    blog_slugs = {p["slug"] for p in content_db.list_blog_posts(include_drafts=True)}
+    lab_slugs  = {e["slug"] for e in content_db.list_lab_entries()}
+
+    valid_pages = {f"/blog/{s}" for s in blog_slugs} | {f"/lab/{s}" for s in lab_slugs}
+
+    blog_removed  = prune_orphaned_stats(blog_slugs)
+    pages_removed = prune_orphaned_page_visits(valid_pages)
+
+    return {
+        "blog_views_removed":    blog_removed["views"],
+        "blog_claps_removed":    blog_removed["claps"],
+        "blog_sessions_removed": blog_removed["sessions"],
+        "page_visits_removed":   pages_removed,
+        "total_removed":         sum(blog_removed.values()) + pages_removed,
+        "live_blogs":            len(blog_slugs),
+        "live_labs":             len(lab_slugs),
+    }

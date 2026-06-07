@@ -385,6 +385,42 @@ def get_location_stats(table: str, period: str = "all") -> list[dict]:
         return []
 
 
+def prune_orphaned_page_visits(valid_pages: set[str]) -> int:
+    """Delete site_visits rows for /blog/* and /lab/* pages not in `valid_pages`.
+
+    Only touches content-routed pages — all other paths (/, /experience, etc.) are untouched.
+    Returns the number of rows removed.
+    """
+    try:
+        with _connect() as conn:
+            if valid_pages:
+                ph = ",".join("?" * len(valid_pages))
+                removed = conn.execute(
+                    f"DELETE FROM site_visits WHERE (page LIKE '/blog/%' OR page LIKE '/lab/%') AND page NOT IN ({ph})",
+                    list(valid_pages),
+                ).rowcount
+            else:
+                removed = conn.execute(
+                    "DELETE FROM site_visits WHERE page LIKE '/blog/%' OR page LIKE '/lab/%'"
+                ).rowcount
+        if removed:
+            logger.info("Pruned %d orphaned site_visits rows", removed)
+        return removed
+    except Exception as exc:
+        logger.warning("prune_orphaned_page_visits failed: %s", exc)
+        return 0
+
+
+def delete_page_visits(page: str) -> None:
+    """Remove all site_visits rows for a deleted page path."""
+    try:
+        with _connect() as conn:
+            conn.execute("DELETE FROM site_visits WHERE page=?", (page,))
+        logger.info("Deleted site_visits for page=%s", page)
+    except Exception as exc:
+        logger.warning("delete_page_visits failed: %s", exc)
+
+
 def get_page_stats(period: str = "all") -> list[dict]:
     """Top visited pages by session count."""
     and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""

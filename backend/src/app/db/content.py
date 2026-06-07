@@ -459,7 +459,7 @@ def sync_blog_json_to_db() -> None:
         return
     posts = json.loads(path.read_text())
     added = 0
-    with _conn() as conn:
+    with _connect() as conn:
         existing = {row[0] for row in conn.execute("SELECT slug FROM blog_posts").fetchall()}
         for post in posts:
             slug = post.get("slug", "")
@@ -517,7 +517,7 @@ def sync_lab_json_to_db() -> None:
         return
     entries = json.loads(path.read_text())
     added = 0
-    with _conn() as conn:
+    with _connect() as conn:
         existing = {row[0] for row in conn.execute("SELECT slug FROM lab_entries").fetchall()}
         for entry in entries:
             slug = entry.get("slug", "")

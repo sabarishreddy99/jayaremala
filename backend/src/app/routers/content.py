@@ -109,6 +109,24 @@ def _sync_lab_to_rag() -> None:
         logger.error("Lab RAG sync failed (non-fatal): %s", exc)
 
 
+def _cleanup_blog_analytics(slug: str) -> None:
+    try:
+        from app.db.blog_stats import delete_post_stats
+        from app.db.analytics import delete_page_visits
+        delete_post_stats(slug)
+        delete_page_visits(f"/blog/{slug}")
+    except Exception as exc:
+        logger.error("Blog analytics cleanup failed (non-fatal): %s", exc)
+
+
+def _cleanup_lab_analytics(slug: str) -> None:
+    try:
+        from app.db.analytics import delete_page_visits
+        delete_page_visits(f"/lab/{slug}")
+    except Exception as exc:
+        logger.error("Lab analytics cleanup failed (non-fatal): %s", exc)
+
+
 # ── Blog endpoints ─────────────────────────────────────────────────────────────
 
 @router.get("/blog")
@@ -156,6 +174,7 @@ def delete_blog_post(slug: str, background_tasks: BackgroundTasks) -> None:
     if not content_db.delete_blog_post(slug):
         raise HTTPException(status_code=404, detail="Post not found")
     background_tasks.add_task(_sync_blog_to_rag)
+    background_tasks.add_task(_cleanup_blog_analytics, slug)
 
 
 # ── Lab endpoints ──────────────────────────────────────────────────────────────
@@ -196,6 +215,7 @@ def delete_lab_entry(slug: str, background_tasks: BackgroundTasks) -> None:
     if not content_db.delete_lab_entry(slug):
         raise HTTPException(status_code=404, detail="Lab entry not found")
     background_tasks.add_task(_sync_lab_to_rag)
+    background_tasks.add_task(_cleanup_lab_analytics, slug)
 
 
 # ── Quotes endpoints ───────────────────────────────────────────────────────────

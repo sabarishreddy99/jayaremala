@@ -15,6 +15,7 @@ import BlogSwitcher from "@/components/blog/BlogSwitcher";
 import { TableOfContents, MobileTOC } from "@/components/blog/TableOfContents";
 import type { Heading } from "@/components/blog/TableOfContents";
 import BlogPostMarkdown from "@/components/blog/BlogPostMarkdown";
+import ProseReveal from "@/components/blog/ProseReveal";
 import type { ApiBlogPost } from "@/lib/api/content";
 
 const prettyCodeOptions: PrettyCodeOptions = {
@@ -61,9 +62,9 @@ function BlogPostApiView({ post }: { post: ApiBlogPost }) {
           <ShareButtons slug={post.slug} title={post.title} />
         </header>
 
-        <div className="prose font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
+        <ProseReveal className="prose font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
           <BlogPostMarkdown content={post.content} />
-        </div>
+        </ProseReveal>
 
         <BlogEngagement slug={post.slug} />
       </article>
@@ -285,7 +286,7 @@ export default async function BlogPostPage({ params }: Props) {
             {/* Mobile TOC — inline before content */}
             <MobileTOC headings={headings} />
 
-            <div
+            <ProseReveal
               className="prose font-[family-name:var(--font-blog)] leading-[1.85]"
               style={{ fontSize: "var(--blog-font-size, 1.0625rem)" }}
             >
@@ -294,7 +295,7 @@ export default async function BlogPostPage({ params }: Props) {
                 components={mdxComponents}
                 options={{ mdxOptions: { rehypePlugins: [rehypeSlug, [rehypePrettyCode, prettyCodeOptions]] } }}
               />
-            </div>
+            </ProseReveal>
 
             <BlogEngagement slug={post.slug} />
           </article>

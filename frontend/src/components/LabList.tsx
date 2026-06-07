@@ -1,8 +1,34 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { LabMeta, LabStatus } from "@/lib/lab";
+
+function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: number }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect(); } },
+      { threshold: 0.06 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return (
+    <div
+      ref={ref}
+      style={{ transitionDelay: `${delay}ms` }}
+      className={`transition-[opacity,transform] duration-500 ease-out ${
+        visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+      }`}
+    >
+      {children}
+    </div>
+  );
+}
 
 const STATUS_STYLES: Record<LabStatus, {
   dot: string;
@@ -101,10 +127,11 @@ export default function LabList({ entries }: { entries: LabMeta[] }) {
 
       {/* Cards */}
       <ol className="space-y-4">
-        {filtered.map((entry) => {
+        {filtered.map((entry, i) => {
           const s = STATUS_STYLES[entry.status];
           return (
             <li key={entry.slug}>
+              <Reveal delay={Math.min(i * 70, 350)}>
               <Link
                 href={`/lab/${entry.slug}`}
                 className={`group relative block rounded-sm border border-border bg-surface p-5 sm:p-6 hover:shadow-md transition-all overflow-hidden ${s.leftBorder}`}
@@ -150,6 +177,7 @@ export default function LabList({ entries }: { entries: LabMeta[] }) {
                   </div>
                 </div>
               </Link>
+              </Reveal>
             </li>
           );
         })}

@@ -8,6 +8,7 @@ import { TableOfContents, MobileTOC } from "@/components/blog/TableOfContents";
 import type { Heading } from "@/components/blog/TableOfContents";
 import FontSizeControl from "@/components/blog/FontSizeControl";
 import BlogSwitcher from "@/components/blog/BlogSwitcher";
+import ProseReveal from "@/components/blog/ProseReveal";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -122,7 +123,7 @@ export default async function LabEntryPage({ params }: Props) {
             {/* Mobile TOC — collapsible, before content */}
             <MobileTOC headings={headings} />
 
-            <div
+            <ProseReveal
               className="prose max-w-none leading-[1.85]"
               style={{ fontSize: "var(--blog-font-size, 1.0rem)" }}
             >
@@ -131,7 +132,7 @@ export default async function LabEntryPage({ params }: Props) {
                 components={labMDXComponents}
                 options={{ mdxOptions: { rehypePlugins: [rehypeSlug] } }}
               />
-            </div>
+            </ProseReveal>
           </article>
 
           <div className="mt-16 pt-8 border-t border-border">

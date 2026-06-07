@@ -100,7 +100,7 @@ export default function EducationPage() {
                 {/* Top row: institution + period */}
                 <div className="flex flex-wrap items-start justify-between gap-3 mb-1">
                   <div>
-                    <h2 className="text-base sm:text-lg font-bold text-fg leading-tight">
+                    <h2 className="text-base font-bold text-fg leading-tight">
                       {edu.institution}
                     </h2>
                     <p className="text-xs text-fg-faint mt-0.5">{edu.school}</p>

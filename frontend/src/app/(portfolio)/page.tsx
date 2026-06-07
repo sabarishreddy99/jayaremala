@@ -353,7 +353,7 @@ export default function PortfolioHome() {
           <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
             style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>01</span>
           <div className="flex items-center gap-4 mb-10">
-            <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-faint shrink-0">At a Glance</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-fg-faint shrink-0">At a Glance</h2>
             <div className="flex-1 h-px bg-border" aria-hidden />
           </div>
 
@@ -482,7 +482,7 @@ export default function PortfolioHome() {
               style={{ fontSize: "clamp(7rem,18vw,14rem)" }}>02</span>
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-4">
-                <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-faint shrink-0">Featured Projects</h2>
+                <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-fg-faint shrink-0">Featured Projects</h2>
               </div>
               <Link href="/projects" className="text-xs font-medium text-accent hover:text-accent-hover">
                 All projects →
@@ -568,7 +568,7 @@ export default function PortfolioHome() {
           {/* Interactive skills ↔ projects constellation — desktop only */}
           <div className="hidden lg:block mt-12 pt-10 border-t border-border">
             <div className="flex items-center gap-4 mb-6">
-              <h3 className="text-xs font-semibold uppercase tracking-[0.2em] text-fg-faint shrink-0">Skills in Action</h3>
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-fg-faint shrink-0">Skills in Action</h3>
               <div className="flex-1 h-px bg-border" aria-hidden />
             </div>
             <SkillsConstellation />

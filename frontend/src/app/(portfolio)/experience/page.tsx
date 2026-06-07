@@ -84,7 +84,7 @@ export default function ExperiencePage() {
                 {/* Header row */}
                 <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
                   <div>
-                    <h2 className="text-base font-bold text-fg">{job.role}</h2>
+                    <h2 className="text-base font-bold text-fg leading-tight">{job.role}</h2>
                     <p className="text-sm font-medium text-accent">{job.company}</p>
                   </div>
                   <div className="text-right shrink-0">

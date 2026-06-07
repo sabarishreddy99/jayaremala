@@ -239,10 +239,13 @@ export default async function BlogPostPage({ params }: Props) {
           </svg>
           All posts
         </Link>
-        <BlogSwitcher
-          posts={allPosts.map((p) => ({ slug: p.slug, title: p.title, date: p.date }))}
-          currentSlug={slug}
-        />
+        {/* Desktop: switcher in breadcrumb row */}
+        <div className="hidden sm:block">
+          <BlogSwitcher
+            posts={allPosts.map((p) => ({ slug: p.slug, title: p.title, date: p.date }))}
+            currentSlug={slug}
+          />
+        </div>
       </div>
 
       <div className="lg:flex lg:gap-14 lg:items-start">
@@ -280,6 +283,13 @@ export default async function BlogPostPage({ params }: Props) {
                   ))}
                 </div>
               )}
+              {/* Mobile: switcher below heading where dropdown has room to open */}
+              <div className="sm:hidden mb-3">
+                <BlogSwitcher
+                  posts={allPosts.map((p) => ({ slug: p.slug, title: p.title, date: p.date }))}
+                  currentSlug={slug}
+                />
+              </div>
               <ShareButtons slug={post.slug} title={post.title} />
             </header>
 

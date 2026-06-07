@@ -16,7 +16,7 @@ interface Props {
   listTitle?: string;
 }
 
-export default function BlogSwitcher({ posts, currentSlug, label = "Browse blogs", listTitle = "All posts" }: Props) {
+export default function BlogSwitcher({ posts, currentSlug, label = "Browse", listTitle = "All posts" }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -61,12 +61,12 @@ export default function BlogSwitcher({ posts, currentSlug, label = "Browse blogs
       {open && (
         <div
           role="listbox"
-          className="absolute right-0 top-full mt-1.5 w-80 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden"
+          className="absolute right-0 top-full mt-1.5 w-72 sm:w-80 bg-surface border border-border rounded-xl shadow-xl z-50 overflow-hidden"
         >
           <div className="px-3 py-2 border-b border-border">
-            <p className="text-[10px] font-semibold uppercase tracking-widest text-fg-faint">{listTitle}</p>
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-fg-subtle">{listTitle}</p>
           </div>
-          <ul className="max-h-72 overflow-y-auto py-1">
+          <ul className="max-h-64 overflow-y-auto overscroll-contain py-1">
             {posts.map((post) => {
               const isCurrent = post.slug === currentSlug;
               return (
@@ -76,12 +76,7 @@ export default function BlogSwitcher({ posts, currentSlug, label = "Browse blogs
                     onClick={() => setOpen(false)}
                     className={`flex items-start gap-2.5 px-3 py-2.5 hover:bg-surface-raised transition-colors group ${isCurrent ? "bg-accent/5" : ""}`}
                   >
-                    {isCurrent && (
-                      <span className="mt-1 w-1.5 h-1.5 rounded-full bg-accent shrink-0" aria-hidden />
-                    )}
-                    {!isCurrent && (
-                      <span className="mt-1 w-1.5 h-1.5 rounded-full bg-transparent shrink-0" aria-hidden />
-                    )}
+                    <span className={`mt-1 w-1.5 h-1.5 rounded-full shrink-0 ${isCurrent ? "bg-accent" : "bg-transparent"}`} aria-hidden />
                     <div className="min-w-0">
                       <p className={`text-sm leading-snug truncate ${isCurrent ? "text-accent font-medium" : "text-fg-muted group-hover:text-fg"} transition-colors`}>
                         {post.title}

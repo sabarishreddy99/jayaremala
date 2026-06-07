@@ -67,12 +67,15 @@ export default async function LabEntryPage({ params }: Props) {
           </svg>
           Lab
         </Link>
-        <BlogSwitcher
-          posts={switcherEntries}
-          currentSlug={slug}
-          label="Browse lab"
-          listTitle="All entries"
-        />
+        {/* Desktop: switcher in breadcrumb row */}
+        <div className="hidden sm:block">
+          <BlogSwitcher
+            posts={switcherEntries}
+            currentSlug={slug}
+            label="Browse"
+            listTitle="All entries"
+          />
+        </div>
       </div>
 
       <div className="lg:flex lg:gap-14 lg:items-start">
@@ -117,6 +120,16 @@ export default async function LabEntryPage({ params }: Props) {
                     </svg>
                   </a>
                 ))}
+              </div>
+
+              {/* Mobile: switcher below heading where dropdown has room to open */}
+              <div className="sm:hidden mt-4">
+                <BlogSwitcher
+                  posts={switcherEntries}
+                  currentSlug={slug}
+                  label="Browse"
+                  listTitle="All entries"
+                />
               </div>
             </header>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, Children, isValidElement } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { API_BASE_URL } from "@/lib/api/client";
@@ -138,13 +138,87 @@ function TBtn({
   );
 }
 
+/* ── Callout styles (mirrors MDXComponents.tsx) ─────────────────────── */
+type CalloutType = "info" | "tip" | "warning" | "quote";
+const CALLOUT_STYLES: Record<CalloutType, { border: string; bg: string; icon: string; label: string; text: string }> = {
+  info:    { border: "border-blue-200 dark:border-blue-800",   bg: "bg-blue-50 dark:bg-blue-950/50",   icon: "ℹ",  label: "text-blue-700 dark:text-blue-400",   text: "text-blue-800 dark:text-blue-300" },
+  tip:     { border: "border-green-200 dark:border-green-800", bg: "bg-green-50 dark:bg-green-950/50", icon: "✦",  label: "text-green-700 dark:text-green-400", text: "text-green-800 dark:text-green-300" },
+  warning: { border: "border-amber-200 dark:border-amber-800", bg: "bg-amber-50 dark:bg-amber-950/50", icon: "⚠",  label: "text-amber-700 dark:text-amber-400", text: "text-amber-900 dark:text-amber-300" },
+  quote:   { border: "border-indigo-200 dark:border-indigo-800", bg: "bg-indigo-50 dark:bg-indigo-950/50", icon: "❝", label: "text-indigo-600 dark:text-indigo-400", text: "text-indigo-900 dark:text-indigo-300" },
+};
+
+/* ── Preprocess markdown before ReactMarkdown ───────────────────────── */
+// Converts JSX-style custom components → markdown equivalents so ReactMarkdown
+// can render them. ReactMarkdown can't execute JSX, so we convert them to
+// standard markdown syntax that our custom component overrides then render correctly.
+function preprocessMarkdown(raw: string): string {
+  return raw
+    // <Divider /> → horizontal rule
+    .replace(/<Divider\s*\/?>/g, "\n\n---\n\n")
+    // <Callout type="x">body</Callout> → special blockquote marker "> [TYPE] body"
+    .replace(
+      /<Callout[^>]*type=["'](\w+)["'][^>]*>([\s\S]*?)<\/Callout>/g,
+      (_, type, body) =>
+        `\n\n> [${type.toUpperCase()}] ${body.trim().replace(/\n+/g, " ")}\n\n`
+    )
+    // <BlogImage src="..." alt="..."> → markdown image
+    .replace(
+      /<BlogImage[^>]*src=["']([^"']+)["'][^>]*alt=["']([^"']*)["'][^>]*\/?>/g,
+      (_, src, alt) => `\n\n![${alt}](${src})\n\n`
+    );
+}
+
 /* ── Markdown preview ───────────────────────────────────────────────── */
 function Preview({ content }: { content: string }) {
+  const processed = preprocessMarkdown(content);
   return (
     <div className="h-full overflow-y-auto px-6 py-5">
       {content.trim() ? (
-        <div className="prose max-w-none text-[1rem] leading-[1.85]">
-          <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+        <div className="prose max-w-none text-[1rem] leading-[1.85] font-[family-name:var(--font-blog)]">
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            components={{
+              // Detect preprocessed callouts: blockquote whose first <p> starts with "[TYPE]"
+              blockquote: ({ children }) => {
+                const kids = Children.toArray(children);
+                const firstP = kids.find(
+                  (k): k is React.ReactElement<{ children: React.ReactNode }> =>
+                    isValidElement(k) && (k as React.ReactElement).type === "p"
+                );
+                if (firstP) {
+                  const pKids = Children.toArray(firstP.props.children);
+                  const firstText = typeof pKids[0] === "string" ? pKids[0] : "";
+                  const m = firstText.match(/^\[([A-Z]+)\]\s*/);
+                  if (m) {
+                    const type = m[1].toLowerCase() as CalloutType;
+                    const s = CALLOUT_STYLES[type] ?? CALLOUT_STYLES.info;
+                    return (
+                      <div className={`not-prose my-6 rounded-xl border ${s.border} ${s.bg} px-5 py-4`}>
+                        <div className={`flex items-center gap-2 mb-1.5 text-sm font-semibold ${s.label}`}>
+                          <span>{s.icon}</span>
+                          <span>{type.charAt(0).toUpperCase() + type.slice(1)}</span>
+                        </div>
+                        <div className={`text-sm leading-relaxed ${s.text}`}>
+                          {firstText.slice(m[0].length)}{pKids.slice(1)}
+                        </div>
+                      </div>
+                    );
+                  }
+                }
+                return <blockquote>{children}</blockquote>;
+              },
+              // <Divider /> → styled ornamental rule
+              hr: () => (
+                <div className="not-prose my-8 flex items-center gap-3">
+                  <div className="flex-1 h-px bg-border" />
+                  <span className="text-fg-faint text-xs">✦</span>
+                  <div className="flex-1 h-px bg-border" />
+                </div>
+              ),
+            }}
+          >
+            {processed}
+          </ReactMarkdown>
         </div>
       ) : (
         <p className="text-fg-faint text-sm italic text-center mt-16">Nothing to preview yet…</p>
@@ -385,7 +459,7 @@ export default function ContentBlogEditor() {
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder={"Write your post in Markdown…\n\nTip: ⌘B bold · ⌘I italic · ⌘K link · ⌘↵ save"}
-            className={`bg-transparent px-4 py-4 text-sm text-fg font-mono placeholder:text-fg-faint/60 focus:outline-none resize-none leading-relaxed ${mode === "split" ? "w-1/2 border-r border-border" : "w-full"}`}
+            className={`bg-transparent px-4 py-4 text-sm text-fg font-mono placeholder:text-fg-subtle focus:outline-none resize-none leading-relaxed ${mode === "split" ? "w-1/2 border-r border-border" : "w-full"}`}
           />
         )}
 

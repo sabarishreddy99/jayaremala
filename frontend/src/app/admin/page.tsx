@@ -72,10 +72,10 @@ function StatCard({
     indigo: "text-indigo-600 dark:text-indigo-400",
   }[color];
   return (
-    <div className="rounded border border-border bg-surface p-4 sm:p-5 flex flex-col gap-1">
-      <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-widest text-fg-faint">{label}</p>
-      <p className={`text-2xl sm:text-3xl font-bold tabular-nums ${accent}`}>{typeof value === "number" ? fmt(value) : value}</p>
-      {sub && <p className="text-[10px] sm:text-[11px] text-fg-faint leading-snug">{sub}</p>}
+    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5 flex flex-col gap-1.5">
+      <p className="text-[10px] font-semibold uppercase tracking-widest text-fg-subtle">{label}</p>
+      <p className={`text-2xl sm:text-3xl font-bold tabular-nums leading-none ${accent}`}>{typeof value === "number" ? fmt(value) : value}</p>
+      {sub && <p className="text-[10px] text-fg-faint leading-snug">{sub}</p>}
     </div>
   );
 }
@@ -141,9 +141,9 @@ function TrendsPanel({ trends }: { trends?: { visitors: DailyCount[]; conversati
         const total = s.data.reduce((a, d) => a + d.count, 0);
         const peak = Math.max(0, ...s.data.map((d) => d.count));
         return (
-          <div key={s.label} className="rounded border border-border bg-surface p-4 sm:p-5">
+          <div key={s.label} className="rounded-xl border border-border bg-surface p-4 sm:p-5">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">{s.label} · 30 days</h2>
+              <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">{s.label} · 30 days</h2>
               <span className="text-[11px] text-fg-faint tabular-nums">{fmt(total)} total · peak {peak}/day</span>
             </div>
             <Sparkline data={s.data} color={s.color} />
@@ -222,10 +222,10 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
   }
 
   return (
-    <div className="rounded border border-border bg-surface p-4 sm:p-5">
+    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap gap-y-2">
         <div className="flex items-center gap-2.5">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Avocado Model Health</h2>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Avocado Model Health</h2>
           {total > 0 && (
             <span className={`inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-[10px] font-semibold ${
               healthy
@@ -247,7 +247,7 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
         <button
           onClick={reingest}
           disabled={reingesting}
-          className="inline-flex items-center justify-center gap-1.5 rounded border border-border bg-surface-raised px-3 py-1.5 text-[11px] font-medium text-fg-muted hover:text-fg hover:border-fg-muted transition-colors disabled:opacity-50 w-full sm:w-auto"
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-1.5 text-[11px] font-medium text-fg-muted hover:text-fg hover:border-fg-muted transition-colors disabled:opacity-50 w-full sm:w-auto"
         >
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
             className={reingesting ? "animate-spin" : ""}>
@@ -289,7 +289,7 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
       )}
 
       {reingestMsg && (
-        <p className="mt-3 text-[11px] text-fg-muted bg-surface-raised border border-border rounded px-3 py-2">{reingestMsg}</p>
+        <p className="mt-3 text-[11px] text-fg-muted bg-surface-raised border border-border rounded-lg px-3 py-2.5">{reingestMsg}</p>
       )}
     </div>
   );
@@ -347,10 +347,10 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
         {/* Card */}
         <form
           onSubmit={handleSubmit}
-          className="rounded border border-border bg-surface p-6 space-y-4 shadow-xl shadow-black/10"
+          className="rounded-xl border border-border bg-surface p-6 space-y-4 shadow-xl shadow-black/10"
         >
           <div className="space-y-1.5">
-            <label className="block text-[11px] font-semibold uppercase tracking-wider text-fg-faint">
+            <label className="block text-[11px] font-semibold uppercase tracking-wider text-fg-subtle">
               Admin token
             </label>
             <div className="relative">
@@ -359,7 +359,7 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 placeholder="Enter ADMIN_TOKEN…"
-                className="w-full rounded border border-border bg-bg px-3 py-2.5 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/10 transition-all font-mono pr-16"
+                className="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/10 transition-all font-mono pr-16"
                 autoFocus
               />
               <button
@@ -466,16 +466,16 @@ function SiteGuide() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded border border-border bg-surface overflow-hidden">
+    <div className="rounded-xl border border-border bg-surface overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-surface-raised transition-colors"
       >
         <div className="flex items-center gap-2">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-subtle">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
           </svg>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Site Guide &amp; Maintenance</h2>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Site Guide &amp; Maintenance</h2>
         </div>
         <svg
           width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
@@ -490,7 +490,7 @@ function SiteGuide() {
 
           {/* MDX Syntax Reference */}
           <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-4">MDX Syntax Reference</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle mb-4">MDX Syntax Reference</p>
             <div className="space-y-5">
               {GUIDE_SECTIONS.map((s) => (
                 <div key={s.heading}>
@@ -505,7 +505,7 @@ function SiteGuide() {
           </div>
 
           {/* Quick card */}
-          <div className="rounded border border-border bg-surface-raised p-4">
+          <div className="rounded-xl border border-border bg-surface-raised p-4">
             <p className="text-[11px] font-bold uppercase tracking-wider text-fg-faint mb-3">Quick card</p>
             <div className="space-y-1.5 font-mono text-[10px] text-fg-muted">
               {[
@@ -534,7 +534,7 @@ function SiteGuide() {
           </div>
 
           {/* Appendix */}
-          <div className="rounded border border-border bg-surface p-5 space-y-8">
+          <div className="rounded-xl border border-border bg-surface p-5 space-y-8">
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-fg-faint mb-0.5">Appendix</p>
               <h3 className="text-sm font-bold text-fg">Project Maintenance</h3>
@@ -616,7 +616,7 @@ function SiteGuide() {
               <p className="text-[10px] text-fg-faint leading-relaxed">
                 Lab is for living, in-progress project documentation — architecture, decisions, and progress logs updated as the project evolves. Files live at <span className="font-mono bg-surface-raised px-1 rounded">frontend/src/content/lab/[slug].mdx</span>. Filename = URL slug.
               </p>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-2">Frontmatter (required)</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-subtle mt-2">Frontmatter (required)</p>
               <pre className="bg-zinc-950 text-zinc-300 text-[11px] leading-relaxed rounded p-3.5 overflow-x-auto font-mono whitespace-pre-wrap break-words">{`---\ntitle: "My Project"\nstatus: "active"        # active | paused | shipped\ndescription: "One-line summary shown on lab index card."\nstartedAt: "2026-01-01"\nupdatedAt: "2026-04-22"  # ← update this every time you edit\ntech: [Next.js, FastAPI, PostgreSQL]\n---`}</pre>
               {[
                 { what: "status: active",  detail: "Green badge with pulse animation. Sorted to top of lab index. Use while actively building." },
@@ -632,7 +632,7 @@ function SiteGuide() {
                 <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">Always update updatedAt</p>
                 <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed mt-0.5">The lab index card shows &quot;last updated [date]&quot;. Set it to today&apos;s date every time you make changes or the card will show a stale date.</p>
               </div>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-3">Lab MDX components</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-subtle mt-3">Lab MDX components</p>
               {[
                 { what: '<Status status="active" />',                           detail: "Inline status badge — same colors as the index card. Put it near the top of the document." },
                 { what: '<Stack items={["Next.js", "Python"]} />',              detail: "Renders a row of monospace tech tags. For a full tech stack listing inside the document body." },
@@ -645,7 +645,7 @@ function SiteGuide() {
                   <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
                 </div>
               ))}
-              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-2">Architecture diagrams</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-subtle mt-2">Architecture diagrams</p>
               <pre className="bg-zinc-950 text-zinc-300 text-[11px] leading-relaxed rounded p-3.5 overflow-x-auto font-mono whitespace-pre-wrap break-words">{`\`\`\`arch\n┌─────────────┐     ┌─────────────┐\n│  Frontend   │────▶│   Backend   │\n└─────────────┘     └─────────────┘\n\`\`\``}</pre>
               <p className="text-[10px] text-fg-faint italic leading-relaxed">
                 Always use fenced <span className="font-mono bg-surface-raised px-1 rounded">```arch</span> blocks for diagrams — never a JSX component. Characters like <span className="font-mono bg-surface-raised px-1 rounded">&lt;</span>, <span className="font-mono bg-surface-raised px-1 rounded">&gt;</span>, and <span className="font-mono bg-surface-raised px-1 rounded">{"{}"}</span> inside JSX children cause an MDX acorn parse error.
@@ -724,7 +724,7 @@ function SiteGuide() {
                 <div className="flex-1 h-px bg-border-subtle" />
               </div>
               <p className="text-[10px] text-fg-faint mb-1">Backend vars → Railway → your backend service → Variables. Frontend vars → GitHub Actions secrets (used at build time).</p>
-              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-2 mb-1">Backend (Railway)</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-subtle mt-2 mb-1">Backend (Railway)</p>
               {[
                 { key: "GOOGLE_API_KEY",            detail: "Required. Google AI API key for Gemini. Chat endpoints return 503 without this." },
                 { key: "GEMINI_MODEL",              detail: "Primary model. Default: gemini-2.5-flash. Change here to swap models without code changes." },
@@ -739,7 +739,7 @@ function SiteGuide() {
                   <p className="text-[10px] text-fg-faint leading-relaxed">{detail}</p>
                 </div>
               ))}
-              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-3 mb-1">Frontend (GitHub Actions secrets / .env.local)</p>
+              <p className="text-[9px] font-bold uppercase tracking-widest text-fg-subtle mt-3 mb-1">Frontend (GitHub Actions secrets / .env.local)</p>
               {[
                 { key: "NEXT_PUBLIC_API_BASE_URL", detail: "Backend URL the browser calls. Set to your Railway backend URL in production. Required — chat and blog stats break without it." },
                 { key: "NEXT_PUBLIC_BLOG_FONT",    detail: "Blog reading font. Default: Source_Serif_4. Must match the font statically imported in frontend/src/app/layout.tsx." },
@@ -1534,7 +1534,7 @@ function BlogEditor() {
       </div>
 
       {/* ── Published Posts ─────────────────────────────────────────────────── */}
-      <div className="rounded border border-border bg-surface overflow-hidden">
+      <div className="rounded-xl border border-border bg-surface overflow-hidden">
         <button
           onClick={() => setShowPublishedPosts(!showPublishedPosts)}
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-raised transition-colors"
@@ -1543,7 +1543,7 @@ function BlogEditor() {
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
             </svg>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Published Posts</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle">Published Posts</span>
             {publishedPosts.length > 0 && (
               <span className="text-[10px] font-mono text-accent">({publishedPosts.length})</span>
             )}
@@ -1642,7 +1642,7 @@ function BlogEditor() {
       </div>
 
       {/* ── Post header card (title + description + tags + slug) ─────────────── */}
-      <div className="rounded border border-border bg-surface overflow-hidden">
+      <div className="rounded-xl border border-border bg-surface overflow-hidden">
         <div className="p-5 sm:p-7 space-y-4">
 
           {/* Editing existing post indicator */}
@@ -1663,7 +1663,7 @@ function BlogEditor() {
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             placeholder="Post title…"
-            className="w-full bg-transparent text-2xl sm:text-3xl font-bold text-fg placeholder:text-fg-faint/50 focus:outline-none leading-tight"
+            className="w-full bg-transparent text-2xl sm:text-3xl font-bold text-fg placeholder:text-fg-subtle focus:outline-none leading-tight"
           />
 
           {/* Description with char counter */}
@@ -1771,7 +1771,7 @@ function BlogEditor() {
               return (
                 <button key={t.id}
                   onClick={() => { setContent(t.content); setShowTemplates(false); setActivePanel("write"); requestAnimationFrame(() => textareaRef.current?.focus()); }}
-                  className="rounded border border-border bg-surface p-4 text-left hover:border-indigo-300 dark:hover:border-indigo-700 hover:shadow-sm transition-all group">
+                  className="rounded-xl border border-border bg-surface p-4 text-left hover:border-accent/50 hover:shadow-sm transition-all group">
                   <div className="w-7 h-7 rounded bg-surface-raised flex items-center justify-center mb-2.5 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/40 transition-colors">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-fg-faint group-hover:text-indigo-500 transition-colors">
                       {tmplIcons[t.icon]}
@@ -1793,7 +1793,7 @@ function BlogEditor() {
       )}
 
       {/* ── Editor ───────────────────────────────────────────────────────────── */}
-      <div className="rounded border border-border bg-surface overflow-hidden">
+      <div className="rounded-xl border border-border bg-surface overflow-hidden">
 
         {/* Toolbar */}
         <div className="border-b border-border bg-surface-raised px-3 py-2 flex items-center gap-1 flex-wrap">
@@ -1902,7 +1902,7 @@ function BlogEditor() {
         {showImageManager && (
           <div className="border-b border-border bg-bg">
             <div className="flex items-center justify-between px-4 py-2.5 bg-surface-raised border-b border-border">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint flex items-center gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle flex items-center gap-1.5">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
                 Image Library
                 {uploadedImages.length > 0 && <span className="font-mono text-accent ml-1">({uploadedImages.length} this session)</span>}
@@ -1951,7 +1951,7 @@ function BlogEditor() {
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-fg-faint">Choose how to place each image in your post</p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {uploadedImages.map((img) => (
-                      <div key={img.url} className="rounded border border-border bg-surface overflow-hidden">
+                      <div key={img.url} className="rounded-xl border border-border bg-surface overflow-hidden">
                         <div className="flex items-start gap-3 p-3">
                           {/* Icon tile — thumbnail would be broken pre-deploy */}
                           <div className="shrink-0 w-14 h-14 rounded bg-surface-raised border border-border flex items-center justify-center">
@@ -2080,10 +2080,10 @@ function BlogEditor() {
       </div>
 
       {/* ── Format Reference (collapsible) ───────────────────────────────────── */}
-      <div className="rounded border border-border bg-surface overflow-hidden">
+      <div className="rounded-xl border border-border bg-surface overflow-hidden">
         <button onClick={() => setShowFormatRef(!showFormatRef)}
           className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-surface-raised transition-colors">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint flex items-center gap-2">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle flex items-center gap-2">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
             Format Reference — MDX Syntax
           </span>
@@ -2101,7 +2101,7 @@ function BlogEditor() {
                 </div>
                 <div className="space-y-1.5">
                   {section.items.map((item) => (
-                    <div key={item.label} className="rounded border border-border-subtle bg-bg hover:border-border transition-colors overflow-hidden">
+                    <div key={item.label} className="rounded-lg border border-border-subtle bg-bg hover:border-border transition-colors overflow-hidden">
                       <div className="flex items-start justify-between gap-2 px-3 pt-2.5 pb-1">
                         <p className="text-[11px] font-semibold text-fg-muted">{item.label}</p>
                         <button onClick={() => copySnippet(item.syntax)}
@@ -2124,14 +2124,14 @@ function BlogEditor() {
       </div>
 
       {/* ── Publish section (collapsible with checklist) ──────────────────────── */}
-      <div className="rounded border border-border bg-surface overflow-hidden">
+      <div className="rounded-xl border border-border bg-surface overflow-hidden">
         <button onClick={() => setShowPublish(!showPublish)}
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-raised transition-colors">
           <div className="flex items-center gap-2">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint">
               <path d="M7 17L17 7M17 7H7M17 7v10"/>
             </svg>
-            <span className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Publish to GitHub</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle">Publish to GitHub</span>
           </div>
           <div className="flex items-center gap-2.5">
             <div className="flex gap-0.5">
@@ -2153,7 +2153,7 @@ function BlogEditor() {
 
             {/* Checklist */}
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Before you publish</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle mb-3">Before you publish</p>
               <div className="grid sm:grid-cols-2 gap-1.5">
                 {[
                   { key: "title",       label: "Post has a title",                     ok: checks.title },
@@ -2175,7 +2175,7 @@ function BlogEditor() {
 
             {/* GitHub token */}
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-2">GitHub Token</p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle mb-2">GitHub Token</p>
               <div className="flex gap-2">
                 <input
                   type={patVisible ? "text" : "password"}
@@ -2382,8 +2382,8 @@ function QuotesEditor() {
     <div className="space-y-6">
 
       {/* PAT + Load */}
-      <div className="rounded border border-border bg-surface p-5 space-y-4">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">GitHub Access</h2>
+      <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">GitHub Access</h2>
         <div className="flex gap-2">
           <div className="relative flex-1">
             <input
@@ -2417,8 +2417,8 @@ function QuotesEditor() {
       </div>
 
       {/* Add new quote */}
-      <div className="rounded border border-border bg-surface p-5 space-y-4">
-        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Add New Quote</h2>
+      <div className="rounded-xl border border-border bg-surface p-5 space-y-4">
+        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Add New Quote</h2>
         <div>
           <label className={labelCls}>Quote text *</label>
           <textarea
@@ -2470,9 +2470,9 @@ function QuotesEditor() {
 
       {/* Existing quotes list */}
       {quotes.length > 0 && (
-        <div className="rounded border border-border bg-surface overflow-hidden">
+        <div className="rounded-xl border border-border bg-surface overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">{quotes.length} Quotes</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">{quotes.length} Quotes</h2>
           </div>
           <div className="divide-y divide-border">
             {quotes.map((q) => (
@@ -2701,7 +2701,7 @@ function Dashboard({
       <nav className="flex-1 overflow-y-auto py-3 space-y-4" style={{ scrollbarWidth: "none" }}>
         {groups.map(g => (
           <div key={g}>
-            <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint px-4 mb-1">{g}</p>
+            <p className="text-[9px] font-bold uppercase tracking-widest text-fg-subtle px-4 mb-1">{g}</p>
             <div className="space-y-px">
               {NAV.filter(n => n.group === g).map(n => {
                 const isActive = activeView === n.key;
@@ -2770,7 +2770,7 @@ function Dashboard({
 
         {/* Sidebar footer */}
         <div className="shrink-0 px-4 pt-2 pb-3 border-t border-border" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
-          <p className="text-[9px] text-fg-faint/60 tracking-wide">jayaremala.com</p>
+          <p className="text-[9px] text-fg-subtle tracking-wide">jayaremala.com</p>
         </div>
       </aside>
 
@@ -2845,7 +2845,7 @@ function Dashboard({
         <header className="hidden lg:flex items-center justify-between gap-4 px-6 py-3 border-b border-border bg-surface/90 backdrop-blur-md shrink-0 sticky top-0 z-10">
           <div className="flex items-center gap-1.5 text-sm min-w-0">
             <span className="text-fg-faint font-medium">Avocado Admin</span>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint/50 shrink-0">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint shrink-0">
               <polyline points="9 18 15 12 9 6"/>
             </svg>
             <span className="font-semibold text-fg truncate">{VIEW_LABELS[activeView]}</span>
@@ -2859,7 +2859,7 @@ function Dashboard({
             <button
               onClick={onRefresh}
               disabled={refreshing}
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-faint hover:text-fg border border-border hover:border-fg-faint rounded px-2.5 py-1.5 transition-all disabled:opacity-40"
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-faint hover:text-fg border border-border hover:border-fg-faint rounded-lg px-2.5 py-1.5 transition-all disabled:opacity-40"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
                 className={refreshing ? "animate-spin" : ""}>
@@ -2878,7 +2878,7 @@ function Dashboard({
             </span>
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-faint hover:text-fg border border-border hover:border-fg-faint rounded px-2.5 py-1.5 transition-all"
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-faint hover:text-fg border border-border hover:border-fg-faint rounded-lg px-2.5 py-1.5 transition-all"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -2888,7 +2888,7 @@ function Dashboard({
             </Link>
             <button
               onClick={onLogout}
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-rose-500 hover:text-rose-400 border border-rose-200 dark:border-rose-800 hover:border-rose-300 dark:hover:border-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded px-2.5 py-1.5 transition-all"
+              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-rose-500 hover:text-rose-400 border border-rose-200 dark:border-rose-800 hover:border-rose-300 dark:hover:border-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg px-2.5 py-1.5 transition-all"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -2907,12 +2907,12 @@ function Dashboard({
         {/* Period tabs — analytics only */}
         {activeView === "analytics" && (
           <div className="w-full sm:w-fit">
-            <div className="grid grid-cols-3 sm:flex gap-1 bg-surface-raised rounded p-1 border border-border">
+            <div className="grid grid-cols-3 sm:flex gap-1 bg-surface-raised rounded-xl p-1 border border-border">
             {(["week", "month", "all"] as Period[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-3 sm:px-4 py-1.5 rounded text-xs font-medium transition-all text-center ${
+                className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-all text-center ${
                   period === p
                     ? "bg-fg text-bg shadow-sm"
                     : "text-fg-muted hover:text-fg hover:bg-surface"
@@ -2992,8 +2992,8 @@ function Dashboard({
         <div className="grid lg:grid-cols-2 gap-6">
 
           {/* Top questions */}
-          <div className="rounded border border-border bg-surface p-4 sm:p-5">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-4">Top Questions</h2>
+          <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle mb-4">Top Questions</h2>
             {topQs.length === 0 ? (
               <p className="text-sm text-fg-faint">No questions logged yet.</p>
             ) : (
@@ -3004,7 +3004,7 @@ function Dashboard({
                     <span className="text-xs text-fg-muted leading-relaxed flex-1 min-w-0 truncate" title={q.text}>
                       {q.text}
                     </span>
-                    <span className="text-[10px] font-semibold tabular-nums bg-surface-raised border border-border rounded-sm px-2 py-0.5 text-fg-muted shrink-0">
+                    <span className="text-[10px] font-semibold tabular-nums bg-surface-raised border border-border rounded-lg px-2 py-0.5 text-fg-muted shrink-0">
                       {q.count}
                     </span>
                   </li>
@@ -3014,21 +3014,21 @@ function Dashboard({
           </div>
 
           {/* Feedback breakdown */}
-          <div className="rounded border border-border bg-surface p-4 sm:p-5 space-y-4 sm:space-y-5">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Response Feedback</h2>
+          <div className="rounded-xl border border-border bg-surface p-4 sm:p-5 space-y-4 sm:space-y-5">
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Response Feedback</h2>
             <div className="grid grid-cols-3 gap-2">
-              <div className="rounded bg-surface-raised border border-border p-2.5 text-center">
+              <div className="rounded-lg bg-surface-raised border border-border p-2.5 text-center">
                 <p className="text-xl sm:text-2xl font-bold text-fg">{feedback.total}</p>
                 <p className="text-[9px] sm:text-[10px] text-fg-faint mt-0.5">Total rated</p>
               </div>
-              <div className="rounded bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2.5 text-center">
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 p-2.5 text-center">
                 <p className="text-xl sm:text-2xl font-bold text-emerald-600 dark:text-emerald-400">{feedback.positive}</p>
                 <p className="text-[9px] sm:text-[10px] text-emerald-700 dark:text-emerald-500 mt-0.5 flex items-center justify-center gap-0.5">
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z"/><path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>
                   Positive
                 </p>
               </div>
-              <div className="rounded bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2.5 text-center">
+              <div className="rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-800 p-2.5 text-center">
                 <p className="text-xl sm:text-2xl font-bold text-rose-600 dark:text-rose-400">{feedback.negative}</p>
                 <p className="text-[9px] sm:text-[10px] text-rose-700 dark:text-rose-500 mt-0.5 flex items-center justify-center gap-0.5">
                   <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3H10z"/><path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
@@ -3040,7 +3040,7 @@ function Dashboard({
 
             {/* All-time conversation comparison */}
             <div className="pt-3 border-t border-border space-y-2">
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-fg-faint">Conversations by period</p>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-fg-subtle">Conversations by period</p>
               {(["week", "month", "all"] as Period[]).map((p) => {
                 const c = stats.conversations[p];
                 const maxVal = stats.conversations.all.total_responses || 1;
@@ -3064,9 +3064,9 @@ function Dashboard({
         </div>
 
         {/* Visitor Experience Ratings */}
-        <div className="rounded border border-border bg-surface p-4 sm:p-5">
+        <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Visitor Experience</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Visitor Experience</h2>
             {exp.total > 0 && (
               <div className="flex items-center gap-1.5">
                 <div className="flex items-center gap-0.5">
@@ -3108,16 +3108,16 @@ function Dashboard({
         </div>
 
         {/* Site visitors breakdown */}
-        <div className="rounded border border-border bg-surface p-4 sm:p-5">
+        <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
           <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Site Visitors</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Site Visitors</h2>
             <span className="text-[11px] text-fg-faint">all unique IPs, hashed — every page load</span>
           </div>
           <div className="grid grid-cols-3 gap-3 mb-5">
             {(["week", "month", "all"] as Period[]).map((p) => {
               const sv = stats.site_visitors[p];
               return (
-                <div key={p} className={`rounded border p-3 text-center ${p === period ? "border-accent bg-accent/5" : "border-border bg-surface-raised"}`}>
+                <div key={p} className={`rounded-lg border p-3 text-center ${p === period ? "border-accent bg-accent/5" : "border-border bg-surface-raised"}`}>
                   <p className="text-xl sm:text-2xl font-bold tabular-nums text-fg">{fmt(sv.unique_visitors)}</p>
                   <p className="text-[9px] sm:text-[10px] text-fg-faint mt-0.5">{PERIOD_LABELS[p]}</p>
                   <p className="text-[9px] text-fg-faint">{fmt(sv.total_visits)} loads</p>
@@ -3143,9 +3143,9 @@ function Dashboard({
         </div>
 
         {/* Blog table */}
-        <div className="rounded border border-border bg-surface overflow-hidden">
+        <div className="rounded-xl border border-border bg-surface overflow-hidden">
           <div className="px-4 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Blog Performance</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Blog Performance</h2>
             <div className="flex items-center gap-3 text-[11px] text-fg-faint">
               <span><strong className="text-fg-muted">{fmt(stats.blog.total_views)}</strong> views</span>
               <span><strong className="text-fg-muted">{fmt(stats.blog.total_claps)}</strong> claps</span>
@@ -3158,9 +3158,9 @@ function Dashboard({
             <table className="w-full text-xs min-w-[320px]">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Post</th>
-                  <th className="text-right px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Views</th>
-                  <th className="text-right px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Claps</th>
+                  <th className="text-left px-3 sm:px-5 py-2.5 text-fg-subtle font-semibold uppercase tracking-wider text-[10px]">Post</th>
+                  <th className="text-right px-3 sm:px-5 py-2.5 text-fg-subtle font-semibold uppercase tracking-wider text-[10px]">Views</th>
+                  <th className="text-right px-3 sm:px-5 py-2.5 text-fg-subtle font-semibold uppercase tracking-wider text-[10px]">Claps</th>
                 </tr>
               </thead>
               <tbody>
@@ -3187,12 +3187,12 @@ function Dashboard({
         </div>
 
         {/* Location breakdown */}
-        <div className="rounded border border-border bg-surface p-4 sm:p-5">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-4">Visitor Locations</h2>
+        <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle mb-4">Visitor Locations</h2>
           <div className="grid lg:grid-cols-2 gap-6">
             {([["Site Visitors", siteLocations], ["Chat Users", chatLocations]] as [string, LocationStat[]][]).map(([label, locs]) => (
               <div key={label}>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-2">{label}</p>
+                <p className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle mb-2">{label}</p>
                 {locs.length === 0 ? (
                   <p className="text-xs text-fg-faint">No geo data yet — populates as visitors arrive.</p>
                 ) : (
@@ -3218,8 +3218,8 @@ function Dashboard({
         </div>
 
         {/* Page visits */}
-        <div className="rounded border border-border bg-surface p-4 sm:p-5">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint mb-4">Top Pages</h2>
+        <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle mb-4">Top Pages</h2>
           {pages.length === 0 ? (
             <p className="text-xs text-fg-faint">No page data yet.</p>
           ) : (
@@ -3243,9 +3243,9 @@ function Dashboard({
         </div>
 
         {/* Blog engagement — session-based opens + revisits */}
-        <div className="rounded border border-border bg-surface overflow-hidden">
+        <div className="rounded-xl border border-border bg-surface overflow-hidden">
           <div className="px-4 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Blog Engagement</h2>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Blog Engagement</h2>
             <div className="flex items-center gap-3 text-[11px] text-fg-faint">
               <span><strong className="text-fg-muted">{fmt(blogEng.total_opens)}</strong> total opens</span>
               <span className="text-[9px]">· 10-min session dedup · revisit = same IP opens again after 10 min</span>
@@ -3258,10 +3258,10 @@ function Dashboard({
               <table className="w-full text-xs min-w-[440px]">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Post</th>
-                    <th className="text-right px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Opens</th>
-                    <th className="text-right px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Readers</th>
-                    <th className="text-right px-3 sm:px-5 py-2.5 text-fg-faint font-semibold uppercase tracking-wider text-[10px]">Revisit %</th>
+                    <th className="text-left px-3 sm:px-5 py-2.5 text-fg-subtle font-semibold uppercase tracking-wider text-[10px]">Post</th>
+                    <th className="text-right px-3 sm:px-5 py-2.5 text-fg-subtle font-semibold uppercase tracking-wider text-[10px]">Opens</th>
+                    <th className="text-right px-3 sm:px-5 py-2.5 text-fg-subtle font-semibold uppercase tracking-wider text-[10px]">Readers</th>
+                    <th className="text-right px-3 sm:px-5 py-2.5 text-fg-subtle font-semibold uppercase tracking-wider text-[10px]">Revisit %</th>
                   </tr>
                 </thead>
                 <tbody>

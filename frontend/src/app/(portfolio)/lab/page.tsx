@@ -21,7 +21,7 @@ export default function LabPage() {
           aria-hidden
         />
 
-        <p className="text-xs font-bold uppercase tracking-wider text-fg-faint mb-3">Build Log · In the Open</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-3">Build Log · In the Open</p>
 
         {/* Title with decorative glyph + switcher */}
         <div className="flex items-center justify-between gap-4 mb-2">
@@ -31,7 +31,7 @@ export default function LabPage() {
           </div>
           <BlogSwitcher
             posts={staticEntries.map((e) => ({ slug: e.slug, title: e.title, date: e.updatedAt }))}
-            label="Browse lab"
+            label="Browse"
             listTitle="All entries"
           />
         </div>

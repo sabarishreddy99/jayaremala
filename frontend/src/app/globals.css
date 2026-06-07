@@ -257,6 +257,7 @@ html {
   -moz-osx-font-smoothing: grayscale;
   overflow-x: clip; /* clip at html level so iOS Safari doesn't widen the scroll area */
   width: 100%;
+  background: var(--bg); /* match body so the root element never shows as white */
 }
 
 body {

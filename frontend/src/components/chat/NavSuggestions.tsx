@@ -56,6 +56,35 @@ const SECTIONS: { href: string; label: string; icon: string; keywords: string[] 
     ],
   },
   {
+    href: "/quotes",
+    label: "Quotes",
+    icon: "❝",
+    keywords: [
+      "quote", "quotes", "saying", "wisdom", "words", "philosophy",
+      "inspiring", "favorite quote", "mental model", "live by",
+      "shaped how", "think and build", "collected", "curated",
+    ],
+  },
+  {
+    href: "/gallery",
+    label: "Gallery",
+    icon: "▣",
+    keywords: [
+      "gallery", "photo", "picture", "milestone", "visual",
+      "event photo", "certificate", "award photo", "photograph", "image",
+    ],
+  },
+  {
+    href: "/now",
+    label: "Now",
+    icon: "◌",
+    keywords: [
+      "now", "currently", "right now", "at the moment", "currently working",
+      "what is he doing", "reading now", "building now", "learning now",
+      "what's he up to", "these days", "recently",
+    ],
+  },
+  {
     href: "/",
     label: "Skills",
     icon: "◆",
@@ -72,8 +101,10 @@ const SOURCE_TYPE_MAP: Record<string, { href: string; label: string; icon: strin
   experience: { href: "/experience", label: "Experience",  icon: "◎" },
   education:  { href: "/education",  label: "Education",   icon: "◉" },
   project:    { href: "/projects",   label: "Projects",    icon: "◈" },
-  skills:     { href: "/",  label: "Skills",      icon: "◆" },
-  profile:    { href: "/",  label: "Portfolio",   icon: "✦" },
+  skills:     { href: "/",           label: "Skills",      icon: "◆" },
+  profile:    { href: "/",           label: "Portfolio",   icon: "✦" },
+  quote:      { href: "/quotes",     label: "Quotes",      icon: "❝" },
+  gallery:    { href: "/gallery",    label: "Gallery",     icon: "▣" },
 };
 
 /**
@@ -112,6 +143,21 @@ export function sourcesToNavLinks(sources: string[]): NavLink[] {
         links.push({ href, label: "Lab entry ↗", icon: "⬡" });
       }
       if (!seen.has("/lab")) { seen.add("/lab"); links.push({ href: "/lab", label: "Lab", icon: "⬡" }); }
+      continue;
+    }
+
+    if (type === "quote") {
+      if (!seen.has("/quotes")) { seen.add("/quotes"); links.push({ href: "/quotes", label: "Quotes", icon: "❝" }); }
+      continue;
+    }
+
+    if (type === "gallery") {
+      if (!seen.has("/gallery")) { seen.add("/gallery"); links.push({ href: "/gallery", label: "Gallery", icon: "▣" }); }
+      continue;
+    }
+
+    if (type === "profile" && id === "profile_now") {
+      if (!seen.has("/now")) { seen.add("/now"); links.push({ href: "/now", label: "Now", icon: "◌" }); }
       continue;
     }
 

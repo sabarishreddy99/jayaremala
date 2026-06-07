@@ -58,6 +58,9 @@ PORTFOLIO SECTION LINKS (use these when relevant — the UI will render them as 
 - Skills overview → /portfolio
 - Blog posts → /blog  (individual post → /blog/[slug])
 - Lab / system design docs → /lab  (individual entry → /lab/[slug])
+- Curated quotes collection → /quotes
+- Photo gallery (milestones, events, achievements) → /gallery
+- What Jaya is currently doing, building, reading → /now
 - Resume → available via the Resume link in navigation"""
 
 
@@ -92,6 +95,8 @@ _HYDE_SKIP_KEYWORDS = (
     "education", "degree", "university", "gpa", "tandon", "master",
     "contact", "email", "reach", "hire", "linkedin", "resume", "cv",
     "award", "win", "achiev", "available", "open to", "location", "based", "who is",
+    "quote", "saying", "wisdom", "gallery", "photo", "milestone",
+    "now", "currently", "right now", "these days",
 )
 
 _hyde_cache: dict[str, "str | None"] = {}
@@ -165,6 +170,12 @@ def _build_rag_queries(req: ChatRequest) -> list[str]:
         queries.append("Qualcomm hackathon award SnapLog achievement strengths")
     elif any(kw in stripped for kw in ["contact", "email", "reach", "hire", "linkedin", "resume", "cv"]):
         queries.append("contact email LinkedIn GitHub resume CV download")
+    elif any(kw in stripped for kw in ["quote", "saying", "wisdom", "words", "philosophy", "live by"]):
+        queries.append("quotes curated collection favorite Jaya books reading wisdom")
+    elif any(kw in stripped for kw in ["gallery", "photo", "milestone", "achievement photo", "event"]):
+        queries.append("gallery milestones events achievements photos Jaya")
+    elif any(kw in stripped for kw in ["now", "currently", "right now", "these days", "up to", "reading now", "building now"]):
+        queries.append("Jaya currently building learning reading now page")
 
     # Add recent conversation context for follow-up questions (only if slot remains)
     if len(queries) < 4:

@@ -50,7 +50,8 @@ Personal AI-assisted portfolio for **Jaya Sabarish Reddy Remala**. Two entry poi
 │   POST /content/blog · PUT · DELETE   (ADMIN_TOKEN)                         │
 │   GET  /content/lab · POST · PUT · DELETE   (ADMIN_TOKEN)                   │
 │   GET  /content/quotes · POST · PUT · DELETE   (ADMIN_TOKEN)                │
-│   POST /admin/reingest        force re-embed (ADMIN_TOKEN required)          │
+│   POST /admin/reingest        start background re-embed (ADMIN_TOKEN)        │
+│   GET  /admin/reingest/status poll background reingest {running,result,error}│
 │   GET  /health                api · analytics_db · content_db · rag         │
 │                                                                              │
 │  ┌──────────────────────────┐    ┌────────────────────────────────────────┐  │
@@ -187,9 +188,17 @@ On every startup, `run_ingest()` diffs the current document set against `.doc_ha
 | Removed document | `collection.delete()` — purged from ChromaDB |
 | Unchanged document | Skipped — no embedding call, no I/O |
 
-Before building the document list, `run_ingest()` calls `_sync_content_db()` — a lazy-import function that calls `regenerate_blog_json()`, `regenerate_lab_json()`, and `regenerate_quotes_json()` in sequence, syncing content.db → JSON before the diff runs. This ensures the knowledge base always reflects the live content.db state, not a stale snapshot.
+Before building the document list, `run_ingest()` calls `_sync_content_db()` — a lazy-import function that runs a two-step sync:
 
-Adding one blog post embeds one document, not the entire corpus. A forced full re-embed via `POST /admin/reingest?force=true` (requires `ADMIN_TOKEN` bearer token) wipes ChromaDB with `reset_collection()` and rebuilds all 124 documents from scratch — useful after structural changes to ingest.py.
+**Step 1 — pull new content into content.db**: `sync_blog_json_to_db()` and `sync_lab_json_to_db()` read the committed `blog.json` / `lab.json` (written by GH Actions from MDX files) and `INSERT OR IGNORE` any slugs not yet in `content.db`. This bridges the gap for MDX posts pushed via git after the initial seeding — they would otherwise be invisible to the knowledge base since `_seed_blog()` only runs on an empty table.
+
+**Step 2 — regenerate JSON from content.db**: `regenerate_blog_json()`, `regenerate_lab_json()`, and `regenerate_quotes_json()` rewrite the JSON files from the now-complete content.db, so the subsequent hash diff always sees the full merged dataset.
+
+After any write via the Content API, the same regeneration + `run_ingest()` cycle runs as a background task — only changed documents are re-embedded.
+
+Adding one blog post embeds one document, not the entire corpus. A forced full re-embed via `POST /admin/reingest?force=true` (requires `ADMIN_TOKEN` bearer token) starts as a **background task** — the endpoint returns `{"status": "started"}` immediately and the client polls `GET /admin/reingest/status` (returns `{running, result, error}`) every 2 seconds until `running === false`. This avoids blocking the HTTP connection past the proxy timeout on the 2GB production server.
+
+**Memory-safe batched embedding**: on a 2 GB / 2 CPU server, embedding all 124 documents in a single ONNX forward pass (BAAI/bge-base-en-v1.5 = ~440 MB of weights) spikes peak RAM to ~1.5 GB — enough to OOM-kill the process. `run_ingest()` now processes documents in batches of 16, calling `gc.collect()` and sleeping 50 ms between each batch to free intermediate tensors before the next forward pass. Total reingest time increases by ~5 seconds; peak RAM stays safely under 1 GB.
 
 **Embedding model change detection**: If the stored `EMBED_MODEL` name in `.doc_hashes.json` differs from the current constant, `reset_collection()` wipes the ChromaDB collection and a full reingest runs automatically. No manual ChromaDB deletion needed when switching embedding models.
 
@@ -208,9 +217,11 @@ GEMINI_FALLBACK_MODELS fallbacks   (gemini-2.0-flash, gemini-2.0-flash-lite, gem
 
 Blog posts, lab entries, and quotes are stored in `content.db` (SQLite on Lightsail SSD). The `/content/*` API exposes public GET endpoints and token-gated write endpoints.
 
-After every write, a background task calls the appropriate `regenerate_*_json()` function (`regenerate_blog_json()`, `regenerate_lab_json()`, or `regenerate_quotes_json()`) and then `run_ingest()` so ChromaDB stays in sync with zero user-visible latency (only changed documents are re-embedded).
+After every write, a background task calls the appropriate `regenerate_*_json()` function and then `run_ingest()` so ChromaDB stays in sync with zero user-visible latency (only changed documents are re-embedded).
 
 The database is seeded from existing JSON files on first startup — no manual migration needed.
+
+**New MDX content sync** — `content.db` is only seeded on first startup (empty table). Blog posts and lab entries written as MDX files and pushed via GH Actions go into `blog.json` / `lab.json` but were not reaching `content.db` after the initial seed. `sync_blog_json_to_db()` and `sync_lab_json_to_db()` (called from `_sync_content_db()` before every ingest) insert any new slugs found in the JSON files but missing from `content.db`, ensuring every MDX post is ingested on the next deploy or re-ingest button click.
 
 ---
 
@@ -408,20 +419,24 @@ itsjaya/
 │   │   ├── main.py                         FastAPI + lifespan + SlowAPI middleware
 │   │   ├── core/settings.py                Pydantic settings (incl. content_db_path)
 │   │   ├── core/limiter.py                 SlowAPI Limiter (X-Forwarded-For aware)
-│   │   ├── routers/admin.py                POST /admin/reingest (token-gated)
+│   │   ├── routers/admin.py                POST /admin/reingest (background task, token-gated)
+│   │                                   GET  /admin/reingest/status (poll running/result/error)
 │   │   ├── routers/ai.py                   /ai/* endpoints + HyDE + RAG orchestration
 │   │   ├── routers/blog.py                 /blog/* engagement endpoints
 │   │   ├── routers/content.py              /content/* CRUD (blog, lab, quotes)
 │   │   ├── routers/stats.py                /stats · /stats/overview · /stats/admin
 │   │   ├── rag/store.py                    ChromaDB + BM25 + RRF (fastembed ONNX, bge-base-en-v1.5 768-dim)
 │   │   ├── rag/ingest.py                   Per-doc hash diff · auto-wipe on model change ·
-│   │   │                                   _sync_content_db() · _build_faq_documents() (fully dynamic)
+│   │   │                                   _sync_content_db() (2-step: sync_*_json_to_db then
+│   │   │                                   regenerate_*_json) · batched upsert (16 docs/batch,
+│   │   │                                   gc.collect between) · _build_faq_documents() ·
 │   │   │                                   _build_system_faq_documents() · ~124 docs / 11 types
 │   │   ├── rag/graph.py                    Static knowledge graph — build_graph() + expand_context()
 │   │   ├── db/analytics.py                 Chat + site analytics (period-aware, geo lookup)
 │   │   ├── db/blog_stats.py                Blog views + claps (period-aware)
 │   │   └── db/content.py                   Blog/lab/quotes CRUD + regenerate_blog_json()
-│   │                                       regenerate_lab_json() · regenerate_quotes_json()
+│   │                                       regenerate_lab_json() · regenerate_quotes_json() ·
+│   │                                       sync_blog_json_to_db() · sync_lab_json_to_db()
 │   ├── data/knowledge/                     Single source of truth (edit here)
 │   │   ├── profile.json  experience.json  education.json  projects.json
 │   │   ├── skills.json   testimonials.json   gallery.json

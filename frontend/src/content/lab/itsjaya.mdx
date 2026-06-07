@@ -83,7 +83,8 @@ An AI-backed portfolio inverts this. The visitor asks in natural language, the s
 │  POST /content/lab · PUT · DELETE  (ADMIN_TOKEN)                        │
 │  GET  /content/quotes     quotes list                                    │
 │  POST /content/quotes · PUT · DELETE  (ADMIN_TOKEN)                     │
-│  POST /admin/reingest     force re-embed (ADMIN_TOKEN)                   │
+│  POST /admin/reingest     start background re-embed (ADMIN_TOKEN)        │
+│  GET  /admin/reingest/status  poll {running, result, error}              │
 │  GET  /health             api · analytics_db · content_db · rag         │
 │                                                                          │
 │  ┌──────────────────────────┐   ┌──────────────────────────────────────┐ │
@@ -112,8 +113,10 @@ An AI-backed portfolio inverts this. The visitor asks in natural language, the s
 │  ┌──────────────────────────┐   │               author, category,     │ │
 │  │  S3: itsjaya-backups-    │   │               favorite, featured)   │ │
 │  │  analytics               │   │  Seeded from JSON on first run.     │ │
-│  │  7-day timestamped       │   │  Writes auto-regenerate JSON +      │ │
-│  │  + latest_analytics.db   │   │  trigger run_ingest() in BG.        │ │
+│  │  7-day timestamped       │   │  sync_blog/lab_json_to_db() pulls   │ │
+│  │  + latest_analytics.db   │   │  new MDX slugs → DB before regen.  │ │
+│  │                          │   │  Writes auto-regenerate JSON +      │ │
+│  │                          │   │  trigger run_ingest() in BG.        │ │
 │  └──────────────────────────┘   └──────────────────────────────────────┘ │
 │                                                                          │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
@@ -374,10 +377,17 @@ Restore (disaster recovery):
 Blog posts, lab entries, and quotes are stored in `content.db` and served via the `/content/*` API. Public `GET` endpoints return live data. Write endpoints require a `Bearer ADMIN_TOKEN` header.
 
 After every write, a background task:
-1. Calls the matching `regenerate_*_json()` function (`regenerate_blog_json()`, `regenerate_lab_json()`, or `regenerate_quotes_json()`) to sync content.db → JSON in `backend/data/knowledge/`
+1. Calls the matching `regenerate_*_json()` function to sync content.db → JSON in `backend/data/knowledge/`
 2. Calls `run_ingest()` — only changed documents are re-embedded (incremental ingest), zero user-visible latency
 
-`run_ingest()` itself also calls `_sync_content_db()` at startup (lazy-imports all three regenerate functions), so the JSON files are always current before the hash diff runs.
+`run_ingest()` calls `_sync_content_db()` which runs a **two-step sync** before the hash diff:
+
+- **Step 1 — pull**: `sync_blog_json_to_db()` and `sync_lab_json_to_db()` read `blog.json` / `lab.json` (committed by GH Actions from MDX files) and `INSERT OR IGNORE` any slugs missing from `content.db`. Without this, blog posts and lab entries written as MDX and pushed via git are invisible to the knowledge base after the initial seeding (which only runs on an empty table).
+- **Step 2 — regenerate**: `regenerate_blog_json()`, `regenerate_lab_json()`, `regenerate_quotes_json()` rewrite the JSON files from the now-complete `content.db`.
+
+`POST /admin/reingest` now returns `{"status": "started"}` immediately and runs the full rebuild as a background `asyncio.to_thread` task — the admin UI polls `GET /admin/reingest/status` every 2 seconds until `running === false`. This prevents the HTTP connection from timing out on the proxy during the 30–60 second rebuild on the 2 GB production server.
+
+Embedding is batched at 16 documents per `collection.upsert()` call with `gc.collect()` + 50 ms sleep between batches — the BAAI/bge-base-en-v1.5 ONNX model (~440 MB) would otherwise spike peak RAM to ~1.5 GB in a single forward pass, enough to OOM-kill the process on a 2 GB instance.
 
 ```
 POST /content/blog   (ADMIN_TOKEN)
@@ -552,6 +562,16 @@ Chatbot lives outside — no nav, no footer, full screen.
 ---
 
 ## Progress Log
+
+<Update date="2026-06-06">
+  Three production reliability fixes for the re-ingest pipeline on the 2 GB / 2 CPU Lightsail server:
+
+  **1. Background re-ingest with polling.** `POST /admin/reingest` previously blocked the HTTP connection for 30–60 s while embedding ran synchronously — Railway/Lightsail proxy timeouts caused the connection to drop silently, leaving the admin spinner running forever. The endpoint now returns `{"status": "started"}` immediately and runs `run_ingest()` via `asyncio.to_thread` in a FastAPI `BackgroundTask`. The admin UI polls `GET /admin/reingest/status` every 2 s until `running === false`, then displays the result.
+
+  **2. Batched embedding to prevent OOM.** Embedding all 124 documents in a single `collection.upsert()` call passes the full list to the BAAI/bge-base-en-v1.5 ONNX model (~440 MB) in one forward pass — peak RAM ~1.5 GB on top of the baseline server, enough to OOM-kill the process. Upserts are now batched at 16 documents per call with `gc.collect()` + 50 ms sleep between batches, keeping peak RAM safely under 1 GB.
+
+  **3. Two-step content sync fixes missing MDX content.** `content.db` is seeded from JSON only on first startup (empty table). New blog posts and lab entries written as MDX and pushed via GH Actions went into `blog.json` / `lab.json` but never reached `content.db` after that initial seed — Avocado never knew they existed. Fixed with `sync_blog_json_to_db()` and `sync_lab_json_to_db()`: called at the start of every `_sync_content_db()`, they `INSERT OR IGNORE` any new slugs from the committed JSON files into `content.db` before the regeneration step runs. The full two-step order: pull (JSON → DB) then regenerate (DB → JSON), ensuring the knowledge base always reflects every piece of content on the site.
+</Update>
 
 <Update date="2026-06-06">
   Knowledge base is now fully dynamic — no hardcoded personal content anywhere in `ingest.py`. Replaced 22 hardcoded FAQ strings with two builder functions: `_build_faq_documents(p, exp_list, edu_list, proj_list, skills_list)` generates 16 personal-content FAQ docs at ingest time from the live JSON files (per-employer `faq_company_*` docs replace the manually maintained `faq_nyu_work` / `faq_shell_wipro`; blog/lab/quotes counts read from live JSON), and `_build_system_faq_documents()` holds 8 architecture docs that describe the tech stack rather than personal data. Added `regenerate_quotes_json()` to `content.py` (mirrors the existing `regenerate_blog_json()` / `regenerate_lab_json()` pattern) so all three content types sync content.db → JSON before every ingest via `_sync_content_db()`. Total knowledge base: **124 atomic documents across 11 types**. Adding a new job, project, blog post, or quote now automatically flows into the knowledge base on the next ingest — no file edits in `ingest.py` required.

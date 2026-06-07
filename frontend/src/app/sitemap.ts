@@ -1,43 +1,94 @@
 import type { MetadataRoute } from "next";
-
-export const dynamic = "force-static";
 import { getAllPosts } from "@/lib/blog";
 import { getAllLabEntries } from "@/lib/lab";
 
+// Revalidate every hour so admin-published content appears without a rebuild
+export const revalidate = 3600;
+
 const BASE = "https://jayaremala.com";
+const API  = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const posts = getAllPosts();
-  const labEntries = getAllLabEntries();
+/* ── API fetchers (silent on failure — MDX posts are the fallback) ─── */
 
+async function fetchApiBlogPosts(): Promise<{ slug: string; published_at: string }[]> {
+  try {
+    const res = await fetch(`${API}/content/blog`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    const posts = await res.json();
+    // only published posts belong in the sitemap
+    return (posts as { slug: string; published_at: string; published?: boolean }[])
+      .filter((p) => p.published !== false);
+  } catch { return []; }
+}
+
+async function fetchApiLabEntries(): Promise<{ slug: string; updated_at: string }[]> {
+  try {
+    const res = await fetch(`${API}/content/lab`, { next: { revalidate: 3600 } });
+    if (!res.ok) return [];
+    return await res.json();
+  } catch { return []; }
+}
+
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  // MDX filesystem posts (always available at build time)
+  const mdxPosts = getAllPosts();
+  const mdxLab   = getAllLabEntries();
+
+  // API posts (admin-published, may not exist in MDX)
+  const [apiPosts, apiLab] = await Promise.all([
+    fetchApiBlogPosts(),
+    fetchApiLabEntries(),
+  ]);
+
+  // Merge blog posts: MDX wins for date precision; API adds any extra slugs
+  const blogSlugMap = new Map<string, string>();
+  for (const p of mdxPosts) {
+    blogSlugMap.set(p.slug, p.publishedAt ?? p.date);
+  }
+  for (const p of apiPosts) {
+    if (!blogSlugMap.has(p.slug)) blogSlugMap.set(p.slug, p.published_at);
+  }
+
+  // Merge lab entries the same way
+  const labSlugMap = new Map<string, string>();
+  for (const e of mdxLab) {
+    labSlugMap.set(e.slug, e.updatedAt);
+  }
+  for (const e of apiLab) {
+    if (!labSlugMap.has(e.slug)) labSlugMap.set(e.slug, e.updated_at);
+  }
+
+  // Blog tag pages (from MDX only — API posts may not have tags indexed)
+  const allTags = [...new Set(mdxPosts.flatMap((p) => p.tags))];
+
+  /* ── Static routes ─────────────────────────────────────────────── */
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE}/`,            lastModified: new Date(), changeFrequency: "weekly",  priority: 1.0 },
-    { url: `${BASE}/experience`,  lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/education`,   lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
-    { url: `${BASE}/projects`,    lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/blog`,        lastModified: new Date(), changeFrequency: "weekly",  priority: 0.9 },
-    { url: `${BASE}/lab`,         lastModified: new Date(), changeFrequency: "weekly",  priority: 0.7 },
-    { url: `${BASE}/gallery`,     lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
-    { url: `${BASE}/now`,         lastModified: new Date(), changeFrequency: "weekly",  priority: 0.6 },
-    { url: `${BASE}/quotes`,      lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
+    { url: `${BASE}/`,           lastModified: new Date(), changeFrequency: "weekly",  priority: 1.0 },
+    { url: `${BASE}/portfolio`,  lastModified: new Date(), changeFrequency: "weekly",  priority: 0.95 },
+    { url: `${BASE}/experience`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE}/education`,  lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
+    { url: `${BASE}/projects`,   lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
+    { url: `${BASE}/blog`,       lastModified: new Date(), changeFrequency: "weekly",  priority: 0.9 },
+    { url: `${BASE}/lab`,        lastModified: new Date(), changeFrequency: "weekly",  priority: 0.7 },
+    { url: `${BASE}/gallery`,    lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
+    { url: `${BASE}/now`,        lastModified: new Date(), changeFrequency: "weekly",  priority: 0.6 },
+    { url: `${BASE}/quotes`,     lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
   ];
 
-  const blogRoutes: MetadataRoute.Sitemap = posts.map((post) => ({
-    url: `${BASE}/blog/${post.slug}`,
-    lastModified: new Date(post.publishedAt ?? post.date),
+  const blogRoutes: MetadataRoute.Sitemap = [...blogSlugMap.entries()].map(([slug, date]) => ({
+    url: `${BASE}/blog/${slug}`,
+    lastModified: new Date(date),
     changeFrequency: "monthly" as const,
     priority: 0.7,
   }));
 
-  const labRoutes: MetadataRoute.Sitemap = labEntries.map((entry) => ({
-    url: `${BASE}/lab/${entry.slug}`,
-    lastModified: entry.updatedAt ? new Date(entry.updatedAt) : new Date(),
+  const labRoutes: MetadataRoute.Sitemap = [...labSlugMap.entries()].map(([slug, date]) => ({
+    url: `${BASE}/lab/${slug}`,
+    lastModified: new Date(date),
     changeFrequency: "weekly" as const,
     priority: 0.6,
   }));
 
-  // Blog tag pages
-  const allTags = [...new Set(posts.flatMap((p) => p.tags))];
   const tagRoutes: MetadataRoute.Sitemap = allTags.map((tag) => ({
     url: `${BASE}/blog/tag/${encodeURIComponent(tag)}`,
     lastModified: new Date(),

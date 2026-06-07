@@ -49,12 +49,12 @@ export default function Footer() {
                     ${revealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}
       >
         <div className="mx-auto flex w-full max-w-6xl xl:max-w-7xl 2xl:max-w-360 flex-wrap items-center justify-between gap-3">
-          {/* Left: copyright */}
-          <div className="flex flex-col gap-1">
-            <span className="font-mono text-[11px] tracking-[0.06em] text-fg/60">
+          {/* Left: copyright — fg-muted: 15:1 light · 12:1 dark */}
+          <div className="flex flex-col gap-0.5">
+            <span className="font-mono text-[11px] tracking-[0.06em] text-fg-muted">
               © {new Date().getFullYear()} Jaya Sabarish Reddy Remala
             </span>
-            <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-fg/35">
+            <span className="font-mono text-[10px] tracking-[0.08em] uppercase text-fg-subtle">
               Updated{" "}
               {new Date().toLocaleDateString("en-US", {
                 month: "short",
@@ -64,15 +64,15 @@ export default function Footer() {
             </span>
           </div>
 
-          {/* Right: links */}
+          {/* Right: links — fg-muted at rest, fg on hover */}
           <div className="flex items-center gap-5 sm:gap-7">
             {profile.github && (
               <a
                 href={profile.github}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-[11px] tracking-[0.06em] text-fg/45
-                           hover:text-fg/80 transition-colors duration-200"
+                className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
+                           hover:text-fg transition-colors duration-200"
               >
                 GitHub
               </a>
@@ -82,23 +82,48 @@ export default function Footer() {
                 href={profile.linkedin}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-mono text-[11px] tracking-[0.06em] text-fg/45
-                           hover:text-fg/80 transition-colors duration-200"
+                className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
+                           hover:text-fg transition-colors duration-200"
               >
                 LinkedIn
               </a>
             )}
             <a
               href={`mailto:${profile.email}`}
-              className="font-mono text-[11px] tracking-[0.06em] text-fg/45
-                         hover:text-fg/80 transition-colors duration-200"
+              className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
+                         hover:text-fg transition-colors duration-200"
             >
               Email
             </a>
+            <a
+              href="/feed.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="RSS Feed"
+              className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
+                         hover:text-fg transition-colors duration-200 inline-flex items-center gap-1"
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+                <circle cx="5" cy="19" r="2"/>
+                <path d="M4 4a16 16 0 0 1 16 16h-3A13 13 0 0 0 4 7V4z"/>
+                <path d="M4 11a9 9 0 0 1 9 9H10a6 6 0 0 0-6-6v-3z"/>
+              </svg>
+              RSS
+            </a>
+            <a
+              href="/sitemap.xml"
+              target="_blank"
+              rel="noopener noreferrer"
+              title="Sitemap"
+              className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
+                         hover:text-fg transition-colors duration-200"
+            >
+              Sitemap
+            </a>
             <Link
               href="/chat"
-              className="font-mono text-[11px] tracking-[0.06em] text-fg/45
-                         hover:text-fg/80 transition-colors duration-200"
+              className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
+                         hover:text-fg transition-colors duration-200"
             >
               Avocado ✦
             </Link>

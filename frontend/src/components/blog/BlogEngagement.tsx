@@ -175,18 +175,24 @@ export default function BlogEngagement({ slug }: { slug: string }) {
             `}
           >
             <svg
-              width="20" height="20"
+              width="22" height="22"
               viewBox="0 0 24 24"
-              fill="none"
+              fill={burst || atMax ? "currentColor" : "none"}
               stroke="currentColor"
-              strokeWidth="1.75"
+              strokeWidth="1.6"
               strokeLinecap="round"
               strokeLinejoin="round"
               aria-hidden
-              className={`transition-colors duration-150 ${burst || atMax ? "text-accent" : "text-fg-muted"}`}
+              className={`transition-all duration-150 ${burst || atMax ? "text-accent" : "text-fg-muted"}`}
             >
-              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/>
-              <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+              {/* Palm */}
+              <path d="M8 13V7.5a1.5 1.5 0 0 1 3 0V12"/>
+              {/* Index finger */}
+              <path d="M11 11.5V6a1.5 1.5 0 0 1 3 0v5.5"/>
+              {/* Middle finger */}
+              <path d="M14 10.5V8a1.5 1.5 0 0 1 3 0v4.5"/>
+              {/* Ring finger + wrist curve */}
+              <path d="M17 12.5V10a1.5 1.5 0 0 1 2.5 1.1V15a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6v-1l-1-3.5a1.5 1.5 0 0 1 2.8-1L8 13"/>
             </svg>
           </button>
         </div>

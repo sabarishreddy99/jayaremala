@@ -1,5 +1,6 @@
 import { getAllLabEntries } from "@/lib/lab";
 import LabSectionDynamic from "@/components/lab/LabSectionDynamic";
+import BlogSwitcher from "@/components/blog/BlogSwitcher";
 import { profile } from "@/data/profile";
 
 export const metadata = { title: "Lab — Jaya Sabarish Reddy Remala" };
@@ -22,10 +23,17 @@ export default function LabPage() {
 
         <p className="text-xs font-bold uppercase tracking-wider text-fg-faint mb-3">Build Log · In the Open</p>
 
-        {/* Title with decorative glyph */}
-        <div className="flex items-baseline gap-4 mb-2">
-          <h1 className="text-3xl sm:text-4xl font-bold text-fg">Lab</h1>
-          <code className="text-lg sm:text-xl font-mono text-fg-faint select-none" aria-hidden>⬡</code>
+        {/* Title with decorative glyph + switcher */}
+        <div className="flex items-center justify-between gap-4 mb-2">
+          <div className="flex items-baseline gap-4">
+            <h1 className="text-3xl sm:text-4xl font-bold text-fg">Lab</h1>
+            <code className="text-lg sm:text-xl font-mono text-fg-faint select-none" aria-hidden>⬡</code>
+          </div>
+          <BlogSwitcher
+            posts={staticEntries.map((e) => ({ slug: e.slug, title: e.title, date: e.updatedAt }))}
+            label="Browse lab"
+            listTitle="All entries"
+          />
         </div>
 
         <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400 mb-3">Building in public</p>

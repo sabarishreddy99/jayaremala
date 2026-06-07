@@ -10,6 +10,8 @@ import BlogEngagement from "@/components/blog/BlogEngagement";
 import ShareButtons from "@/components/blog/ShareButtons";
 import BlogViewCount from "@/components/blog/BlogViewCount";
 import ReadingMode from "@/components/blog/ReadingMode";
+import FontSizeControl from "@/components/blog/FontSizeControl";
+import BlogSwitcher from "@/components/blog/BlogSwitcher";
 import { TableOfContents, MobileTOC } from "@/components/blog/TableOfContents";
 import type { Heading } from "@/components/blog/TableOfContents";
 import BlogPostMarkdown from "@/components/blog/BlogPostMarkdown";
@@ -193,8 +195,15 @@ export default async function BlogPostPage({ params }: Props) {
     })
   );
 
+  const allPosts = getAllPosts(); // sorted newest → oldest by publishedAt
+
+  // Adjacent posts for next/prev nav
+  const currentIdx = allPosts.findIndex((p) => p.slug === slug);
+  const prevPost = currentIdx < allPosts.length - 1 ? allPosts[currentIdx + 1] : null; // older
+  const nextPost = currentIdx > 0 ? allPosts[currentIdx - 1] : null;                   // newer
+
   // Related posts — up to 2 by shared tags
-  const related = getAllPosts()
+  const related = allPosts
     .filter((p) => p.slug !== slug)
     .map((p) => ({ ...p, score: p.tags.filter((t) => post.tags.includes(t)).length }))
     .filter((p) => p.score > 0)
@@ -219,15 +228,21 @@ export default async function BlogPostPage({ params }: Props) {
   return (
     <div className="mx-auto w-full max-w-3xl lg:max-w-[68rem] px-4 sm:px-6 py-12 sm:py-16">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <Link
-        href="/blog"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover transition-colors mb-10"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-        All posts
-      </Link>
+      <div className="flex items-center justify-between mb-10">
+        <Link
+          href="/blog"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover transition-colors"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          All posts
+        </Link>
+        <BlogSwitcher
+          posts={allPosts.map((p) => ({ slug: p.slug, title: p.title, date: p.date }))}
+          currentSlug={slug}
+        />
+      </div>
 
       <div className="lg:flex lg:gap-14 lg:items-start">
         <div className="flex-1 min-w-0">
@@ -236,7 +251,7 @@ export default async function BlogPostPage({ params }: Props) {
               <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-fg leading-tight mb-4 font-[family-name:var(--font-blog)]">
                 {post.title}
               </h1>
-              {/* Meta row: date · reading time · views | reading mode */}
+              {/* Meta row: date · reading time · views | font size + reading mode */}
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                   <span className="text-sm text-fg-faint">{post.date}</span>
@@ -244,7 +259,11 @@ export default async function BlogPostPage({ params }: Props) {
                   <span className="text-sm text-fg-faint">{post.readingTime} min read</span>
                   <BlogViewCount slug={post.slug} />
                 </div>
-                <ReadingMode />
+                <div className="flex items-center gap-2">
+                  <FontSizeControl />
+                  <span className="w-px h-3.5 bg-border" aria-hidden />
+                  <ReadingMode />
+                </div>
               </div>
               {/* Tags row — consistent with card tag style */}
               {post.tags.length > 0 && (
@@ -266,7 +285,10 @@ export default async function BlogPostPage({ params }: Props) {
             {/* Mobile TOC — inline before content */}
             <MobileTOC headings={headings} />
 
-            <div className="prose font-[family-name:var(--font-blog)] text-[1.0625rem] leading-[1.85]">
+            <div
+              className="prose font-[family-name:var(--font-blog)] leading-[1.85]"
+              style={{ fontSize: "var(--blog-font-size, 1.0625rem)" }}
+            >
               <MDXRemote
                 source={post.content}
                 components={mdxComponents}
@@ -305,16 +327,63 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
           )}
 
+          {/* Next / Previous post navigation */}
           <div className="mt-16 pt-8 border-t border-border">
-            <Link
-              href="/blog"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover transition-colors"
-            >
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-              </svg>
-              Back to all posts
-            </Link>
+            <div className="grid grid-cols-2 gap-4">
+              {/* Prev = older post */}
+              {prevPost ? (
+                <Link
+                  href={`/blog/${prevPost.slug}`}
+                  className="group flex flex-col gap-1 p-4 rounded-xl border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all"
+                >
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-fg-faint group-hover:text-fg-subtle transition-colors">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Previous
+                  </span>
+                  <span className="text-sm font-medium text-fg-muted group-hover:text-fg transition-colors leading-snug line-clamp-2">
+                    {prevPost.title}
+                  </span>
+                  <span className="text-[10px] text-fg-faint">{prevPost.date}</span>
+                </Link>
+              ) : (
+                <div />
+              )}
+
+              {/* Next = newer post */}
+              {nextPost ? (
+                <Link
+                  href={`/blog/${nextPost.slug}`}
+                  className="group flex flex-col gap-1 p-4 rounded-xl border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all text-right"
+                >
+                  <span className="inline-flex items-center justify-end gap-1 text-[10px] font-semibold uppercase tracking-widest text-fg-faint group-hover:text-fg-subtle transition-colors">
+                    Next
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </span>
+                  <span className="text-sm font-medium text-fg-muted group-hover:text-fg transition-colors leading-snug line-clamp-2">
+                    {nextPost.title}
+                  </span>
+                  <span className="text-[10px] text-fg-faint">{nextPost.date}</span>
+                </Link>
+              ) : (
+                <div />
+              )}
+            </div>
+
+            <div className="mt-6 text-center">
+              <Link
+                href="/blog"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-fg-faint hover:text-accent transition-colors"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path d="M19 12H5M12 19l-7-7 7-7"/>
+                </svg>
+                Back to all posts
+              </Link>
+            </div>
           </div>
         </div>
 

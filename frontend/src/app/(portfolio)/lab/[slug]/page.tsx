@@ -6,6 +6,8 @@ import { getAllLabEntries, getAllLabSlugs, getLabEntryBySlug, LabStatus } from "
 import { labMDXComponents } from "@/components/lab/LabMDXComponents";
 import { TableOfContents, MobileTOC } from "@/components/blog/TableOfContents";
 import type { Heading } from "@/components/blog/TableOfContents";
+import FontSizeControl from "@/components/blog/FontSizeControl";
+import BlogSwitcher from "@/components/blog/BlogSwitcher";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -35,6 +37,12 @@ export default async function LabEntryPage({ params }: Props) {
   const prev = allEntries[idx + 1] ?? null;
   const next = allEntries[idx - 1] ?? null;
 
+  const switcherEntries = allEntries.map((e) => ({
+    slug: e.slug,
+    title: e.title,
+    date: e.updatedAt,
+  }));
+
   const s = STATUS_STYLES[entry.status];
 
   const headings: Heading[] = [...entry.content.matchAll(/^(#{2,3})\s+(.+)$/gm)].map(
@@ -48,28 +56,39 @@ export default async function LabEntryPage({ params }: Props) {
   return (
     <>
     <div className="mx-auto w-full max-w-3xl lg:max-w-[68rem] px-4 sm:px-6 py-12 sm:py-16">
-      <Link
-        href="/lab"
-        className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover transition-colors mb-10"
-      >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path d="M19 12H5M12 19l-7-7 7-7"/>
-        </svg>
-        Lab
-      </Link>
+      <div className="flex items-center justify-between mb-10">
+        <Link
+          href="/lab"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-accent hover:text-accent-hover transition-colors"
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Lab
+        </Link>
+        <BlogSwitcher
+          posts={switcherEntries}
+          currentSlug={slug}
+          label="Browse lab"
+          listTitle="All entries"
+        />
+      </div>
 
       <div className="lg:flex lg:gap-14 lg:items-start">
         <div className="flex-1 min-w-0">
           <article>
             <header className="mb-10 pb-8 border-b border-border">
-              <div className="flex flex-wrap items-center gap-3 mb-3">
-                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border text-[10px] font-semibold ${s.bg} ${s.text}`}>
-                  <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                  {s.label}
-                </span>
-                <span className="text-[11px] text-fg-faint">started {entry.startedAt}</span>
-                <span className="text-fg-faint/40 select-none" aria-hidden>·</span>
-                <span className="text-[11px] text-fg-faint">updated {entry.updatedAt}</span>
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border text-[10px] font-semibold ${s.bg} ${s.text}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
+                    {s.label}
+                  </span>
+                  <span className="text-[11px] text-fg-faint">started {entry.startedAt}</span>
+                  <span className="text-fg-faint/40 select-none" aria-hidden>·</span>
+                  <span className="text-[11px] text-fg-faint">updated {entry.updatedAt}</span>
+                </div>
+                <FontSizeControl />
               </div>
 
               <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-fg leading-tight mb-3">
@@ -103,7 +122,10 @@ export default async function LabEntryPage({ params }: Props) {
             {/* Mobile TOC — collapsible, before content */}
             <MobileTOC headings={headings} />
 
-            <div className="prose max-w-none text-[1.0rem] leading-[1.85]">
+            <div
+              className="prose max-w-none leading-[1.85]"
+              style={{ fontSize: "var(--blog-font-size, 1.0rem)" }}
+            >
               <MDXRemote
                 source={entry.content}
                 components={labMDXComponents}
@@ -112,28 +134,56 @@ export default async function LabEntryPage({ params }: Props) {
             </div>
           </article>
 
-          <div className="flex items-center justify-between mt-16 pt-8 border-t border-border text-xs font-medium gap-4">
-            {prev ? (
-              <Link href={`/lab/${prev.slug}`} className="inline-flex items-center gap-1.5 text-fg-muted hover:text-fg transition-colors min-w-0">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
+          <div className="mt-16 pt-8 border-t border-border">
+            <div className="grid grid-cols-2 gap-4">
+              {prev ? (
+                <Link
+                  href={`/lab/${prev.slug}`}
+                  className="group flex flex-col gap-1 p-4 rounded-xl border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all"
+                >
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-fg-faint group-hover:text-fg-subtle transition-colors">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M19 12H5M12 19l-7-7 7-7"/>
+                    </svg>
+                    Previous
+                  </span>
+                  <span className="text-sm font-medium text-fg-muted group-hover:text-fg transition-colors leading-snug line-clamp-2">
+                    {prev.title}
+                  </span>
+                  <span className="text-[10px] text-fg-faint">updated {prev.updatedAt}</span>
+                </Link>
+              ) : <div />}
+
+              {next ? (
+                <Link
+                  href={`/lab/${next.slug}`}
+                  className="group flex flex-col gap-1 p-4 rounded-xl border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all text-right"
+                >
+                  <span className="inline-flex items-center justify-end gap-1 text-[10px] font-semibold uppercase tracking-widest text-fg-faint group-hover:text-fg-subtle transition-colors">
+                    Next
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </span>
+                  <span className="text-sm font-medium text-fg-muted group-hover:text-fg transition-colors leading-snug line-clamp-2">
+                    {next.title}
+                  </span>
+                  <span className="text-[10px] text-fg-faint">updated {next.updatedAt}</span>
+                </Link>
+              ) : <div />}
+            </div>
+
+            <div className="mt-6 text-center">
+              <Link
+                href="/lab"
+                className="inline-flex items-center gap-1.5 text-xs font-medium text-fg-faint hover:text-accent transition-colors"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path d="M19 12H5M12 19l-7-7 7-7"/>
                 </svg>
-                <span className="truncate">{prev.title}</span>
+                Back to all entries
               </Link>
-            ) : <div />}
-
-            <Link href="/lab" className="text-accent hover:text-accent-hover transition-colors shrink-0">
-              All entries
-            </Link>
-
-            {next ? (
-              <Link href={`/lab/${next.slug}`} className="inline-flex items-center gap-1.5 text-fg-muted hover:text-fg transition-colors min-w-0 text-right">
-                <span className="truncate">{next.title}</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </Link>
-            ) : <div />}
+            </div>
           </div>
         </div>
 

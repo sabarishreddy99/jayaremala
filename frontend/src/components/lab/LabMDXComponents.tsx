@@ -20,16 +20,32 @@ export function Status({ status }: { status: "active" | "shipped" | "paused" }) 
 /* ── Architecture block (used via ```arch fenced code blocks) ──────── */
 function ArchBlock({ children }: { children: React.ReactNode }) {
   return (
-    <div className="not-prose my-6 rounded-xl border border-border bg-zinc-950 overflow-x-auto">
-      <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-zinc-800">
-        <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
-        <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
-        <span className="w-2.5 h-2.5 rounded-full bg-zinc-700" />
+    <div className="not-prose my-6 rounded-xl border border-border bg-zinc-950 overflow-hidden">
+      {/* Accent top line — ties block to site design tokens */}
+      <div className="h-px bg-linear-to-r from-transparent via-accent/40 to-transparent" />
+      <div className="flex items-center gap-1.5 px-4 py-2.5 border-b border-zinc-800/60">
+        <span className="w-2 h-2 rounded-full bg-zinc-700 shrink-0" />
+        <span className="w-2 h-2 rounded-full bg-zinc-700 shrink-0" />
+        <span className="w-2 h-2 rounded-full bg-zinc-700 shrink-0" />
         <span className="ml-2 text-[10px] text-zinc-500 font-mono uppercase tracking-widest">architecture</span>
       </div>
-      <pre className="px-5 py-4 text-[11px] sm:text-xs text-zinc-300 font-mono leading-relaxed whitespace-pre overflow-x-auto">
-        {children}
-      </pre>
+      {/* Diagram scrolls independently — header stays fixed */}
+      <div className="overflow-x-auto">
+        {/* Inline styles override .prose pre CSS (specificity 11 beats Tailwind utilities 10,
+            and !important in the globals reset zeroes out background/border/padding/font-size) */}
+        <pre
+          className="font-mono whitespace-pre"
+          style={{
+            padding: "1rem 1.25rem",
+            fontSize: "0.6875rem",   /* 11px */
+            lineHeight: 1.65,
+            color: "rgb(212 212 216)", /* zinc-300 */
+            background: "transparent",
+          }}
+        >
+          {children}
+        </pre>
+      </div>
     </div>
   );
 }
@@ -108,11 +124,8 @@ function Pre({ children, ...props }: React.HTMLAttributes<HTMLPreElement>) {
   if (child?.props?.className === "language-arch") {
     return <ArchBlock>{child.props.children}</ArchBlock>;
   }
-  return (
-    <pre {...props} className="bg-zinc-950 text-zinc-300 text-[0.83em] font-mono rounded-xl p-4 overflow-x-auto my-4">
-      {children}
-    </pre>
-  );
+  // Defer to .prose pre CSS — light/dark aware, matches blog code block styling
+  return <pre {...props}>{children}</pre>;
 }
 
 /* ── MDX component map ─────────────────────────────────────────────── */

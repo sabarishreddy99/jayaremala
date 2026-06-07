@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
 import type { Options as PrettyCodeOptions } from "rehype-pretty-code";
+import rehypeSlug from "rehype-slug";
 import { getAllPosts, getAllSlugs, getPostBySlug } from "@/lib/blog";
 import Link from "next/link";
 import { mdxComponents } from "@/components/blog/MDXComponents";
@@ -43,14 +44,18 @@ function BlogPostApiView({ post }: { post: ApiBlogPost }) {
           <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-fg leading-tight mb-3 font-[family-name:var(--font-blog)]">
             {post.title}
           </h1>
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2.5 mb-3">
             <span className="text-sm text-fg-faint">{post.date}</span>
-            {post.tags.map((t) => (
-              <span key={t} className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
-                #{t}
-              </span>
-            ))}
           </div>
+          {post.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {post.tags.map((t) => (
+                <span key={t} className="rounded-sm bg-surface-raised border border-border px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
+                  #{t}
+                </span>
+              ))}
+            </div>
+          )}
           <ShareButtons slug={post.slug} title={post.title} />
         </header>
 
@@ -228,26 +233,33 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="flex-1 min-w-0">
           <article>
             <header className="mb-10 pb-8 border-b border-border">
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-fg leading-tight mb-3 font-[family-name:var(--font-blog)]">
+              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-fg leading-tight mb-4 font-[family-name:var(--font-blog)]">
                 {post.title}
               </h1>
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="flex flex-wrap items-center gap-3">
+              {/* Meta row: date · reading time · views | reading mode */}
+              <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
+                <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                   <span className="text-sm text-fg-faint">{post.date}</span>
+                  <span className="text-fg-faint/40 select-none" aria-hidden>·</span>
                   <span className="text-sm text-fg-faint">{post.readingTime} min read</span>
                   <BlogViewCount slug={post.slug} />
+                </div>
+                <ReadingMode />
+              </div>
+              {/* Tags row — consistent with card tag style */}
+              {post.tags.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mb-3">
                   {post.tags.map((t) => (
                     <Link
                       key={t}
                       href={`/blog/tag/${encodeURIComponent(t)}`}
-                      className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle hover:text-accent transition-colors"
+                      className="rounded-sm bg-surface-raised border border-border px-2 py-0.5 text-[10px] font-medium text-fg-subtle hover:text-accent transition-colors"
                     >
                       #{t}
                     </Link>
                   ))}
                 </div>
-                <ReadingMode />
-              </div>
+              )}
               <ShareButtons slug={post.slug} title={post.title} />
             </header>
 
@@ -258,7 +270,7 @@ export default async function BlogPostPage({ params }: Props) {
               <MDXRemote
                 source={post.content}
                 components={mdxComponents}
-                options={{ mdxOptions: { rehypePlugins: [[rehypePrettyCode, prettyCodeOptions]] } }}
+                options={{ mdxOptions: { rehypePlugins: [rehypeSlug, [rehypePrettyCode, prettyCodeOptions]] } }}
               />
             </div>
 
@@ -282,7 +294,7 @@ export default async function BlogPostPage({ params }: Props) {
                     <p className="text-[11px] text-fg-faint mb-2">{p.date}</p>
                     <div className="flex flex-wrap gap-1">
                       {p.tags.slice(0, 3).map((t) => (
-                        <span key={t} className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
+                        <span key={t} className="rounded-sm bg-surface-raised border border-border px-2 py-0.5 text-[10px] font-medium text-fg-subtle">
                           #{t}
                         </span>
                       ))}

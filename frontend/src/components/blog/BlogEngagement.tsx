@@ -165,7 +165,7 @@ export default function BlogEngagement({ slug }: { slug: string }) {
             disabled={atMax}
             title={atMax ? "You've given the maximum claps!" : "Clap for this post"}
             className={`
-              relative w-12 h-12 rounded-full border-2 flex items-center justify-center text-xl
+              relative w-12 h-12 rounded-full border-2 flex items-center justify-center
               transition-all duration-150
               ${atMax
                 ? "border-border-strong bg-accent-light cursor-default opacity-60"
@@ -174,7 +174,20 @@ export default function BlogEngagement({ slug }: { slug: string }) {
               ${burst ? "scale-125 border-accent bg-accent-light" : "scale-100"}
             `}
           >
-            👏
+            <svg
+              width="20" height="20"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.75"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden
+              className={`transition-colors duration-150 ${burst || atMax ? "text-accent" : "text-fg-muted"}`}
+            >
+              <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/>
+              <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+            </svg>
           </button>
         </div>
         <span className="text-xs font-semibold text-fg-muted">

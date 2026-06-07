@@ -478,6 +478,17 @@ a[role="button"]:active {
   background: #22272e;
   border-color: #30363d;
 }
+/* Reset prose pre decorations inside not-prose containers (e.g. ArchBlock, custom code widgets).
+   .not-prose only guards against Tailwind Typography's :where() selectors, not custom CSS. */
+.prose .not-prose pre {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-size: inherit !important;
+  line-height: inherit !important;
+}
 .prose pre code {
   background: transparent !important;
   border: none !important;

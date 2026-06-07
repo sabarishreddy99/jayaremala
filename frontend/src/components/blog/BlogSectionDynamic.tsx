@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import useSWR from "swr";
 import { BlogSection } from "./BlogIndexStats";
 import {
@@ -21,15 +22,20 @@ interface StaticPost {
 }
 
 interface Props {
-  /** Posts from the build-time MDX scan — used as fallback if API is unavailable */
+  /** Posts from the build-time MDX scan — baseline that is always present */
   staticPosts: StaticPost[];
 }
 
 const fetcher = () => fetchBlogPosts();
 
 /**
- * Wraps BlogSection with SWR so newly published posts (from the admin API)
- * appear without a site rebuild. Falls back to staticPosts if API is unreachable.
+ * Merges static (MDX build-time) posts with live API posts so no post is
+ * ever dropped. Static posts are the baseline; API posts override by slug
+ * (applying any admin edits) and add admin-only posts not in MDX.
+ *
+ * This prevents the race condition where the frontend deploys before the
+ * backend has synced, which used to make newly published MDX posts invisible
+ * because the API response (without the new slug) replaced staticPosts entirely.
  */
 export default function BlogSectionDynamic({ staticPosts }: Props) {
   const { data: apiPosts } = useSWR<ApiBlogPost[]>(BLOG_POSTS_KEY, fetcher, {
@@ -38,14 +44,21 @@ export default function BlogSectionDynamic({ staticPosts }: Props) {
     shouldRetryOnError: false,
   });
 
-  // Use API data only when it has entries — an empty array means seeding hasn't
-  // run yet (e.g. CONTENT_DB_PATH not configured) and should not erase the
-  // static build-time posts. An empty [] is truthy in JS, hence the length check.
-  const posts = apiPosts && apiPosts.length > 0
-    ? apiPosts.map(normalizeBlogPost).sort(
-        (a, b) => (a.publishedAt! < b.publishedAt! ? 1 : -1)
-      )
-    : staticPosts;
+  const posts = useMemo(() => {
+    // Start with static posts as the ordered baseline
+    const merged = new Map<string, StaticPost>(
+      staticPosts.map((p) => [p.slug, p])
+    );
+    // API posts override static ones (admin edits) and add admin-only posts
+    if (apiPosts && apiPosts.length > 0) {
+      for (const p of apiPosts) {
+        merged.set(p.slug, normalizeBlogPost(p));
+      }
+    }
+    return Array.from(merged.values()).sort(
+      (a, b) => ((a.publishedAt ?? a.date) < (b.publishedAt ?? b.date) ? 1 : -1)
+    );
+  }, [staticPosts, apiPosts]);
 
   return <BlogSection posts={posts} />;
 }

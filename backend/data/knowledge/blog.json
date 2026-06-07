@@ -1,20 +1,8 @@
 [
   {
-    "slug": "gopi",
-    "title": "gopi",
-    "date": "2026-06-07",
-    "publishedAt": "2026-06-07",
-    "description": "Nadipinenuii testttttt",
-    "tags": [
-      "friend"
-    ],
-    "content": "Welcome to the website. If you're here, you're likely looking to find random words. Random Word Generator is the perfect tool to help you do this. While this tool isn't a word creator, it is a word generator that will generate random words for a variety of activities or uses. Even better, it allows you to adjust the parameters of the random words to best fit your needs.\n\nThe first option the tool allows you to adjust is the number of random words to be generated. You can choose as many or as few as you'd like. You also have the option of choosing words that only begin with a certain letter, only end with a certain letter or only begin and end with certain letters. If you leave these blank, the randomized words that appear will be from the complete list.\n\nAnother option you have is choosing the number of syllables of the words or the word length of the randomized words. There are also ways to further refine these by choosing the \"less than\" or \"greater than\" options for both syllables and word length. Again, if you leave the space blank, the complete list of randomized words will be used.\n\nYou have the option of choosing the types of words you want to be displayed using the \"Word Type\" dropdown. The default is \"All\" which is a curated list of thousands of the more common English words. You can also opt to only display nouns, verbs, or adjectives from this curated list. If you want to choose from all the words out there, you can choose \"Extended\" which is a list that includes over half a million different English words.\n\nIf you're interested in random words in languages other than English, you can choose the \"Non English\" word type. Doing so will give you the option to generate words in ten different languages other than English. This includes Spanish words, Hindi words, Arabic words, German words, Russian words, Chinese words, Japanese words, Korean words. Latin words, or Italian words. You simply need to choose the language and then words from that language will ran"
-  },
-  {
     "slug": "thanks-for-stopping-by",
     "title": "Thanks for stopping by!",
     "date": "2026-05-26",
-    "publishedAt": "2026-05-26",
     "description": "My heartfelt thanks to everyone landing here!",
     "tags": [
       "thanks",
@@ -26,7 +14,6 @@
     "slug": "welcome",
     "title": "Are you the real one who you think you are..?",
     "date": "2025-10-23",
-    "publishedAt": "2025-10-23",
     "description": "A reflection on self-discovery, purpose, and the kind of person you're becoming through the choices you make every day.",
     "tags": [
       "self-improvement",
@@ -36,6 +23,6 @@
       "thoughts-and-feelings",
       "life"
     ],
-    "content": "So, you're thinking that now… honestly, me too!\n\nHey, I'm Jaya and one of your well-wishers — not because you're here reading this article, but because you genuinely deserve to have one!\n\nMore often than not, we find ourselves wondering if we're heading in the right direction — whether it's in our studies, careers, relationships or family responsibilities. We constantly question our capabilities and whether we've made the right decisions when things don't go as planned.\n\nWell, that's perfectly normal — because we're all human, after all.\n\nExpecting nothing in return for the good you do is a remarkable quality everyone should cultivate. Because whenever you act selflessly, you open yourself to learning more and becoming willing to take risks.\n\nLife is a Rainbow\n\nLife is nothing short of a rainbow, full of colours. We usually see just a thin white light and it's boring, right?\n\nIf you wanna see its true side, your good deeds should shine on others' life droplet, where the prism with seven colours would showcase the one you actually are!\n\nOn the occasion of Diwali, the festival of lights, I wish you joy, prosperity, and happiness. I never imagined I would pen an article like this and express myself in the GPT era. That said, being human, I truly believe emotions carry trust and hope.\n\nIf you've come this far, thank you so much for investing your valuable time in this.\n\nHappy Diwali!\n\nI hope it made you feel better!"
+    "content": "So, you're thinking that now… honestly, me too!\n\nHey, I'm Jaya and one of your well-wishers — not because you're here reading this article, but because you genuinely deserve to have one!\n\nMore often than not, we find ourselves wondering if we're heading in the right direction — whether it's in our studies, careers, relationships or family responsibilities. We constantly question our capabilities and whether we've made the right decisions when things don't go as planned.\n\nWell, that's perfectly normal — because we're all human, after all.\n\nExpecting nothing in return for the good you do is a remarkable quality everyone should cultivate. Because whenever you act selflessly, you open yourself to learning more and becoming willing to take risks.\n\nLife is a Rainbow\n\nLife is nothing short of a rainbow, full of colours. We usually see just a thin white light and it's boring, right?\n\nIf you wanna see its true side, your good deeds should shine on others' life droplet, where the prism with seven colours would showcase the one you actually are!\n\n<BlogImage\n  src=\"/blog/blog_welcome_2.webp\"\n  alt=\"Colourful rainbow over a landscape\"\n  caption=\"Life in full colour\"\n/>\n\nOn the occasion of Diwali, the festival of lights, I wish you joy, prosperity, and happiness. I never imagined I would pen an article like this and express myself in the GPT era. That said, being human, I truly believe emotions carry trust and hope.\n\nIf you've come this far, thank you so much for investing your valuable time in this.\n\nHappy Diwali! 🪔\n\nI hope it made you feel better!"
   }
 ]

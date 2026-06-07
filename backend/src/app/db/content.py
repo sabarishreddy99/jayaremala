@@ -96,6 +96,19 @@ def init_db() -> None:
             )
         """)
 
+    # ── Live migrations (idempotent ALTER TABLE) ──────────────────────────────
+    # source column: 'mdx' for posts synced from MDX files, 'api' for admin CRUD.
+    # Allows sync_*_json_to_db() to safely delete stale MDX posts without
+    # touching API-created ones.
+    try:
+        conn.execute("ALTER TABLE blog_posts ADD COLUMN source TEXT NOT NULL DEFAULT 'api'")
+    except Exception:
+        pass  # column already exists
+    try:
+        conn.execute("ALTER TABLE lab_entries ADD COLUMN source TEXT NOT NULL DEFAULT 'api'")
+    except Exception:
+        pass  # column already exists
+
     _seed_if_empty()
 
 
@@ -447,41 +460,63 @@ def delete_quote(quote_id: str) -> bool:
 # ── JSON regeneration helpers (used by content router after CRUD) ──────────────
 
 def sync_blog_json_to_db() -> None:
-    """Upsert any blog posts present in blog.json but missing from content.db.
+    """Sync blog.json (MDX source) → content.db, tracking the 'mdx' source so
+    that posts deleted from the repo are also removed from content.db.
 
-    blog.json is updated by GH Actions (sync-knowledge.mjs) whenever an MDX
-    post is pushed. content.db is only seeded from it on first startup, so new
-    MDX posts would otherwise never reach ChromaDB. This bridges the gap by
-    inserting new slugs on every ingest without touching existing rows.
+    - INSERT new MDX posts not yet in content.db (source='mdx')
+    - Mark existing rows whose slug is in blog.json as source='mdx'
+    - DELETE rows where source='mdx' AND slug no longer exists in blog.json
+      (this is what removes a post deleted via the GitHub API admin flow)
+    - API-created posts (source='api') are never touched here.
     """
     path = _DATA_DIR / "blog.json"
     if not path.exists():
         return
     posts = json.loads(path.read_text())
-    added = 0
+    mdx_slugs = {p["slug"] for p in posts if p.get("slug")}
+
+    added = deleted = 0
     with _connect() as conn:
         existing = {row[0] for row in conn.execute("SELECT slug FROM blog_posts").fetchall()}
+
         for post in posts:
             slug = post.get("slug", "")
-            if not slug or slug in existing:
+            if not slug:
                 continue
-            conn.execute(
-                """INSERT OR IGNORE INTO blog_posts
-                   (slug, title, date, published_at, description, tags, content, published)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, 1)""",
-                (
-                    slug,
-                    post.get("title", ""),
-                    post.get("date", ""),
-                    post.get("publishedAt", post.get("date", "")),
-                    post.get("description", ""),
-                    json.dumps(post.get("tags", [])),
-                    post.get("content", "")[:2000],
-                ),
-            )
-            added += 1
+            if slug not in existing:
+                conn.execute(
+                    """INSERT OR IGNORE INTO blog_posts
+                       (slug, title, date, published_at, description, tags, content, published, source)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, 1, 'mdx')""",
+                    (
+                        slug,
+                        post.get("title", ""),
+                        post.get("date", ""),
+                        post.get("publishedAt", post.get("date", "")),
+                        post.get("description", ""),
+                        json.dumps(post.get("tags", [])),
+                        post.get("content", "")[:2000],
+                    ),
+                )
+                added += 1
+            else:
+                # Claim ownership: this slug is an MDX post
+                conn.execute("UPDATE blog_posts SET source='mdx' WHERE slug=?", (slug,))
+
+        # Remove MDX posts that no longer have a backing MDX file
+        if mdx_slugs:
+            ph = ",".join("?" * len(mdx_slugs))
+            deleted = conn.execute(
+                f"DELETE FROM blog_posts WHERE source='mdx' AND slug NOT IN ({ph})",
+                list(mdx_slugs),
+            ).rowcount
+        else:
+            deleted = conn.execute("DELETE FROM blog_posts WHERE source='mdx'").rowcount
+
     if added:
-        logger.info("sync_blog_json_to_db: inserted %d new post(s) from blog.json → content.db", added)
+        logger.info("sync_blog_json_to_db: inserted %d new post(s)", added)
+    if deleted:
+        logger.info("sync_blog_json_to_db: removed %d stale MDX post(s) from content.db", deleted)
 
 
 def regenerate_blog_json() -> None:
@@ -545,42 +580,60 @@ def sync_quotes_json_to_db() -> None:
 
 
 def sync_lab_json_to_db() -> None:
-    """Upsert any lab entries present in lab.json but missing from content.db.
+    """Sync lab.json (MDX source) → content.db, tracking the 'mdx' source so
+    that entries deleted from the repo are also removed from content.db.
 
-    Same gap as blog: lab.json is updated by GH Actions whenever an MDX lab
-    entry is pushed, but content.db is only seeded on first startup. New entries
-    would otherwise be invisible to ChromaDB until the table is wiped.
+    Mirrors the blog sync: insert new, mark existing, delete stale MDX entries.
+    API-created entries (source='api') are never touched here.
     """
     path = _DATA_DIR / "lab.json"
     if not path.exists():
         return
     entries = json.loads(path.read_text())
-    added = 0
+    mdx_slugs = {e["slug"] for e in entries if e.get("slug")}
+
+    added = deleted = 0
     with _connect() as conn:
         existing = {row[0] for row in conn.execute("SELECT slug FROM lab_entries").fetchall()}
+
         for entry in entries:
             slug = entry.get("slug", "")
-            if not slug or slug in existing:
+            if not slug:
                 continue
-            conn.execute(
-                """INSERT OR IGNORE INTO lab_entries
-                   (slug, title, status, description, started_at, updated_at, tech, links, content)
-                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-                (
-                    slug,
-                    entry.get("title", ""),
-                    entry.get("status", "active"),
-                    entry.get("description", ""),
-                    entry.get("startedAt", ""),
-                    entry.get("updatedAt", ""),
-                    json.dumps(entry.get("tech", [])),
-                    json.dumps(entry.get("links", [])),
-                    entry.get("content", "")[:3000],
-                ),
-            )
-            added += 1
+            if slug not in existing:
+                conn.execute(
+                    """INSERT OR IGNORE INTO lab_entries
+                       (slug, title, status, description, started_at, updated_at, tech, links, content, source)
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'mdx')""",
+                    (
+                        slug,
+                        entry.get("title", ""),
+                        entry.get("status", "active"),
+                        entry.get("description", ""),
+                        entry.get("startedAt", ""),
+                        entry.get("updatedAt", ""),
+                        json.dumps(entry.get("tech", [])),
+                        json.dumps(entry.get("links", [])),
+                        entry.get("content", "")[:3000],
+                    ),
+                )
+                added += 1
+            else:
+                conn.execute("UPDATE lab_entries SET source='mdx' WHERE slug=?", (slug,))
+
+        if mdx_slugs:
+            ph = ",".join("?" * len(mdx_slugs))
+            deleted = conn.execute(
+                f"DELETE FROM lab_entries WHERE source='mdx' AND slug NOT IN ({ph})",
+                list(mdx_slugs),
+            ).rowcount
+        else:
+            deleted = conn.execute("DELETE FROM lab_entries WHERE source='mdx'").rowcount
+
     if added:
-        logger.info("sync_lab_json_to_db: inserted %d new entry/entries from lab.json → content.db", added)
+        logger.info("sync_lab_json_to_db: inserted %d new entry/entries", added)
+    if deleted:
+        logger.info("sync_lab_json_to_db: removed %d stale MDX entry/entries from content.db", deleted)
 
 
 def regenerate_lab_json() -> None:

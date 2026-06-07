@@ -395,7 +395,7 @@ def _build_faq_documents(
         recent = [b["title"] for b in blog_data[:3]]
         recent_str = f" Recent posts: {', '.join(recent)}." if recent else ""
         docs.append(("faq_blog", (
-            f"Jaya's blog at itsjaya.com/blog has {count} published posts. "
+            f"Jaya's blog at jayaremala.com/blog has {count} published posts. "
             + (f"{page_desc} " if page_desc else "")
             + recent_str
         ), "faq"))
@@ -412,7 +412,7 @@ def _build_faq_documents(
         ]
         active_str = f" Active: {', '.join(active_titles[:3])}." if active_titles else ""
         docs.append(("faq_lab", (
-            f"Jaya's Lab at itsjaya.com/lab documents {count} projects. "
+            f"Jaya's Lab at jayaremala.com/lab documents {count} projects. "
             + (f"{page_desc} " if page_desc else "")
             + active_str
         ), "faq"))
@@ -424,7 +424,7 @@ def _build_faq_documents(
         count = len(qdata)
         page_desc = (p or {}).get("page_quotes", "")
         docs.append(("faq_quotes_collection", (
-            f"Jaya curates a collection of {count} quotes at itsjaya.com/quotes. "
+            f"Jaya curates a collection of {count} quotes at jayaremala.com/quotes. "
             + (page_desc if page_desc else "")
         ), "faq"))
 
@@ -439,7 +439,7 @@ def _build_system_faq_documents(approx_content_docs: int) -> list[tuple[str, str
 
     docs.append(("faq_portfolio_how_it_works", (
         "How does this portfolio work? How is Avocado built? "
-        "itsjaya.com is Jaya's AI-powered portfolio. It has two parts: "
+        "jayaremala.com is Jaya's AI-powered portfolio. It has two parts: "
         "(1) Avocado — a full-screen RAG-powered AI chatbot at the homepage that answers questions about Jaya in real time. "
         "(2) A classic portfolio with experience, projects, education, blog, lab, gallery, quotes, and a /now page. "
         "Avocado works like this: when you type a question, the backend runs a 4-stage hybrid retrieval pipeline — "
@@ -454,7 +454,7 @@ def _build_system_faq_documents(approx_content_docs: int) -> list[tuple[str, str
     docs.append(("faq_services_connected", (
         "How are the services connected in this portfolio? What is the system architecture? "
         "The portfolio has three layers: "
-        "(1) Frontend: Next.js 16 static export hosted on GitHub Pages at itsjaya.com. "
+        "(1) Frontend: Next.js 16 static export hosted on GitHub Pages at jayaremala.com. "
         "No server-side rendering — fully static HTML/CSS/JS served from GitHub's CDN for free. "
         "(2) Backend API: FastAPI (Python) running in Docker on AWS Lightsail 2GB VPS at api.jayaremala.com. "
         "Nginx sits in front as a reverse proxy (port 443 → Docker port 8000) with Let's Encrypt HTTPS. "
@@ -504,7 +504,7 @@ def _build_system_faq_documents(approx_content_docs: int) -> list[tuple[str, str
         "How is the portfolio deployed? What is the CI/CD pipeline? "
         "Everything deploys automatically on every git push to main via GitHub Actions: "
         "(1) Frontend: npm build runs sync-knowledge.mjs (generates blog.json from MDX posts), "
-        "then Next.js builds a static export to frontend/out/, which is uploaded to GitHub Pages at itsjaya.com. "
+        "then Next.js builds a static export to frontend/out/, which is uploaded to GitHub Pages at jayaremala.com. "
         "(2) Backend: GitHub Actions SSHes into AWS Lightsail and runs infra/scripts/deploy.sh — "
         "a zero-downtime blue-green deployment script. It builds the new Docker image, "
         "starts it on port 8001, health-checks it for up to 120 seconds (ONNX model warmup), "

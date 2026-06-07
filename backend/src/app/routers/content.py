@@ -119,6 +119,14 @@ def _cleanup_blog_analytics(slug: str) -> None:
         logger.error("Blog analytics cleanup failed (non-fatal): %s", exc)
 
 
+def _sync_quotes_to_rag() -> None:
+    try:
+        content_db.regenerate_quotes_json()
+        run_ingest()
+    except Exception as exc:
+        logger.error("Quotes RAG sync failed (non-fatal): %s", exc)
+
+
 def _cleanup_lab_analytics(slug: str) -> None:
     try:
         from app.db.analytics import delete_page_visits
@@ -234,21 +242,25 @@ def get_quote(quote_id: str) -> dict:
 
 
 @router.post("/quotes", status_code=201, dependencies=[Depends(_require_token)])
-def create_quote(body: QuoteIn) -> dict:
+def create_quote(body: QuoteIn, background_tasks: BackgroundTasks) -> dict:
     if content_db.get_quote(body.quote_id):
         raise HTTPException(status_code=409, detail="quote_id already exists")
-    return content_db.create_quote(body.model_dump())
+    result = content_db.create_quote(body.model_dump())
+    background_tasks.add_task(_sync_quotes_to_rag)
+    return result
 
 
 @router.put("/quotes/{quote_id}", dependencies=[Depends(_require_token)])
-def update_quote(quote_id: str, body: QuoteIn) -> dict:
+def update_quote(quote_id: str, body: QuoteIn, background_tasks: BackgroundTasks) -> dict:
     result = content_db.update_quote(quote_id, body.model_dump())
     if not result:
         raise HTTPException(status_code=404, detail="Quote not found")
+    background_tasks.add_task(_sync_quotes_to_rag)
     return result
 
 
 @router.delete("/quotes/{quote_id}", status_code=204, dependencies=[Depends(_require_token)])
-def delete_quote(quote_id: str) -> None:
+def delete_quote(quote_id: str, background_tasks: BackgroundTasks) -> None:
     if not content_db.delete_quote(quote_id):
         raise HTTPException(status_code=404, detail="Quote not found")
+    background_tasks.add_task(_sync_quotes_to_rag)

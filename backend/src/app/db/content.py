@@ -505,6 +505,45 @@ def regenerate_blog_json() -> None:
     logger.info("Regenerated blog.json (%d posts)", len(output))
 
 
+def sync_quotes_json_to_db() -> None:
+    """Upsert any quotes present in quotes.json but missing from content.db.
+
+    quotes.json is updated by the admin GitHub-API editor whenever a quote is
+    added/edited/deleted. content.db is only seeded from it on first startup,
+    so new quotes would otherwise be silently erased by regenerate_quotes_json()
+    (which writes from content.db, not from the JSON file). This bridges the gap.
+    """
+    path = _DATA_DIR / "quotes.json"
+    if not path.exists():
+        return
+    quotes = json.loads(path.read_text())
+    added = 0
+    with _connect() as conn:
+        existing = {row[0] for row in conn.execute("SELECT quote_id FROM quotes").fetchall()}
+        for q in quotes:
+            qid = q.get("id", q.get("quote_id", ""))
+            if not qid or qid in existing:
+                continue
+            conn.execute(
+                """INSERT OR IGNORE INTO quotes
+                   (quote_id, text, author, source, category, favorite, featured, added_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (
+                    qid,
+                    q.get("text", ""),
+                    q.get("author", ""),
+                    q.get("source"),
+                    q.get("category", "Philosophy"),
+                    1 if q.get("favorite") else 0,
+                    1 if q.get("featured") else 0,
+                    q.get("addedAt", q.get("added_at", "")),
+                ),
+            )
+            added += 1
+    if added:
+        logger.info("sync_quotes_json_to_db: inserted %d new quote(s) from quotes.json → content.db", added)
+
+
 def sync_lab_json_to_db() -> None:
     """Upsert any lab entries present in lab.json but missing from content.db.
 

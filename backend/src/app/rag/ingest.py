@@ -200,11 +200,13 @@ def _sync_content_db() -> None:
     try:
         from app.db.content import (  # noqa: PLC0415
             regenerate_blog_json, regenerate_lab_json, regenerate_quotes_json,
-            sync_blog_json_to_db, sync_lab_json_to_db,
+            sync_blog_json_to_db, sync_lab_json_to_db, sync_quotes_json_to_db,
         )
-        # Step 1: pull any new MDX-pushed content from JSON files → content.db
+        # Step 1: pull any new content from JSON files → content.db
+        # (must run before regenerate_* so new entries survive the overwrite)
         sync_blog_json_to_db()
         sync_lab_json_to_db()
+        sync_quotes_json_to_db()
         # Step 2: regenerate all JSON files from the now-complete content.db
         regenerate_blog_json()
         regenerate_lab_json()

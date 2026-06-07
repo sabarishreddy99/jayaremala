@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { API_BASE_URL } from "@/lib/api/client";
 import ContentBlogEditor from "@/components/admin/ContentBlogEditor";
@@ -453,6 +453,320 @@ function ReingestPanel() {
       {error && (
         <p className="rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 px-3 py-2 text-[11px] text-rose-700 dark:text-rose-400">{error}</p>
       )}
+    </div>
+  );
+}
+
+// ── Sync Status Panel ──────────────────────────────────────────────────────────
+
+interface SyncStatus {
+  content_db: { blogs: number; labs: number; quotes: number };
+  json_files: Record<string, number>;
+  chromadb: { total: number; by_type: Record<string, number> };
+  last_ingest_ts: number | null;
+  ingest_running: boolean;
+}
+
+function timeAgo(ts: number): string {
+  const secs = Math.floor((Date.now() / 1000) - ts);
+  if (secs < 60) return `${secs}s ago`;
+  if (secs < 3600) return `${Math.floor(secs / 60)}m ago`;
+  if (secs < 86400) return `${Math.floor(secs / 3600)}h ago`;
+  return `${Math.floor(secs / 86400)}d ago`;
+}
+
+function SyncStatusPanel() {
+  const [status, setStatus] = useState<SyncStatus | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [syncResult, setSyncResult] = useState<{ added: number; updated: number; unchanged: number; deleted: number; total: number } | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
+  const fetchStatus = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/sync-status`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("avocado_admin_token") ?? ""}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setLoadError(null);
+      setStatus(await res.json());
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : "Failed to load sync status");
+    }
+  }, []);
+
+  async function handleSync() {
+    setSyncing(true);
+    setSyncResult(null);
+    setSyncError(null);
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/reingest?force=true`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${localStorage.getItem("avocado_admin_token") ?? ""}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const kick = await res.json();
+      if (kick.status === "already_running") {
+        setSyncError("Already running — check back in a moment.");
+        setSyncing(false);
+        return;
+      }
+      await new Promise<void>((resolve, reject) => {
+        const iv = setInterval(async () => {
+          try {
+            const sr = await fetch(`${API_BASE_URL}/admin/reingest/status`, {
+              headers: { Authorization: `Bearer ${localStorage.getItem("avocado_admin_token") ?? ""}` },
+            });
+            if (!sr.ok) { clearInterval(iv); reject(new Error(`HTTP ${sr.status}`)); return; }
+            const s = await sr.json();
+            if (!s.running) {
+              clearInterval(iv);
+              if (s.error) { reject(new Error(s.error)); return; }
+              setSyncResult(s.result ?? {});
+              setLastSyncTime(new Date().toLocaleTimeString());
+              resolve();
+            }
+          } catch (err) { clearInterval(iv); reject(err); }
+        }, 2000);
+      });
+      await fetchStatus();
+    } catch (e) {
+      setSyncError(e instanceof Error ? e.message : "Sync failed — check backend logs");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  useEffect(() => { void fetchStatus(); }, [fetchStatus]); // eslint-disable-line react-hooks/set-state-in-effect
+
+  const CONTENT_ROWS: { key: string; label: string; source: "db+json" | "json" }[] = [
+    { key: "blog",         label: "Blog posts",    source: "db+json" },
+    { key: "lab",          label: "Lab entries",   source: "db+json" },
+    { key: "quotes",       label: "Quotes",        source: "db+json" },
+    { key: "experience",   label: "Experience",    source: "json"    },
+    { key: "education",    label: "Education",     source: "json"    },
+    { key: "projects",     label: "Projects",      source: "json"    },
+    { key: "skills",       label: "Skills",        source: "json"    },
+    { key: "testimonials", label: "Testimonials",  source: "json"    },
+    { key: "gallery",      label: "Gallery",       source: "json"    },
+  ];
+
+  const chromaByType = status?.chromadb.by_type ?? {};
+  const jsonFiles = status?.json_files ?? {};
+  const contentDb = status?.content_db ?? { blogs: 0, labs: 0, quotes: 0 };
+
+  function dbCount(key: string): number | null {
+    if (key === "blog")   return contentDb.blogs;
+    if (key === "lab")    return contentDb.labs;
+    if (key === "quotes") return contentDb.quotes;
+    return null;
+  }
+
+  function chromaCount(key: string): number {
+    const map: Record<string, string> = {
+      blog: "blog", lab: "lab", quotes: "quote",
+      experience: "exp", education: "edu", projects: "proj",
+      skills: "skills", testimonials: "testimonial", gallery: "gallery",
+    };
+    return chromaByType[map[key] ?? key] ?? 0;
+  }
+
+  function rowStatus(key: string, source: "db+json" | "json"): "ok" | "warn" | "unknown" {
+    if (!status) return "unknown";
+    const json = jsonFiles[key] ?? 0;
+    if (source === "db+json") {
+      const db = dbCount(key) ?? 0;
+      return db === json ? "ok" : "warn";
+    }
+    return json > 0 ? "ok" : "warn";
+  }
+
+  const allOk = status !== null && CONTENT_ROWS.every((r) => rowStatus(r.key, r.source) === "ok");
+
+  return (
+    <div className="space-y-4">
+      {/* Status header */}
+      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-4 mb-5">
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle mb-1">Content Sync Status</h2>
+            <p className="text-[11px] text-fg-muted leading-relaxed max-w-xl">
+              Shows what&apos;s in content.db, the knowledge JSON files, and Avocado&apos;s vector index. Use{" "}
+              <span className="font-semibold">Full Sync</span> to propagate all admin changes to Avocado immediately.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => { setRefreshing(true); void fetchStatus().finally(() => setRefreshing(false)); }}
+              disabled={refreshing || syncing}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface-raised px-3 py-2 text-[11px] font-medium text-fg-muted hover:text-fg hover:border-border-strong transition-colors disabled:opacity-40"
+              title="Refresh status"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={refreshing ? "animate-spin" : ""}>
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/>
+              </svg>
+              Refresh
+            </button>
+            <button
+              onClick={handleSync}
+              disabled={syncing || refreshing}
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-hover transition-colors disabled:opacity-50 shadow-sm shadow-accent/20"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={syncing ? "animate-spin" : ""}>
+                <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+              </svg>
+              {syncing ? "Syncing…" : "Full Sync"}
+            </button>
+          </div>
+        </div>
+
+        {loadError && (
+          <p className="mb-4 rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 px-3 py-2 text-[11px] text-rose-700 dark:text-rose-400">{loadError}</p>
+        )}
+
+        {/* Per-type table */}
+        <div className="rounded-lg border border-border overflow-hidden">
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-border bg-surface-raised">
+                <th className="text-left px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-fg-subtle">Content Type</th>
+                <th className="text-center px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-fg-subtle">DB</th>
+                <th className="text-center px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-fg-subtle">JSON</th>
+                <th className="text-center px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-fg-subtle hidden sm:table-cell">Avocado</th>
+                <th className="text-center px-3 py-2.5 text-[10px] font-semibold uppercase tracking-widest text-fg-subtle">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {CONTENT_ROWS.map((row, i) => {
+                const db = dbCount(row.key);
+                const json = jsonFiles[row.key] ?? 0;
+                const chroma = chromaCount(row.key);
+                const st = rowStatus(row.key, row.source);
+                const isLast = i === CONTENT_ROWS.length - 1;
+                return (
+                  <tr key={row.key} className={`${isLast ? "" : "border-b border-border"} hover:bg-surface-raised/50 transition-colors`}>
+                    <td className="px-3 py-2.5 font-medium text-fg-muted">{row.label}</td>
+                    <td className="px-3 py-2.5 text-center tabular-nums">
+                      {db !== null ? (
+                        <span className="text-fg font-semibold">{db}</span>
+                      ) : (
+                        <span className="text-fg-faint text-[10px]">JSON only</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-center tabular-nums">
+                      {status ? (
+                        <span className={`font-semibold ${db !== null && db !== json ? "text-amber-600 dark:text-amber-400" : "text-fg"}`}>{json}</span>
+                      ) : (
+                        <span className="text-fg-faint animate-pulse">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-center tabular-nums hidden sm:table-cell">
+                      {status ? (
+                        <span className="text-fg-muted">{chroma}</span>
+                      ) : (
+                        <span className="text-fg-faint animate-pulse">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-2.5 text-center">
+                      {!status ? (
+                        <span className="inline-block w-2 h-2 rounded-full bg-fg-faint/30 animate-pulse" />
+                      ) : st === "ok" ? (
+                        <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                          <span className="text-[10px] font-medium hidden sm:inline">Synced</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                          <span className="text-[10px] font-medium hidden sm:inline">Out of sync</span>
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Footer: ChromaDB total + last sync */}
+        <div className="flex flex-wrap items-center justify-between gap-3 mt-3 pt-3 border-t border-border">
+          <div className="flex items-center gap-4 text-[11px] text-fg-faint">
+            <span>
+              Avocado index:{" "}
+              <span className="font-semibold text-fg-muted tabular-nums">{status?.chromadb.total ?? "—"}</span>{" "}
+              total docs
+            </span>
+            {status?.last_ingest_ts && (
+              <span>
+                Last synced:{" "}
+                <span className="font-semibold text-fg-muted">{timeAgo(status.last_ingest_ts)}</span>
+              </span>
+            )}
+            {status?.ingest_running && (
+              <span className="inline-flex items-center gap-1 text-accent animate-pulse">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+                Sync in progress
+              </span>
+            )}
+          </div>
+          {status && (
+            <span className={`inline-flex items-center gap-1.5 rounded-sm px-2.5 py-1 text-[10px] font-semibold border ${
+              allOk
+                ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                : "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800"
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${allOk ? "bg-emerald-500" : "bg-amber-500 animate-pulse"}`} />
+              {allOk ? "All synced" : "Sync needed"}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {/* Sync result */}
+      {syncResult && (
+        <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+            Full sync complete
+            {lastSyncTime && <span className="font-normal text-emerald-600/70 dark:text-emerald-500/70">· {lastSyncTime}</span>}
+          </span>
+          <div className="ml-auto flex items-center gap-3 text-[11px] tabular-nums text-fg-muted">
+            <span><span className="font-semibold text-fg">{syncResult.added}</span> added</span>
+            <span><span className="font-semibold text-fg">{syncResult.updated}</span> updated</span>
+            {syncResult.deleted > 0 && <span><span className="font-semibold text-rose-600 dark:text-rose-400">{syncResult.deleted}</span> removed</span>}
+            <span><span className="font-semibold text-fg">{syncResult.unchanged}</span> unchanged</span>
+            <span className="border-l border-border pl-3"><span className="font-semibold text-fg">{syncResult.total}</span> total in Avocado</span>
+          </div>
+        </div>
+      )}
+
+      {syncError && (
+        <p className="rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 px-3 py-2 text-[11px] text-rose-700 dark:text-rose-400">{syncError}</p>
+      )}
+
+      {/* What each column means */}
+      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5 space-y-3">
+        <p className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle">How sync works</p>
+        <div className="grid sm:grid-cols-3 gap-3">
+          {[
+            { label: "DB (content.db)", color: "text-fg", desc: "Live SQLite database on the server. Blog, Lab, and Quotes entries you create/edit via admin live here first." },
+            { label: "JSON (knowledge files)", color: "text-fg", desc: "Files baked into the backend. DB-managed content is regenerated here after each change. Profile, Experience, Education, etc. live only here and update on GitHub push." },
+            { label: "Avocado (ChromaDB)", color: "text-accent", desc: "Vector index used by the AI chatbot. Full Sync re-reads all JSON files and re-embeds any changed document so Avocado answers with the latest content." },
+          ].map((item) => (
+            <div key={item.label} className="border border-border-subtle rounded p-3 space-y-1">
+              <p className={`text-[11px] font-semibold ${item.color}`}>{item.label}</p>
+              <p className="text-[10px] text-fg-faint leading-relaxed">{item.desc}</p>
+            </div>
+          ))}
+        </div>
+        <p className="text-[10px] text-fg-faint leading-relaxed">
+          <span className="font-semibold text-amber-600 dark:text-amber-400">Out of sync</span> means the DB row count differs from the JSON file count — usually because a content change is still in flight. Full Sync resolves it instantly.
+          Changes to Profile, Experience, Education, Projects, Skills, Testimonials, and Gallery made via admin go to GitHub first, rebuild the Docker image, and are visible here after the next deployment (~2–3 min).
+        </p>
+      </div>
     </div>
   );
 }
@@ -2775,7 +3089,7 @@ function Dashboard({
   const [period, setPeriod] = useState<Period>("all");
   const [activeView, setActiveView] = useState<
     "analytics" | "write-blog" | "quotes" | "blog-api" | "lab" | "quotes-api" |
-    "availability" | "now" | "data" |
+    "availability" | "now" | "data" | "sync" |
     "profile" | "hero-stats" | "experience" | "education" | "projects" | "skills" | "testimonials" | "gallery"
   >("analytics");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -2816,6 +3130,7 @@ function Dashboard({
     { key: "skills",       label: "Skills",       group: "Portfolio" },
     { key: "testimonials", label: "Testimonials", group: "Portfolio" },
     { key: "gallery",      label: "Gallery",      group: "Portfolio" },
+    { key: "sync",         label: "Sync",         group: "Settings"  },
     { key: "data",         label: "Raw JSON",     group: "Settings"  },
     { key: "availability", label: "Availability", group: "Settings"  },
     { key: "now",          label: "Now Page",     group: "Settings"  },
@@ -2825,7 +3140,7 @@ function Dashboard({
   const VIEW_LABELS: Record<typeof activeView, string> = {
     analytics: "Analytics", "write-blog": "Write Blog", quotes: "Quotes",
     "blog-api": "Blog (API)", lab: "Lab (API)", "quotes-api": "Quotes (API)",
-    availability: "Availability", now: "Now Page", data: "Raw JSON",
+    availability: "Availability", now: "Now Page", data: "Raw JSON", sync: "Sync Status",
     profile: "Profile", "hero-stats": "Hero Stats", experience: "Experience",
     education: "Education", projects: "Projects", skills: "Skills", testimonials: "Testimonials",
     gallery: "Gallery",
@@ -2847,6 +3162,7 @@ function Dashboard({
       skills:        <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
       testimonials:  <><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></>,
       gallery:       <><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>,
+      sync:          <><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></>,
       data:          <><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></>,
       availability:  <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
       now:           <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
@@ -3102,6 +3418,7 @@ function Dashboard({
         {activeView === "skills"       && <SkillsEditor />}
         {activeView === "testimonials" && <TestimonialsEditor />}
         {activeView === "gallery" && <GalleryEditor />}
+        {activeView === "sync" && <SyncStatusPanel />}
         {activeView === "data" && <KnowledgeDataView />}
 
         {/* Analytics content */}

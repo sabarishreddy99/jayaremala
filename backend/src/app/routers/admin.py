@@ -1,9 +1,12 @@
 import asyncio
+import json
+from pathlib import Path
+
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from app.core.settings import settings
-from app.rag.ingest import run_ingest
+from app.rag.ingest import DATA_DIR, run_ingest
 
 router = APIRouter(prefix="/admin", tags=["admin"])
 _bearer = HTTPBearer(auto_error=False)
@@ -55,6 +58,74 @@ def reingest_status() -> dict:
         "running": _reingest_state["running"],
         "result": _reingest_state["result"],
         "error": _reingest_state["error"],
+    }
+
+
+@router.get("/sync-status", dependencies=[Depends(_require_token)])
+def sync_status() -> dict:
+    """Return per-content-type counts from content.db, JSON knowledge files, and ChromaDB.
+
+    Used by the admin Sync panel to surface what's indexed, what's in the DB,
+    and when the last full sync completed. All reads are fast (no embedding).
+    """
+    from app.db import content as content_db  # noqa: PLC0415
+
+    def count_json(filename: str) -> int:
+        path = DATA_DIR / filename
+        try:
+            return len(json.loads(path.read_text())) if path.exists() else 0
+        except Exception:
+            return 0
+
+    # content.db row counts
+    db_blogs  = len(content_db.list_blog_posts(include_drafts=True))
+    db_labs   = len(content_db.list_lab_entries())
+    db_quotes = len(content_db.list_quotes())
+
+    # Knowledge JSON file counts
+    json_counts = {
+        "blog":         count_json("blog.json"),
+        "lab":          count_json("lab.json"),
+        "quotes":       count_json("quotes.json"),
+        "experience":   count_json("experience.json"),
+        "education":    count_json("education.json"),
+        "projects":     count_json("projects.json"),
+        "skills":       count_json("skills.json"),
+        "testimonials": count_json("testimonials.json"),
+        "gallery":      count_json("gallery.json"),
+    }
+
+    # ChromaDB — total count + per-type by ID prefix (single get() call)
+    chroma_total = 0
+    chroma_by_type: dict[str, int] = {}
+    try:
+        from app.rag.store import get_collection  # noqa: PLC0415
+        collection = get_collection()
+        chroma_total = collection.count()
+        if chroma_total > 0:
+            all_ids: list[str] = collection.get(include=[])["ids"]
+            prefixes = ["blog", "lab", "quote", "exp", "edu", "proj", "skills",
+                        "testimonial", "gallery", "faq", "profile"]
+            for prefix in prefixes:
+                chroma_by_type[prefix] = sum(1 for id_ in all_ids if id_.startswith(f"{prefix}_"))
+    except Exception:
+        pass
+
+    # Last ingest time — mtime of .doc_hashes.json
+    last_ingest_ts: float | None = None
+    try:
+        hashes_path = Path(settings.chroma_db_path) / ".doc_hashes.json"
+        if hashes_path.exists():
+            last_ingest_ts = hashes_path.stat().st_mtime
+    except Exception:
+        pass
+
+    return {
+        "content_db": {"blogs": db_blogs, "labs": db_labs, "quotes": db_quotes},
+        "json_files": json_counts,
+        "chromadb": {"total": chroma_total, "by_type": chroma_by_type},
+        "last_ingest_ts": last_ingest_ts,
+        "ingest_running": _reingest_state["running"],
     }
 
 

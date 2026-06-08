@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useGitHubFile } from "@/lib/useGitHubFile";
-import { FieldLabel, TextInput, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, MoveButtons } from "./AdminShared";
+import { FieldLabel, TextInput, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, MoveButtons, triggerReingest } from "./AdminShared";
 
 const FILE = "backend/data/knowledge/skills.json";
 
@@ -73,7 +73,7 @@ export default function SkillsEditor() {
 
   async function handleSave() {
     const ok = await gh.save(groups, "chore: update skills");
-    if (ok) setDirty(false);
+    if (ok) { setDirty(false); triggerReingest(); }
   }
 
   useEffect(() => { if (gh.pat.trim()) handleLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps

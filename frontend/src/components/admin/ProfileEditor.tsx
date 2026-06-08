@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useGitHubFile } from "@/lib/useGitHubFile";
-import { FieldLabel, TextInput, TextArea, GithubPATRow, SaveRow, ResultBanner, DirtyBadge } from "./AdminShared";
+import { FieldLabel, TextInput, TextArea, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, triggerReingest } from "./AdminShared";
 
 const FILE = "backend/data/knowledge/profile.json";
 
@@ -130,7 +130,7 @@ export default function ProfileEditor() {
     const full  = JSON.parse(new TextDecoder("utf-8").decode(bytes));
     const merged = { ...full, ...fields };
     const ok = await gh.save(merged, "chore: update profile info");
-    if (ok) setDirty(false);
+    if (ok) { setDirty(false); triggerReingest(); }
   }
 
   useEffect(() => { if (gh.pat.trim()) handleLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps

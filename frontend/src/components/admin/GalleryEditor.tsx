@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { triggerReingest } from "./AdminShared";
 
 interface GalleryItem {
   id: string;
@@ -141,6 +142,7 @@ export default function GalleryEditor() {
       setItems(next);
       setFile(null); setTitle(""); setCaption(""); setCategory(""); setDate("");
       setResult({ ok: true, msg: "Uploaded! Live in ~2 min after the rebuild." });
+      triggerReingest();
     } catch (e) {
       setResult({ ok: false, msg: `Upload failed: ${(e as Error).message}` });
     } finally { setBusy(false); }
@@ -278,6 +280,7 @@ export default function GalleryEditor() {
       setQueue([]);
       setBulkProgress(null);
       setResult({ ok: true, msg: `Pushed ${newEntries.length} photo${newEntries.length !== 1 ? "s" : ""} in one commit! Live in ~2 min after rebuild.` });
+      triggerReingest();
     } catch (e) {
       setResult({ ok: false, msg: `Bulk upload failed: ${(e as Error).message}` });
     } finally {
@@ -294,6 +297,7 @@ export default function GalleryEditor() {
       await putJson(next, `gallery: remove ${id}`);
       setItems(next);
       setResult({ ok: true, msg: "Removed." });
+      triggerReingest();
     } catch (e) {
       setResult({ ok: false, msg: `Remove failed: ${(e as Error).message}` });
     } finally { setBusy(false); }

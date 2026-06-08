@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { triggerReingest } from "./AdminShared";
 
 const REPO      = "sabarishreddy99/jayaremala";
 const FILE_PATH = "backend/data/knowledge/profile.json";
@@ -129,6 +130,7 @@ export default function NowEditor() {
 
       if (putRes.ok) {
         setResult({ ok: true, message: "Saved! GH Actions rebuilds the site in ~2 min." });
+        triggerReingest();
       } else {
         const err = await putRes.json().catch(() => ({ message: putRes.statusText }));
         setResult({ ok: false, message: `GitHub: ${(err as { message?: string }).message ?? putRes.statusText}` });

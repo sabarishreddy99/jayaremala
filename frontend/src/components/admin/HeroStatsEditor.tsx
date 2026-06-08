@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useGitHubFile } from "@/lib/useGitHubFile";
-import { FieldLabel, TextInput, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, MoveButtons } from "./AdminShared";
+import { FieldLabel, TextInput, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, MoveButtons, triggerReingest } from "./AdminShared";
 
 const FILE = "backend/data/knowledge/profile.json";
 
@@ -47,7 +47,7 @@ export default function HeroStatsEditor() {
     const bytes = Uint8Array.from(atob(data.content.replace(/\n/g, "")), c => c.charCodeAt(0));
     const full  = JSON.parse(new TextDecoder("utf-8").decode(bytes));
     const ok = await gh.save({ ...full, heroStats: stats }, "chore: update hero stats");
-    if (ok) setDirty(false);
+    if (ok) { setDirty(false); triggerReingest(); }
   }
 
   useEffect(() => { if (gh.pat.trim()) handleLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps

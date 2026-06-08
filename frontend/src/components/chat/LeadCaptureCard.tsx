@@ -57,7 +57,12 @@ export default function LeadCaptureCard({ messages, persona }: LeadCaptureCardPr
         }),
       });
       if (res.ok) {
-        setSubmitted(true);
+        const data = await res.json();
+        if (!data.email_sent) {
+          setError("Your info was saved but the email couldn't be sent right now. Please email Jaya directly at jr6421@nyu.edu.");
+        } else {
+          setSubmitted(true);
+        }
       } else if (res.status === 429) {
         setError("Too many requests — please try again later.");
       } else {

@@ -1020,22 +1020,74 @@ function SyncStatusPanel() {
 
 // ── Login ─────────────────────────────────────────────────────────────────────
 
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_MS   = 5 * 60 * 1000; // 5 minutes
+
+function getAttemptState(): { count: number; until: number } {
+  try {
+    return JSON.parse(sessionStorage.getItem("avocado_admin_attempts") ?? "{}");
+  } catch { return { count: 0, until: 0 }; }
+}
+
+function recordFailedAttempt() {
+  const s = getAttemptState();
+  const count = (s.count ?? 0) + 1;
+  const until = count >= MAX_ATTEMPTS ? Date.now() + LOCKOUT_MS : (s.until ?? 0);
+  sessionStorage.setItem("avocado_admin_attempts", JSON.stringify({ count, until }));
+}
+
+function clearAttempts() {
+  sessionStorage.removeItem("avocado_admin_attempts");
+}
+
 function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
   const [token, setToken] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
+  const [lockedUntil, setLockedUntil] = useState<number>(0);
+  const [remaining, setRemaining] = useState(0);
+
+  useEffect(() => {
+    const { count, until } = getAttemptState();
+    if (count >= MAX_ATTEMPTS && until > Date.now()) {
+      setLockedUntil(until);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!lockedUntil) return;
+    const tick = setInterval(() => {
+      const left = Math.ceil((lockedUntil - Date.now()) / 1000);
+      if (left <= 0) { setLockedUntil(0); clearAttempts(); clearInterval(tick); }
+      else setRemaining(left);
+    }, 1000);
+    setRemaining(Math.ceil((lockedUntil - Date.now()) / 1000));
+    return () => clearInterval(tick);
+  }, [lockedUntil]);
+
+  const isLocked = lockedUntil > Date.now();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (isLocked) return;
     setLoading(true);
     setError("");
     try {
       const res = await fetch(`${API_BASE_URL}/stats/admin`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (res.ok) { onAuth(token); }
-      else { setError("Invalid token — check your ADMIN_TOKEN env var."); }
+      if (res.ok) { clearAttempts(); onAuth(token); }
+      else {
+        recordFailedAttempt();
+        const { count, until } = getAttemptState();
+        if (count >= MAX_ATTEMPTS) {
+          setLockedUntil(until);
+          setError(`Too many failed attempts. Locked for 5 minutes.`);
+        } else {
+          setError(`Invalid token. ${MAX_ATTEMPTS - count} attempt${MAX_ATTEMPTS - count === 1 ? "" : "s"} remaining.`);
+        }
+      }
     } catch {
       setError("Could not reach the backend.");
     } finally {
@@ -1107,10 +1159,12 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
 
           <button
             type="submit"
-            disabled={!token || loading}
+            disabled={!token || loading || isLocked}
             className="w-full rounded bg-gradient-to-r from-indigo-600 to-violet-600 text-white py-2.5 text-sm font-semibold hover:from-indigo-500 hover:to-violet-500 transition-all shadow-md shadow-indigo-500/20 hover:shadow-lg hover:shadow-indigo-500/30 disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
           >
-            {loading ? (
+            {isLocked ? (
+              `Locked — ${remaining}s`
+            ) : loading ? (
               <>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin">
                   <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
@@ -4159,6 +4213,24 @@ function Dashboard({
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 const AUTO_REFRESH_MS = 60_000;
+const SESSION_TTL_MS  = 4 * 60 * 60 * 1000; // 4 hours
+
+function saveSession(t: string) {
+  sessionStorage.setItem("avocado_admin_token", t);
+  sessionStorage.setItem("avocado_admin_exp", String(Date.now() + SESSION_TTL_MS));
+}
+
+function clearSession() {
+  sessionStorage.removeItem("avocado_admin_token");
+  sessionStorage.removeItem("avocado_admin_exp");
+}
+
+function loadSession(): string | null {
+  const t   = sessionStorage.getItem("avocado_admin_token");
+  const exp = Number(sessionStorage.getItem("avocado_admin_exp") ?? 0);
+  if (!t || Date.now() > exp) { clearSession(); return null; }
+  return t;
+}
 
 export default function AdminPage() {
   const [token, setToken] = useState<string | null>(null);
@@ -4168,17 +4240,26 @@ export default function AdminPage() {
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [secondsAgo, setSecondsAgo] = useState(0);
 
-  // Restore token from localStorage after hydration
+  // Restore token from sessionStorage after hydration (checks expiry)
   useEffect(() => {
-    const saved = localStorage.getItem("avocado_admin_token");
+    const saved = loadSession();
     if (saved) setToken(saved);
   }, []);
+
+  // Auto-expire: check every minute
+  useEffect(() => {
+    if (!token) return;
+    const id = setInterval(() => {
+      if (!loadSession()) { clearSession(); setToken(null); setStats(null); setLastUpdated(null); }
+    }, 60_000);
+    return () => clearInterval(id);
+  }, [token]);
 
   const fetchStats = (t: string, silent = false) => {
     if (!silent) setRefreshing(true);
     return fetch(`${API_BASE_URL}/stats/admin`, { headers: { Authorization: `Bearer ${t}` } })
       .then(async (res) => {
-        if (!res.ok) { setToken(null); localStorage.removeItem("avocado_admin_token"); return; }
+        if (!res.ok) { clearSession(); setToken(null); return; }
         setStats(await res.json());
         setLastUpdated(new Date());
         setSecondsAgo(0);
@@ -4207,12 +4288,12 @@ export default function AdminPage() {
   }, [lastUpdated]);
 
   function handleAuth(t: string) {
-    localStorage.setItem("avocado_admin_token", t);
+    saveSession(t);
     setToken(t);
   }
 
   function handleLogout() {
-    localStorage.removeItem("avocado_admin_token");
+    clearSession();
     setToken(null);
     setStats(null);
     setLastUpdated(null);

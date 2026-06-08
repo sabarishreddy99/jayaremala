@@ -565,6 +565,58 @@ def _build_system_faq_documents(approx_content_docs: int) -> list[tuple[str, str
     return docs
 
 
+def _build_inbox_signals_documents() -> list[tuple[str, str, str]]:
+    """Build a single profile_signals chunk from inbox_signals.json (Feature 3).
+    File is written by POST /admin/gmail/digest. Skip if file is older than 7 days.
+    """
+    path = DATA_DIR / "inbox_signals.json"
+    if not path.exists():
+        return []
+    try:
+        import time as _time
+        age_days = (_time.time() - path.stat().st_mtime) / 86400
+        if age_days > 7:
+            return []
+        data = json.loads(path.read_text())
+        summary = data.get("summary_text", "")
+        if not summary:
+            return []
+        companies = ", ".join(data.get("companies", [])[:5])
+        role_types = ", ".join(data.get("role_types", [])[:4])
+        updated = data.get("updated_at", "")[:10]
+        text = (
+            f"Recent recruiter market signals for Jaya (week of {updated}): {summary}"
+            + (f" Companies showing interest: {companies}." if companies else "")
+            + (f" Role types: {role_types}." if role_types else "")
+        )
+        return [("profile_signals", text, "profile")]
+    except Exception as exc:
+        logger.warning("_build_inbox_signals_documents failed: %s", exc)
+        return []
+
+
+def _build_drive_resume_documents() -> list[tuple[str, str, str]]:
+    """Build a profile_resume chunk from drive_resume.json (Feature 4).
+    File is written by POST /admin/drive/sync-resume.
+    """
+    path = DATA_DIR / "drive_resume.json"
+    if not path.exists():
+        return []
+    try:
+        data = json.loads(path.read_text())
+        text_content = data.get("text", "").strip()
+        if not text_content:
+            return []
+        modified = data.get("modified_time", "")[:10]
+        link = data.get("web_view_link", "")
+        header = f"Jaya's resume (last updated {modified}" + (f", view at {link}" if link else "") + "): "
+        full_text = header + text_content[:4000]
+        return [("profile_resume", full_text, "profile")]
+    except Exception as exc:
+        logger.warning("_build_drive_resume_documents failed: %s", exc)
+        return []
+
+
 def _build_documents() -> list[tuple[str, str, str]]:
     """Return list of (id, text, type) tuples — atomic chunks for precise retrieval."""
     docs: list[tuple[str, str, str]] = []
@@ -718,6 +770,10 @@ def _build_documents() -> list[tuple[str, str, str]]:
     # ── FAQ DOCUMENTS (fully dynamic — reads from JSON, no hardcoded content) ──
     docs.extend(_build_faq_documents(p, exp_list, edu_list, proj_list, skills_list))
     docs.extend(_build_system_faq_documents(len(docs)))
+
+    # ── LIVE EXTERNAL DATA (Google integrations — skip gracefully if not set up) ──
+    docs.extend(_build_inbox_signals_documents())
+    docs.extend(_build_drive_resume_documents())
 
     return docs
 

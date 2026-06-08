@@ -20,6 +20,18 @@ class Settings(BaseSettings):
     # Empty string (default) disables the endpoint entirely.
     admin_token: str = ""
 
+    # Google OAuth2 — obtained from Google Cloud Console
+    google_oauth_token_path: str = "/data/google_oauth_token.json"
+    google_oauth_client_id: str = ""
+    google_oauth_client_secret: str = ""
+
+    # Gmail digest recipient (Jaya's email for weekly digest + lead-capture intros)
+    gmail_digest_recipient: str = "venkatphanindra5@gmail.com"
+
+    # Google Calendar settings
+    calendar_id: str = "primary"
+    calendar_tz: str = "America/New_York"
+
     @property
     def model_chain(self) -> list[str]:
         """Primary model first, then fallbacks (deduped, preserving order)."""

@@ -116,4 +116,5 @@ def get_admin_stats(authorization: str = Header(default="")) -> dict:
             "visitors":      analytics.get_daily_counts("site_visits", 30),
             "conversations": analytics.get_daily_counts("interactions", 30),
         },
+        "lead_captures": {x: analytics.get_lead_capture_stats(x) for x in p},
     }

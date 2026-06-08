@@ -86,6 +86,15 @@ def init_db() -> None:
         # then create the page index — order matters: column must exist before index.
         _migrate(conn)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_site_visit_page ON site_visits(page)")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS lead_captures (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                email_hash  TEXT    NOT NULL,
+                company     TEXT    DEFAULT '',
+                created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_lead_email ON lead_captures(email_hash)")
     logger.info("Analytics DB ready: %s", p.resolve())
 
 
@@ -419,6 +428,38 @@ def delete_page_visits(page: str) -> None:
         logger.info("Deleted site_visits for page=%s", page)
     except Exception as exc:
         logger.warning("delete_page_visits failed: %s", exc)
+
+
+def record_lead_capture(email: str, company: str) -> None:
+    email_hash = hashlib.sha256(email.strip().lower().encode()).hexdigest()
+    try:
+        with _connect() as conn:
+            conn.execute(
+                "INSERT INTO lead_captures (email_hash, company) VALUES (?, ?)",
+                (email_hash, company[:100]),
+            )
+    except Exception as exc:
+        logger.warning("record_lead_capture failed: %s", exc)
+
+
+def get_lead_capture_stats(period: str = "all") -> dict:
+    and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
+    try:
+        with _connect() as conn:
+            total = conn.execute(
+                f"SELECT COUNT(*) FROM lead_captures WHERE 1=1 {and_clause}"
+            ).fetchone()[0]
+            companies = conn.execute(
+                f"SELECT company, COUNT(*) AS c FROM lead_captures WHERE company != '' {and_clause} "
+                f"GROUP BY company ORDER BY c DESC LIMIT 5"
+            ).fetchall()
+        return {
+            "total": total,
+            "top_companies": [{"company": r[0], "count": r[1]} for r in companies],
+        }
+    except Exception as exc:
+        logger.warning("get_lead_capture_stats failed: %s", exc)
+        return {"total": 0, "top_companies": []}
 
 
 def get_page_stats(period: str = "all") -> list[dict]:

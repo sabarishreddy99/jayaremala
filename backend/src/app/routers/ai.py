@@ -238,7 +238,19 @@ def _build_context(chunks: list[dict]) -> str:
     return "\n\n".join(sections)
 
 
-def _build_chat_prompt(req: ChatRequest, context: str) -> str:
+_CALENDAR_KEYWORDS = frozenset({
+    "book", "schedule", "call", "meeting", "available", "availability",
+    "slot", "free", "interview", "chat", "connect", "this week", "next week",
+    "30 min", "30-min", "30 minute", "hop on", "catch up",
+})
+
+
+def _is_calendar_query(text: str) -> bool:
+    lower = text.lower()
+    return any(kw in lower for kw in _CALENDAR_KEYWORDS)
+
+
+def _build_chat_prompt(req: ChatRequest, context: str, extra_blocks: dict[str, str] | None = None) -> str:
     history_text = ""
     for m in req.messages[-4:]:
         prefix = "User" if m.role == "user" else "Avocado"
@@ -253,10 +265,17 @@ def _build_chat_prompt(req: ChatRequest, context: str) -> str:
     if req.persona and req.persona in _PERSONA_GUIDANCE:
         persona_block = f"AUDIENCE TAILORING: {_PERSONA_GUIDANCE[req.persona]}\n\n"
 
+    extra_text = ""
+    if extra_blocks:
+        for label, content in extra_blocks.items():
+            if content:
+                extra_text += f"[{label}]\n{content}\n\n"
+
     return (
         f"{SYSTEM_PROMPT}\n\n"
         f"{persona_block}"
         f"{context_block}"
+        f"{extra_text}"
         f"Conversation history:\n{history_text}"
         f"User: {req.message}\nAvocado:"
     )
@@ -428,7 +447,69 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
         top_chunks = await rag_store.query_multi_async(queries)
     context = _build_context(top_chunks)
     sources = [f"{c['type']}:{c['id']}" for c in top_chunks]
-    full_prompt = _build_chat_prompt(req, context)
+
+    # Gather live context blocks in parallel (calendar + inbox signals)
+    extra_blocks: dict[str, str] = {}
+    live_tasks = []
+
+    if _is_calendar_query(req.message):
+        async def _fetch_calendar():
+            try:
+                from app.integrations.calendar import get_availability_summary
+                loop = asyncio.get_running_loop()
+                summary = await asyncio.wait_for(
+                    loop.run_in_executor(None, get_availability_summary),
+                    timeout=2.5,
+                )
+                if summary:
+                    extra_blocks["Availability"] = summary
+            except Exception as exc:
+                logger.debug("Calendar availability fetch skipped: %s", exc)
+        live_tasks.append(_fetch_calendar())
+
+    if req.persona == "recruiter":
+        async def _fetch_signals():
+            try:
+                import json
+                from app.rag.ingest import DATA_DIR
+                signals_path = DATA_DIR / "inbox_signals.json"
+                if signals_path.exists():
+                    from datetime import timezone as _tz
+                    import time as _time
+                    age_days = (_time.time() - signals_path.stat().st_mtime) / 86400
+                    if age_days < 7:
+                        data = json.loads(signals_path.read_text())
+                        summary = data.get("summary_text", "")
+                        if summary:
+                            extra_blocks["Market Signals"] = summary
+            except Exception as exc:
+                logger.debug("Inbox signals injection skipped: %s", exc)
+        live_tasks.append(_fetch_signals())
+
+    if live_tasks:
+        await asyncio.gather(*live_tasks, return_exceptions=True)
+
+    # Inject Drive resume context for resume-intent queries
+    _RESUME_KEYWORDS = {"resume", "cv", "curriculum", "download resume", "latest resume"}
+    if any(kw in req.message.lower() for kw in _RESUME_KEYWORDS):
+        try:
+            import json as _json
+            from app.rag.ingest import DATA_DIR as _DATA_DIR
+            resume_path = _DATA_DIR / "drive_resume.json"
+            if resume_path.exists():
+                rdata = _json.loads(resume_path.read_text())
+                modified = rdata.get("modified_time", "")[:10]
+                link = rdata.get("web_view_link", "")
+                if link:
+                    extra_blocks["Resume"] = f"Jaya's latest resume (updated {modified}): {link}"
+        except Exception:
+            pass
+
+    full_prompt = _build_chat_prompt(req, context, extra_blocks if extra_blocks else None)
+
+    # Determine if lead-capture prompt should be shown after response
+    user_turn_count = sum(1 for m in req.messages if m.role == "user") + 1
+    show_lead_capture = user_turn_count >= 3
 
     ip = (
         request.headers.get("x-forwarded-for", "").split(",")[0].strip()
@@ -451,7 +532,10 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
             model_used = used_model[0] if used_model else settings.gemini_model
             latency_ms = int((time.perf_counter() - req_start) * 1000)
             row_id = analytics.record(identifier, model_used, latency_ms)
-            yield f"data: {json.dumps({'done': True, 'sources': sources, 'model': model_used})}\n\n"
+            done_payload: dict = {"done": True, "sources": sources, "model": model_used}
+            if show_lead_capture:
+                done_payload["lead_capture_prompt"] = True
+            yield f"data: {json.dumps(done_payload)}\n\n"
             if row_id:
                 threading.Thread(
                     target=analytics.geo_update_sync,
@@ -539,6 +623,58 @@ def ai_rewrite(req: RewriteRequest) -> dict:
         f"Instruction: {req.instruction}\n\nText:\n{req.text}",
     )
     return {"result": reply.strip()}
+
+
+# ── /ai/lead-capture ──────────────────────────────────────────────────────────
+
+class LeadCaptureRequest(BaseModel):
+    recruiter_name: str
+    recruiter_email: str
+    company: str
+    note: str = ""
+    messages: list[ChatMessage] = []
+    persona: str | None = None
+
+
+@router.post("/lead-capture")
+@limiter.limit("2/hour")
+def ai_lead_capture(req: LeadCaptureRequest, request: Request) -> dict:
+    """Receive a recruiter intro form, send Jaya an email, record in analytics."""
+    from app.db import analytics as _analytics
+
+    # Build a short conversation summary for the email body
+    history = "\n".join(
+        f"{'Recruiter' if m.role == 'user' else 'Avocado'}: {m.content[:200]}"
+        for m in req.messages[-8:]
+    ) or "(no conversation history)"
+
+    try:
+        summary = _generate(
+            "You are a concise assistant. Summarize in 2-3 sentences.",
+            f"Summarize this recruiter conversation with Jaya's AI:\n\n{history}",
+        ).strip()
+    except Exception:
+        summary = history[:500]
+
+    try:
+        from app.core.settings import settings as _settings
+        from app.integrations.gmail import send_visitor_intro
+        send_visitor_intro(
+            name=req.recruiter_name.strip(),
+            visitor_email=req.recruiter_email.strip(),
+            company=req.company.strip(),
+            note=req.note.strip(),
+            summary=summary,
+            recipient=_settings.gmail_digest_recipient,
+            persona=req.persona,
+        )
+        email_sent = True
+    except Exception as exc:
+        logger.warning("Lead capture email failed (non-fatal): %s", exc)
+        email_sent = False
+
+    _analytics.record_lead_capture(req.recruiter_email, req.company)
+    return {"ok": True, "email_sent": email_sent}
 
 
 # ── /ai/followups ──────────────────────────────────────────────────────────────

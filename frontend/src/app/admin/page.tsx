@@ -475,6 +475,253 @@ function timeAgo(ts: number): string {
   return `${Math.floor(secs / 86400)}d ago`;
 }
 
+function GoogleIntegrationsPanel() {
+  const [authStatus, setAuthStatus] = useState<{ connected: boolean; has_gmail?: boolean; has_calendar?: boolean; has_drive?: boolean; error?: string } | null>(null);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [calendarStatus, setCalendarStatus] = useState<{ connected: boolean; next_slots?: { date: string; start: string; end: string; tz: string }[]; error?: string } | null>(null);
+  const [resumeStatus, setResumeStatus] = useState<{ synced: boolean; name?: string; word_count?: number; modified_time?: string; synced_at?: string; web_view_link?: string } | null>(null);
+  const [draftDocs, setDraftDocs] = useState<{ id: string; name: string; modified_time: string }[]>([]);
+  const [digestResult, setDigestResult] = useState<string>("");
+  const [inboxResult, setInboxResult] = useState<{ total_threads?: number; summary_text?: string } | null>(null);
+  const [actionLoading, setActionLoading] = useState<string>("");
+  const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
+
+  function adminToken() { return typeof window !== "undefined" ? localStorage.getItem("avocado_admin_token") ?? "" : ""; }
+  function authHeaders() { return { "Content-Type": "application/json", Authorization: `Bearer ${adminToken()}` }; }
+
+  async function loadStatus() {
+    try {
+      const [authRes, calRes, resumeRes, docsRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/admin/google-auth/status`, { headers: authHeaders() }),
+        fetch(`${API_BASE_URL}/admin/calendar/status`, { headers: authHeaders() }),
+        fetch(`${API_BASE_URL}/admin/drive/resume-status`, { headers: authHeaders() }),
+        fetch(`${API_BASE_URL}/admin/drive/draft-docs`, { headers: authHeaders() }),
+      ]);
+      if (authRes.ok) setAuthStatus(await authRes.json());
+      if (calRes.ok) setCalendarStatus(await calRes.json());
+      if (resumeRes.ok) setResumeStatus(await resumeRes.json());
+      if (docsRes.ok) { const d = await docsRes.json(); setDraftDocs(d.docs ?? []); }
+    } catch { /* non-fatal */ }
+  }
+
+  useEffect(() => { void loadStatus(); }, []);
+
+  async function handleConnect() {
+    setAuthLoading(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/google-auth/init`, { headers: authHeaders() });
+      if (res.ok) {
+        const { auth_url } = await res.json() as { auth_url: string };
+        window.open(auth_url, "_blank", "width=600,height=700");
+        setResult({ ok: true, message: "Google sign-in opened in a new window. After authorizing, click Refresh Status." });
+      }
+    } catch { setResult({ ok: false, message: "Failed to start OAuth flow." }); }
+    setAuthLoading(false);
+  }
+
+  async function handleRevoke() {
+    if (!confirm("Disconnect Google account? All integrations will stop working.")) return;
+    await fetch(`${API_BASE_URL}/admin/google-auth/revoke`, { method: "DELETE", headers: authHeaders() });
+    setAuthStatus(null);
+    setResult({ ok: true, message: "Google account disconnected." });
+  }
+
+  async function handleInboxDigest() {
+    setActionLoading("inbox");
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/gmail/digest`, { method: "POST", headers: authHeaders() });
+      if (res.ok) {
+        const d = await res.json() as { total_threads?: number; summary_text?: string };
+        setInboxResult(d);
+        setResult({ ok: true, message: `Inbox digest synced: ${d.total_threads ?? 0} recruiter threads found.` });
+      } else setResult({ ok: false, message: `Error ${res.status}` });
+    } catch (e: unknown) { setResult({ ok: false, message: (e as Error).message }); }
+    setActionLoading("");
+  }
+
+  async function handleResumeSync() {
+    setActionLoading("resume");
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/drive/sync-resume`, { method: "POST", headers: authHeaders() });
+      if (res.ok) {
+        const d = await res.json() as { ok?: boolean; word_count?: number; name?: string; error?: string };
+        if (d.ok) { setResult({ ok: true, message: `Resume synced: ${d.name} (${d.word_count} words)` }); void loadStatus(); }
+        else setResult({ ok: false, message: d.error ?? "Sync failed" });
+      } else setResult({ ok: false, message: `Error ${res.status}` });
+    } catch (e: unknown) { setResult({ ok: false, message: (e as Error).message }); }
+    setActionLoading("");
+  }
+
+  async function handleSendDigest() {
+    setActionLoading("digest");
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/digest/send`, { method: "POST", headers: authHeaders() });
+      if (res.ok) setResult({ ok: true, message: "Weekly digest email sent!" });
+      else setResult({ ok: false, message: `Error ${res.status}` });
+    } catch (e: unknown) { setResult({ ok: false, message: (e as Error).message }); }
+    setDigestResult("");
+    setActionLoading("");
+  }
+
+  async function handlePreviewDigest() {
+    setActionLoading("preview");
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/digest/preview`, { headers: authHeaders() });
+      if (res.ok) { const d = await res.json() as { html: string }; setDigestResult(d.html); }
+      else setResult({ ok: false, message: `Error ${res.status}` });
+    } catch (e: unknown) { setResult({ ok: false, message: (e as Error).message }); }
+    setActionLoading("");
+  }
+
+  const connected = authStatus?.connected ?? false;
+  const scopePill = (label: string, active: boolean) => (
+    <span key={label} className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${active ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400" : "bg-surface-raised text-fg-faint"}`}>
+      {label}
+    </span>
+  );
+
+  return (
+    <div className="space-y-6">
+      {/* OAuth Connection */}
+      <div className="rounded-2xl border border-border bg-surface p-6">
+        <div className="flex items-start justify-between mb-4">
+          <div>
+            <h2 className="text-base font-bold text-fg">Google Account</h2>
+            <p className="text-xs text-fg-faint mt-0.5">Connect once to enable Gmail, Calendar, and Drive features</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className={`w-2 h-2 rounded-full ${connected ? "bg-emerald-500" : "bg-fg-faint/40"}`} />
+            <span className="text-[11px] text-fg-faint">{connected ? "Connected" : "Not connected"}</span>
+          </div>
+        </div>
+
+        {connected && (
+          <div className="flex flex-wrap gap-1.5 mb-4">
+            {scopePill("Gmail", authStatus?.has_gmail ?? false)}
+            {scopePill("Calendar", authStatus?.has_calendar ?? false)}
+            {scopePill("Drive", authStatus?.has_drive ?? false)}
+          </div>
+        )}
+
+        <div className="flex items-center gap-2">
+          {connected ? (
+            <button onClick={handleRevoke} className="text-xs text-rose-500 hover:text-rose-400 transition-colors">
+              Disconnect account
+            </button>
+          ) : (
+            <button onClick={handleConnect} disabled={authLoading} className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 disabled:opacity-50 transition-colors">
+              {authLoading ? "Opening…" : "Connect Google Account"}
+            </button>
+          )}
+          <button onClick={() => void loadStatus()} className="text-xs text-fg-faint hover:text-fg transition-colors">
+            Refresh status
+          </button>
+        </div>
+
+        {result && (
+          <p className={`text-xs mt-3 ${result.ok ? "text-emerald-600 dark:text-emerald-400" : "text-rose-500"}`}>
+            {result.ok ? "✓" : "✗"} {result.message}
+          </p>
+        )}
+      </div>
+
+      {/* Calendar */}
+      <div className="rounded-2xl border border-border bg-surface p-6">
+        <h2 className="text-base font-bold text-fg mb-1">Calendar Availability</h2>
+        <p className="text-xs text-fg-faint mb-4">Avocado will answer scheduling questions with your real free slots (2.5s timeout, graceful fallback)</p>
+        {calendarStatus?.connected && calendarStatus.next_slots && calendarStatus.next_slots.length > 0 ? (
+          <div className="space-y-1 mb-3">
+            <p className="text-[11px] font-semibold text-fg-faint uppercase tracking-wider mb-2">Next open slots</p>
+            {calendarStatus.next_slots.map((s, i) => (
+              <div key={i} className="flex items-center gap-2 text-[12px] text-fg">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                {s.date}: {s.start} – {s.end} {s.tz}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-fg-faint mb-3">{connected ? (calendarStatus?.connected ? "No upcoming free slots found" : "Calendar not connected") : "Connect Google account above"}</p>
+        )}
+      </div>
+
+      {/* Gmail Inbox Signals */}
+      <div className="rounded-2xl border border-border bg-surface p-6">
+        <h2 className="text-base font-bold text-fg mb-1">Inbox Signals</h2>
+        <p className="text-xs text-fg-faint mb-4">Parse the last 7 days of recruiter emails — Avocado will use this to answer &quot;What roles is Jaya considering?&quot; with live market data</p>
+        {inboxResult && (
+          <div className="mb-3 rounded-xl border border-border bg-bg p-3">
+            <p className="text-[11px] font-semibold text-fg-faint mb-1">{inboxResult.total_threads ?? 0} recruiter threads found</p>
+            {inboxResult.summary_text && <p className="text-[12px] text-fg">{inboxResult.summary_text}</p>}
+          </div>
+        )}
+        <button
+          onClick={handleInboxDigest}
+          disabled={!connected || actionLoading === "inbox"}
+          className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-fg hover:bg-surface-raised disabled:opacity-40 transition-colors"
+        >
+          {actionLoading === "inbox" ? "Syncing…" : "Sync inbox now"}
+        </button>
+      </div>
+
+      {/* Drive Resume Sync */}
+      <div className="rounded-2xl border border-border bg-surface p-6">
+        <h2 className="text-base font-bold text-fg mb-1">Resume Sync</h2>
+        <p className="text-xs text-fg-faint mb-4">Sync your latest resume PDF from Google Drive — Avocado will cite the Drive link with the correct modification date</p>
+        {resumeStatus?.synced && (
+          <div className="mb-3 rounded-xl border border-border bg-bg p-3 text-[12px] text-fg space-y-0.5">
+            <p className="font-semibold">{resumeStatus.name}</p>
+            <p className="text-fg-faint">{resumeStatus.word_count} words · modified {resumeStatus.modified_time?.slice(0, 10)} · synced {resumeStatus.synced_at?.slice(0, 10)}</p>
+            {resumeStatus.web_view_link && (
+              <a href={resumeStatus.web_view_link} target="_blank" rel="noreferrer" className="text-accent text-[11px] hover:underline">View on Drive →</a>
+            )}
+          </div>
+        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          <button onClick={handleResumeSync} disabled={!connected || actionLoading === "resume"}
+            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 disabled:opacity-40 transition-colors">
+            {actionLoading === "resume" ? "Syncing…" : "Sync resume from Drive"}
+          </button>
+          {draftDocs.length > 0 && (
+            <div>
+              <p className="text-[11px] text-fg-faint mb-1">Portfolio Drafts folder ({draftDocs.length} docs)</p>
+              <div className="flex flex-wrap gap-1.5">
+                {draftDocs.slice(0, 5).map((d) => (
+                  <span key={d.id} className="text-[11px] px-2 py-0.5 rounded-full border border-border text-fg-muted">{d.name}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Weekly Digest */}
+      <div className="rounded-2xl border border-border bg-surface p-6">
+        <h2 className="text-base font-bold text-fg mb-1">Weekly Digest Email</h2>
+        <p className="text-xs text-fg-faint mb-4">Send yourself a portfolio analytics summary. Automated via GitHub Actions every Monday 9 AM ET.</p>
+        <div className="flex items-center gap-3">
+          <button onClick={handleSendDigest} disabled={!connected || actionLoading === "digest"}
+            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 disabled:opacity-40 transition-colors">
+            {actionLoading === "digest" ? "Sending…" : "Send digest now"}
+          </button>
+          <button onClick={handlePreviewDigest} disabled={actionLoading === "preview"}
+            className="rounded-xl border border-border px-4 py-2 text-sm font-medium text-fg hover:bg-surface-raised disabled:opacity-40 transition-colors">
+            {actionLoading === "preview" ? "Loading…" : "Preview HTML"}
+          </button>
+        </div>
+        {digestResult && (
+          <div className="mt-4 rounded-xl border border-border overflow-hidden">
+            <div className="flex items-center justify-between px-3 py-1.5 bg-surface-raised border-b border-border">
+              <span className="text-[11px] font-semibold text-fg-faint uppercase tracking-wider">Digest Preview</span>
+              <button onClick={() => setDigestResult("")} className="text-[11px] text-fg-faint hover:text-fg">×</button>
+            </div>
+            <iframe srcDoc={digestResult} className="w-full h-96 border-0" title="Digest preview" sandbox="allow-same-origin" />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function SyncStatusPanel() {
   const [status, setStatus] = useState<SyncStatus | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -3207,7 +3454,7 @@ function Dashboard({
   const [period, setPeriod] = useState<Period>("all");
   const [activeView, setActiveView] = useState<
     "analytics" | "write-blog" | "quotes" | "blog-api" | "lab" | "quotes-api" |
-    "availability" | "now" | "data" | "sync" |
+    "availability" | "now" | "data" | "sync" | "integrations" |
     "profile" | "hero-stats" | "experience" | "education" | "projects" | "skills" | "testimonials" | "gallery"
   >("analytics");
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -3252,6 +3499,7 @@ function Dashboard({
     { key: "data",         label: "Raw JSON",     group: "Settings"  },
     { key: "availability", label: "Availability", group: "Settings"  },
     { key: "now",          label: "Now Page",     group: "Settings"  },
+    { key: "integrations", label: "Integrations", group: "Settings"  },
   ];
   const groups = ["Overview", "Content", "Portfolio", "Settings"] as const;
 
@@ -3259,6 +3507,7 @@ function Dashboard({
     analytics: "Analytics", "write-blog": "Write Blog", quotes: "Quotes",
     "blog-api": "Blog (API)", lab: "Lab (API)", "quotes-api": "Quotes (API)",
     availability: "Availability", now: "Now Page", data: "Raw JSON", sync: "Sync Status",
+    integrations: "Google Integrations",
     profile: "Profile", "hero-stats": "Hero Stats", experience: "Experience",
     education: "Education", projects: "Projects", skills: "Skills", testimonials: "Testimonials",
     gallery: "Gallery",
@@ -3284,6 +3533,7 @@ function Dashboard({
       data:          <><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></>,
       availability:  <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
       now:           <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
+      integrations:  <><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></>,
     };
     return (
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 opacity-80">
@@ -3538,6 +3788,7 @@ function Dashboard({
         {activeView === "gallery" && <GalleryEditor />}
         {activeView === "sync" && <SyncStatusPanel />}
         {activeView === "data" && <KnowledgeDataView />}
+        {activeView === "integrations" && <GoogleIntegrationsPanel />}
 
         {/* Analytics content */}
         {activeView === "analytics" && (<>

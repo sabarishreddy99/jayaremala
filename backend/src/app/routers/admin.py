@@ -2,8 +2,9 @@ import asyncio
 import json
 from pathlib import Path
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import BaseModel
 
 from app.core.settings import settings
 from app.rag.ingest import DATA_DIR, run_ingest
@@ -127,6 +128,214 @@ def sync_status() -> dict:
         "last_ingest_ts": last_ingest_ts,
         "ingest_running": _reingest_state["running"],
     }
+
+
+# ── Google Auth endpoints ─────────────────────────────────────────────────────
+
+@router.get("/google-auth/status", dependencies=[Depends(_require_token)])
+def google_auth_status() -> dict:
+    """Return Google OAuth connection status and which scopes are live."""
+    try:
+        from app.integrations.google_auth import get_status
+        return get_status()
+    except ImportError:
+        return {"connected": False, "error": "google-auth not installed"}
+
+
+@router.get("/google-auth/init", dependencies=[Depends(_require_token)])
+def google_auth_init(request: Request) -> dict:
+    """Return the Google OAuth authorization URL for the admin to open."""
+    try:
+        from app.integrations.google_auth import get_auth_url
+        from app.core.settings import settings
+        # Redirect back to the admin panel after OAuth
+        origin = settings.frontend_origin.split(",")[0].strip()
+        redirect_uri = f"{origin}/admin/google-callback"
+        url = get_auth_url(redirect_uri)
+        return {"auth_url": url, "redirect_uri": redirect_uri}
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+class GoogleCallbackBody(BaseModel):
+    code: str
+    redirect_uri: str
+
+
+@router.post("/google-auth/callback", dependencies=[Depends(_require_token)])
+def google_auth_callback(body: GoogleCallbackBody) -> dict:
+    """Exchange an OAuth code for tokens and persist them."""
+    try:
+        from app.integrations.google_auth import exchange_code
+        return exchange_code(body.code, body.redirect_uri)
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+
+
+@router.delete("/google-auth/revoke", dependencies=[Depends(_require_token)])
+def google_auth_revoke() -> dict:
+    """Delete the stored Google OAuth token."""
+    from app.integrations.google_auth import revoke
+    revoke()
+    return {"ok": True}
+
+
+# ── Gmail / Inbox Digest endpoints ────────────────────────────────────────────
+
+@router.post("/gmail/digest", dependencies=[Depends(_require_token)])
+async def gmail_inbox_digest() -> dict:
+    """Fetch recruiter inbox signals, summarize, write inbox_signals.json, and re-ingest."""
+    try:
+        from app.integrations.gmail import fetch_recruiter_signals, summarize_signals
+        signals = await asyncio.to_thread(fetch_recruiter_signals)
+        summary = await asyncio.to_thread(summarize_signals, signals)
+
+        from app.rag.ingest import DATA_DIR
+        import json
+        out_path = DATA_DIR / "inbox_signals.json"
+        out_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False))
+
+        # Incremental re-ingest in background
+        if not _reingest_state["running"]:
+            _reingest_state["running"] = True
+            asyncio.create_task(_run_ingest_background(False))
+
+        return summary
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ── Calendar preview endpoints ────────────────────────────────────────────────
+
+@router.get("/calendar/status", dependencies=[Depends(_require_token)])
+async def calendar_status() -> dict:
+    """Return Google Calendar connection status + next 3 free slots."""
+    try:
+        from app.integrations.google_auth import get_status
+        status = get_status()
+        if not status.get("connected") or not status.get("has_calendar"):
+            return {"connected": False}
+
+        from app.integrations.calendar import get_free_slots
+        slots = await asyncio.to_thread(get_free_slots, 7)
+        return {"connected": True, "next_slots": slots[:3]}
+    except Exception as exc:
+        return {"connected": False, "error": str(exc)}
+
+
+@router.get("/calendar/preview", dependencies=[Depends(_require_token)])
+async def calendar_preview() -> dict:
+    """Return what Avocado would say about availability right now."""
+    try:
+        from app.integrations.calendar import get_availability_summary
+        summary = await asyncio.to_thread(get_availability_summary)
+        return {"summary": summary}
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ── Drive endpoints ───────────────────────────────────────────────────────────
+
+@router.post("/drive/sync-resume", dependencies=[Depends(_require_token)])
+async def drive_sync_resume(background_tasks: BackgroundTasks) -> dict:
+    """Sync resume PDF from Drive → extract text → write drive_resume.json → re-ingest."""
+    try:
+        from app.integrations.drive import sync_resume
+        result = await asyncio.to_thread(sync_resume)
+        if result.get("ok"):
+            if not _reingest_state["running"]:
+                _reingest_state["running"] = True
+                background_tasks.add_task(_run_ingest_background, False)
+        return result
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.get("/drive/resume-status", dependencies=[Depends(_require_token)])
+def drive_resume_status() -> dict:
+    """Return the current cached resume metadata from drive_resume.json."""
+    from app.integrations.drive import get_resume_status
+    return get_resume_status()
+
+
+@router.get("/drive/draft-docs", dependencies=[Depends(_require_token)])
+async def drive_draft_docs() -> dict:
+    """List Google Docs in the Portfolio Drafts folder."""
+    try:
+        from app.integrations.drive import list_draft_docs
+        docs = await asyncio.to_thread(list_draft_docs)
+        return {"docs": docs}
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@router.post("/drive/draft-docs/{doc_id}/import", dependencies=[Depends(_require_token)])
+async def drive_import_doc(doc_id: str) -> dict:
+    """Export a Google Doc as text for pre-filling the blog editor."""
+    try:
+        from app.integrations.drive import export_doc_as_text
+        text = await asyncio.to_thread(export_doc_as_text, doc_id)
+        if not text:
+            raise HTTPException(status_code=404, detail="Could not export document")
+        return {"text": text, "word_count": len(text.split())}
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+# ── Weekly Digest endpoints ───────────────────────────────────────────────────
+
+@router.get("/digest/preview", dependencies=[Depends(_require_token)])
+def digest_preview() -> dict:
+    """Build and return the digest HTML without sending it."""
+    from app.db import analytics, blog_stats
+    from app.integrations.digest import build_digest_html
+
+    p = ["week", "month", "all"]
+    stats = {
+        "conversations":  {x: analytics.get_stats(x) for x in p},
+        "feedback":       {x: analytics.get_feedback_summary(x) for x in p},
+        "top_questions":  {x: analytics.get_top_questions(15, x) for x in p},
+        "blog":           blog_stats.get_summary(),
+        "lead_captures":  {x: analytics.get_lead_capture_stats(x) for x in p},
+    }
+    html = build_digest_html(stats)
+    return {"html": html}
+
+
+@router.post("/digest/send", dependencies=[Depends(_require_token)])
+def digest_send() -> dict:
+    """Build and send the weekly digest email immediately."""
+    from app.db import analytics, blog_stats
+    from app.integrations.digest import build_digest_html, send_digest
+
+    p = ["week", "month", "all"]
+    stats = {
+        "conversations":  {x: analytics.get_stats(x) for x in p},
+        "feedback":       {x: analytics.get_feedback_summary(x) for x in p},
+        "top_questions":  {x: analytics.get_top_questions(15, x) for x in p},
+        "blog":           blog_stats.get_summary(),
+        "lead_captures":  {x: analytics.get_lead_capture_stats(x) for x in p},
+    }
+    try:
+        html = build_digest_html(stats)
+        send_digest(html)
+        return {"ok": True, "message": "Digest sent successfully"}
+    except RuntimeError as exc:
+        raise HTTPException(status_code=503, detail=str(exc))
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @router.post("/prune-analytics", dependencies=[Depends(_require_token)])

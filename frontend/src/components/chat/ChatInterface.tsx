@@ -10,12 +10,14 @@ import ChatInput from "./ChatInput";
 import LoadingGame from "./LoadingGame";
 import NavSuggestions, { detectNavLinks, sourcesToNavLinks, mergeNavLinks, NavLink } from "./NavSuggestions";
 import RichCards from "./RichCards";
+import LeadCaptureCard from "./LeadCaptureCard";
 
 export interface Message {
   role: "user" | "assistant";
   content: string;
   navLinks?: NavLink[];
   followUps?: string[];
+  showLeadCapture?: boolean;
 }
 
 function getGeminiResetInfo(): { time: string; countdown: string } {
@@ -293,6 +295,7 @@ export default function ChatInterface() {
       let accumulated = "";
       let ragSources: string[] = [];
       let sseError: string | null = null;
+      let leadCapturePrompt = false;
 
       outer: while (true) {
         const { done, value } = await reader.read();
@@ -307,6 +310,7 @@ export default function ChatInterface() {
             if (data.done) {
               if (data.model) { setActiveModel(data.model); saveModel(data.model as string); }
               if (data.sources) ragSources = data.sources as string[];
+              if (data.lead_capture_prompt) leadCapturePrompt = true;
               break outer;
             }
           } catch { /* partial chunk */ }
@@ -336,7 +340,13 @@ export default function ChatInterface() {
         detectNavLinks(text, accumulated),
       );
       const content = accumulated.trim() || "Sorry, I couldn't generate a response. Please try again or reach Jaya directly at jr6421@nyu.edu.";
-      const assistantMsg: Message = { role: "assistant", content, navLinks, followUps: [] };
+      const assistantMsg: Message = {
+        role: "assistant",
+        content,
+        navLinks,
+        followUps: [],
+        showLeadCapture: leadCapturePrompt,
+      };
       const finalMessages = [...nextMessages, assistantMsg];
       setMessages(finalMessages);
       saveMessages(finalMessages.filter((m) => m !== WELCOME));
@@ -582,6 +592,16 @@ export default function ChatInterface() {
               {m.role === "assistant" && m.navLinks && m.navLinks.length > 0 && m !== WELCOME && (
                 <div className="ml-10">
                   <NavSuggestions links={m.navLinks} />
+                </div>
+              )}
+              {m.role === "assistant" && m.showLeadCapture && !streaming && (
+                <div className="ml-10">
+                  <LeadCaptureCard
+                    messages={messages
+                      .filter((msg) => msg !== WELCOME)
+                      .map((msg) => ({ role: msg.role, content: msg.content }))}
+                    persona={persona}
+                  />
                 </div>
               )}
               {m.role === "assistant" && i === messages.length - 1 && !streaming &&

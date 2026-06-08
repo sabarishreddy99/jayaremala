@@ -1811,6 +1811,17 @@ function BlogEditor() {
       const putRes = await fetch(apiURL, { method: "PUT", headers, body: JSON.stringify(body) });
       if (putRes.ok) {
         setResult({ ok: true, message: `${sha ? "Updated" : "Published"}! GH Actions is building — /blog/${slug} will be live in ~2 min.` });
+        // Immediately sync to backend so Avocado knows about this post without waiting for Railway redeploy.
+        const adminTk = typeof window !== "undefined" ? localStorage.getItem("avocado_admin_token") ?? "" : "";
+        if (adminTk) {
+          const blogBody = { slug, title, date, published_at: publishedAt, description, tags, image: ogImage.trim() || null, content, published: true };
+          void fetch(`${API_BASE_URL}/content/blog/${slug}`, { headers: { Authorization: `Bearer ${adminTk}` } })
+            .then((r) => r.ok
+              ? fetch(`${API_BASE_URL}/content/blog/${slug}`, { method: "PUT", headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminTk}` }, body: JSON.stringify(blogBody) })
+              : fetch(`${API_BASE_URL}/content/blog`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${adminTk}` }, body: JSON.stringify(blogBody) })
+            )
+            .catch(() => {});
+        }
       } else {
         const err = await putRes.json().catch(() => ({ message: putRes.statusText }));
         setResult({ ok: false, message: `GitHub: ${(err as { message?: string }).message ?? putRes.statusText}` });
@@ -1899,6 +1910,15 @@ function BlogEditor() {
         setPublishedPosts((prev) => prev.filter((p) => p.slug !== slug));
         setPostsResult({ ok: true, message: `Deleted /blog/${slug} — site rebuilds in ~2 min.` });
         setConfirmDeleteSlug(null);
+        // Also remove from content.db + ChromaDB immediately so Avocado
+        // stops seeing this post without waiting for the Railway redeploy.
+        const adminToken = typeof window !== "undefined" ? localStorage.getItem("avocado_admin_token") ?? "" : "";
+        if (adminToken) {
+          void fetch(`${API_BASE_URL}/content/blog/${slug}`, {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${adminToken}` },
+          }).catch(() => {});
+        }
       } else {
         const err = await res.json().catch(() => ({ message: res.statusText }));
         setPostsResult({ ok: false, message: `GitHub: ${(err as { message?: string }).message ?? res.statusText}` });
@@ -2797,6 +2817,27 @@ function QuotesEditor() {
         setSha(data.content.sha);
         setQuotes(updatedQuotes);
         setSaveResult({ ok: true, message: "Saved! GH Actions will sync to frontend in ~2 min." });
+        // Sync changes to backend Content API for immediate Avocado (ChromaDB) update.
+        // quotes (closure) = pre-save state; updatedQuotes = new state.
+        const adminTk = typeof window !== "undefined" ? localStorage.getItem("avocado_admin_token") ?? "" : "";
+        if (adminTk) {
+          const oldById = new Map(quotes.map((q) => [q.id, q]));
+          const newById = new Map(updatedQuotes.map((q) => [q.id, q]));
+          const apiHdrs = { "Content-Type": "application/json", Authorization: `Bearer ${adminTk}` };
+          for (const [id] of oldById) {
+            if (!newById.has(id)) {
+              void fetch(`${API_BASE_URL}/content/quotes/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${adminTk}` } }).catch(() => {});
+            }
+          }
+          for (const [id, q] of newById) {
+            const qBody = { quote_id: q.id, text: q.text, author: q.author, source: q.source ?? null, category: q.category, favorite: q.favorite, featured: q.featured ?? false, added_at: q.addedAt };
+            if (!oldById.has(id)) {
+              void fetch(`${API_BASE_URL}/content/quotes`, { method: "POST", headers: apiHdrs, body: JSON.stringify(qBody) }).catch(() => {});
+            } else {
+              void fetch(`${API_BASE_URL}/content/quotes/${id}`, { method: "PUT", headers: apiHdrs, body: JSON.stringify(qBody) }).catch(() => {});
+            }
+          }
+        }
       } else {
         const err = await res.json().catch(() => ({ message: res.statusText }));
         setSaveResult({ ok: false, message: `GitHub: ${(err as { message?: string }).message ?? res.statusText}` });

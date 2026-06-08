@@ -4,6 +4,50 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api/client";
 import { triggerReingest } from "./AdminShared";
 
+const GITHUB_LAB_URL = "https://api.github.com/repos/sabarishreddy99/jayaremala/contents/backend/data/knowledge/lab.json";
+const GITHUB_LAB_MDX_BASE = "https://api.github.com/repos/sabarishreddy99/jayaremala/contents/frontend/src/content/lab";
+
+function buildLabMdx(b: { title: string; status: string; description: string; started_at: string; updated_at: string; tech: string[]; links: { label: string; url: string }[]; content: string }): string {
+  const esc = (s: string) => s.replace(/"/g, '\\"');
+  const techYaml = `[${b.tech.join(", ")}]`;
+  const linksYaml = b.links.length > 0
+    ? `links:\n${b.links.map((l) => `  - label: ${l.label}\n    url: ${l.url}`).join("\n")}`
+    : "links: []";
+  return `---\ntitle: "${esc(b.title)}"\nstatus: "${b.status}"\ndescription: "${esc(b.description)}"\nstartedAt: "${b.started_at}"\nupdatedAt: "${b.updated_at}"\ntech: ${techYaml}\n${linksYaml}\n---\n\n${b.content}`;
+}
+
+function githubPat(): string {
+  return typeof window !== "undefined" ? localStorage.getItem("avocado_github_pat") ?? "" : "";
+}
+
+async function pushLabMdxToGitHub(b: { slug: string; title: string; status: string; description: string; started_at: string; updated_at: string; tech: string[]; links: { label: string; url: string }[]; content: string }) {
+  const pat = githubPat();
+  if (!pat.trim()) return;
+  try {
+    const url = `${GITHUB_LAB_MDX_BASE}/${b.slug}.mdx`;
+    const hdrs = { Authorization: `Bearer ${pat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
+    const getRes = await fetch(url, { headers: hdrs });
+    if (!getRes.ok && getRes.status !== 404) return;
+    const sha = getRes.ok ? (await getRes.json() as { sha: string }).sha : undefined;
+    const ghBody: Record<string, string> = { message: `lab: ${sha ? "update" : "add"} ${b.slug}`, content: btoa(unescape(encodeURIComponent(buildLabMdx(b)))), branch: "main" };
+    if (sha) ghBody.sha = sha;
+    await fetch(url, { method: "PUT", headers: hdrs, body: JSON.stringify(ghBody) });
+  } catch { /* non-fatal — API save already succeeded */ }
+}
+
+async function deleteLabMdxFromGitHub(slug: string) {
+  const pat = githubPat();
+  if (!pat.trim()) return;
+  try {
+    const url = `${GITHUB_LAB_MDX_BASE}/${slug}.mdx`;
+    const hdrs = { Authorization: `Bearer ${pat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
+    const getRes = await fetch(url, { headers: hdrs });
+    if (!getRes.ok) return;
+    const { sha } = await getRes.json() as { sha: string };
+    await fetch(url, { method: "DELETE", headers: hdrs, body: JSON.stringify({ message: `lab: remove ${slug}`, sha, branch: "main" }) });
+  } catch { /* non-fatal */ }
+}
+
 interface LabLink { label: string; url: string }
 
 interface LabRow {
@@ -89,13 +133,33 @@ export default function ContentLabEditor() {
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
 
-  async function loadEntries() {
+  async function loadEntries(): Promise<LabRow[] | null> {
     setLoading(true);
+    let data: LabRow[] | null = null;
     try {
       const res = await fetch(`${API_BASE_URL}/content/lab`);
-      if (res.ok) setEntries(await res.json());
+      if (res.ok) { data = await res.json(); setEntries(data ?? []); }
     } catch { /* silent */ }
     setLoading(false);
+    return data;
+  }
+
+  async function pushToGitHub(rows: LabRow[]) {
+    const pat = typeof window !== "undefined" ? localStorage.getItem("avocado_github_pat") ?? "" : "";
+    if (!pat.trim()) return;
+    try {
+      const output = rows.map((e) => ({
+        slug: e.slug, title: e.title, status: e.status, description: e.description,
+        startedAt: e.started_at, updatedAt: e.updated_at, tech: e.tech, links: e.links, content: e.content,
+      }));
+      const hdrs = { Authorization: `Bearer ${pat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
+      const getRes = await fetch(GITHUB_LAB_URL, { headers: hdrs });
+      if (!getRes.ok && getRes.status !== 404) return;
+      const sha = getRes.ok ? (await getRes.json() as { sha: string }).sha : undefined;
+      const body: Record<string, string> = { message: "lab: sync from admin", content: btoa(unescape(encodeURIComponent(JSON.stringify(output, null, 2)))), branch: "main" };
+      if (sha) body.sha = sha;
+      await fetch(GITHUB_LAB_URL, { method: "PUT", headers: hdrs, body: JSON.stringify(body) });
+    } catch { /* non-fatal — API save already succeeded */ }
   }
 
   useEffect(() => { loadEntries(); }, []);
@@ -176,8 +240,10 @@ export default function ContentLabEditor() {
       if (res.ok) {
         setResult({ ok: true, message: editingSlug ? "Updated!" : "Entry created — live immediately." });
         resetForm();
-        await loadEntries();
+        const updated = await loadEntries();
         triggerReingest();
+        if (updated !== null) void pushToGitHub(updated);
+        void pushLabMdxToGitHub(body);
       } else {
         const err = await res.json().catch(() => ({}));
         setResult({ ok: false, message: (err as { detail?: string }).detail ?? `Error ${res.status}` });
@@ -199,8 +265,10 @@ export default function ContentLabEditor() {
         setResult({ ok: true, message: "Deleted." });
         setConfirmDelete(null);
         if (editingSlug === slug) resetForm();
-        await loadEntries();
+        const updated = await loadEntries();
         triggerReingest();
+        if (updated !== null) void pushToGitHub(updated);
+        void deleteLabMdxFromGitHub(slug);
       } else {
         setResult({ ok: false, message: `Error ${res.status}` });
       }

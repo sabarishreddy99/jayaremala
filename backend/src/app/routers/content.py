@@ -8,13 +8,14 @@ and triggers run_ingest() so ChromaDB stays in sync — zero user-visible latenc
 from __future__ import annotations
 
 import logging
+import re
 from typing import Any, Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel, field_validator
 
 from app.db import content as content_db
-from app.rag.ingest import run_ingest
+from app.rag.ingest import remove_docs_by_id, run_ingest
 from app.routers.admin import _require_token
 
 logger = logging.getLogger(__name__)
@@ -119,6 +120,20 @@ def _cleanup_blog_analytics(slug: str) -> None:
         logger.error("Blog analytics cleanup failed (non-fatal): %s", exc)
 
 
+def _rag_sync_after_delete() -> None:
+    """Run incremental ingest after any content deletion.
+
+    The JSON knowledge files are already regenerated synchronously in the delete
+    handler before this task runs, so ingest sees the correct (post-delete) state
+    and removes the stale ChromaDB documents detected via hash comparison.
+    Also rebuilds the BM25 index and updates FAQ summary documents.
+    """
+    try:
+        run_ingest()
+    except Exception as exc:
+        logger.error("RAG sync after delete failed (non-fatal): %s", exc)
+
+
 def _sync_quotes_to_rag() -> None:
     try:
         content_db.regenerate_quotes_json()
@@ -181,7 +196,14 @@ def update_blog_post(slug: str, body: BlogPostIn, background_tasks: BackgroundTa
 def delete_blog_post(slug: str, background_tasks: BackgroundTasks) -> None:
     if not content_db.delete_blog_post(slug):
         raise HTTPException(status_code=404, detail="Post not found")
-    background_tasks.add_task(_sync_blog_to_rag)
+    # Regenerate blog.json synchronously so any reingest triggered by the
+    # frontend (triggerReingest) sees the correct post-delete state.
+    content_db.regenerate_blog_json()
+    # Directly evict the document from ChromaDB + hash file immediately.
+    remove_docs_by_id([f"blog_{slug}"])
+    # Full incremental ingest in background: updates faq_blog count, BM25 index,
+    # and removes any remaining stale hashes.
+    background_tasks.add_task(_rag_sync_after_delete)
     background_tasks.add_task(_cleanup_blog_analytics, slug)
 
 
@@ -222,7 +244,9 @@ def update_lab_entry(slug: str, body: LabEntryIn, background_tasks: BackgroundTa
 def delete_lab_entry(slug: str, background_tasks: BackgroundTasks) -> None:
     if not content_db.delete_lab_entry(slug):
         raise HTTPException(status_code=404, detail="Lab entry not found")
-    background_tasks.add_task(_sync_lab_to_rag)
+    content_db.regenerate_lab_json()
+    remove_docs_by_id([f"lab_{slug}"])
+    background_tasks.add_task(_rag_sync_after_delete)
     background_tasks.add_task(_cleanup_lab_analytics, slug)
 
 
@@ -263,4 +287,8 @@ def update_quote(quote_id: str, body: QuoteIn, background_tasks: BackgroundTasks
 def delete_quote(quote_id: str, background_tasks: BackgroundTasks) -> None:
     if not content_db.delete_quote(quote_id):
         raise HTTPException(status_code=404, detail="Quote not found")
-    background_tasks.add_task(_sync_quotes_to_rag)
+    content_db.regenerate_quotes_json()
+    # Quote ChromaDB IDs use a stable slug derived from quote_id (matches ingest.py).
+    stable = re.sub(r"[^a-z0-9]+", "_", str(quote_id).lower()).strip("_")
+    remove_docs_by_id([f"quote_{stable}"])
+    background_tasks.add_task(_rag_sync_after_delete)

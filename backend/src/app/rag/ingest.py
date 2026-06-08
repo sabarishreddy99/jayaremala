@@ -817,6 +817,31 @@ def run_ingest(force: bool = False) -> dict:
     return {"added": added, "updated": updated, "deleted": len(to_delete), "unchanged": unchanged, "total": total}
 
 
+def remove_docs_by_id(doc_ids: list[str]) -> None:
+    """Directly remove specific documents from ChromaDB and the hash file.
+
+    Used on content deletion so the document disappears from the knowledge base
+    immediately, before the next incremental ingest runs.
+    """
+    if not doc_ids:
+        return
+    try:
+        collection = get_collection()
+        existing = collection.get(ids=doc_ids, include=[])["ids"]
+        if existing:
+            collection.delete(ids=existing)
+            clear_query_cache()
+            logger.info("Removed %d doc(s) directly from ChromaDB: %s", len(existing), existing)
+        hashes = _load_doc_hashes()
+        changed = any(d in hashes for d in doc_ids)
+        for doc_id in doc_ids:
+            hashes.pop(doc_id, None)
+        if changed:
+            _save_doc_hashes(hashes)
+    except Exception as exc:
+        logger.warning("remove_docs_by_id failed (non-fatal): %s", exc)
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     result = run_ingest(force=True)

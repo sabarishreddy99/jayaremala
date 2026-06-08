@@ -51,6 +51,46 @@ function readingTime(text: string) {
   return Math.max(1, Math.ceil(wordCount(text) / 200));
 }
 
+/* ── GitHub MDX sync ────────────────────────────────────────────────── */
+const GITHUB_BLOG_MDX_BASE = "https://api.github.com/repos/sabarishreddy99/jayaremala/contents/frontend/src/content/blog";
+
+function buildBlogMdx(b: { title: string; date: string; published_at: string; description: string; tags: string[]; content: string }): string {
+  const esc = (s: string) => s.replace(/"/g, '\\"');
+  return `---\ntitle: "${esc(b.title)}"\ndate: "${b.date}"\npublishedAt: "${b.published_at}"\ndescription: "${esc(b.description)}"\ntags: ${JSON.stringify(b.tags)}\n---\n\n${b.content}`;
+}
+
+function githubPat(): string {
+  return typeof window !== "undefined" ? localStorage.getItem("avocado_github_pat") ?? "" : "";
+}
+
+async function pushBlogMdxToGitHub(b: { slug: string; title: string; date: string; published_at: string; description: string; tags: string[]; content: string }) {
+  const pat = githubPat();
+  if (!pat.trim()) return;
+  try {
+    const url = `${GITHUB_BLOG_MDX_BASE}/${b.slug}.mdx`;
+    const hdrs = { Authorization: `Bearer ${pat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
+    const getRes = await fetch(url, { headers: hdrs });
+    if (!getRes.ok && getRes.status !== 404) return;
+    const sha = getRes.ok ? (await getRes.json() as { sha: string }).sha : undefined;
+    const ghBody: Record<string, string> = { message: `blog: ${sha ? "update" : "add"} ${b.slug}`, content: btoa(unescape(encodeURIComponent(buildBlogMdx(b)))), branch: "main" };
+    if (sha) ghBody.sha = sha;
+    await fetch(url, { method: "PUT", headers: hdrs, body: JSON.stringify(ghBody) });
+  } catch { /* non-fatal — API save already succeeded */ }
+}
+
+async function deleteBlogMdxFromGitHub(slug: string) {
+  const pat = githubPat();
+  if (!pat.trim()) return;
+  try {
+    const url = `${GITHUB_BLOG_MDX_BASE}/${slug}.mdx`;
+    const hdrs = { Authorization: `Bearer ${pat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
+    const getRes = await fetch(url, { headers: hdrs });
+    if (!getRes.ok) return;
+    const { sha } = await getRes.json() as { sha: string };
+    await fetch(url, { method: "DELETE", headers: hdrs, body: JSON.stringify({ message: `blog: remove ${slug}`, sha, branch: "main" }) });
+  } catch { /* non-fatal */ }
+}
+
 /* ── Toolbar insert helper ──────────────────────────────────────────── */
 function insertMarkdown(
   ref: React.RefObject<HTMLTextAreaElement | null>,
@@ -325,6 +365,7 @@ export default function ContentBlogEditor() {
         if (!editingSlug) resetForm();
         await loadPosts();
         triggerReingest();
+        void pushBlogMdxToGitHub(body);
       } else {
         const err = await res.json().catch(() => ({}));
         setResult({ ok: false, message: (err as { detail?: string }).detail ?? `Error ${res.status}` });
@@ -347,6 +388,7 @@ export default function ContentBlogEditor() {
         if (editingSlug === slug) resetForm();
         await loadPosts();
         triggerReingest();
+        void deleteBlogMdxFromGitHub(slug);
       } else {
         setResult({ ok: false, message: `Error ${res.status}` });
       }

@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api/client";
 import { triggerReingest } from "./AdminShared";
 
+const GITHUB_QUOTES_URL = "https://api.github.com/repos/sabarishreddy99/jayaremala/contents/backend/data/knowledge/quotes.json";
+
 interface QuoteRow {
   id: number;
   quote_id: string;
@@ -59,13 +61,33 @@ export default function ContentQuotesEditor() {
     added_at: todayISO,
   });
 
-  async function loadQuotes() {
+  async function loadQuotes(): Promise<QuoteRow[] | null> {
     setLoading(true);
+    let data: QuoteRow[] | null = null;
     try {
       const res = await fetch(`${API_BASE_URL}/content/quotes`);
-      if (res.ok) setQuotes(await res.json());
+      if (res.ok) { data = await res.json(); setQuotes(data ?? []); }
     } catch { /* silent */ }
     setLoading(false);
+    return data;
+  }
+
+  async function pushToGitHub(rows: QuoteRow[]) {
+    const pat = typeof window !== "undefined" ? localStorage.getItem("avocado_github_pat") ?? "" : "";
+    if (!pat.trim()) return;
+    try {
+      const output = rows.map((q) => ({
+        id: q.quote_id, text: q.text, author: q.author, source: q.source ?? "",
+        category: q.category, favorite: q.favorite, featured: q.featured ?? false, addedAt: q.added_at,
+      }));
+      const hdrs = { Authorization: `Bearer ${pat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
+      const getRes = await fetch(GITHUB_QUOTES_URL, { headers: hdrs });
+      if (!getRes.ok && getRes.status !== 404) return;
+      const sha = getRes.ok ? (await getRes.json() as { sha: string }).sha : undefined;
+      const body: Record<string, string> = { message: "quotes: sync from admin", content: btoa(unescape(encodeURIComponent(JSON.stringify(output, null, 2)))), branch: "main" };
+      if (sha) body.sha = sha;
+      await fetch(GITHUB_QUOTES_URL, { method: "PUT", headers: hdrs, body: JSON.stringify(body) });
+    } catch { /* non-fatal — API save already succeeded */ }
   }
 
   useEffect(() => { loadQuotes(); }, []);
@@ -111,8 +133,9 @@ export default function ContentQuotesEditor() {
       if (res.ok) {
         setResult({ ok: true, message: editingId ? "Updated!" : "Quote added — live immediately." });
         resetForm();
-        await loadQuotes();
+        const updated = await loadQuotes();
         triggerReingest();
+        if (updated !== null) void pushToGitHub(updated);
       } else {
         const err = await res.json().catch(() => ({}));
         setResult({ ok: false, message: (err as { detail?: string }).detail ?? `Error ${res.status}` });
@@ -133,8 +156,9 @@ export default function ContentQuotesEditor() {
       if (res.ok || res.status === 204) {
         setResult({ ok: true, message: "Deleted." });
         setConfirmDelete(null);
-        await loadQuotes();
+        const updated = await loadQuotes();
         triggerReingest();
+        if (updated !== null) void pushToGitHub(updated);
       } else {
         setResult({ ok: false, message: `Error ${res.status}` });
       }

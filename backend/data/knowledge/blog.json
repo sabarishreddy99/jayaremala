@@ -15,7 +15,6 @@
     "slug": "test44",
     "title": "test44",
     "date": "2026-06-08",
-    "publishedAt": "2026-06-08",
     "description": "tes4",
     "tags": [
       "Python"
@@ -36,7 +35,6 @@
     "slug": "testtttt1",
     "title": "Testtttt1",
     "date": "2026-06-07",
-    "publishedAt": "2026-06-07",
     "description": "My testtttttttt",
     "tags": [
       "AI",

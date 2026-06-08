@@ -3,7 +3,7 @@ title: "itsjaya — AI Portfolio"
 status: "active"
 description: "AI-powered personal portfolio with a RAG chatbot (Avocado), MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade — not a toy."
 startedAt: "2025-11-01"
-updatedAt: "2026-06-06"
+updatedAt: "2026-06-08"
 tech: [Next.js 16, React 19, Tailwind CSS v4, TypeScript, FastAPI, ChromaDB, Gemini 2.5 Flash, BAAI/bge-base-en-v1.5, HyDE, BM25, RRF, Knowledge Graph, FNV-1a Hash, SQLite, SlowAPI, AWS Lightsail, Nginx, S3, GitHub Pages, GitHub Actions]
 links:
   - label: GitHub
@@ -562,6 +562,16 @@ Chatbot lives outside — no nav, no footer, full screen.
 ---
 
 ## Progress Log
+
+<Update date="2026-06-08">
+  Three admin panel improvements targeting content consistency and operational efficiency:
+
+  **1. Content API editors now commit MDX to GitHub.** Previously, creating, updating, or deleting a blog post or lab entry via the Content API admin editors only wrote to `content.db` — the corresponding `.mdx` file in the repo was not touched. This meant MDX-rendered routes (`/blog/[slug]`, `/lab/[slug]`) and the frontend static build could fall out of sync with what Avocado knew. Each save now fires a fire-and-forget GitHub Contents API call: `GET` the existing file SHA, then `PUT` the new MDX (built from the form fields via `buildBlogMdx()` / `buildLabMdx()`). Deletes fire a `DELETE` call against the same path. All calls are non-fatal — the API save succeeds independently regardless of whether the GitHub call succeeds.
+
+  **2. All editors trigger immediate Avocado re-index on save.** The nine GitHub-only editors (Profile, Experience, Education, Projects, Skills, Testimonials, HeroStats, Now, Availability) and GalleryEditor previously had no reingest call after save. A successful save to GitHub would update the static site on the next GH Actions deploy but leave Avocado's ChromaDB knowledge base stale until that deploy. Every successful save across all editors now fires `POST /admin/reingest` (incremental, no force) immediately. For GitHub-only editors this is a no-op until the JSON files land on the server from the next deploy, but it acts as a safety net for any pending `content.db` changes and primes the path for future content delivery improvements.
+
+  **3. Bulk delete across all admin list views.** All four list views with deletable items now support checkbox multi-select: ContentBlogEditor (Content API blog posts), ContentLabEditor (Content API lab entries), ContentQuotesEditor (Content API quotes), and the BlogEditor published posts list (GitHub MDX path). Each view adds a "Select all" checkbox in the list header and per-row checkboxes. When any items are checked a "Delete selected (N)" button appears. First click changes it to "Confirm delete" / "Cancel" (two-step confirm to prevent accidents); second click executes all deletes sequentially, preserving every side effect from the single-item path — MDX deletion from GitHub, JSON sync to GitHub, Avocado eviction, reingest trigger.
+</Update>
 
 <Update date="2026-06-06">
   Three production reliability fixes for the re-ingest pipeline on the 2 GB / 2 CPU Lightsail server:

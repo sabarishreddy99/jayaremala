@@ -23,7 +23,8 @@ Personal AI-assisted portfolio for **Jaya Sabarish Reddy Remala**. Two entry poi
 │              │                                   │                          │
 │  ┌────────────────────────────────────────────┐  │                          │
 │  │  /admin  (no-index, token-gated)           │  │                          │
-│  │  Stats dashboard · Content editors         │  │                          │
+│  │  Stats · Content editors · Bulk delete     │  │                          │
+│  │  GitHub MDX sync · Immediate reingest      │  │                          │
 │  └────────────────────────────────────────────┘  │                          │
 └──────────────┼───────────────────────────────────┼──────────────────────────┘
                │ HTTPS / SSE                       │ HTTPS REST
@@ -221,7 +222,9 @@ After every write, a background task calls the appropriate `regenerate_*_json()`
 
 The database is seeded from existing JSON files on first startup — no manual migration needed.
 
-**New MDX content sync** — `content.db` is only seeded on first startup (empty table). Blog posts and lab entries written as MDX files and pushed via GH Actions go into `blog.json` / `lab.json` but were not reaching `content.db` after the initial seed. `sync_blog_json_to_db()` and `sync_lab_json_to_db()` (called from `_sync_content_db()` before every ingest) insert any new slugs found in the JSON files but missing from `content.db`, ensuring every MDX post is ingested on the next deploy or re-ingest button click.
+**MDX GitHub sync from admin** — When a blog post or lab entry is created, updated, or deleted via the Content API admin editors, the corresponding `.mdx` file in the repo is also committed (or deleted) via the GitHub Contents API. This keeps the static frontend and MDX-rendered routes in sync with what the Content API serves, even when editing through the admin panel instead of a git commit.
+
+**MDX content sync** — `content.db` is only seeded on first startup (empty table). Blog posts and lab entries written as MDX files and pushed via GH Actions go into `blog.json` / `lab.json` but were not reaching `content.db` after the initial seed. `sync_blog_json_to_db()` and `sync_lab_json_to_db()` (called from `_sync_content_db()` before every ingest) insert any new slugs found in the JSON files but missing from `content.db`, ensuring every MDX post is ingested on the next deploy or re-ingest button click.
 
 ---
 
@@ -353,7 +356,7 @@ Daily S3 backup → s3://itsjaya-backups-analytics/analytics_db/
 | `/quotes` | Curated quotes by category (Philosophy, Engineering, Science, etc.) |
 | `/gallery` | Photo grid — milestones, events, and achievements |
 | `/now` | What Jaya is currently building, learning, and reading |
-| `/admin` | Stats dashboard + content editors (no-index, token-gated) |
+| `/admin` | Stats dashboard · content editors · bulk delete · GitHub MDX sync · immediate reingest (no-index, token-gated) |
 
 All portfolio routes share a layout via the `(portfolio)` route group — adds no URL segment.
 
@@ -389,7 +392,7 @@ itsjaya/
 │   │   │   ├── (portfolio)/quotes/page.tsx QuotesFeed
 │   │   │   ├── (portfolio)/gallery/page.tsx Photo grid — milestones + achievements
 │   │   │   ├── (portfolio)/now/page.tsx    Current status (building/learning/reading)
-│   │   │   └── admin/                      Stats dashboard + content editors
+│   │   │   └── admin/                      Stats · content editors · bulk delete · GitHub MDX sync
 │   │   ├── components/
 │   │   │   ├── chat/                       ChatInterface, ChatMessage, ChatInput
 │   │   │   ├── blog/                       BlogIndexStats (card grid + sort + SVG art),
@@ -398,9 +401,12 @@ itsjaya/
 │   │   │   ├── lab/                        LabMDXComponents (Status, Decision,
 │   │   │   │                               Update, Stack, Metric, ArchBlock)
 │   │   │   ├── admin/                      ContentBlogEditor, ContentLabEditor,
-│   │   │   │                               ContentQuotesEditor, KnowledgeBaseEditor,
-│   │   │   │                               AvailabilityEditor, KnowledgeDataView,
-│   │   │   │                               ProfileEditor (all page descriptions editable)
+│   │   │   │                               ContentQuotesEditor — bulk-select multi-delete
+│   │   │   │                               + GitHub MDX sync on every save/delete
+│   │   │   │                               KnowledgeBaseEditor, AvailabilityEditor,
+│   │   │   │                               KnowledgeDataView, ProfileEditor
+│   │   │   │                               (all page descriptions editable; all editors
+│   │   │   │                               trigger immediate Avocado reingest on save)
 │   │   │   ├── GalleryGrid.tsx             Photo grid client component
 │   │   │   └── QuotesClient.tsx            Quotes feed with category filter
 │   │   ├── data/knowledge/                 Synced JSON copies (do not edit)

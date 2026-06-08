@@ -1,5 +1,17 @@
 [
   {
+    "slug": "sys-design-jayaremala",
+    "title": "System Architecture of jayaremala.com",
+    "date": "2026-06-08",
+    "description": "How the system you are currently experiencing was designed!",
+    "tags": [
+      "System Design",
+      "design",
+      "architecture"
+    ],
+    "content": "!System Architecture - jayaremala.com\n\nTo be continued!"
+  },
+  {
     "slug": "thanks-for-stopping-by",
     "title": "Thanks for stopping by!",
     "date": "2026-05-26",

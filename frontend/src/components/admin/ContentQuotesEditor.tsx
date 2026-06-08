@@ -48,6 +48,9 @@ export default function ContentQuotesEditor() {
   const [result, setResult] = useState<{ ok: boolean; message: string } | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkConfirm, setBulkConfirm] = useState(false);
 
   // New quote form
   const [form, setForm] = useState({
@@ -144,6 +147,30 @@ export default function ContentQuotesEditor() {
       setResult({ ok: false, message: (e as Error).message });
     }
     setSaving(false);
+  }
+
+  function toggleSelectId(id: string) {
+    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+  }
+  function toggleSelectAll() {
+    setSelectedIds(prev => prev.size === quotes.length ? new Set<string>() : new Set(quotes.map(q => q.quote_id)));
+  }
+  async function handleBulkDelete() {
+    if (!bulkConfirm) { setBulkConfirm(true); return; }
+    setBulkDeleting(true);
+    setBulkConfirm(false);
+    const idsToDelete = [...selectedIds];
+    for (const quote_id of idsToDelete) {
+      try {
+        await fetch(`${API_BASE_URL}/content/quotes/${quote_id}`, { method: "DELETE", headers: authHeaders() });
+      } catch { /* continue */ }
+    }
+    setSelectedIds(new Set());
+    const updated = await loadQuotes();
+    triggerReingest();
+    if (updated !== null) void pushToGitHub(updated);
+    setBulkDeleting(false);
+    setResult({ ok: true, message: `Deleted ${idsToDelete.length} quote${idsToDelete.length !== 1 ? "s" : ""}.` });
   }
 
   async function handleDelete(quote_id: string) {
@@ -271,12 +298,51 @@ export default function ContentQuotesEditor() {
         </div>
 
         {/* Quote list */}
-        <h3 className="text-xs font-bold uppercase tracking-wider text-fg-faint mb-3">
-          {loading ? "Loading…" : `${quotes.length} quotes`}
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={quotes.length > 0 && selectedIds.size === quotes.length}
+              onChange={toggleSelectAll}
+              disabled={quotes.length === 0}
+              className="accent-accent cursor-pointer"
+            />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-fg-faint">
+              {loading ? "Loading…" : `${quotes.length} quotes`}
+            </h3>
+          </div>
+          {selectedIds.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-fg-muted">{selectedIds.size} selected</span>
+              {bulkConfirm ? (
+                <>
+                  <button onClick={handleBulkDelete} disabled={bulkDeleting}
+                    className="px-3 py-1 rounded bg-rose-600 text-white text-[11px] font-semibold hover:bg-rose-700 disabled:opacity-50 transition-colors">
+                    {bulkDeleting ? "Deleting…" : "Confirm delete"}
+                  </button>
+                  <button onClick={() => setBulkConfirm(false)}
+                    className="px-2 py-1 rounded border border-border text-[11px] text-fg-faint hover:text-fg transition-colors">
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button onClick={handleBulkDelete} disabled={bulkDeleting}
+                  className="px-3 py-1 rounded border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-[11px] font-medium hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors">
+                  Delete selected ({selectedIds.size})
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         <div className="space-y-2">
           {quotes.map((q) => (
-            <div key={q.quote_id} className="flex items-start gap-3 rounded-xl border border-border bg-bg p-3">
+            <div key={q.quote_id} className={`flex items-start gap-3 rounded-xl border bg-bg p-3 ${selectedIds.has(q.quote_id) ? "border-rose-300 dark:border-rose-800" : "border-border"}`}>
+              <input
+                type="checkbox"
+                checked={selectedIds.has(q.quote_id)}
+                onChange={() => toggleSelectId(q.quote_id)}
+                className="mt-1 shrink-0 accent-accent cursor-pointer"
+              />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-fg leading-snug line-clamp-2">"{q.text}"</p>
                 <p className="text-[11px] text-fg-faint mt-0.5">— {q.author}{q.source ? `, ${q.source}` : ""}</p>

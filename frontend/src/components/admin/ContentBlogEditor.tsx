@@ -291,6 +291,9 @@ export default function ContentBlogEditor() {
   const [mode, setMode]             = useState<EditorMode>("write");
   const [fullscreen, setFullscreen] = useState(false);
   const taRef = useRef<HTMLTextAreaElement>(null);
+  const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkConfirm, setBulkConfirm] = useState(false);
 
   const isDirty = form.content !== savedContent;
 
@@ -396,6 +399,33 @@ export default function ContentBlogEditor() {
       setResult({ ok: false, message: (e as Error).message });
     }
     setSaving(false);
+  }
+
+  function toggleSelect(slug: string) {
+    setSelectedSlugs(prev => { const next = new Set(prev); next.has(slug) ? next.delete(slug) : next.add(slug); return next; });
+  }
+  function toggleSelectAll() {
+    setSelectedSlugs(prev => prev.size === posts.length ? new Set<string>() : new Set(posts.map(p => p.slug)));
+  }
+  async function handleBulkDelete() {
+    if (!bulkConfirm) { setBulkConfirm(true); return; }
+    setBulkDeleting(true);
+    setBulkConfirm(false);
+    const slugsToDelete = [...selectedSlugs];
+    for (const slug of slugsToDelete) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/content/blog/${slug}`, { method: "DELETE", headers: authHeaders() });
+        if (res.ok || res.status === 204) {
+          if (editingSlug === slug) resetForm();
+          void deleteBlogMdxFromGitHub(slug);
+        }
+      } catch { /* continue */ }
+    }
+    setSelectedSlugs(new Set());
+    await loadPosts();
+    triggerReingest();
+    setBulkDeleting(false);
+    setResult({ ok: true, message: `Deleted ${slugsToDelete.length} post${slugsToDelete.length !== 1 ? "s" : ""}.` });
   }
 
   // Keyboard shortcuts on the textarea
@@ -651,12 +681,51 @@ export default function ContentBlogEditor() {
 
       {/* Post list */}
       <div className="rounded-2xl border border-border bg-surface p-6">
-        <h3 className="text-[11px] font-bold uppercase tracking-wider text-fg-faint mb-4">
-          {loading ? "Loading…" : `${posts.length} post${posts.length !== 1 ? "s" : ""} (including drafts)`}
-        </h3>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={posts.length > 0 && selectedSlugs.size === posts.length}
+              onChange={toggleSelectAll}
+              disabled={posts.length === 0}
+              className="accent-accent cursor-pointer"
+            />
+            <h3 className="text-[11px] font-bold uppercase tracking-wider text-fg-faint">
+              {loading ? "Loading…" : `${posts.length} post${posts.length !== 1 ? "s" : ""} (including drafts)`}
+            </h3>
+          </div>
+          {selectedSlugs.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-fg-muted">{selectedSlugs.size} selected</span>
+              {bulkConfirm ? (
+                <>
+                  <button onClick={handleBulkDelete} disabled={bulkDeleting}
+                    className="px-3 py-1 rounded bg-rose-600 text-white text-[11px] font-semibold hover:bg-rose-700 disabled:opacity-50 transition-colors">
+                    {bulkDeleting ? "Deleting…" : "Confirm delete"}
+                  </button>
+                  <button onClick={() => setBulkConfirm(false)}
+                    className="px-2 py-1 rounded border border-border text-[11px] text-fg-faint hover:text-fg transition-colors">
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button onClick={handleBulkDelete} disabled={bulkDeleting}
+                  className="px-3 py-1 rounded border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-[11px] font-medium hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors">
+                  Delete selected ({selectedSlugs.size})
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         <div className="space-y-2">
           {posts.map((p) => (
-            <div key={p.slug} className="flex items-start gap-3 rounded-xl border border-border bg-bg p-3 hover:border-border-strong transition-colors">
+            <div key={p.slug} className={`flex items-start gap-3 rounded-xl border bg-bg p-3 hover:border-border-strong transition-colors ${selectedSlugs.has(p.slug) ? "border-rose-300 dark:border-rose-800" : "border-border"}`}>
+              <input
+                type="checkbox"
+                checked={selectedSlugs.has(p.slug)}
+                onChange={() => toggleSelect(p.slug)}
+                className="mt-1 shrink-0 accent-accent cursor-pointer"
+              />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${p.published ? "bg-emerald-400" : "bg-amber-400"}`} />

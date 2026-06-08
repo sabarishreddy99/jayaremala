@@ -1546,6 +1546,9 @@ function BlogEditor() {
   const [confirmDeleteSlug, setConfirmDeleteSlug]   = useState<string | null>(null);
   const [deletingSlug, setDeletingSlug]             = useState<string | null>(null);
   const [editingExisting, setEditingExisting]       = useState(false);
+  const [selectedPostSlugs, setSelectedPostSlugs]   = useState<Set<string>>(new Set());
+  const [bulkDeletingPosts, setBulkDeletingPosts]   = useState(false);
+  const [bulkConfirmPosts, setBulkConfirmPosts]     = useState(false);
 
   // GitHub / publish
   const [githubPat, setGithubPat] = useState(() =>
@@ -1930,6 +1933,40 @@ function BlogEditor() {
     }
   }
 
+  function togglePostSelect(slug: string) {
+    setSelectedPostSlugs(prev => { const next = new Set(prev); next.has(slug) ? next.delete(slug) : next.add(slug); return next; });
+  }
+  function toggleSelectAllPosts() {
+    setSelectedPostSlugs(prev => prev.size === publishedPosts.length ? new Set<string>() : new Set(publishedPosts.map(p => p.slug)));
+  }
+  async function handleBulkDeletePosts() {
+    if (!bulkConfirmPosts) { setBulkConfirmPosts(true); return; }
+    setBulkDeletingPosts(true);
+    setBulkConfirmPosts(false);
+    const slugsToDelete = [...selectedPostSlugs];
+    const adminToken = typeof window !== "undefined" ? localStorage.getItem("avocado_admin_token") ?? "" : "";
+    for (const slug of slugsToDelete) {
+      const post = publishedPosts.find(p => p.slug === slug);
+      if (!post || !githubPat.trim()) continue;
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/sabarishreddy99/jayaremala/contents/frontend/src/content/blog/${slug}.mdx`,
+          { method: "DELETE", headers: { Authorization: `Bearer ${githubPat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" },
+            body: JSON.stringify({ message: `blog: delete ${slug}`, sha: post.sha, branch: "main" }) }
+        );
+        if (res.ok) {
+          setPublishedPosts(prev => prev.filter(p => p.slug !== slug));
+          if (adminToken) {
+            void fetch(`${API_BASE_URL}/content/blog/${slug}`, { method: "DELETE", headers: { Authorization: `Bearer ${adminToken}` } }).catch(() => {});
+          }
+        }
+      } catch { /* continue */ }
+    }
+    setSelectedPostSlugs(new Set());
+    setBulkDeletingPosts(false);
+    setPostsResult({ ok: true, message: `Deleted ${slugsToDelete.length} post${slugsToDelete.length !== 1 ? "s" : ""} — site rebuilds in ~2 min.` });
+  }
+
   // === FOCUS MODE ===
   if (focusMode) {
     return (
@@ -2078,8 +2115,48 @@ function BlogEditor() {
             {/* Posts list */}
             {publishedPosts.length > 0 && (
               <div className="space-y-1.5">
+                {/* Bulk delete bar */}
+                <div className="flex items-center justify-between px-1 pb-1">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={publishedPosts.length > 0 && selectedPostSlugs.size === publishedPosts.length}
+                      onChange={toggleSelectAllPosts}
+                      className="accent-accent cursor-pointer"
+                    />
+                    <span className="text-[11px] text-fg-faint">Select all</span>
+                  </div>
+                  {selectedPostSlugs.size > 0 && (
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-fg-muted">{selectedPostSlugs.size} selected</span>
+                      {bulkConfirmPosts ? (
+                        <>
+                          <button onClick={handleBulkDeletePosts} disabled={bulkDeletingPosts}
+                            className="px-3 py-1 rounded bg-rose-600 text-white text-[11px] font-semibold hover:bg-rose-700 disabled:opacity-50 transition-colors">
+                            {bulkDeletingPosts ? "Deleting…" : "Confirm delete"}
+                          </button>
+                          <button onClick={() => setBulkConfirmPosts(false)}
+                            className="px-2 py-1 rounded border border-border text-[11px] text-fg-faint hover:text-fg transition-colors">
+                            Cancel
+                          </button>
+                        </>
+                      ) : (
+                        <button onClick={handleBulkDeletePosts} disabled={bulkDeletingPosts}
+                          className="px-3 py-1 rounded border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-[11px] font-medium hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors">
+                          Delete selected ({selectedPostSlugs.size})
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
                 {publishedPosts.map((post) => (
-                  <div key={post.slug} className="flex items-center gap-3 px-4 py-3 rounded border border-border bg-bg hover:bg-surface-raised transition-colors group">
+                  <div key={post.slug} className={`flex items-center gap-3 px-4 py-3 rounded border bg-bg hover:bg-surface-raised transition-colors group ${selectedPostSlugs.has(post.slug) ? "border-rose-300 dark:border-rose-800" : "border-border"}`}>
+                    <input
+                      type="checkbox"
+                      checked={selectedPostSlugs.has(post.slug)}
+                      onChange={() => togglePostSelect(post.slug)}
+                      className="shrink-0 accent-accent cursor-pointer"
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-fg truncate">/blog/<span className="text-accent">{post.slug}</span></p>
                       <p className="text-[10px] font-mono text-fg-faint">{post.name}</p>

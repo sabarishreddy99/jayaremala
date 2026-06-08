@@ -132,6 +132,9 @@ export default function ContentLabEditor() {
   const [editingSlug, setEditingSlug] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [form, setForm] = useState(EMPTY_FORM);
+  const [selectedSlugs, setSelectedSlugs] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [bulkConfirm, setBulkConfirm] = useState(false);
 
   async function loadEntries(): Promise<LabRow[] | null> {
     setLoading(true);
@@ -252,6 +255,34 @@ export default function ContentLabEditor() {
       setResult({ ok: false, message: (e as Error).message });
     }
     setSaving(false);
+  }
+
+  function toggleSelect(slug: string) {
+    setSelectedSlugs(prev => { const next = new Set(prev); next.has(slug) ? next.delete(slug) : next.add(slug); return next; });
+  }
+  function toggleSelectAll() {
+    setSelectedSlugs(prev => prev.size === entries.length ? new Set<string>() : new Set(entries.map(e => e.slug)));
+  }
+  async function handleBulkDelete() {
+    if (!bulkConfirm) { setBulkConfirm(true); return; }
+    setBulkDeleting(true);
+    setBulkConfirm(false);
+    const slugsToDelete = [...selectedSlugs];
+    for (const slug of slugsToDelete) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/content/lab/${slug}`, { method: "DELETE", headers: authHeaders() });
+        if (res.ok || res.status === 204) {
+          if (editingSlug === slug) resetForm();
+          void deleteLabMdxFromGitHub(slug);
+        }
+      } catch { /* continue */ }
+    }
+    setSelectedSlugs(new Set());
+    const updated = await loadEntries();
+    triggerReingest();
+    if (updated !== null) void pushToGitHub(updated);
+    setBulkDeleting(false);
+    setResult({ ok: true, message: `Deleted ${slugsToDelete.length} entr${slugsToDelete.length !== 1 ? "ies" : "y"}.` });
   }
 
   async function handleDelete(slug: string) {
@@ -430,12 +461,51 @@ export default function ContentLabEditor() {
         </div>
 
         {/* Entry list */}
-        <h3 className="text-xs font-bold uppercase tracking-wider text-fg-faint mb-3">
-          {loading ? "Loading…" : `${entries.length} entries`}
-        </h3>
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={entries.length > 0 && selectedSlugs.size === entries.length}
+              onChange={toggleSelectAll}
+              disabled={entries.length === 0}
+              className="accent-accent cursor-pointer"
+            />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-fg-faint">
+              {loading ? "Loading…" : `${entries.length} entries`}
+            </h3>
+          </div>
+          {selectedSlugs.size > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-fg-muted">{selectedSlugs.size} selected</span>
+              {bulkConfirm ? (
+                <>
+                  <button onClick={handleBulkDelete} disabled={bulkDeleting}
+                    className="px-3 py-1 rounded bg-rose-600 text-white text-[11px] font-semibold hover:bg-rose-700 disabled:opacity-50 transition-colors">
+                    {bulkDeleting ? "Deleting…" : "Confirm delete"}
+                  </button>
+                  <button onClick={() => setBulkConfirm(false)}
+                    className="px-2 py-1 rounded border border-border text-[11px] text-fg-faint hover:text-fg transition-colors">
+                    Cancel
+                  </button>
+                </>
+              ) : (
+                <button onClick={handleBulkDelete} disabled={bulkDeleting}
+                  className="px-3 py-1 rounded border border-rose-300 dark:border-rose-800 text-rose-600 dark:text-rose-400 text-[11px] font-medium hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors">
+                  Delete selected ({selectedSlugs.size})
+                </button>
+              )}
+            </div>
+          )}
+        </div>
         <div className="space-y-2">
           {entries.map((e) => (
-            <div key={e.slug} className="flex items-start gap-3 rounded-xl border border-border bg-bg p-3">
+            <div key={e.slug} className={`flex items-start gap-3 rounded-xl border bg-bg p-3 ${selectedSlugs.has(e.slug) ? "border-rose-300 dark:border-rose-800" : "border-border"}`}>
+              <input
+                type="checkbox"
+                checked={selectedSlugs.has(e.slug)}
+                onChange={() => toggleSelect(e.slug)}
+                className="mt-1 shrink-0 accent-accent cursor-pointer"
+              />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-fg leading-snug truncate">{e.title}</p>
                 <p className="text-[11px] text-fg-faint mt-0.5 font-mono">/{e.slug}</p>

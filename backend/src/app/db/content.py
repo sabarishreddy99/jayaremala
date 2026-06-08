@@ -109,7 +109,26 @@ def init_db() -> None:
     except Exception:
         pass  # column already exists
 
+    _apply_source_fix()
     _seed_if_empty()
+
+
+def _apply_source_fix() -> None:
+    """One-time data fix: reset any source='mdx' rows to 'api'.
+
+    Old sync_*_json_to_db() code had no 'api' guard on its UPDATE, so admin
+    posts got relabeled 'mdx' and deleted on the next git push (when blog.json
+    reverted to MDX-only). This runs once per DB and resets everything to 'api';
+    new MDX inserts are tagged correctly going forward.
+    """
+    with _connect() as conn:
+        conn.execute(
+            "CREATE TABLE IF NOT EXISTS _db_migrations (id INTEGER PRIMARY KEY)"
+        )
+        if not conn.execute("SELECT 1 FROM _db_migrations WHERE id=1").fetchone():
+            conn.execute("UPDATE blog_posts SET source='api' WHERE source='mdx'")
+            conn.execute("UPDATE lab_entries SET source='api' WHERE source='mdx'")
+            conn.execute("INSERT INTO _db_migrations (id) VALUES (1)")
 
 
 def _seed_if_empty() -> None:
@@ -263,8 +282,8 @@ def create_blog_post(data: dict) -> dict:
     with _connect() as conn:
         conn.execute(
             """INSERT INTO blog_posts
-               (slug, title, date, published_at, description, tags, image, content, published)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+               (slug, title, date, published_at, description, tags, image, content, published, source)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'api')""",
             (
                 data["slug"],
                 data["title"],
@@ -500,8 +519,11 @@ def sync_blog_json_to_db() -> None:
                 )
                 added += 1
             else:
-                # Claim ownership: this slug is an MDX post
-                conn.execute("UPDATE blog_posts SET source='mdx' WHERE slug=?", (slug,))
+                # Mark as MDX only if not already an API-created post
+                conn.execute(
+                    "UPDATE blog_posts SET source='mdx' WHERE slug=? AND source != 'api'",
+                    (slug,),
+                )
 
         # Remove MDX posts that no longer have a backing MDX file
         if mdx_slugs:
@@ -619,7 +641,11 @@ def sync_lab_json_to_db() -> None:
                 )
                 added += 1
             else:
-                conn.execute("UPDATE lab_entries SET source='mdx' WHERE slug=?", (slug,))
+                # Guard: never relabel an API-created entry as MDX
+                conn.execute(
+                    "UPDATE lab_entries SET source='mdx' WHERE slug=? AND source != 'api'",
+                    (slug,),
+                )
 
         if mdx_slugs:
             ph = ",".join("?" * len(mdx_slugs))

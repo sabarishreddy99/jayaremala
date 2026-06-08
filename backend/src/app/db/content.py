@@ -114,21 +114,54 @@ def init_db() -> None:
 
 
 def _apply_source_fix() -> None:
-    """One-time data fix: reset any source='mdx' rows to 'api'.
+    """Two-phase migration to correctly label MDX vs API-created posts.
 
-    Old sync_*_json_to_db() code had no 'api' guard on its UPDATE, so admin
-    posts got relabeled 'mdx' and deleted on the next git push (when blog.json
-    reverted to MDX-only). This runs once per DB and resets everything to 'api';
-    new MDX inserts are tagged correctly going forward.
+    Migration 1 (shipped previously — too broad): reset ALL source='mdx' to 'api'.
+    Migration 2 (corrective): restore real MDX posts back to 'mdx' by reading
+    blog.json/lab.json at startup (before regenerate_*_json() overwrites them,
+    Docker image versions are MDX-only from sync-knowledge.mjs). Posts that were
+    mislabeled 'mdx' by the old sync code but aren't in the Docker image JSON
+    stay as 'api', which is correct.
     """
+    blog_path = _DATA_DIR / "blog.json"
+    lab_path = _DATA_DIR / "lab.json"
+
     with _connect() as conn:
         conn.execute(
             "CREATE TABLE IF NOT EXISTS _db_migrations (id INTEGER PRIMARY KEY)"
         )
+
         if not conn.execute("SELECT 1 FROM _db_migrations WHERE id=1").fetchone():
             conn.execute("UPDATE blog_posts SET source='api' WHERE source='mdx'")
             conn.execute("UPDATE lab_entries SET source='api' WHERE source='mdx'")
             conn.execute("INSERT INTO _db_migrations (id) VALUES (1)")
+
+        if not conn.execute("SELECT 1 FROM _db_migrations WHERE id=2").fetchone():
+            # Re-tag genuine MDX posts that migration 1 incorrectly reset to 'api'.
+            # blog.json at this point is the Docker-image version (MDX-only).
+            if blog_path.exists():
+                mdx_blog_slugs = [
+                    p["slug"]
+                    for p in json.loads(blog_path.read_text())
+                    if p.get("slug")
+                ]
+                for slug in mdx_blog_slugs:
+                    conn.execute(
+                        "UPDATE blog_posts SET source='mdx' WHERE slug=? AND source='api'",
+                        (slug,),
+                    )
+            if lab_path.exists():
+                mdx_lab_slugs = [
+                    e["slug"]
+                    for e in json.loads(lab_path.read_text())
+                    if e.get("slug")
+                ]
+                for slug in mdx_lab_slugs:
+                    conn.execute(
+                        "UPDATE lab_entries SET source='mdx' WHERE slug=? AND source='api'",
+                        (slug,),
+                    )
+            conn.execute("INSERT INTO _db_migrations (id) VALUES (2)")
 
 
 def _seed_if_empty() -> None:
@@ -519,10 +552,22 @@ def sync_blog_json_to_db() -> None:
                 )
                 added += 1
             else:
-                # Mark as MDX only if not already an API-created post
+                # Update content and metadata from blog.json for MDX posts.
+                # Admin-created posts (source='api') are fully protected by the guard.
                 conn.execute(
-                    "UPDATE blog_posts SET source='mdx' WHERE slug=? AND source != 'api'",
-                    (slug,),
+                    """UPDATE blog_posts SET
+                       title=?, date=?, published_at=?, description=?, tags=?,
+                       content=?, source='mdx'
+                       WHERE slug=? AND source != 'api'""",
+                    (
+                        post.get("title", ""),
+                        post.get("date", ""),
+                        post.get("publishedAt", post.get("date", "")),
+                        post.get("description", ""),
+                        json.dumps(post.get("tags", [])),
+                        post.get("content", "")[:2000],
+                        slug,
+                    ),
                 )
 
         # Remove MDX posts that no longer have a backing MDX file
@@ -641,10 +686,24 @@ def sync_lab_json_to_db() -> None:
                 )
                 added += 1
             else:
-                # Guard: never relabel an API-created entry as MDX
+                # Update content and metadata from lab.json for MDX entries.
+                # Admin-created entries (source='api') are fully protected by the guard.
                 conn.execute(
-                    "UPDATE lab_entries SET source='mdx' WHERE slug=? AND source != 'api'",
-                    (slug,),
+                    """UPDATE lab_entries SET
+                       title=?, status=?, description=?, started_at=?, updated_at=?,
+                       tech=?, links=?, content=?, source='mdx'
+                       WHERE slug=? AND source != 'api'""",
+                    (
+                        entry.get("title", ""),
+                        entry.get("status", "active"),
+                        entry.get("description", ""),
+                        entry.get("startedAt", ""),
+                        entry.get("updatedAt", ""),
+                        json.dumps(entry.get("tech", [])),
+                        json.dumps(entry.get("links", [])),
+                        entry.get("content", "")[:3000],
+                        slug,
+                    ),
                 )
 
         if mdx_slugs:

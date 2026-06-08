@@ -4,6 +4,7 @@ import { useEffect, useRef, useState, useCallback, Children, isValidElement } fr
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { API_BASE_URL } from "@/lib/api/client";
+import { triggerReingest } from "./AdminShared";
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 interface BlogRow {
@@ -323,6 +324,7 @@ export default function ContentBlogEditor() {
         setResult({ ok: true, message: editingSlug ? "Updated!" : "Post created and live!" });
         if (!editingSlug) resetForm();
         await loadPosts();
+        triggerReingest();
       } else {
         const err = await res.json().catch(() => ({}));
         setResult({ ok: false, message: (err as { detail?: string }).detail ?? `Error ${res.status}` });
@@ -344,6 +346,7 @@ export default function ContentBlogEditor() {
         setConfirmDelete(null);
         if (editingSlug === slug) resetForm();
         await loadPosts();
+        triggerReingest();
       } else {
         setResult({ ok: false, message: `Error ${res.status}` });
       }

@@ -2,6 +2,22 @@
 
 /** Shared design primitives used by every admin editor */
 
+import { API_BASE_URL } from "@/lib/api/client";
+
+// ── Background reingest trigger ───────────────────────────────────────────────
+// Call after any content.db write so Avocado stays in sync automatically.
+export function triggerReingest(): void {
+  const token =
+    typeof window !== "undefined"
+      ? (localStorage.getItem("avocado_admin_token") ?? "")
+      : "";
+  if (!token) return;
+  void fetch(`${API_BASE_URL}/admin/reingest`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+  }).catch(() => {});
+}
+
 // ── Base class strings (re-usable in editors that build inputs directly) ──────
 
 export const inputCls =

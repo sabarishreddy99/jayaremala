@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api/client";
+import { triggerReingest } from "./AdminShared";
 
 interface LabLink { label: string; url: string }
 
@@ -176,6 +177,7 @@ export default function ContentLabEditor() {
         setResult({ ok: true, message: editingSlug ? "Updated!" : "Entry created — live immediately." });
         resetForm();
         await loadEntries();
+        triggerReingest();
       } else {
         const err = await res.json().catch(() => ({}));
         setResult({ ok: false, message: (err as { detail?: string }).detail ?? `Error ${res.status}` });
@@ -198,6 +200,7 @@ export default function ContentLabEditor() {
         setConfirmDelete(null);
         if (editingSlug === slug) resetForm();
         await loadEntries();
+        triggerReingest();
       } else {
         setResult({ ok: false, message: `Error ${res.status}` });
       }

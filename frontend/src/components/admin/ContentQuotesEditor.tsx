@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { API_BASE_URL } from "@/lib/api/client";
+import { triggerReingest } from "./AdminShared";
 
 interface QuoteRow {
   id: number;
@@ -111,6 +112,7 @@ export default function ContentQuotesEditor() {
         setResult({ ok: true, message: editingId ? "Updated!" : "Quote added — live immediately." });
         resetForm();
         await loadQuotes();
+        triggerReingest();
       } else {
         const err = await res.json().catch(() => ({}));
         setResult({ ok: false, message: (err as { detail?: string }).detail ?? `Error ${res.status}` });
@@ -132,6 +134,7 @@ export default function ContentQuotesEditor() {
         setResult({ ok: true, message: "Deleted." });
         setConfirmDelete(null);
         await loadQuotes();
+        triggerReingest();
       } else {
         setResult({ ok: false, message: `Error ${res.status}` });
       }

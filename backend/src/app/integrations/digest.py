@@ -8,6 +8,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+
 def build_digest_html(stats: dict) -> str:
     """Build the HTML body for the weekly digest email."""
     conv = stats.get("conversations", {}).get("week", {})

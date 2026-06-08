@@ -268,13 +268,13 @@ export default function PortfolioHome() {
             >
               Ask Avocado
             </Link>
-            <Link
-              href="/projects"
+            <a
+              href="#contact"
               className="group inline-flex items-center gap-1.5 text-sm font-medium text-fg-muted hover:text-fg transition-colors duration-200"
             >
-              View Projects
+              Schedule a Call
               <span className="group-hover:translate-x-0.5 transition-transform duration-200">→</span>
-            </Link>
+            </a>
           </div>
 
           {/* Minimal social row */}

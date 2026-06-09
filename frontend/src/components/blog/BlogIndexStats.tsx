@@ -569,7 +569,12 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
 
                   {/* Footer */}
                   <div className="flex items-center justify-between gap-2 pt-3 border-t border-border">
-                    <span className="text-[11px] text-fg-faint min-w-0 truncate">{p.date}</span>
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-[11px] text-fg-faint truncate">{p.publishedAt ?? p.date}</span>
+                      {p.publishedAt && p.date && p.date !== p.publishedAt && (
+                        <span className="text-[10px] text-fg-faint/60 truncate">Updated {p.date}</span>
+                      )}
+                    </div>
                     <div className="flex items-center gap-2.5 shrink-0">
                       {postStats && postStats.views > 0 && (
                         <div className="flex items-center gap-1">

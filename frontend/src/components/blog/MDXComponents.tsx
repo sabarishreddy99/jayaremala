@@ -1,3 +1,4 @@
+import React from "react";
 import type { MDXComponents } from "mdx/types";
 import BlogImageClient from "./BlogImage";
 import CodeBlock from "./CodeBlock";
@@ -47,6 +48,14 @@ export const mdxComponents: MDXComponents = {
   img: ({ src, alt, title }) => (
     <BlogImageClient src={src as string} alt={alt ?? ""} caption={title} />
   ),
+
+  // Prevent hydration errors: MDX wraps block-level components (BlogImage, Callout, Divider)
+  // in <p> tags — invalid HTML. When a custom component is the only child, skip the <p>.
+  p: ({ children }) => {
+    const arr = React.Children.toArray(children);
+    const hasBlock = arr.some(c => React.isValidElement(c) && typeof c.type === "function");
+    return hasBlock ? <>{arr}</> : <p>{children}</p>;
+  },
 
   // Code blocks — Shiki highlights the tokens; CodeBlock adds the copy button.
   // Inline code (single backtick) is NOT a pre element — handled by CSS only.

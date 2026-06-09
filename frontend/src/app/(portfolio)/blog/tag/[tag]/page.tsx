@@ -72,17 +72,16 @@ export default async function BlogTagPage({ params }: Props) {
                   <p className="text-sm text-fg-subtle leading-relaxed line-clamp-2">{post.description}</p>
                 )}
                 <div className="flex flex-wrap items-center gap-2 pt-1">
-                  <span className="text-[11px] text-fg-faint tabular-nums">{post.date}</span>
+                  <span className="text-[11px] text-fg-faint tabular-nums">{post.publishedAt ?? post.date}</span>
                   <span className="text-border text-[10px]">·</span>
                   <span className="text-[11px] text-fg-faint">{post.readingTime} min read</span>
                   {post.tags.filter((t) => t !== decoded).slice(0, 3).map((t) => (
-                    <Link
+                    <span
                       key={t}
-                      href={`/blog/tag/${encodeURIComponent(t)}`}
-                      className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-muted hover:text-accent transition-colors"
+                      className="rounded-full bg-surface-raised px-2 py-0.5 text-[10px] font-medium text-fg-muted"
                     >
                       #{t}
-                    </Link>
+                    </span>
                   ))}
                 </div>
               </div>

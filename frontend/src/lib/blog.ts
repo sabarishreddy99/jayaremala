@@ -37,14 +37,23 @@ export function getAllPosts(): PostMeta[] {
         slug,
         title: data.title ?? slug,
         date: toStr(data.date),
-        publishedAt: toStr(data.publishedAt || data.date),
+        publishedAt: data.publishedAt ? toStr(data.publishedAt) : undefined,
         description: data.description ?? "",
         tags: data.tags ?? [],
         readingTime: Math.max(1, Math.ceil(wordCount / 200)),
         image: data.image ?? undefined,
       } as PostMeta;
     })
-    .sort((a, b) => (a.publishedAt! < b.publishedAt! ? 1 : -1));
+    .sort((a, b) => {
+      // Posts with explicit publishedAt sort first (by publishedAt).
+      // Legacy posts without publishedAt sort after, by date.
+      const aKey = a.publishedAt ?? "";
+      const bKey = b.publishedAt ?? "";
+      if (aKey && bKey) return aKey < bKey ? 1 : -1;
+      if (aKey) return -1;
+      if (bKey) return 1;
+      return a.date < b.date ? 1 : -1;
+    });
 }
 
 export function getPostBySlug(slug: string): Post | null {
@@ -59,7 +68,7 @@ export function getPostBySlug(slug: string): Post | null {
     slug,
     title: data.title ?? slug,
     date: toStr(data.date),
-    publishedAt: toStr(data.publishedAt || data.date),
+    publishedAt: data.publishedAt ? toStr(data.publishedAt) : undefined,
     description: data.description ?? "",
     tags: data.tags ?? [],
     readingTime: Math.max(1, Math.ceil(wordCount / 200)),

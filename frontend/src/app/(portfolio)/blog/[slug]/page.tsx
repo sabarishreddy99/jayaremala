@@ -394,7 +394,13 @@ export default async function BlogPostPage({ params }: Props) {
               {/* Meta row: date · reading time · views | font size + reading mode */}
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
-                  <span className="text-sm text-fg-faint">{post.date}</span>
+                  <span className="text-sm text-fg-faint">{post.publishedAt ?? post.date}</span>
+                  {post.publishedAt && post.date && post.date !== post.publishedAt && (
+                    <>
+                      <span className="text-fg-faint/40 select-none" aria-hidden>·</span>
+                      <span className="text-sm text-fg-faint">Updated {post.date}</span>
+                    </>
+                  )}
                   <span className="text-fg-faint/40 select-none" aria-hidden>·</span>
                   <span className="text-sm text-fg-faint">{post.readingTime} min read</span>
                   <BlogViewCount slug={post.slug} />

@@ -324,6 +324,8 @@ export default function PortfolioHome() {
                 <span className="text-[11px] text-fg-subtle group-hover:text-accent transition-colors line-clamp-1 max-w-[60vw] sm:max-w-xs">
                   {latestPost.title}
                 </span>
+                <span className="w-px h-3 bg-border shrink-0" />
+                <span className="text-[10px] text-fg-faint shrink-0">{latestPost.publishedAt ?? latestPost.date}</span>
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-fg-faint group-hover:text-accent shrink-0 transition-colors">
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>

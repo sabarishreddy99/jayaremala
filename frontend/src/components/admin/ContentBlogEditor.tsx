@@ -636,13 +636,13 @@ export default function ContentBlogEditor() {
         {/* Dates + Tags */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label className="block text-[11px] font-semibold text-fg-faint mb-1 uppercase tracking-wider">Display Date</label>
-            <input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
+            <label className="block text-[11px] font-semibold text-fg-faint mb-1 uppercase tracking-wider">Originally Published <span className="normal-case font-normal text-fg-faint">(sort order)</span></label>
+            <input type="date" value={form.published_at} onChange={(e) => setForm((f) => ({ ...f, published_at: e.target.value }))}
               className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg focus:outline-none focus:border-accent transition-colors" />
           </div>
           <div>
-            <label className="block text-[11px] font-semibold text-fg-faint mb-1 uppercase tracking-wider">Published At</label>
-            <input type="date" value={form.published_at} onChange={(e) => setForm((f) => ({ ...f, published_at: e.target.value }))}
+            <label className="block text-[11px] font-semibold text-fg-faint mb-1 uppercase tracking-wider">Last Edited <span className="normal-case font-normal text-fg-faint">(shown to readers)</span></label>
+            <input type="date" value={form.date} onChange={(e) => setForm((f) => ({ ...f, date: e.target.value }))}
               className="w-full rounded-xl border border-border bg-bg px-3 py-2 text-sm text-fg focus:outline-none focus:border-accent transition-colors" />
           </div>
           <div>

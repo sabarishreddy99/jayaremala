@@ -353,7 +353,7 @@ export default function ContentLabEditor() {
               </select>
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-fg-faint mb-1 uppercase tracking-wider">Started</label>
+              <label className="block text-[11px] font-semibold text-fg-faint mb-1 uppercase tracking-wider">Originally Published <span className="normal-case font-normal text-fg-faint">(sort order)</span></label>
               <input
                 type="date"
                 value={form.started_at}
@@ -362,7 +362,7 @@ export default function ContentLabEditor() {
               />
             </div>
             <div>
-              <label className="block text-[11px] font-semibold text-fg-faint mb-1 uppercase tracking-wider">Last Updated</label>
+              <label className="block text-[11px] font-semibold text-fg-faint mb-1 uppercase tracking-wider">Last Edited <span className="normal-case font-normal text-fg-faint">(shown to readers)</span></label>
               <input
                 type="date"
                 value={form.updated_at}

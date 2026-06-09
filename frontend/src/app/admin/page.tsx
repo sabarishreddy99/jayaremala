@@ -1810,7 +1810,7 @@ function BlogEditor() {
   const [slug, setSlug]                 = useState("");
   const [slugEdited, setSlugEdited]     = useState(false);
   const [date, setDate]                 = useState(todayISO);
-  const [publishedAt]                   = useState(todayISO);
+  const [publishedAt, setPublishedAt]   = useState(todayISO);
   const [description, setDescription]   = useState("");
   const [tags, setTags]                 = useState<string[]>([]);
   const [tagInput, setTagInput]         = useState("");
@@ -2598,10 +2598,13 @@ function BlogEditor() {
               />
             </div>
             <span className="text-fg-faint">·</span>
+            <span className="text-fg-faint text-[10px] uppercase tracking-wider">Last Edited:</span>
             <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
               className="bg-transparent text-fg-faint focus:outline-none focus:text-fg cursor-pointer" />
             <span className="text-fg-faint">·</span>
-            <span className="text-fg-faint">publishedAt: <code className="font-mono text-accent">{publishedAt}</code></span>
+            <span className="text-fg-faint text-[10px] uppercase tracking-wider">Originally Published:</span>
+            <input type="date" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)}
+              className="bg-transparent text-accent focus:outline-none focus:text-fg cursor-pointer font-mono text-xs" />
             <button onClick={() => setShowAdvancedMeta(!showAdvancedMeta)}
               className="ml-auto text-fg-faint hover:text-fg transition-colors flex items-center gap-1">
               OG image

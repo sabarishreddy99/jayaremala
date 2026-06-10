@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { profile } from "@/data/profile";
 import { API_BASE_URL } from "@/lib/api/client";
+import SparkleIcon from "@/components/SparkleIcon";
 
 // ─── constants ────────────────────────────────────────────────────────────────
 
@@ -264,6 +265,7 @@ export default function IntroScreen() {
           >
             <span className="text-base leading-none" aria-hidden>🥑</span>
             Ask Avocado
+            <SparkleIcon size={13} className="shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-12" />
             <svg
               width="14" height="14" viewBox="0 0 24 24"
               fill="none" stroke="currentColor" strokeWidth="2.5"

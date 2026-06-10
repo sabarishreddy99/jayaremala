@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import SparkleIcon from "@/components/SparkleIcon";
 
 const SESSION_KEY = "avocado_popup_shown";
 const SNOOZE_KEY  = "avocado_popup_snoozed";
@@ -184,7 +185,10 @@ export default function AvocadoChatButton() {
                     "linear-gradient(135deg, var(--accent) 0%, var(--accent-secondary) 100%)",
                 }}
               >
-                Start chatting
+                <span className="flex items-center gap-1.5">
+                  <SparkleIcon size={13} className="shrink-0" />
+                  Start chatting
+                </span>
                 <svg
                   width="12" height="12" viewBox="0 0 24 24"
                   fill="none" stroke="currentColor" strokeWidth="2.5"

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { profile } from "@/data/profile";
+import SparkleIcon from "@/components/SparkleIcon";
 
 const NAV_ITEMS = [
   {
@@ -235,7 +236,10 @@ export default function MobileAvocadoFAB() {
                 </svg>
               </div>
               <div>
-                <p className="text-[11px] font-semibold text-white/90 leading-none mb-0.5">Ask Avocado</p>
+                <p className="flex items-center gap-1 text-[11px] font-semibold text-white/90 leading-none mb-0.5">
+                  <SparkleIcon size={10} className="shrink-0" />
+                  Ask Avocado
+                </p>
                 <p className="text-[10px] text-white/60 leading-none">Ask anything about Jaya</p>
               </div>
             </div>

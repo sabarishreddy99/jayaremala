@@ -16,6 +16,7 @@ import SkillsConstellation from "@/components/SkillsConstellation";
 import MobileNoBg from "@/components/MobileNoBg";
 import HeroDotGrid from "@/components/HeroDotGrid";
 import SiteVitals from "@/components/SiteVitals";
+import SparkleIcon from "@/components/SparkleIcon";
 import { experience } from "@/data/experience";
 
 export const metadata = {
@@ -264,8 +265,9 @@ export default function PortfolioHome() {
           >
             <Link
               href="/chat"
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-fg text-bg px-8 py-3.5 text-sm font-medium hover:opacity-75 transition-opacity duration-200"
+              className="group inline-flex items-center justify-center gap-2 rounded-full bg-fg text-bg px-8 py-3.5 text-sm font-medium hover:opacity-75 transition-opacity duration-200"
             >
+              <SparkleIcon size={14} className="shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-12" />
               Ask Avocado
             </Link>
             <a

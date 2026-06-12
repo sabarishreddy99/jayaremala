@@ -317,9 +317,9 @@ export default function PortfolioHome() {
             </div>
           )}
 
-          {/* Latest post — single subtle teaser, centered */}
-          {latestPost && (
-            <div className="flex justify-center mt-6">
+          {/* Latest post + LLM scrape hint — subtle teasers, centered */}
+          <div className="flex flex-col items-center gap-2 mt-6">
+            {latestPost && (
               <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 rounded-sm border border-border/60 dark:border-border-strong bg-surface dark:bg-surface-raised px-3.5 py-1.5 hover:border-border-strong transition-all">
                 <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-fg-faint shrink-0">Latest</span>
                 <span className="w-px h-3 bg-border shrink-0" />
@@ -332,8 +332,14 @@ export default function PortfolioHome() {
                   <path d="M5 12h14M12 5l7 7-7 7"/>
                 </svg>
               </Link>
-            </div>
-          )}
+            )}
+            <a href="/llms.txt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-1.5 text-fg-faint hover:text-accent transition-colors">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 animate-pulse group-hover:animate-none text-accent">
+                <path d="M4 17l6-6-6-6"/><path d="M12 19h8"/>
+              </svg>
+              <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">Want your LLM to read my work?</span>
+            </a>
+          </div>
         </Inner>
 
         </div>{/* end flex-1 content wrapper */}

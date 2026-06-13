@@ -923,24 +923,27 @@ async def ai_chat_agentic(req: ChatRequest, request: Request) -> StreamingRespon
 
     def event_stream():
         model_used: str | None = None
+        gemini_exc: Exception | None = None
         try:
-            # 1) Gemini agent first (native function-calling), if configured.
+            # 1) Gemini agent first (native function-calling), if configured. ANY
+            #    failure — quota, thought_signature, all-models-exhausted — falls over
+            #    to the OpenAI providers rather than erroring out. (step_reset clears
+            #    any tool chips emitted by a partial attempt before the next one.)
             if settings.google_api_key and _gemini_models():
+                yield f"data: {json.dumps({'step_reset': True})}\n\n"
                 try:
                     model_used = yield from _gemini_agent()
                 except Exception as exc:
-                    if not _is_capacity_error(exc):
-                        raise
-                    logger.warning("Gemini agent exhausted (%s); falling to OpenAI providers", str(exc)[:90])
+                    gemini_exc = exc
+                    logger.warning("Gemini agent failed (%s); falling to OpenAI providers", str(exc)[:120])
             # 2) Fall over to Groq / OpenRouter agents (OpenAI tool-calling).
             if model_used is None:
-                last_exc: Exception | None = None
-                tried = False
+                last_exc: Exception | None = gemini_exc
                 for entry in settings.model_chain:
                     provider, model = _split(entry)
                     if provider == "gemini":
                         continue
-                    tried = True
+                    yield f"data: {json.dumps({'step_reset': True})}\n\n"
                     try:
                         model_used = yield from _openai_agent(provider, model)
                         break
@@ -949,9 +952,7 @@ async def ai_chat_agentic(req: ChatRequest, request: Request) -> StreamingRespon
                         logger.warning("Agentic: %s:%s failed (%s); trying next", provider, model, str(exc)[:90])
                         continue
                 if model_used is None:
-                    if not tried:
-                        raise RuntimeError("No agent-capable model configured")
-                    raise last_exc or RuntimeError("All providers exhausted")
+                    raise last_exc or RuntimeError("No agent-capable model configured")
 
             # ── Done + analytics (once, whichever provider answered) ──
             latency_ms = int(trace.total_ms())

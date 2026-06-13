@@ -338,6 +338,7 @@ export default function ChatInterface() {
           try {
             const data = JSON.parse(line.slice(6));
             if (data.reset) { accumulated = ""; setStreamingContent(""); }
+            if (data.step_reset) { agentSteps.length = 0; setLiveSteps([]); }
             if (data.step) {
               const step = data.step as StepEvent;
               agentSteps.splice(0, agentSteps.length, ...toolStepReduce(agentSteps, step));

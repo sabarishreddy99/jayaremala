@@ -8,6 +8,7 @@ import time
 from typing import Iterator, Literal
 
 import google.genai as genai
+from google.genai import types
 from fastapi import APIRouter, HTTPException
 from app.core.limiter import limiter
 from fastapi.responses import StreamingResponse
@@ -17,6 +18,7 @@ from fastapi import Request
 
 from app.core.settings import settings
 from app.db import analytics
+from app.obs.trace import Trace
 from app.rag import graph as rag_graph
 from app.rag import store as rag_store
 
@@ -71,6 +73,50 @@ def _get_client() -> genai.Client:
             raise HTTPException(status_code=503, detail="GOOGLE_API_KEY is not configured")
         _genai_client = genai.Client(api_key=settings.google_api_key)
     return _genai_client
+
+
+# ── Multi-provider generation (Gemini + OpenAI-compatible free tiers) ─────────
+# Chain entries are "provider:model" (bare names default to gemini). Groq and
+# OpenRouter speak the OpenAI API, so one client type covers both; stacking their
+# free tiers behind Gemini keeps the chatbot answering after Gemini's daily quota.
+
+_openai_clients: dict[str, object] = {}
+
+_OPENAI_PROVIDERS = {
+    "groq":       ("https://api.groq.com/openai/v1", "groq_api_key"),
+    "openrouter": ("https://openrouter.ai/api/v1",   "openrouter_api_key"),
+}
+
+
+def _split(entry: str) -> tuple[str, str]:
+    """'provider:model' → (provider, model); a bare name defaults to gemini."""
+    if ":" in entry:
+        provider, _, model = entry.partition(":")
+        return provider, model
+    return "gemini", entry
+
+
+def _openai_client(provider: str):
+    client = _openai_clients.get(provider)
+    if client is None:
+        import openai
+        base_url, key_attr = _OPENAI_PROVIDERS[provider]
+        api_key = getattr(settings, key_attr, "")
+        if not api_key:
+            raise HTTPException(status_code=503, detail=f"{provider} API key is not configured")
+        client = openai.OpenAI(base_url=base_url, api_key=api_key)
+        _openai_clients[provider] = client
+    return client
+
+
+def _gemini_models() -> list[str]:
+    """Bare Gemini model names from the chain — for Gemini-only paths (agent mode)."""
+    out: list[str] = []
+    for entry in settings.model_chain:
+        provider, model = _split(entry)
+        if provider == "gemini":
+            out.append(model)
+    return out
 
 
 _GREETINGS = frozenset({
@@ -282,6 +328,15 @@ def _build_chat_prompt(req: ChatRequest, context: str, extra_blocks: dict[str, s
 
 
 def _is_capacity_error(exc: Exception) -> bool:
+    # OpenAI-compatible providers (Groq / OpenRouter) raise typed rate/5xx errors.
+    try:
+        import openai
+        if isinstance(exc, openai.RateLimitError):
+            return True
+        if isinstance(exc, openai.APIStatusError) and getattr(exc, "status_code", None) in (429, 500, 502, 503):
+            return True
+    except Exception:
+        pass
     msg = str(exc)
     return (
         "503" in msg or "429" in msg
@@ -293,18 +348,26 @@ def _is_capacity_error(exc: Exception) -> bool:
 
 
 def _generate(system: str, prompt: str) -> str:
-    client = _get_client()
-    contents = f"{system}\n\n{prompt}" if system else prompt
+    chain = settings.model_chain
     last_exc: Exception | None = None
-    for model in settings.model_chain:
+    for entry in chain:
+        provider, model = _split(entry)
         try:
-            response = client.models.generate_content(model=model, contents=contents)
-            if model != settings.gemini_model:
-                logger.info("Fell back to model: %s", model)
-            return response.text or ""
+            if provider == "gemini":
+                contents = f"{system}\n\n{prompt}" if system else prompt
+                response = _get_client().models.generate_content(model=model, contents=contents)
+                text = response.text or ""
+            else:
+                messages = ([{"role": "system", "content": system}] if system else [])
+                messages.append({"role": "user", "content": prompt})
+                resp = _openai_client(provider).chat.completions.create(model=model, messages=messages)
+                text = resp.choices[0].message.content or ""
+            if entry != chain[0]:
+                logger.info("Generated via fallback: %s", entry)
+            return text
         except Exception as exc:
             if _is_capacity_error(exc):
-                logger.warning("Model %s unavailable (%s), trying next...", model, exc)
+                logger.warning("%s unavailable (%s), trying next...", entry, exc)
                 last_exc = exc
             else:
                 raise
@@ -315,23 +378,38 @@ _RESET_SENTINEL = object()  # yielded to signal "discard partial output, retryin
 
 
 def _stream_tokens(full_prompt: str, used_model: list[str]) -> Iterator:
-    """Yields str tokens, or _RESET_SENTINEL when switching models mid-stream."""
-    client = _get_client()
+    """Yields str tokens, or _RESET_SENTINEL when switching models mid-stream.
+    Dispatches per chain entry: Gemini via google-genai, Groq/OpenRouter via the
+    OpenAI-compatible streaming API. Appends the served `provider:model` to used_model."""
+    chain = settings.model_chain
     last_exc: Exception | None = None
-    for model in settings.model_chain:
+    for entry in chain:
+        provider, model = _split(entry)
         yielded_any = False
         try:
-            for chunk in client.models.generate_content_stream(model=model, contents=full_prompt):
-                if chunk.text:
-                    yield chunk.text
-                    yielded_any = True
-            used_model.append(model)
-            if model != settings.gemini_model:
-                logger.info("Streamed via fallback model: %s", model)
+            if provider == "gemini":
+                for chunk in _get_client().models.generate_content_stream(model=model, contents=full_prompt):
+                    if chunk.text:
+                        yield chunk.text
+                        yielded_any = True
+            else:
+                stream = _openai_client(provider).chat.completions.create(
+                    model=model,
+                    messages=[{"role": "user", "content": full_prompt}],
+                    stream=True,
+                )
+                for chunk in stream:
+                    delta = chunk.choices[0].delta.content if chunk.choices else None
+                    if delta:
+                        yield delta
+                        yielded_any = True
+            used_model.append(entry)
+            if entry != chain[0]:
+                logger.info("Streamed via fallback: %s", entry)
             return
         except Exception as exc:
             if _is_capacity_error(exc):
-                logger.warning("Model %s capacity error (%s), trying next...", model, exc)
+                logger.warning("%s capacity error (%s), trying next...", entry, exc)
                 if yielded_any:
                     # Partial tokens already sent — tell the frontend to discard them
                     yield _RESET_SENTINEL
@@ -408,40 +486,45 @@ def ai_chat(req: ChatRequest) -> ChatResponse:
 @router.post("/chat/stream")
 @limiter.limit("10/minute")
 async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingResponse:
+    trace = Trace()  # glass-box: per-stage timing for the "how this answer was built" waterfall
     queries = _build_rag_queries(req)
     try:
         # 1. HyDE generation + original dense retrieval run in parallel.
         #    HyDE generates a hypothetical answer; embedding it yields higher cosine
         #    similarity to real KB chunks than the raw question (Gao et al. 2022).
-        hyde_task = asyncio.create_task(_hyde_query(req.message))
-        dense_task = asyncio.create_task(rag_store.query_batch_async(queries, n_per_query=6))
-        # 2. BM25 is sync and fast (~2ms) — run while async tasks are in flight
-        bm25 = rag_store.bm25_query(req.message, n_results=15)
-        hyde_doc, dense_result = await asyncio.gather(hyde_task, dense_task, return_exceptions=True)
-        if isinstance(dense_result, BaseException):
-            raise dense_result
-        dense: list[dict] = list(dense_result)
-        # 3. If HyDE produced a doc, embed it and prepend results so RRF rewards
-        #    chunks retrieved by both signals (accumulated score = double rank bonus).
-        if isinstance(hyde_doc, str) and hyde_doc:
-            try:
-                hyde_chunks = await rag_store.query_batch_async([hyde_doc], n_per_query=8)
-                dense = hyde_chunks + dense
-                logger.debug("HyDE retrieved %d additional chunks", len(hyde_chunks))
-            except Exception as exc:
-                logger.debug("HyDE embedding step failed (non-fatal): %s", exc)
+        with trace.span("retrieve"):
+            hyde_task = asyncio.create_task(_hyde_query(req.message))
+            dense_task = asyncio.create_task(rag_store.query_batch_async(queries, n_per_query=6))
+            # 2. BM25 is sync and fast (~2ms) — run while async tasks are in flight
+            bm25 = rag_store.bm25_query(req.message, n_results=15)
+            hyde_doc, dense_result = await asyncio.gather(hyde_task, dense_task, return_exceptions=True)
+            if isinstance(dense_result, BaseException):
+                raise dense_result
+            dense: list[dict] = list(dense_result)
+            # 3. If HyDE produced a doc, embed it and prepend results so RRF rewards
+            #    chunks retrieved by both signals (accumulated score = double rank bonus).
+            if isinstance(hyde_doc, str) and hyde_doc:
+                try:
+                    hyde_chunks = await rag_store.query_batch_async([hyde_doc], n_per_query=8)
+                    dense = hyde_chunks + dense
+                    logger.debug("HyDE retrieved %d additional chunks", len(hyde_chunks))
+                except Exception as exc:
+                    logger.debug("HyDE embedding step failed (non-fatal): %s", exc)
         # 4. Hybrid merge via Reciprocal Rank Fusion
-        merged = rag_store.rrf_merge(dense, bm25, k=60, top_n=20)
+        with trace.span("rrf"):
+            merged = rag_store.rrf_merge(dense, bm25, k=60, top_n=20)
         # 5. Cross-encoder rerank → top 4 (fewer context tokens = faster first token)
-        top_chunks = await rag_store.rerank_cross_encoder_async(req.message, merged, top_n=4)
+        with trace.span("rerank"):
+            top_chunks = await rag_store.rerank_cross_encoder_async(req.message, merged, top_n=4)
         # 6. Graph expansion — pull in 1 related doc from the merged pool
-        graph_extras = rag_graph.expand_context(
-            retrieved_ids=[c["id"] for c in top_chunks],
-            rrf_pool=merged,
-            max_expansion=1,
-        )
-        if graph_extras:
-            top_chunks = top_chunks + graph_extras
+        with trace.span("graph"):
+            graph_extras = rag_graph.expand_context(
+                retrieved_ids=[c["id"] for c in top_chunks],
+                rrf_pool=merged,
+                max_expansion=1,
+            )
+            if graph_extras:
+                top_chunks = top_chunks + graph_extras
     except Exception as exc:
         logger.warning("Hybrid RAG pipeline failed, falling back to simple retrieval: %s", exc)
         top_chunks = await rag_store.query_multi_async(queries)
@@ -474,7 +557,6 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
                 from app.rag.ingest import DATA_DIR
                 signals_path = DATA_DIR / "inbox_signals.json"
                 if signals_path.exists():
-                    from datetime import timezone as _tz
                     import time as _time
                     age_days = (_time.time() - signals_path.stat().st_mtime) / 86400
                     if age_days < 7:
@@ -519,23 +601,34 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
     # Prefer the stable per-device UUID so unique chat users counts devices, not IPs.
     identifier = request.headers.get("x-visitor-id", "").strip() or ip
     analytics.record_question(req.message)
-    req_start = time.perf_counter()
 
     def event_stream():
         used_model: list[str] = []
         try:
+            llm_start = time.perf_counter()
             for item in _stream_tokens(full_prompt, used_model):
                 if item is _RESET_SENTINEL:
                     yield f"data: {json.dumps({'reset': True})}\n\n"
                 else:
                     yield f"data: {json.dumps({'token': item})}\n\n"
+            trace.add("llm", (time.perf_counter() - llm_start) * 1000)
             model_used = used_model[0] if used_model else settings.gemini_model
-            latency_ms = int((time.perf_counter() - req_start) * 1000)
+            latency_ms = int(trace.total_ms())
             row_id = analytics.record(identifier, model_used, latency_ms)
-            done_payload: dict = {"done": True, "sources": sources, "model": model_used}
+            stages = trace.as_list()
+            done_payload: dict = {
+                "done": True, "sources": sources, "model": model_used,
+                "trace": stages, "latency_ms": latency_ms,
+            }
             if show_lead_capture:
                 done_payload["lead_capture_prompt"] = True
             yield f"data: {json.dumps(done_payload)}\n\n"
+            # Persist the stage breakdown + geo off the hot path
+            threading.Thread(
+                target=analytics.record_stage_timings,
+                args=(row_id, stages),
+                daemon=True,
+            ).start()
             if row_id:
                 threading.Thread(
                     target=analytics.geo_update_sync,
@@ -546,6 +639,337 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
             logger.error("Streaming error: %s", exc)
             error_code = "quota_exhausted" if _is_capacity_error(exc) else "stream_error"
             yield f"data: {json.dumps({'error': error_code})}\n\n"
+
+    return StreamingResponse(
+        event_stream(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+# ── /ai/chat/agentic (visible tool-calling agent) ────────────────────────────
+
+AGENT_SYSTEM_PROMPT = SYSTEM_PROMPT + (
+    "\n\nYOU HAVE TOOLS. You are an agent — decide which tools to call to answer.\n"
+    "- Use `search_knowledge` for any open-ended question about Jaya's background.\n"
+    "- Use the `get_*` tools (get_experience, get_projects, get_project, get_skills, "
+    "get_education, get_now, get_resume, get_profile) for specific structured facts.\n"
+    "- Use `check_availability` for scheduling / 'is he available' questions.\n"
+    "Call tools before answering; ground every claim in their results. Once you have "
+    "enough, give a concise final answer. Do not mention the tools by name to the user."
+)
+
+_GEMINI_TYPE = {
+    "string": "STRING", "integer": "INTEGER", "number": "NUMBER",
+    "boolean": "BOOLEAN", "object": "OBJECT", "array": "ARRAY",
+}
+
+_gemini_tools_cache: list | None = None
+
+
+def _json_schema_to_gemini(js: dict):
+    props = {
+        k: types.Schema(
+            type=getattr(types.Type, _GEMINI_TYPE.get(v.get("type", "string"), "STRING")),
+            description=v.get("description"),
+        )
+        for k, v in (js.get("properties") or {}).items()
+    }
+    return types.Schema(
+        type=types.Type.OBJECT,
+        properties=props or None,
+        required=(js.get("required") or None),
+    )
+
+
+def _gemini_tools() -> list:
+    """Build (once) the Gemini Tool declaration list from the shared registry."""
+    global _gemini_tools_cache
+    if _gemini_tools_cache is None:
+        from app.agent.tools import TOOLS
+        decls = [
+            types.FunctionDeclaration(
+                name=t.name, description=t.description,
+                parameters=_json_schema_to_gemini(t.parameters),
+            )
+            for t in TOOLS
+        ]
+        _gemini_tools_cache = [types.Tool(function_declarations=decls)]
+    return _gemini_tools_cache
+
+
+_openai_tools_cache: list | None = None
+
+
+def _openai_tools() -> list:
+    """Same registry in OpenAI tool-calling shape (for Groq / OpenRouter agent mode)."""
+    global _openai_tools_cache
+    if _openai_tools_cache is None:
+        from app.agent.tools import TOOLS
+        _openai_tools_cache = [
+            {"type": "function", "function": {
+                "name": t.name, "description": t.description, "parameters": t.parameters,
+            }}
+            for t in TOOLS
+        ]
+    return _openai_tools_cache
+
+
+def _is_thinking_model(model: str) -> bool:
+    """Gemini 2.5 / flash-latest / pro are thinking models. Manual (non-automatic)
+    function-calling with thinking on requires round-tripping a `thought_signature`
+    on every function call; we disable thinking instead (plenty for tool selection)
+    so those signatures are never produced or required. 2.0 / lite models are not
+    thinking models and must NOT receive a thinking_config."""
+    m = model.lower()
+    return ("2.5" in m) or ("flash-latest" in m) or ("pro" in m) or ("gemini-3" in m)
+
+
+def _agent_config(model: str, with_tools: bool):
+    kwargs: dict = {"system_instruction": AGENT_SYSTEM_PROMPT}
+    if with_tools:
+        kwargs["tools"] = _gemini_tools()
+        kwargs["automatic_function_calling"] = types.AutomaticFunctionCallingConfig(disable=True)
+    if _is_thinking_model(model):
+        kwargs["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+    return types.GenerateContentConfig(**kwargs)
+
+
+def _is_deterministic_skip(exc: Exception) -> bool:
+    """Errors that will recur identically for this model every round, so the model
+    should be blocked for the rest of the request instead of retried each round:
+    a missing thought_signature (the model demands signatures we can't supply in a
+    manual tool loop) or a non-existent model id (404)."""
+    msg = str(exc).lower()
+    return (
+        "thought_signature" in msg
+        or ("404" in msg and "not_found" in msg)
+        or "is not found for api version" in msg
+    )
+
+
+_MAX_TOOL_ROUNDS = 4
+
+
+@router.post("/chat/agentic")
+@limiter.limit("8/minute")
+async def ai_chat_agentic(req: ChatRequest, request: Request) -> StreamingResponse:
+    """Gemini function-calling agent over the shared tool registry. Streams visible
+    `step` events as each tool runs, then the final answer tokens, then a `done`
+    payload with the per-stage trace. The classic /chat/stream stays the default;
+    this is opt-in 'Agent mode'."""
+    from app.agent.tools import TOOLS_BY_NAME
+
+    ip = (
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or request.headers.get("x-real-ip", "").strip()
+        or (request.client.host if request.client else "unknown")
+    )
+    identifier = request.headers.get("x-visitor-id", "").strip() or ip
+    analytics.record_question(req.message)
+
+    # Shared per-request state used by both provider agents.
+    trace = Trace()
+    sources: list[str] = []
+
+    def _emit_tool(name: str, args: dict):
+        """Run one tool, streaming its running/done step events; return the result.
+        Shared by the Gemini and OpenAI agents (the visible 'steps' are identical)."""
+        yield f"data: {json.dumps({'step': {'tool': name, 'status': 'running'}})}\n\n"
+        t0 = time.perf_counter()
+        tool = TOOLS_BY_NAME.get(name)
+        try:
+            result = tool.run(**args) if tool else {"error": f"unknown tool {name}"}
+        except Exception as exc:
+            result = {"error": str(exc)}
+        ms = (time.perf_counter() - t0) * 1000
+        trace.add(f"tool:{name}", ms)
+        if name == "search_knowledge" and isinstance(result, list):
+            sources.extend(f"{c.get('type')}:{c.get('id')}" for c in result if isinstance(c, dict))
+        yield f"data: {json.dumps({'step': {'tool': name, 'status': 'done', 'ms': round(ms, 1)}})}\n\n"
+        return result
+
+    # ── Gemini agent (native function-calling) ──────────────────────────────
+    contents: list = []
+    for m in req.messages[-8:]:
+        role = "user" if m.role == "user" else "model"
+        contents.append(types.Content(role=role, parts=[types.Part(text=m.content)]))
+    contents.append(types.Content(role="user", parts=[types.Part(text=req.message)]))
+
+    # Pin to the model that served the previous round; block models that fail
+    # deterministically (404 / thought_signature) for the rest of the request.
+    preferred: list[str | None] = [None]
+    blocked: set[str] = set()
+
+    def _ordered_chain() -> list[str]:
+        chain = _gemini_models()
+        ordered = ([preferred[0]] + [m for m in chain if m != preferred[0]]) if preferred[0] else list(chain)
+        return [m for m in ordered if m not in blocked]
+
+    def _should_fall_through(model: str, exc: Exception) -> bool:
+        if _is_deterministic_skip(exc):
+            logger.warning("Agentic: blocking %s for this request (%s)", model, str(exc)[:120])
+            blocked.add(model)
+            return True
+        if _is_capacity_error(exc):
+            logger.warning("Agentic: %s unavailable (%s); trying next", model, str(exc)[:80])
+            return True
+        return False
+
+    def _gemini_generate(used: list[str]):
+        last_exc: Exception | None = None
+        for model in _ordered_chain():
+            try:
+                resp = _get_client().models.generate_content(
+                    model=model, contents=contents, config=_agent_config(model, with_tools=True)
+                )
+                used.append(model)
+                preferred[0] = model
+                return resp
+            except Exception as exc:
+                last_exc = exc
+                if _should_fall_through(model, exc):
+                    continue
+                raise
+        raise last_exc or RuntimeError("All models exhausted")
+
+    def _gemini_agent():
+        for _ in range(_MAX_TOOL_ROUNDS):
+            used: list[str] = []
+            resp = _gemini_generate(used)
+            cand = resp.candidates[0] if resp.candidates else None
+            parts = cand.content.parts if (cand and cand.content and cand.content.parts) else []
+            fcs = [p.function_call for p in parts if getattr(p, "function_call", None)]
+            if not fcs:
+                break
+            contents.append(cand.content)
+            tool_parts = []
+            for fc in fcs:
+                result = yield from _emit_tool(fc.name, dict(fc.args or {}))
+                tool_parts.append(types.Part.from_function_response(name=fc.name, response={"result": result}))
+            contents.append(types.Content(role="tool", parts=tool_parts))
+        # Final answer — tools off forces a text response; stream it.
+        llm_start = time.perf_counter()
+        streamed = False
+        last_exc: Exception | None = None
+        final_model = preferred[0] or settings.gemini_model
+        for model in _ordered_chain():
+            try:
+                for chunk in _get_client().models.generate_content_stream(
+                    model=model, contents=contents, config=_agent_config(model, with_tools=False)
+                ):
+                    if chunk.text:
+                        streamed = True
+                        yield f"data: {json.dumps({'token': chunk.text})}\n\n"
+                final_model = model
+                preferred[0] = model
+                break
+            except Exception as exc:
+                last_exc = exc
+                if _should_fall_through(model, exc):
+                    if streamed:
+                        yield f"data: {json.dumps({'reset': True})}\n\n"
+                        streamed = False
+                    continue
+                raise
+        if not streamed and last_exc:
+            raise last_exc
+        trace.add("llm", (time.perf_counter() - llm_start) * 1000)
+        return f"gemini:{final_model}"
+
+    # ── OpenAI-compatible agent (Groq / OpenRouter) ─────────────────────────
+    def _openai_agent(provider: str, model: str):
+        oclient = _openai_client(provider)
+        messages: list = [{"role": "system", "content": AGENT_SYSTEM_PROMPT}]
+        for m in req.messages[-8:]:
+            messages.append({"role": "user" if m.role == "user" else "assistant", "content": m.content})
+        messages.append({"role": "user", "content": req.message})
+        for _ in range(_MAX_TOOL_ROUNDS):
+            resp = oclient.chat.completions.create(
+                model=model, messages=messages, tools=_openai_tools(), tool_choice="auto"
+            )
+            msg = resp.choices[0].message
+            tcs = msg.tool_calls or []
+            if not tcs:
+                break
+            messages.append({
+                "role": "assistant",
+                "content": msg.content or None,
+                "tool_calls": [
+                    {"id": tc.id, "type": "function",
+                     "function": {"name": tc.function.name, "arguments": tc.function.arguments}}
+                    for tc in tcs
+                ],
+            })
+            for tc in tcs:
+                try:
+                    args = json.loads(tc.function.arguments or "{}")
+                except Exception:
+                    args = {}
+                result = yield from _emit_tool(tc.function.name, args)
+                messages.append({
+                    "role": "tool", "tool_call_id": tc.id,
+                    "content": json.dumps(result, default=str)[:8000],
+                })
+        # Final answer — stream it.
+        llm_start = time.perf_counter()
+        stream = oclient.chat.completions.create(model=model, messages=messages, stream=True)
+        for chunk in stream:
+            delta = chunk.choices[0].delta.content if chunk.choices else None
+            if delta:
+                yield f"data: {json.dumps({'token': delta})}\n\n"
+        trace.add("llm", (time.perf_counter() - llm_start) * 1000)
+        return f"{provider}:{model}"
+
+    def event_stream():
+        model_used: str | None = None
+        try:
+            # 1) Gemini agent first (native function-calling), if configured.
+            if settings.google_api_key and _gemini_models():
+                try:
+                    model_used = yield from _gemini_agent()
+                except Exception as exc:
+                    if not _is_capacity_error(exc):
+                        raise
+                    logger.warning("Gemini agent exhausted (%s); falling to OpenAI providers", str(exc)[:90])
+            # 2) Fall over to Groq / OpenRouter agents (OpenAI tool-calling).
+            if model_used is None:
+                last_exc: Exception | None = None
+                tried = False
+                for entry in settings.model_chain:
+                    provider, model = _split(entry)
+                    if provider == "gemini":
+                        continue
+                    tried = True
+                    try:
+                        model_used = yield from _openai_agent(provider, model)
+                        break
+                    except Exception as exc:
+                        last_exc = exc
+                        logger.warning("Agentic: %s:%s failed (%s); trying next", provider, model, str(exc)[:90])
+                        continue
+                if model_used is None:
+                    if not tried:
+                        raise RuntimeError("No agent-capable model configured")
+                    raise last_exc or RuntimeError("All providers exhausted")
+
+            # ── Done + analytics (once, whichever provider answered) ──
+            latency_ms = int(trace.total_ms())
+            row_id = analytics.record(identifier, model_used, latency_ms)
+            stages = trace.as_list()
+            done_payload = {
+                "done": True, "agent": True,
+                "sources": list(dict.fromkeys(sources)),
+                "model": model_used, "trace": stages, "latency_ms": latency_ms,
+            }
+            yield f"data: {json.dumps(done_payload)}\n\n"
+            threading.Thread(target=analytics.record_stage_timings, args=(row_id, stages), daemon=True).start()
+            if row_id:
+                threading.Thread(target=analytics.geo_update_sync, args=("interactions", row_id, ip), daemon=True).start()
+        except Exception as exc:
+            logger.error("Agentic streaming error: %s", exc)
+            code = "quota_exhausted" if _is_capacity_error(exc) else "stream_error"
+            yield f"data: {json.dumps({'error': code})}\n\n"
 
     return StreamingResponse(
         event_stream(),

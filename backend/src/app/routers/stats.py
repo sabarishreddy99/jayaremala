@@ -60,6 +60,49 @@ def get_overview() -> dict:
     }
 
 
+@router.get("/system")
+def get_system() -> dict:
+    """Public observability snapshot for the /system dashboard: end-to-end latency
+    percentiles, per-stage RAG pipeline timing, model mix + fallback rate, request
+    volume trend, knowledge-base size, and live component health.
+    """
+    models = analytics.get_model_breakdown("all")
+    total_model = sum(m["count"] for m in models) or 1
+    primary = settings.gemini_model
+    fallback = sum(m["count"] for m in models if m["model"] != primary)
+
+    health = {"api": "ok", "analytics_db": "ok", "rag": "ok"}
+    try:
+        with analytics._connect() as c:
+            c.execute("SELECT 1")
+    except Exception:
+        health["analytics_db"] = "degraded"
+    try:
+        from app.rag.store import get_collection
+        kb_docs = get_collection().count()
+    except Exception:
+        health["rag"] = "degraded"
+        kb_docs = 0
+
+    return {
+        "latency": analytics.get_latency_percentiles("all"),
+        "stages": analytics.get_stage_latency_averages("all"),
+        "models": models,
+        "fallback_rate_pct": round(fallback / total_model * 100, 1),
+        "primary_model": primary,
+        "model_chain": settings.model_chain,
+        "volume": analytics.get_daily_counts("interactions", 30),
+        "totals": analytics.get_stats("all"),
+        "kb_docs": kb_docs,
+        "health": {"status": "ok" if all(v == "ok" for v in health.values()) else "degraded", **health},
+        "retrieval": {
+            "embed_model": "BAAI/bge-base-en-v1.5",
+            "embed_dim": 768,
+            "method": "hybrid dense + BM25 → Reciprocal Rank Fusion (k=60) → 1-hop graph expansion",
+        },
+    }
+
+
 @router.post("/visit", status_code=204)
 async def record_visit(
     request: Request,

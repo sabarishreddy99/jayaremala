@@ -101,6 +101,8 @@ export async function GET() {
     `- [Gallery](${BASE}/gallery): visual log of achievements and milestones`,
     `- [Quotes](${BASE}/quotes): words that shaped how I think and build`,
     `- [Chat with Avocado](${BASE}/chat): RAG chatbot that answers recruiter questions about my work`,
+    `- [MCP server](${BASE}/mcp): connect your own LLM (Claude/Cursor) to read-only portfolio tools`,
+    `- [System](${BASE}/system): live observability — latency percentiles, RAG pipeline timing, model fallback`,
   ].join("\n");
 
   const blogSection = posts.length

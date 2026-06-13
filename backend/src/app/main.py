@@ -19,8 +19,18 @@ from app.routers.ai import router as ai_router
 from app.routers.blog import router as blog_router
 from app.routers.content import router as content_router
 from app.routers.stats import router as stats_router
+from app.routers.tools import router as tools_router
 
 logger = logging.getLogger(__name__)
+
+# Build the public MCP server once at import. Non-fatal if fastmcp is missing —
+# the rest of the API keeps working.
+try:
+    from app.mcp_server import build_mcp_app
+    _mcp_app = build_mcp_app(path="/")
+except Exception as exc:  # noqa: BLE001
+    logger.warning("MCP server unavailable (non-fatal): %s", exc)
+    _mcp_app = None
 
 
 def _background_startup() -> None:
@@ -52,7 +62,13 @@ async def lifespan(app: FastAPI):
     except Exception as exc:
         logger.error("content.init_db failed (non-fatal): %s", exc)
     threading.Thread(target=_background_startup, daemon=True).start()
-    yield
+    # The MCP streamable-HTTP app manages its own session lifespan — enter it so
+    # the mounted /mcp endpoint works.
+    if _mcp_app is not None:
+        async with _mcp_app.lifespan(app):
+            yield
+    else:
+        yield
 
 
 app = FastAPI(title="Portfolio API", version="0.1.0", lifespan=lifespan)
@@ -75,6 +91,11 @@ app.include_router(ai_router)
 app.include_router(blog_router)
 app.include_router(content_router)
 app.include_router(stats_router)
+app.include_router(tools_router)
+
+# Mount the public MCP server (read-only portfolio tools over streamable-HTTP).
+if _mcp_app is not None:
+    app.mount("/mcp", _mcp_app)
 
 
 @app.get("/health")

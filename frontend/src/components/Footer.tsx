@@ -131,6 +131,22 @@ export default function Footer() {
               Sitemap
             </a>
             <Link
+              href="/mcp"
+              title="Model Context Protocol server"
+              className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
+                         hover:text-fg transition-colors duration-200"
+            >
+              MCP
+            </Link>
+            <Link
+              href="/system"
+              title="Live system observability"
+              className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
+                         hover:text-fg transition-colors duration-200"
+            >
+              System
+            </Link>
+            <Link
               href="/chat"
               className="font-mono text-[11px] tracking-[0.06em] text-fg-muted
                          hover:text-fg transition-colors duration-200"

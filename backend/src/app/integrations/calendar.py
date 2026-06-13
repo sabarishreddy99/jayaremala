@@ -2,9 +2,20 @@
 from __future__ import annotations
 
 import logging
+import time
+from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import TimeoutError as _FutureTimeout
 from datetime import datetime, timedelta, timezone
 
 logger = logging.getLogger(__name__)
+
+# Availability summary is expensive (Freebusy API + a Gemini phrasing call) but
+# changes slowly, so cache the final sentence and bound the worst-case wait.
+_SUMMARY_TTL_SECONDS = 300        # 5 minutes
+_SUMMARY_TIMEOUT_SECONDS = 6.0    # cap a pathological hang; serve stale/empty instead
+_summary_cache: tuple[float, str] | None = None
+_summary_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="cal-avail")
+_summary_inflight: Future | None = None
 
 # Working hours (9 AM – 6 PM) in the configured calendar timezone
 WORK_HOUR_START = 9
@@ -37,7 +48,6 @@ def get_free_slots(days_ahead: int = 7) -> list[dict]:
         import pytz
         tz = pytz.timezone(tz_name)
     except Exception:
-        from datetime import timezone as _tz
         tz = timezone.utc
 
     now = datetime.now(tz)
@@ -111,25 +121,62 @@ def get_free_slots(days_ahead: int = 7) -> list[dict]:
     return free_slots
 
 
-def get_availability_summary() -> str:
-    """Return a natural-language sentence about upcoming free slots, or empty string on failure."""
-    try:
-        slots = get_free_slots()
-        if not slots:
-            return ""
-
-        from app.routers.ai import _generate
-        slots_text = "\n".join(
-            f"- {s['date']}: {s['start']} – {s['end']} {s['tz']}"
-            for s in slots[:5]
-        )
-        prompt = (
-            f"Write one concise sentence (max 30 words) summarizing these open calendar slots for Jaya:\n"
-            f"{slots_text}\n\n"
-            "Format: 'Jaya has openings [natural description]. You can book at [booking_url].' "
-            "Use the placeholder [booking_url] literally — do not invent a URL."
-        )
-        return _generate("", prompt).strip()
-    except Exception as exc:
-        logger.warning("get_availability_summary failed: %s", exc)
+def _compute_availability_summary() -> str:
+    """Freebusy lookup + LLM phrasing — the expensive part, run behind the cache."""
+    slots = get_free_slots()
+    if not slots:
         return ""
+
+    from app.routers.ai import _generate
+    slots_text = "\n".join(
+        f"- {s['date']}: {s['start']} – {s['end']} {s['tz']}"
+        for s in slots[:5]
+    )
+    prompt = (
+        f"Write one concise sentence (max 30 words) summarizing these open calendar slots for Jaya:\n"
+        f"{slots_text}\n\n"
+        "Format: 'Jaya has openings [natural description]. You can book at [booking_url].' "
+        "Use the placeholder [booking_url] literally — do not invent a URL."
+    )
+    return _generate("", prompt).strip()
+
+
+def _store_summary(fut: Future) -> None:
+    """Cache the computed summary when the background task finishes."""
+    global _summary_cache
+    try:
+        _summary_cache = (time.time(), fut.result())
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("availability compute failed: %s", exc)
+
+
+def get_availability_summary() -> str:
+    """Natural-language sentence about upcoming free slots, or "" on failure.
+
+    Cached for 5 minutes (the slots barely change), and bounded by a 6s timeout.
+    The expensive work (Freebusy API + Gemini phrasing) runs in a background
+    worker whose result populates the cache, so a slow first call returns ""
+    quickly and the next call within the window is instant — instead of blocking
+    the chat for ~7s every time. Concurrent callers share one in-flight task.
+    """
+    global _summary_inflight
+    now = time.time()
+    if _summary_cache and now - _summary_cache[0] < _SUMMARY_TTL_SECONDS:
+        return _summary_cache[1]
+
+    fut = _summary_inflight
+    if fut is None or fut.done():
+        fut = _summary_executor.submit(_compute_availability_summary)
+        fut.add_done_callback(_store_summary)
+        _summary_inflight = fut
+
+    try:
+        return fut.result(timeout=_SUMMARY_TIMEOUT_SECONDS)
+    except _FutureTimeout:
+        logger.warning(
+            "availability summary timed out (%.1fs); serving cached/empty, cache will self-warm",
+            _SUMMARY_TIMEOUT_SECONDS,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("availability summary failed: %s", exc)
+    return _summary_cache[1] if _summary_cache else ""

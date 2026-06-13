@@ -11,6 +11,8 @@ import LoadingGame from "./LoadingGame";
 import NavSuggestions, { detectNavLinks, sourcesToNavLinks, mergeNavLinks, NavLink } from "./NavSuggestions";
 import RichCards from "./RichCards";
 import LeadCaptureCard from "./LeadCaptureCard";
+import AnswerTrace, { TraceStage } from "./AnswerTrace";
+import AgentSteps, { StepEvent } from "./AgentSteps";
 
 export interface Message {
   role: "user" | "assistant";
@@ -18,6 +20,10 @@ export interface Message {
   navLinks?: NavLink[];
   followUps?: string[];
   showLeadCapture?: boolean;
+  trace?: TraceStage[];
+  traceModel?: string;
+  latencyMs?: number;
+  steps?: StepEvent[];
 }
 
 function getGeminiResetInfo(): { time: string; countdown: string } {
@@ -103,6 +109,20 @@ const PROMPTS_BY_PERSONA: Record<PersonaId, Prompt[]> = {
 };
 
 const PERSONA_KEY = "avocado_persona";
+const AGENT_MODE_KEY = "avocado_agent_mode";
+
+function toolStepReduce(arr: StepEvent[], step: StepEvent): StepEvent[] {
+  // Collapse the running→done pair for a tool into a single chip.
+  if (step.status === "running") return [...arr, { tool: step.tool, status: "running" }];
+  for (let i = arr.length - 1; i >= 0; i--) {
+    if (arr[i].tool === step.tool && arr[i].status === "running") {
+      const copy = [...arr];
+      copy[i] = { tool: step.tool, status: "done", ms: step.ms };
+      return copy;
+    }
+  }
+  return [...arr, { tool: step.tool, status: "done", ms: step.ms }];
+}
 
 export default function ChatInterface() {
   const searchParams = useSearchParams();
@@ -123,6 +143,11 @@ export default function ChatInterface() {
   const [persona, setPersona] = useState<PersonaId | null>(null);
   const personaRef = useRef<PersonaId | null>(null);
   personaRef.current = persona;
+  const [agentMode, setAgentMode] = useState(false);
+  const agentModeRef = useRef(false);
+  agentModeRef.current = agentMode;
+  // Live tool-call steps for the in-flight agent response
+  const [liveSteps, setLiveSteps] = useState<StepEvent[]>([]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -134,6 +159,7 @@ export default function ChatInterface() {
     // Restore previously-chosen persona
     const saved = (typeof localStorage !== "undefined" && localStorage.getItem(PERSONA_KEY)) as PersonaId | null;
     if (saved && PROMPTS_BY_PERSONA[saved]) setPersona(saved);
+    try { if (localStorage.getItem(AGENT_MODE_KEY) === "1") setAgentMode(true); } catch { /* storage blocked */ }
     return () => controller.abort();
   }, []);
 
@@ -248,20 +274,24 @@ export default function ChatInterface() {
     if (messages.length > 1) setIntroVisible(false);
   }, [messages.length]);
 
-  async function handleSend(text: string) {
+  async function handleSend(text: string, forceClassic = false) {
+    const useAgent = agentModeRef.current && !forceClassic;
+    const endpoint = useAgent ? "/ai/chat/agentic" : "/ai/chat/stream";
     const userMsg: Message = { role: "user", content: text };
     const nextMessages = [...messagesRef.current, userMsg];
     setMessages(nextMessages);
     setStreaming(true);
     setStreamingContent("");
+    setLiveSteps([]);
     abortRef.current = new AbortController();
 
     setPendingRetry(null);
     setDynamicFollowUps([]);
     setFollowUpsLoading(false);
+    const agentSteps: StepEvent[] = [];
     try {
       const vid = getOrCreateVisitorId();
-      const res = await fetch(`${API_BASE_URL}/ai/chat/stream`, {
+      const res = await fetch(`${API_BASE_URL}${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -296,6 +326,9 @@ export default function ChatInterface() {
       let ragSources: string[] = [];
       let sseError: string | null = null;
       let leadCapturePrompt = false;
+      let traceStages: TraceStage[] = [];
+      let traceModel: string | undefined;
+      let latencyMs: number | undefined;
 
       outer: while (true) {
         const { done, value } = await reader.read();
@@ -305,12 +338,19 @@ export default function ChatInterface() {
           try {
             const data = JSON.parse(line.slice(6));
             if (data.reset) { accumulated = ""; setStreamingContent(""); }
+            if (data.step) {
+              const step = data.step as StepEvent;
+              agentSteps.splice(0, agentSteps.length, ...toolStepReduce(agentSteps, step));
+              setLiveSteps([...agentSteps]);
+            }
             if (data.token) { accumulated += data.token; setStreamingContent(accumulated); }
             if (data.error) { sseError = data.error as string; break outer; }
             if (data.done) {
-              if (data.model) { setActiveModel(data.model); saveModel(data.model as string); }
+              if (data.model) { setActiveModel(data.model); saveModel(data.model as string); traceModel = data.model as string; }
               if (data.sources) ragSources = data.sources as string[];
               if (data.lead_capture_prompt) leadCapturePrompt = true;
+              if (Array.isArray(data.trace)) traceStages = data.trace as TraceStage[];
+              if (typeof data.latency_ms === "number") latencyMs = data.latency_ms;
               break outer;
             }
           } catch { /* partial chunk */ }
@@ -346,6 +386,10 @@ export default function ChatInterface() {
         navLinks,
         followUps: [],
         showLeadCapture: leadCapturePrompt,
+        trace: traceStages.length ? traceStages : undefined,
+        traceModel,
+        latencyMs,
+        steps: agentSteps.length ? agentSteps : undefined,
       };
       const finalMessages = [...nextMessages, assistantMsg];
       setMessages(finalMessages);
@@ -584,6 +628,11 @@ export default function ChatInterface() {
             <div key={i}>
               <ChatMessage message={m} />
               {/* Inline rich cards — projects mentioned in the reply */}
+              {m.role === "assistant" && m.steps && m.steps.length > 0 && m !== WELCOME && (
+                <div className="ml-10">
+                  <AgentSteps steps={m.steps} />
+                </div>
+              )}
               {m.role === "assistant" && m !== WELCOME && (
                 <div className="ml-10">
                   <RichCards content={m.content} />
@@ -592,6 +641,12 @@ export default function ChatInterface() {
               {m.role === "assistant" && m.navLinks && m.navLinks.length > 0 && m !== WELCOME && (
                 <div className="ml-10">
                   <NavSuggestions links={m.navLinks} />
+                </div>
+              )}
+              {/* Glass-box: how this answer was built (per-stage RAG waterfall) */}
+              {m.role === "assistant" && m.trace && m.trace.length > 0 && m !== WELCOME && (
+                <div className="ml-10">
+                  <AnswerTrace trace={m.trace} model={m.traceModel} latencyMs={m.latencyMs} />
                 </div>
               )}
               {m.role === "assistant" && m.showLeadCapture && !streaming && (
@@ -667,7 +722,14 @@ export default function ChatInterface() {
             </div>
           )}
 
-          {streaming && !streamingContent && <LoadingGame />}
+          {/* Live agent tool-call steps while the agent works */}
+          {streaming && liveSteps.length > 0 && (
+            <div className="ml-10">
+              <AgentSteps steps={liveSteps} />
+            </div>
+          )}
+
+          {streaming && !streamingContent && liveSteps.length === 0 && <LoadingGame />}
 
           {streaming && streamingContent && (
             <ChatMessage
@@ -722,14 +784,32 @@ export default function ChatInterface() {
                 "Powered by Gemini"
               )}
             </span>
-            {messages.length > 1 && (
+            <div className="flex items-center gap-2.5">
               <button
-                onClick={handleClear}
-                className="text-[11px] text-fg-faint hover:text-fg-muted transition-colors"
+                onClick={() => {
+                  const next = !agentMode;
+                  setAgentMode(next);
+                  try { localStorage.setItem(AGENT_MODE_KEY, next ? "1" : "0"); } catch { /* storage blocked */ }
+                }}
+                title="Agent mode — Avocado picks tools per question and shows its steps live"
+                aria-pressed={agentMode}
+                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
+                  agentMode
+                    ? "border-accent bg-accent/10 text-accent"
+                    : "border-border text-fg-faint hover:text-fg-muted"
+                }`}
               >
-                Clear
+                <span aria-hidden>⚡</span> Agent{agentMode ? " · on" : ""}
               </button>
-            )}
+              {messages.length > 1 && (
+                <button
+                  onClick={handleClear}
+                  className="text-[11px] text-fg-faint hover:text-fg-muted transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Experience rating — contextual, appears only after 2+ exchanges */}

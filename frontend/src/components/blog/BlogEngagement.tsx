@@ -128,7 +128,15 @@ export default function BlogEngagement({ slug }: { slug: string }) {
   const atMax = userClapsTotal >= MAX_USER_CLAPS;
 
   return (
-    <div className="flex items-center gap-6 py-6 border-t border-b border-border-subtle my-8 select-none">
+    <>
+    {/* Editorial end-mark — a quiet fleuron that closes the piece before engagement */}
+    <div aria-hidden className="mt-12 flex items-center justify-center gap-3 text-fg-faint">
+      <span className="h-px w-12 bg-gradient-to-r from-transparent to-border" />
+      <span className="text-base leading-none font-[family-name:var(--font-garamond)] text-accent/70">❦</span>
+      <span className="h-px w-12 bg-gradient-to-l from-transparent to-border" />
+    </div>
+
+    <div className="flex items-center gap-6 py-6 border-b border-border-subtle mt-4 mb-8 select-none">
 
       {/* Clap button */}
       <div className="flex flex-col items-center gap-1.5">
@@ -225,5 +233,6 @@ export default function BlogEngagement({ slug }: { slug: string }) {
       </div>
 
     </div>
+    </>
   );
 }

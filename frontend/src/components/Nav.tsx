@@ -43,6 +43,14 @@ const links = [
     href: "/now",        label: "Now",
     icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>,
   },
+  {
+    href: "/mcp",        label: "MCP",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22v-5"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/><rect x="6" y="8" width="12" height="6" rx="2"/><path d="M9 14v3M15 14v3"/></svg>,
+  },
+  {
+    href: "/system",     label: "System",
+    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+  },
 ];
 
 export default function Nav() {

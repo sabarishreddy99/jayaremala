@@ -31,6 +31,24 @@ export function BlogImage({ src, alt, caption }: { src: string; alt: string; cap
   return <BlogImageClient src={src} alt={alt} caption={caption} />;
 }
 
+/* ── PullQuote — large editorial inline quote, optional attribution ── */
+export function PullQuote({ children, author }: { children: React.ReactNode; author?: string }) {
+  return (
+    <figure className="not-prose my-10 sm:my-12 text-center px-2 sm:px-6">
+      <blockquote className="relative font-[family-name:var(--font-garamond)] italic tracking-tight text-balance text-fg text-[1.45rem] sm:text-[1.75rem] leading-[1.35]">
+        <span aria-hidden className="absolute -left-1 -top-4 sm:-left-3 text-accent/25 text-5xl leading-none select-none font-[family-name:var(--font-garamond)]">&ldquo;</span>
+        {children}
+      </blockquote>
+      {author && (
+        <figcaption className="mt-4 text-[11px] font-semibold uppercase tracking-[0.2em] text-fg-faint not-italic">
+          <span className="inline-block w-6 h-px align-middle bg-border mr-2.5" />
+          {author}
+        </figcaption>
+      )}
+    </figure>
+  );
+}
+
 /* ── Divider ─────────────────────────────────────────── */
 export function Divider() {
   return (
@@ -87,4 +105,5 @@ export const mdxComponents: MDXComponents = {
   Callout,
   BlogImage,
   Divider,
+  PullQuote,
 };

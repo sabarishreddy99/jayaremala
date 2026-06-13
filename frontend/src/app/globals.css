@@ -400,7 +400,16 @@ a[role="button"]:active {
 
 /* ── Blog prose ───────────────────────────────────────── */
 /* Base prose — Source Serif 4 body, EB Garamond headings */
-.prose { color: var(--fg-muted); max-width: 68ch; font-size: 1.0625rem; line-height: 1.85; }
+.prose {
+  color: var(--fg-muted);
+  max-width: 68ch;
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  /* Pull opening quotes/bullets into the margin for a cleaner text edge (Safari) */
+  hanging-punctuation: first allow-end last;
+}
+/* Accent-tinted highlight while reading — a small branded delight */
+.prose ::selection { background: color-mix(in srgb, var(--accent) 24%, transparent); }
 
 /* EB Garamond for prose headings — echoes Cormorant Garamond on  */
 /* the hero; same humanist Garamond skeleton, warmer than Playfair */
@@ -427,11 +436,46 @@ a[role="button"]:active {
   margin-top: 1.7em; margin-bottom: 0.35em;
 }
 
+/* Balanced heading wraps (no lonely last word) + clearance under the sticky nav
+   so TOC/anchor jumps land the heading in view, not hidden behind the header. */
+.prose h1, .prose h2, .prose h3, .prose h4 { text-wrap: balance; }
+.prose h2, .prose h3, .prose h4 { scroll-margin-top: 6rem; }
+
 .prose p { margin-bottom: 1.4em; }
 .prose p:last-child { margin-bottom: 0; }
+/* Better line breaks: avoid orphans and ragged short last lines */
+.prose p, .prose li { text-wrap: pretty; }
 
-.prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; font-weight: 500; transition: color 0.15s; }
-.prose a:hover { color: var(--accent-hover); }
+/* Lead / standfirst — the opening paragraph runs slightly larger to ease the
+   reader in (pairs with the drop cap below). */
+.prose > p:first-of-type {
+  font-size: 1.09em;
+  line-height: 1.72;
+  color: var(--fg-subtle);
+}
+
+/* Drop cap — an editorial "settle in" signal on the opening paragraph,
+   set in the heading Garamond and the site's indigo accent. */
+.prose > p:first-of-type::first-letter {
+  float: left;
+  font-family: var(--font-garamond), Georgia, serif;
+  font-weight: 700;
+  font-size: 3.1em;
+  line-height: 0.78;
+  margin: 0.02em 0.12em 0 0;
+  color: var(--accent);
+}
+
+.prose a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-decoration-color: color-mix(in srgb, var(--accent) 38%, transparent);
+  text-underline-offset: 3px;
+  font-weight: 500;
+  transition: color 0.15s, text-decoration-color 0.15s;
+}
+.prose a:hover { color: var(--accent-hover); text-decoration-color: var(--accent-hover); }
 
 .prose strong { color: var(--fg); font-weight: 700; }
 .prose em { color: var(--fg-subtle); font-style: italic; }
@@ -442,13 +486,29 @@ a[role="button"]:active {
 .prose li::marker { color: var(--fg-faint); }
 
 .prose blockquote {
+  position: relative;
   border-left: 3px solid var(--accent);
-  padding: 0.6em 1.2em;
-  margin: 1.8em 0;
+  padding: 0.55em 1.3em 0.55em 1.6em;
+  margin: 2em 0;
   background: var(--accent-light);
-  border-radius: 0 0.5rem 0.5rem 0;
+  border-radius: 0 0.6rem 0.6rem 0;
   color: var(--accent-hover);
   font-style: italic;
+  font-size: 1.05em;
+  line-height: 1.7;
+}
+/* Oversized watermark quote glyph — a literary, pull-quote feel */
+.prose blockquote::before {
+  content: "\201C";
+  position: absolute;
+  top: -0.12em;
+  left: 0.34em;
+  font-family: var(--font-garamond), Georgia, serif;
+  font-size: 2.6em;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0.16;
+  pointer-events: none;
 }
 .prose blockquote p { margin-bottom: 0; }
 
@@ -576,6 +636,49 @@ figcaption[data-rehype-pretty-code-title] + pre {
 .prose th { background: var(--surface-raised); font-weight: 700; color: var(--fg); padding: 0.6em 1em; text-align: left; border: 1px solid var(--border); }
 .prose td { padding: 0.55em 1em; border: 1px solid var(--border); color: var(--fg-muted); }
 .prose tr:nth-child(even) td { background: var(--bg); }
+
+/* ── Footnotes (GFM [^1] syntax) ───────────────────────── */
+/* Inline reference superscript */
+.prose [data-footnote-ref] {
+  font-weight: 600;
+  font-size: 0.72em;
+  text-decoration: none;
+  padding: 0 0.12em;
+  vertical-align: super;
+  line-height: 0;
+}
+.prose [data-footnote-ref]:hover { text-decoration: underline; }
+
+/* Footnotes section at the end of the article */
+.prose .footnotes,
+.prose section[data-footnotes] {
+  margin-top: 3.5em;
+  padding-top: 1.6em;
+  border-top: 1px solid var(--border);
+  font-size: 0.9em;
+  color: var(--fg-subtle);
+}
+/* "Footnotes" label — small uppercase tag, not a full prose heading */
+.prose [id="footnote-label"] {
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--fg-faint);
+  border: none;
+  padding: 0;
+  margin: 0 0 1em;
+}
+.prose .footnotes ol { margin-bottom: 0; }
+.prose .footnotes li { margin-bottom: 0.6em; line-height: 1.6; }
+.prose .footnotes li:last-child { margin-bottom: 0; }
+.prose [data-footnote-backref] {
+  margin-left: 0.35em;
+  text-decoration: none;
+  color: var(--accent);
+}
+.prose [data-footnote-backref]:hover { color: var(--accent-hover); }
 
 /* Animations */
 @keyframes avo-float {

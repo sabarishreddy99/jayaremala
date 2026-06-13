@@ -80,7 +80,21 @@ tags: [tag1, tag2]
 <Callout type="tip" title="Title">text</Callout>
 <Callout type="warning" title="Title">text</Callout>
 <Callout type="quote" title="Title">text</Callout>`,
-    note: "All MDX components (Callout, BlogImage, Divider) are auto-imported — no import statement needed.",
+    note: "All MDX components (Callout, BlogImage, Divider, PullQuote) are auto-imported — no import statement needed.",
+  },
+  {
+    heading: "Pull quote",
+    code: `<PullQuote author="Optional Name">
+  A line worth pausing on, set large and centered.
+</PullQuote>`,
+    note: "Large editorial quote for breaking up long sections. Author is optional.",
+  },
+  {
+    heading: "Footnotes",
+    code: `Here is a claim.[^1]
+
+[^1]: The supporting note, shown at the end.`,
+    note: "GFM footnotes — references link down to a styled notes section at the article end.",
   },
   {
     heading: "Code blocks",
@@ -628,6 +642,8 @@ tech: [Next.js, FastAPI, PostgreSQL]
                 ["Tip box",     "<Callout type=\"tip\">"],
                 ["Warn box",    "<Callout type=\"warning\">"],
                 ["Quote box",   "<Callout type=\"quote\">"],
+                ["Pull quote",  "<PullQuote author=\"…\">"],
+                ["Footnote",    "text[^1]  …  [^1]: note"],
               ].map(([label, syntax]) => (
                 <div key={label} className="flex gap-2">
                   <span className="text-fg-faint w-20 shrink-0">{label}</span>

@@ -12,6 +12,15 @@ class Settings(BaseSettings):
     gemini_model: str = "gemini-2.0-flash"
     # Comma-separated fallback chain tried in order when primary hits 503/429
     gemini_fallback_models: str = "gemini-2.5-flash,gemini-2.0-flash-lite,gemini-flash-latest"
+
+    # Extra free providers appended to the fallback chain (OpenAI-compatible APIs).
+    # Each is included only when its API key is set, so behaviour is unchanged otherwise.
+    # Stacking these free tiers behind Gemini keeps the chatbot answering after
+    # Gemini's daily quota is exhausted.
+    groq_api_key: str = ""
+    groq_models: str = "llama-3.3-70b-versatile,llama-3.1-8b-instant"
+    openrouter_api_key: str = ""
+    openrouter_models: str = "deepseek/deepseek-chat-v3-0324:free,meta-llama/llama-3.3-70b-instruct:free"
     # Persistent DB paths — set to absolute paths on the Lightsail volume (/data/)
     analytics_db_path: str = "./chroma_db/analytics.db"
     content_db_path: str = "./chroma_db/content.db"
@@ -34,14 +43,28 @@ class Settings(BaseSettings):
 
     @property
     def model_chain(self) -> list[str]:
-        """Primary model first, then fallbacks (deduped, preserving order)."""
-        seen: set[str] = set()
-        chain = []
-        for m in [self.gemini_model] + self.gemini_fallback_models.split(","):
+        """Cross-provider fallback chain as `provider:model` entries, in priority
+        order: Gemini first, then Groq, then OpenRouter (each included only when its
+        key is set). Bare Gemini model names are auto-prefixed `gemini:`. Deduped,
+        order preserved."""
+        entries: list[str] = []
+        # Gemini (always — keyed by google_api_key elsewhere)
+        for m in [self.gemini_model, *self.gemini_fallback_models.split(",")]:
             m = m.strip()
-            if m and m not in seen:
-                seen.add(m)
-                chain.append(m)
+            if m:
+                entries.append(m if ":" in m else f"gemini:{m}")
+        # Groq + OpenRouter free tiers — only if configured
+        if self.groq_api_key:
+            entries += [f"groq:{m.strip()}" for m in self.groq_models.split(",") if m.strip()]
+        if self.openrouter_api_key:
+            entries += [f"openrouter:{m.strip()}" for m in self.openrouter_models.split(",") if m.strip()]
+
+        seen: set[str] = set()
+        chain: list[str] = []
+        for e in entries:
+            if e not in seen:
+                seen.add(e)
+                chain.append(e)
         return chain
 
 

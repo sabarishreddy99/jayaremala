@@ -3,6 +3,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypePrettyCode from "rehype-pretty-code";
 import type { Options as PrettyCodeOptions } from "rehype-pretty-code";
 import rehypeSlug from "rehype-slug";
+import remarkGfm from "remark-gfm";
 import { getAllPosts, getAllSlugs, getPostBySlug } from "@/lib/blog";
 import type { PostMeta } from "@/lib/blog";
 import Link from "next/link";
@@ -445,7 +446,7 @@ export default async function BlogPostPage({ params }: Props) {
               <MDXRemote
                 source={post.content}
                 components={mdxComponents}
-                options={{ mdxOptions: { rehypePlugins: [rehypeSlug, [rehypePrettyCode, prettyCodeOptions]] } }}
+                options={{ mdxOptions: { remarkPlugins: [remarkGfm], rehypePlugins: [rehypeSlug, [rehypePrettyCode, prettyCodeOptions]] } }}
               />
             </ProseReveal>
 

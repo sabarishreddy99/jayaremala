@@ -95,6 +95,16 @@ def init_db() -> None:
             )
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_lead_email ON lead_captures(email_hash)")
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS stage_timings (
+                id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                interaction_id INTEGER,
+                stage          TEXT    NOT NULL,
+                ms             REAL    NOT NULL,
+                created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        conn.execute("CREATE INDEX IF NOT EXISTS idx_stage_name ON stage_timings(stage)")
     logger.info("Analytics DB ready: %s", p.resolve())
 
 
@@ -178,6 +188,73 @@ def record(identifier: str, model: str = "", latency_ms: int = 0) -> int | None:
     except Exception as exc:
         logger.warning("Analytics record failed (non-fatal): %s", exc)
         return None
+
+
+def record_stage_timings(interaction_id: int | None, stages: list[dict]) -> None:
+    """Persist the per-stage latency breakdown for one chat response.
+    `stages` is a list of {"stage": str, "ms": float} (from obs.trace.Trace).
+    Best-effort and non-fatal — designed to run in a daemon thread.
+    """
+    if not stages:
+        return
+    try:
+        with _connect() as conn:
+            conn.executemany(
+                "INSERT INTO stage_timings (interaction_id, stage, ms) VALUES (?, ?, ?)",
+                [(interaction_id, s.get("stage", ""), float(s.get("ms", 0))) for s in stages],
+            )
+    except Exception as exc:
+        logger.warning("record_stage_timings failed (non-fatal): %s", exc)
+
+
+def get_stage_latency_averages(period: str = "all") -> list[dict]:
+    """Average duration per pipeline stage, for the /system dashboard bar chart."""
+    where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
+    try:
+        with _connect() as conn:
+            rows = conn.execute(
+                f"SELECT stage, AVG(ms) AS avg_ms, COUNT(*) AS n "
+                f"FROM stage_timings {where} GROUP BY stage ORDER BY avg_ms DESC"
+            ).fetchall()
+        return [{"stage": r[0], "avg_ms": round(r[1], 1) if r[1] else 0.0, "count": r[2]} for r in rows]
+    except Exception as exc:
+        logger.warning("get_stage_latency_averages failed: %s", exc)
+        return []
+
+
+def get_latency_percentiles(period: str = "all") -> dict:
+    """P50/P95/P99 + average of end-to-end chat latency (ms).
+    SQLite lacks percentile functions, so we pull non-zero samples and compute
+    in Python — the sample count is small (one row per chat response).
+    """
+    where_clauses = ["latency_ms > 0"]
+    if period in _CUTOFFS:
+        where_clauses.append(f"created_at >= {_CUTOFFS[period]}")
+    where = "WHERE " + " AND ".join(where_clauses)
+    try:
+        with _connect() as conn:
+            rows = conn.execute(
+                f"SELECT latency_ms FROM interactions {where} ORDER BY latency_ms"
+            ).fetchall()
+        samples = [r[0] for r in rows]
+    except Exception as exc:
+        logger.warning("get_latency_percentiles failed: %s", exc)
+        samples = []
+    if not samples:
+        return {"count": 0, "p50": 0, "p95": 0, "p99": 0, "avg": 0}
+
+    def _pct(p: float) -> int:
+        # Nearest-rank percentile on the pre-sorted samples.
+        idx = min(len(samples) - 1, max(0, round(p / 100 * len(samples)) - 1))
+        return int(samples[idx])
+
+    return {
+        "count": len(samples),
+        "p50": _pct(50),
+        "p95": _pct(95),
+        "p99": _pct(99),
+        "avg": int(sum(samples) / len(samples)),
+    }
 
 
 def get_model_breakdown(period: str = "all") -> list[dict]:

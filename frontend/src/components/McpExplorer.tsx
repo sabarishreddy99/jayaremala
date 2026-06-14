@@ -40,7 +40,7 @@ function CopyBlock({ label, code }: { label: string; code: string }) {
 }
 
 export default function McpExplorer() {
-  const mcpUrl = `${API_BASE_URL.replace(/\/$/, "")}/mcp`;
+  const mcpUrl = `${API_BASE_URL.replace(/\/$/, "")}/mcp/`;
 
   const [tools, setTools] = useState<ToolDef[]>([]);
   const [error, setError] = useState(false);

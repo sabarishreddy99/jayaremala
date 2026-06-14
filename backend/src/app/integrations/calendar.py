@@ -121,6 +121,62 @@ def get_free_slots(days_ahead: int = 7) -> list[dict]:
     return free_slots
 
 
+# Structured slots for the booking card change slowly too — cache them briefly so
+# the "book a call" card is instant on repeat asks and resilient to a slow API.
+_BOOKING_TTL_SECONDS = 180
+_booking_cache: tuple[float, list[dict]] | None = None
+
+
+def get_booking_slots() -> list[dict]:
+    """Cached structured free slots (no LLM) for the booking card.
+
+    Falls back to the last good slots (or empty) if the live Freebusy call fails,
+    so the card always renders — the booking link works even with no slots.
+    """
+    global _booking_cache
+    now = time.time()
+    if _booking_cache and now - _booking_cache[0] < _BOOKING_TTL_SECONDS:
+        return _booking_cache[1]
+    try:
+        slots = get_free_slots()
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("booking slots fetch failed: %s", exc)
+        slots = _booking_cache[1] if _booking_cache else []
+    _booking_cache = (now, slots)
+    return slots
+
+
+def get_booking_card() -> dict:
+    """Everything the 'book a call' UI card needs, in one structured payload.
+
+    Slots come from the live calendar (cached); `booking_url` + `open` come from
+    profile.json. Always returns a usable card — if the calendar isn't connected
+    the slots list is empty but the Google booking link still lets visitors book.
+    """
+    import json
+
+    from app.rag.ingest import DATA_DIR
+
+    profile: dict = {}
+    try:
+        profile = json.loads((DATA_DIR / "profile.json").read_text())
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("booking card profile read failed: %s", exc)
+
+    availability = profile.get("availability") or {}
+    slots: list[dict] = []
+    try:
+        slots = get_booking_slots()
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("booking card slots skipped: %s", exc)
+
+    return {
+        "booking_url": profile.get("booking_url", ""),
+        "open": bool(availability.get("open", True)),
+        "slots": slots[:5],
+    }
+
+
 def _compute_availability_summary() -> str:
     """Freebusy lookup + LLM phrasing — the expensive part, run behind the cache."""
     slots = get_free_slots()

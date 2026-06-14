@@ -533,6 +533,7 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
 
     # Gather live context blocks in parallel (calendar + inbox signals)
     extra_blocks: dict[str, str] = {}
+    booking_card: dict = {}  # structured "book a call" card surfaced to the UI
     live_tasks = []
 
     if _is_calendar_query(req.message):
@@ -549,6 +550,20 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
             except Exception as exc:
                 logger.debug("Calendar availability fetch skipped: %s", exc)
         live_tasks.append(_fetch_calendar())
+
+        async def _fetch_booking():
+            try:
+                from app.integrations.calendar import get_booking_card
+                loop = asyncio.get_running_loop()
+                card = await asyncio.wait_for(
+                    loop.run_in_executor(None, get_booking_card),
+                    timeout=3.5,
+                )
+                if card:
+                    booking_card.update(card)
+            except Exception as exc:
+                logger.debug("Booking card fetch skipped: %s", exc)
+        live_tasks.append(_fetch_booking())
 
     if req.persona == "recruiter":
         async def _fetch_signals():
@@ -570,6 +585,15 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
 
     if live_tasks:
         await asyncio.gather(*live_tasks, return_exceptions=True)
+
+    # When a booking card is shown, tell the model not to duplicate it in prose —
+    # warmly invite the visitor to pick a time below instead of listing slots/links.
+    if booking_card:
+        extra_blocks["Booking"] = (
+            "The visitor wants to schedule a call. A booking card with Jaya's open times "
+            "and a Google booking button is displayed right below your reply. Warmly invite "
+            "them to pick a time below — do NOT list the slots or paste a link yourself."
+        )
 
     # Inject Drive resume context for resume-intent queries
     _RESUME_KEYWORDS = {"resume", "cv", "curriculum", "download resume", "latest resume"}
@@ -622,6 +646,8 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
             }
             if show_lead_capture:
                 done_payload["lead_capture_prompt"] = True
+            if booking_card:
+                done_payload["booking_card"] = booking_card
             yield f"data: {json.dumps(done_payload)}\n\n"
             # Persist the stage breakdown + geo off the hot path
             threading.Thread(
@@ -654,7 +680,11 @@ AGENT_SYSTEM_PROMPT = SYSTEM_PROMPT + (
     "- Use `search_knowledge` for any open-ended question about Jaya's background.\n"
     "- Use the `get_*` tools (get_experience, get_projects, get_project, get_skills, "
     "get_education, get_now, get_resume, get_profile) for specific structured facts.\n"
-    "- Use `check_availability` for scheduling / 'is he available' questions.\n"
+    "- Use `check_availability` for 'is he available / open to work' questions.\n"
+    "- Use `get_booking_link` when the visitor wants to book / schedule / set up a call, "
+    "meeting, or interview. A booking card with open times + a booking button is shown "
+    "below your reply automatically — so warmly invite them to pick a time instead of "
+    "listing slots or pasting the link yourself.\n"
     "Call tools before answering; ground every claim in their results. Once you have "
     "enough, give a concise final answer. Do not mention the tools by name to the user."
 )
@@ -771,6 +801,7 @@ async def ai_chat_agentic(req: ChatRequest, request: Request) -> StreamingRespon
     # Shared per-request state used by both provider agents.
     trace = Trace()
     sources: list[str] = []
+    booking_card: dict = {}  # populated when the agent calls get_booking_link
 
     def _emit_tool(name: str, args: dict):
         """Run one tool, streaming its running/done step events; return the result.
@@ -786,6 +817,10 @@ async def ai_chat_agentic(req: ChatRequest, request: Request) -> StreamingRespon
         trace.add(f"tool:{name}", ms)
         if name == "search_knowledge" and isinstance(result, list):
             sources.extend(f"{c.get('type')}:{c.get('id')}" for c in result if isinstance(c, dict))
+        if name == "get_booking_link" and isinstance(result, dict):
+            booking_card.clear()
+            booking_card.update(result)
+            yield f"data: {json.dumps({'booking_card': result})}\n\n"
         yield f"data: {json.dumps({'step': {'tool': name, 'status': 'done', 'ms': round(ms, 1)}})}\n\n"
         return result
 
@@ -963,6 +998,8 @@ async def ai_chat_agentic(req: ChatRequest, request: Request) -> StreamingRespon
                 "sources": list(dict.fromkeys(sources)),
                 "model": model_used, "trace": stages, "latency_ms": latency_ms,
             }
+            if booking_card:
+                done_payload["booking_card"] = booking_card
             yield f"data: {json.dumps(done_payload)}\n\n"
             threading.Thread(target=analytics.record_stage_timings, args=(row_id, stages), daemon=True).start()
             if row_id:

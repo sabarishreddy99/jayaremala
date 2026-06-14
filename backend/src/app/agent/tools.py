@@ -105,6 +105,20 @@ def _check_availability() -> str:
         return "Availability is not currently published."
 
 
+def _get_booking_link() -> dict:
+    """Open call slots + Jaya's Google booking link, for scheduling intents.
+
+    Always returns a usable card — the booking_url works even when the live
+    calendar isn't connected (slots will just be empty).
+    """
+    try:
+        from app.integrations.calendar import get_booking_card
+        return get_booking_card()
+    except Exception:
+        p = _load("profile") or {}
+        return {"booking_url": p.get("booking_url", ""), "open": True, "slots": []}
+
+
 # ── Tool registry ─────────────────────────────────────────────────────────────
 
 def _obj(props: dict | None = None, required: list[str] | None = None) -> dict:
@@ -185,8 +199,20 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="check_availability",
-        description="Whether Jaya is open to opportunities and a summary of his calendar availability for a call.",
+        description=(
+            "Whether Jaya is open to opportunities, in natural language. Use for "
+            "'is he available / open to work' questions — NOT for actually booking."
+        ),
         handler=_check_availability,
+    ),
+    Tool(
+        name="get_booking_link",
+        description=(
+            "Use when the visitor wants to schedule, book, or set up a call/meeting/interview. "
+            "Returns Jaya's real open 30-min slots plus his Google booking link. The UI renders "
+            "these as a booking card — so invite the visitor to pick a time, don't list the slots yourself."
+        ),
+        handler=_get_booking_link,
     ),
 ]
 

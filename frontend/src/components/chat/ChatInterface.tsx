@@ -13,6 +13,7 @@ import RichCards from "./RichCards";
 import LeadCaptureCard from "./LeadCaptureCard";
 import AnswerTrace, { TraceStage } from "./AnswerTrace";
 import AgentSteps, { StepEvent } from "./AgentSteps";
+import BookingCard, { BookingCardData } from "./BookingCard";
 
 export interface Message {
   role: "user" | "assistant";
@@ -24,6 +25,7 @@ export interface Message {
   traceModel?: string;
   latencyMs?: number;
   steps?: StepEvent[];
+  bookingCard?: BookingCardData;
 }
 
 function getGeminiResetInfo(): { time: string; countdown: string } {
@@ -329,6 +331,7 @@ export default function ChatInterface() {
       let traceStages: TraceStage[] = [];
       let traceModel: string | undefined;
       let latencyMs: number | undefined;
+      let bookingCard: BookingCardData | undefined;
 
       outer: while (true) {
         const { done, value } = await reader.read();
@@ -345,6 +348,7 @@ export default function ChatInterface() {
               setLiveSteps([...agentSteps]);
             }
             if (data.token) { accumulated += data.token; setStreamingContent(accumulated); }
+            if (data.booking_card) bookingCard = data.booking_card as BookingCardData;
             if (data.error) { sseError = data.error as string; break outer; }
             if (data.done) {
               if (data.model) { setActiveModel(data.model); saveModel(data.model as string); traceModel = data.model as string; }
@@ -391,6 +395,7 @@ export default function ChatInterface() {
         traceModel,
         latencyMs,
         steps: agentSteps.length ? agentSteps : undefined,
+        bookingCard,
       };
       const finalMessages = [...nextMessages, assistantMsg];
       setMessages(finalMessages);
@@ -637,6 +642,11 @@ export default function ChatInterface() {
               {m.role === "assistant" && m !== WELCOME && (
                 <div className="ml-10">
                   <RichCards content={m.content} />
+                </div>
+              )}
+              {m.role === "assistant" && m.bookingCard && m !== WELCOME && (
+                <div className="ml-10">
+                  <BookingCard data={m.bookingCard} />
                 </div>
               )}
               {m.role === "assistant" && m.navLinks && m.navLinks.length > 0 && m !== WELCOME && (

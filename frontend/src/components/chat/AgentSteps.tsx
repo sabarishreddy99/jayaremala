@@ -17,6 +17,7 @@ const META: Record<string, { label: string; icon: string }> = {
   get_now:          { label: "Checking what he's up to now", icon: "📍" },
   get_resume:       { label: "Fetching resume", icon: "📄" },
   check_availability: { label: "Checking availability", icon: "📅" },
+  get_booking_link:   { label: "Finding open times to meet", icon: "📅" },
 };
 
 export default function AgentSteps({ steps }: { steps: StepEvent[] }) {

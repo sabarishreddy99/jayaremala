@@ -42,4 +42,8 @@ def build_mcp_app(path: str = "/"):
             )
         )
     logger.info("MCP server built with %d tools", len(TOOLS))
-    return mcp.http_app(path=path, transport="http")
+    # stateless_http=True drops the per-session handshake: every request is
+    # independent, so public clients can POST without first negotiating (and
+    # carrying) an Mcp-Session-Id header. Required for a connect-from-anywhere
+    # endpoint and for running behind a load balancer with no session affinity.
+    return mcp.http_app(path=path, transport="http", stateless_http=True)

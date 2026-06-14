@@ -94,8 +94,26 @@ app.include_router(stats_router)
 app.include_router(tools_router)
 
 # Mount the public MCP server (read-only portfolio tools over streamable-HTTP).
+# The main API's CORS is locked to Jaya's domains, but MCP is meant to be reached
+# from anywhere — including browser-based clients (e.g. claude.ai connectors) whose
+# origin we can't enumerate. So wrap *only* the /mcp mount in permissive CORS; the
+# rest of the API keeps its restrictive policy. allow_origins=["*"] precludes
+# credentials, which is correct here — these tools are read-only and unauthenticated.
+# Lifespan is still entered on the unwrapped _mcp_app (see lifespan()), so the
+# session manager that serves requests is the same one started at startup.
 if _mcp_app is not None:
-    app.mount("/mcp", _mcp_app)
+    # CORSMiddleware (imported above from fastapi.middleware.cors) is the Starlette
+    # class and wraps any ASGI app directly.
+    app.mount(
+        "/mcp",
+        CORSMiddleware(
+            _mcp_app,
+            allow_origins=["*"],
+            allow_methods=["GET", "POST", "OPTIONS", "DELETE"],
+            allow_headers=["*"],
+            expose_headers=["Mcp-Session-Id", "Mcp-Protocol-Version"],
+        ),
+    )
 
 
 @app.get("/health")

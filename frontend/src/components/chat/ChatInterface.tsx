@@ -461,6 +461,46 @@ export default function ChatInterface() {
   return (
     <div className="flex flex-col h-full">
 
+      {/* ── Mode toggle — persistent at the top: Normal ⟷ Agent. Agent mode lets
+           Avocado pick tools per question and shows its steps live; Normal is the
+           fast RAG answer. Switching applies to the next message. ── */}
+      <div className="shrink-0 px-3 sm:px-6 lg:px-10 pt-1.5 pb-0.5">
+        <div className="mx-auto flex max-w-2xl lg:max-w-3xl justify-center">
+          <div
+            role="group"
+            aria-label="Response mode"
+            className="inline-flex items-center rounded-full border border-border bg-surface/80 backdrop-blur-sm p-0.5 text-[11px] font-medium shadow-sm"
+          >
+            <button
+              onClick={() => {
+                setAgentMode(false);
+                try { localStorage.setItem(AGENT_MODE_KEY, "0"); } catch { /* storage blocked */ }
+              }}
+              aria-pressed={!agentMode}
+              title="Normal — fast, grounded RAG answer"
+              className={`rounded-full px-3 py-1 transition-colors ${
+                !agentMode ? "bg-accent text-white" : "text-fg-faint hover:text-fg-muted"
+              }`}
+            >
+              Normal
+            </button>
+            <button
+              onClick={() => {
+                setAgentMode(true);
+                try { localStorage.setItem(AGENT_MODE_KEY, "1"); } catch { /* storage blocked */ }
+              }}
+              aria-pressed={agentMode}
+              title="Agent — Avocado picks tools per question and shows its steps live"
+              className={`inline-flex items-center gap-1 rounded-full px-3 py-1 transition-colors ${
+                agentMode ? "bg-accent text-white" : "text-fg-faint hover:text-fg-muted"
+              }`}
+            >
+              <span aria-hidden>⚡</span> Agent
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* ── Intro — cinematic first impression, collapses on first send ── */}
       <div
         className="shrink-0 overflow-hidden transition-all duration-500 ease-in-out"
@@ -796,22 +836,6 @@ export default function ChatInterface() {
               )}
             </span>
             <div className="flex items-center gap-2.5">
-              <button
-                onClick={() => {
-                  const next = !agentMode;
-                  setAgentMode(next);
-                  try { localStorage.setItem(AGENT_MODE_KEY, next ? "1" : "0"); } catch { /* storage blocked */ }
-                }}
-                title="Agent mode — Avocado picks tools per question and shows its steps live"
-                aria-pressed={agentMode}
-                className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition-colors ${
-                  agentMode
-                    ? "border-accent bg-accent/10 text-accent"
-                    : "border-border text-fg-faint hover:text-fg-muted"
-                }`}
-              >
-                <span aria-hidden>⚡</span> Agent{agentMode ? " · on" : ""}
-              </button>
               {messages.length > 1 && (
                 <button
                   onClick={handleClear}

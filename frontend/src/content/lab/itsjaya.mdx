@@ -1,10 +1,10 @@
 ---
 title: "itsjaya — AI Portfolio"
 status: "active"
-description: "AI-powered personal portfolio with a RAG chatbot (Avocado), MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade — not a toy."
+description: "AI-powered personal portfolio with a RAG chatbot (Avocado), an agentic tool-calling mode, a public MCP server, in-chat book-a-call, MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade — not a toy."
 startedAt: "2025-11-01"
-updatedAt: "2026-06-08"
-tech: [Next.js 16, React 19, Tailwind CSS v4, TypeScript, FastAPI, ChromaDB, Gemini 2.5 Flash, BAAI/bge-base-en-v1.5, HyDE, BM25, RRF, Knowledge Graph, FNV-1a Hash, SQLite, SlowAPI, AWS Lightsail, Nginx, S3, GitHub Pages, GitHub Actions]
+updatedAt: "2026-06-14"
+tech: [Next.js 16, React 19, Tailwind CSS v4, TypeScript, FastAPI, ChromaDB, Gemini 2.5 Flash, Groq, OpenRouter, Model Context Protocol, FastMCP, Function Calling, Google Calendar API, BAAI/bge-base-en-v1.5, HyDE, BM25, RRF, Knowledge Graph, FNV-1a Hash, SQLite, SlowAPI, AWS Lightsail, Nginx, S3, GitHub Pages, GitHub Actions]
 links:
   - label: GitHub
     url: https://github.com/sabarishreddy99/jayaremala
@@ -19,6 +19,8 @@ Most portfolios are static pages someone scrolls past in 30 seconds. This one st
 **Avocado** is an AI assistant backed by a hybrid RAG pipeline. It answers questions about experience, projects, skills, and blog posts in real time — with tokens streaming directly to the browser. Ask it *"what's your strongest AI project?"* and it retrieves the most relevant knowledge chunks, reranks them, and streams a grounded answer through Gemini.
 
 The portfolio half is a full static Next.js site — experience, education, projects, and a blog with per-post views and claps tracked in SQLite. The whole system auto-deploys on every `git push` with zero manual steps. Content (blog posts, lab entries, quotes) can also be managed via a token-gated admin panel without any git commits.
+
+Avocado is also **agentic**. An opt-in *Agent mode* lets the model pick tools per turn and shows its steps live; the same read-only tools are published over a **public MCP server** so a recruiter can wire their own Claude or Cursor straight into this portfolio; and a **book-a-call** flow drops real Google Calendar openings and a one-click booking link into the conversation. Under the hood the model layer fails over across providers — **Gemini → Groq → OpenRouter** — so the chatbot keeps answering even after a free tier runs dry.
 
 ### Why build it this way
 
@@ -131,11 +133,12 @@ An AI-backed portfolio inverts this. The visitor asks in natural language, the s
                   │  Google AI API  (HTTPS)
                   ▼
 ┌─────────────────────────────────────┐
-│  Gemini 2.5 Flash  (primary)        │
-│  Gemini 2.0 Flash  (fallback 1)     │
-│  Gemini 2.0 Flash Lite  (fallback 2)│
-│  Gemini Flash Latest  (fallback 3)  │
-│  auto-retry on 503 / 429            │
+│  Cross-provider fallback chain      │
+│  Gemini 2.0 Flash    (primary)      │
+│  + Gemini 2.5 / lite / flash-latest │
+│  → Groq (llama-3.x)   [if key set]  │
+│  → OpenRouter (deepseek/llama)      │
+│  auto-retry on 503 / 429 / 404      │
 └─────────────────────────────────────┘
 ```
 
@@ -249,6 +252,72 @@ User message: "what's your strongest AI project?"
                        │
               SSE tokens streamed to client
 ```
+
+---
+
+## Agentic Mode, MCP & Tools
+
+Classic chat answers questions. The agentic layer lets the model *act* — and lets other models
+act on Jaya's data too. It all hangs off **one shared tool registry**
+(`backend/src/app/agent/tools.py`): each tool is a name, a description, a plain Python handler,
+and a JSON-Schema for its arguments. **The handlers do pure data / retrieval — no LLM calls** — so
+they're cheap and safe to expose publicly. That single registry is consumed three ways:
+
+```arch
+                    backend/src/app/agent/tools.py
+                    TOOLS  (search_knowledge, get_profile, get_experience,
+                            get_projects, get_project, get_skills, get_education,
+                            get_now, get_blog, get_lab, get_resume,
+                            check_availability, get_booking_link)
+                                         │
+            ┌────────────────────────────┼────────────────────────────┐
+            ▼                            ▼                            ▼
+┌───────────────────────┐   ┌───────────────────────────┐  ┌──────────────────────────┐
+│  MCP server  /mcp/    │   │  Agent mode               │  │  REST playground          │
+│  mcp_server.py        │   │  POST /ai/chat/agentic    │  │  GET /tools               │
+│  FastMCP streamable   │   │                           │  │  POST /tools/{name}       │
+│  -HTTP, stateless     │   │  Gemini native function-  │  │                           │
+│                       │   │  calling; falls over to   │  │  Browsers can't speak MCP │
+│  Client's OWN model   │   │  Groq/OpenRouter OpenAI   │  │  → the /mcp page playground│
+│  (Claude Desktop /    │   │  tool-calling. Streams    │  │  invokes tools here. Same │
+│  Cursor) reasons and  │   │  visible `step` chips per │  │  handlers, no login, no    │
+│  calls the tools.     │   │  tool, then the answer.   │  │  LLM cost.                │
+└───────────────────────┘   └───────────────────────────┘  └──────────────────────────┘
+```
+
+**Mental model:** a knowledge base → wrapped as read-only tools → exposed to *external models* over
+MCP, to *Avocado's own model* in agent mode, and to *browsers* via a REST shim.
+
+The MCP server is **public and stateless**: `mcp.http_app(path="/", stateless_http=True)` drops the
+per-session handshake so any client can POST without an `Mcp-Session-Id` header, and it's mounted in
+`main.py` behind a permissive CORS layer scoped to just `/mcp` (the main API stays domain-locked). The
+endpoint is `https://api.jayaremala.com/mcp/` — **trailing slash required** (`/mcp` 307-redirects). The
+`/mcp` page generates ready-to-paste Claude Desktop / Cursor configs and runs a live tool playground.
+
+### Book a call — in-chat scheduling
+
+When a visitor wants to talk — keyword-detected in classic chat (`_is_calendar_query`) or the model
+calling `get_booking_link` in agent mode — Avocado surfaces a **booking card**:
+
+```arch
+"can we set up a call?"
+        │
+        ▼
+get_booking_card()
+   ├── Google Calendar Freebusy API (read-only OAuth) → real open 30-min slots (cached ~3 min)
+   └── booking_url + availability.open  ← profile.json
+        │
+        ▼
+SSE `booking_card` event → <BookingCard>
+   ├── open slots, each a clickable link
+   └── "Book on Google Calendar" CTA → existing Google Appointment Schedule page
+        │
+        ▼
+Google sends the invite + Meet link + reminders.  No calendar-write scope needed.
+```
+
+It **degrades gracefully** — if the calendar isn't connected the slots list is empty but the booking
+CTA still works — and the whole fetch is timeout-bounded so it never stalls the token stream.
 
 ---
 
@@ -424,6 +493,8 @@ jayaremala.com  (GitHub Pages — static export, no basePath)
 ├── /quotes              Curated quotes — QuotesFeed with categories
 ├── /gallery             Photo grid — milestones, events, and achievements
 ├── /now                 What I'm currently building, learning, reading
+├── /mcp                 Public MCP server explainer + live tool playground + connect configs
+├── /system              Live observability — latency percentiles, RAG timing, model fallback
 └── /admin               Stats dashboard + content editors (no-index)
 
 All portfolio routes share layout via (portfolio) route group.
@@ -435,11 +506,69 @@ Chatbot lives outside — no nav, no footer, full screen.
 
 ## Tech Stack
 
-<Stack items={["Next.js 16 (App Router)", "React 19", "Tailwind CSS v4", "TypeScript", "MDX + next-mdx-remote", "gray-matter", "FastAPI", "Python 3.11", "Pydantic Settings", "SlowAPI (rate limiting)", "ChromaDB", "fastembed (BAAI/bge-base-en-v1.5 ONNX, 768-dim)", "rank-bm25 (BM25Okapi)", "HyDE (Hypothetical Document Embeddings)", "Knowledge Graph (static, in-memory)", "google-genai SDK", "Gemini 2.5 Flash", "SQLite3 (analytics.db)", "SQLite3 (content.db)", "AWS Lightsail 2GB", "Nginx + Let's Encrypt", "Amazon S3", "Docker", "GitHub Pages", "GitHub Actions"]} />
+<Stack items={["Next.js 16 (App Router)", "React 19", "Tailwind CSS v4", "TypeScript", "MDX + next-mdx-remote", "gray-matter", "FastAPI", "Python 3.11", "Pydantic Settings", "SlowAPI (rate limiting)", "ChromaDB", "fastembed (BAAI/bge-base-en-v1.5 ONNX, 768-dim)", "rank-bm25 (BM25Okapi)", "HyDE (Hypothetical Document Embeddings)", "Knowledge Graph (static, in-memory)", "google-genai SDK", "Gemini 2.5 Flash", "Groq (OpenAI-compatible)", "OpenRouter (OpenAI-compatible)", "Function calling / tool use", "FastMCP (Model Context Protocol)", "Google Calendar API (Freebusy)", "SQLite3 (analytics.db)", "SQLite3 (content.db)", "AWS Lightsail 2GB", "Nginx + Let's Encrypt", "Amazon S3", "Docker", "GitHub Pages", "GitHub Actions"]} />
 
 ---
 
 ## Key Decisions
+
+<Decision date="2026-06-14" title="Book a call — smart handoff over building a scheduler">
+  Recruiters who get interested mid-conversation shouldn't have to leave the chat to find a calendar
+  link. The question was how far to take it. Option A: a full in-chat scheduler — collect name/email/slot
+  and *create* the calendar event directly. Option B: a smart handoff — show real open slots and hand off
+  to Jaya's existing Google booking page for the actual booking.
+
+  Option B won. The endpoint is public and unauthenticated, so writing events to Jaya's calendar would
+  mean a `calendar.events` OAuth scope, spam guards, rate limiting, and a confirmation-email path — a lot
+  of surface for a portfolio. The handoff needs only **read-only Freebusy** plus a static booking link:
+  `get_booking_card()` pulls real open 30-min slots (cached ~3 min) and bundles them with `booking_url`
+  from `profile.json`. The booking card renders in both classic chat (keyword-detected via
+  `_is_calendar_query`) and agent mode (the model calls `get_booking_link`), and Google handles the
+  invite, Meet link, and reminders. It degrades gracefully — no calendar connection just means an empty
+  slot list with the booking CTA still live — and the fetch is timeout-bounded so it never stalls the
+  stream.
+</Decision>
+
+<Decision date="2026-06-14" title="Public MCP server — stateless HTTP, one registry, three surfaces">
+  A recruiter who lives in Claude Desktop or Cursor should be able to point *their own* model at Jaya's
+  portfolio. That's exactly what the Model Context Protocol is for. The implementation reuses the same
+  `TOOLS` registry that powers agent mode and the REST playground — no duplicate logic, and the handlers
+  make no LLM calls, so a public endpoint costs nothing per request.
+
+  The key decision was **stateless** transport: `mcp.http_app(path="/", stateless_http=True)`. The default
+  stateful mode issues an `Mcp-Session-Id` on `initialize` that every later POST must echo — which broke
+  connect-from-anywhere clients with "Missing session ID". Stateless makes each request independent (also
+  load-balancer friendly). It's mounted behind a CORS layer scoped to `/mcp` only, so browser clients work
+  while the main API stays locked to Jaya's domains. One gotcha worth recording: the endpoint is `/mcp/`
+  **with a trailing slash** — `/mcp` 307-redirects (and the proxy downgrades the redirect to `http://`),
+  which surfaces in clients as a confusing "Method Not Allowed".
+</Decision>
+
+<Decision date="2026-06-13" title="Cross-provider model fallback — Gemini → Groq → OpenRouter">
+  Gemini's free tier has a daily quota. Once it's gone, a Gemini-only chatbot is just down until midnight
+  Pacific. The fix is to stack other free tiers behind it. Groq and OpenRouter both speak the OpenAI API,
+  so one client type covers both, and the chain is expressed as ordered `provider:model` entries in
+  `settings.model_chain` (bare Gemini names auto-prefixed `gemini:`). Each provider is included only when
+  its API key is set, so nothing changes when keys are absent.
+
+  `_generate()` and `_stream_tokens()` walk the chain on any capacity error (503 / 429 / deprecated-model
+  404). Streaming fallback can switch *mid-answer*: if a model dies after emitting partial tokens, a
+  `reset` event tells the frontend to discard them before the next model starts. The green pill badge shows
+  which `provider:model` actually answered — transparent, without reading as a failure.
+</Decision>
+
+<Decision date="2026-06-13" title="Agent mode — visible tool-calling over the shared registry">
+  Classic RAG does one retrieval pass then answers. Some questions want more than that — "compare his
+  fintech and healthcare work" needs multiple targeted lookups. Agent mode (`/ai/chat/agentic`, an opt-in
+  toggle) lets the model pick tools per turn over up to 4 rounds. Rather than hide the reasoning, the
+  backend streams a visible `step` chip per tool (running → done with timing) before the answer — the
+  "glass box" ethos the answer-trace waterfall already established.
+
+  It runs on the same multi-provider fallback as classic chat: Gemini uses native function-calling, and on
+  exhaustion (or a `thought_signature` error from a thinking model in a manual tool loop) the request falls
+  over to the Groq/OpenRouter OpenAI-style tool-calling agents — identical registry, identical visible
+  steps. Reusing `TOOLS` means a tool added for the chatbot is instantly available to MCP clients too.
+</Decision>
 
 <Decision date="2026-05-28" title="Content DB (SQLite) for CRUD — edit content without git commits">
   Every blog post and lab entry previously required a git commit and a full deploy to appear on the site. That's a high-friction loop when you want to fix a typo or publish a draft at midnight. It also made the Avocado knowledge base stale until the next deploy.
@@ -562,6 +691,51 @@ Chatbot lives outside — no nav, no footer, full screen.
 ---
 
 ## Progress Log
+
+<Update date="2026-06-14">
+  **Structured `get_blog` / `get_lab` tools.** Blog and lab entries were previously reachable over MCP
+  and agent mode only through `search_knowledge` (semantic) — there was no way to *enumerate* them.
+  Added two getters to the shared registry: called with no args they return a lightweight metadata list
+  (slug, title, date/status, description, tags/tech); passed a `slug` they return the full entry
+  including content. Because every surface reads the same `TOOLS`, they lit up on MCP, agent mode, and
+  the `/tools` playground at once. Handlers read `blog.json` / `lab.json` fresh per call, so new posts
+  appear automatically — no MCP restart.
+</Update>
+
+<Update date="2026-06-14">
+  **Book a call — in-chat smart handoff.** Avocado now surfaces a booking card when a visitor wants to
+  schedule. New `get_booking_link` tool (in the shared registry, so it works in both agent mode and over
+  MCP) and `get_booking_card()` in `integrations/calendar.py` pull real open 30-min slots from the Google
+  Calendar Freebusy API (read-only OAuth, cached ~3 min) and bundle them with `booking_url` + `availability.open`
+  from `profile.json`. Classic chat triggers it via keyword detection (`_is_calendar_query`); agent mode lets
+  the model call the tool. Both emit a `booking_card` SSE event that renders `<BookingCard>` — clickable open
+  slots plus a "Book on Google Calendar" CTA to Jaya's existing Appointment Schedule page (Google handles the
+  invite, Meet link, reminders). Degrades gracefully to just the booking link if the calendar isn't connected,
+  and the fetch is timeout-bounded so it never stalls the token stream. No calendar-write scope required.
+</Update>
+
+<Update date="2026-06-14">
+  **Public MCP server went stateless + CORS-enabled.** `mcp_server.py` now returns
+  `mcp.http_app(path="/", transport="http", stateless_http=True)` — dropping the per-session handshake that
+  was failing connect-from-anywhere clients with "Missing session ID". The `/mcp` mount in `main.py` is
+  wrapped in a permissive CORS layer scoped to that mount only, so browser-based MCP clients work while the
+  main API keeps its domain-locked policy. Endpoint is `https://api.jayaremala.com/mcp/` (trailing slash
+  required — `/mcp` 307-redirects). Verified live: `initialize` and `tools/list` return 200 with no session
+  ID needed.
+</Update>
+
+<Update date="2026-06-13">
+  **Agent mode + public MCP server + multi-provider fallback.** Three connected additions, all over one
+  shared read-only tool registry (`agent/tools.py`): (1) **Agent mode** (`POST /ai/chat/agentic`, opt-in
+  toggle) — the model picks tools per turn over up to 4 rounds and streams visible `step` chips before the
+  answer; Gemini native function-calling with fall-over to Groq/OpenRouter OpenAI-style tool-calling. (2) A
+  **public MCP server** at `/mcp/` (FastMCP streamable-HTTP) so recruiters can connect their own Claude/Cursor,
+  plus a browser-friendly REST shim (`/tools`, `/tools/{name}`) powering the `/mcp` page's live playground.
+  (3) **Cross-provider model fallback** — `settings.model_chain` stacks Gemini → Groq → OpenRouter as ordered
+  `provider:model` entries (each included only if its key is set), with mid-stream `reset` on failure and the
+  serving model shown in the pill badge. Also added the `/system` observability page (latency percentiles, RAG
+  timing, model fallback).
+</Update>
 
 <Update date="2026-06-08">
   Three admin panel improvements targeting content consistency and operational efficiency:

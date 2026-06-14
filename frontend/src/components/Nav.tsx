@@ -10,48 +10,77 @@ import SparkleIcon from "@/components/SparkleIcon";
 import ReadingProgress from "@/components/blog/ReadingProgress";
 import { playClick } from "@/lib/sound";
 
-const links = [
+type NavItem = { href: string; label: string; desc: string; icon: React.ReactNode };
+type NavGroup = { label: string; items: NavItem[] };
+
+const groups: NavGroup[] = [
   {
-    href: "/experience", label: "Experience",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>,
+    label: "Work",
+    items: [
+      {
+        href: "/experience", label: "Experience", desc: "Roles, companies & impact",
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>,
+      },
+      {
+        href: "/education", label: "Education", desc: "Degrees & foundations",
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>,
+      },
+      {
+        href: "/projects", label: "Projects", desc: "What I've shipped",
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+      },
+      {
+        href: "/lab", label: "Lab", desc: "Live system designs",
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0H5a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4m-6 0h6"/></svg>,
+      },
+      {
+        href: "/now", label: "Now", desc: "What I'm doing right now",
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>,
+      },
+    ],
   },
   {
-    href: "/education",  label: "Education",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/></svg>,
+    label: "Writing",
+    items: [
+      {
+        href: "/blog", label: "Blog", desc: "Notes on building",
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>,
+      },
+      {
+        href: "/quotes", label: "Quotes", desc: "Words I live by",
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zm14.017 0v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-3.983v-10h9.983z"/></svg>,
+      },
+      {
+        href: "/gallery", label: "Gallery", desc: "Milestones & moments",
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>,
+      },
+    ],
   },
   {
-    href: "/projects",   label: "Projects",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
-  },
-  {
-    href: "/lab",        label: "Lab",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0H5a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4m-6 0h6"/></svg>,
-  },
-  {
-    href: "/blog",       label: "Blog",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>,
-  },
-  {
-    href: "/gallery",    label: "Gallery",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/></svg>,
-  },
-  {
-    href: "/quotes",     label: "Quotes",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zm14.017 0v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-3.983v-10h9.983z"/></svg>,
-  },
-  {
-    href: "/now",        label: "Now",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>,
-  },
-  {
-    href: "/mcp",        label: "MCP",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22v-5"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/><rect x="6" y="8" width="12" height="6" rx="2"/><path d="M9 14v3M15 14v3"/></svg>,
-  },
-  {
-    href: "/system",     label: "System",
-    icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+    label: "Developers",
+    items: [
+      {
+        href: "/mcp", label: "MCP", desc: "Connect your LLM to my work",
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22v-5"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/><rect x="6" y="8" width="12" height="6" rx="2"/><path d="M9 14v3M15 14v3"/></svg>,
+      },
+      {
+        href: "/system", label: "System", desc: "Live observability",
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>,
+      },
+    ],
   },
 ];
+
+const Chevron = ({ open }: { open: boolean }) => (
+  <svg
+    width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
+    strokeLinecap="round" strokeLinejoin="round"
+    className={`ml-0.5 transition-transform duration-200 ${open ? "rotate-180" : ""}`}
+    aria-hidden
+  >
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);
 
 export default function Nav() {
   const pathname = usePathname();
@@ -66,33 +95,73 @@ export default function Nav() {
   const openRef       = useRef(open);
   useEffect(() => { openRef.current = open; }, [open]);
 
-  // ── Magnetic spotlight indicator ──────────────────────────────
-  const linkRefs = useRef<(HTMLAnchorElement | null)[]>([]);
+  // ── Dropdown menus (desktop) ──────────────────────────────────
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const menubarRef = useRef<HTMLDivElement>(null);
+
+  // ── Magnetic spotlight indicator (now glides across the 3 group triggers) ──
+  const triggerRefs = useRef<(HTMLDivElement | null)[]>([]);
   const [hoverIdx, setHoverIdx] = useState<number | null>(null);
   const [spot, setSpot] = useState<{ left: number; width: number; opacity: number }>({
     left: 0, width: 0, opacity: 0,
   });
 
-  const activeIdx = links.findIndex((l) => pathname.startsWith(l.href));
+  const activeGroupIdx = groups.findIndex((g) => g.items.some((it) => pathname.startsWith(it.href)));
 
+  // Close any open dropdown on navigation — React's "adjust state during render"
+  // pattern (preferred over an effect for resetting state when a value changes).
+  const [navPath, setNavPath] = useState(pathname);
+  if (navPath !== pathname) {
+    setNavPath(pathname);
+    if (openIdx !== null) setOpenIdx(null);
+  }
+
+  const openMenu = (i: number) => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    setOpenIdx(i);
+    setHoverIdx(i);
+  };
+  const scheduleClose = () => {
+    if (closeTimer.current) clearTimeout(closeTimer.current);
+    closeTimer.current = setTimeout(() => { setOpenIdx(null); setHoverIdx(null); }, 150);
+  };
+
+  // Move the spotlight to the open → hovered → active group, in that priority.
   useEffect(() => {
-    const idx = hoverIdx ?? activeIdx;
-    const el = idx >= 0 ? linkRefs.current[idx] : null;
+    const idx = openIdx ?? hoverIdx ?? activeGroupIdx;
+    const el = idx != null && idx >= 0 ? triggerRefs.current[idx] : null;
     if (el) setSpot({ left: el.offsetLeft, width: el.offsetWidth, opacity: 1 });
     else setSpot((s) => ({ ...s, opacity: 0 }));
-  }, [hoverIdx, activeIdx, pathname]);
+  }, [openIdx, hoverIdx, activeGroupIdx, pathname]);
 
   // Re-measure on resize (font / layout shifts)
   useEffect(() => {
     const remeasure = () => {
-      const idx = activeIdx;
-      const el = idx >= 0 ? linkRefs.current[idx] : null;
+      const el = activeGroupIdx >= 0 ? triggerRefs.current[activeGroupIdx] : null;
       if (el) setSpot({ left: el.offsetLeft, width: el.offsetWidth, opacity: 1 });
     };
     const id = setTimeout(remeasure, 80); // after font swap
     window.addEventListener("resize", remeasure);
     return () => { clearTimeout(id); window.removeEventListener("resize", remeasure); };
-  }, [activeIdx]);
+  }, [activeGroupIdx]);
+
+  // Close on Escape
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpenIdx(null); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
+  // Close on outside click (covers click-opened menus where the cursor never leaves)
+  useEffect(() => {
+    if (openIdx === null) return;
+    const onDown = (e: MouseEvent) => {
+      if (menubarRef.current && !menubarRef.current.contains(e.target as Node)) setOpenIdx(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [openIdx]);
 
   useEffect(() => {
     const onScroll = () => {
@@ -185,15 +254,16 @@ export default function Nav() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {/* Spotlight link group — a soft indigo highlight glides between items */}
+          {/* Spotlight group — a soft indigo highlight glides between the 3 menu triggers */}
           <div
+            ref={menubarRef}
             className="relative flex items-center gap-1"
-            onMouseLeave={() => setHoverIdx(null)}
+            onMouseLeave={scheduleClose}
           >
             {/* The gliding spotlight */}
             <span
               aria-hidden
-              className="pointer-events-none absolute top-1/2 -translate-y-1/2 h-8
+              className="pointer-events-none absolute top-1/2 -translate-y-1/2 h-8 rounded-md
                          bg-surface-raised dark:bg-surface-raised
                          ring-1 ring-border dark:ring-border"
               style={{
@@ -203,38 +273,92 @@ export default function Nav() {
                 transition: "left 0.42s cubic-bezier(0.22,1,0.36,1), width 0.42s cubic-bezier(0.22,1,0.36,1), opacity 0.3s ease",
               }}
             />
-            {links.map((l, i) => {
-              const active = pathname.startsWith(l.href);
+            {groups.map((g, i) => {
+              const groupActive = g.items.some((it) => pathname.startsWith(it.href));
+              const isOpen = openIdx === i;
               return (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  ref={(el) => { linkRefs.current[i] = el; }}
-                  onMouseEnter={() => setHoverIdx(i)}
-                  onClick={() => playClick("nav")}
-                  className={`relative z-10 inline-flex items-center px-3 py-1.5 text-sm whitespace-nowrap transition-colors duration-200 ${
-                    active
-                      ? "text-fg font-semibold"
-                      : hoverIdx === i
-                      ? "text-fg"
-                      : "text-fg-subtle"
-                  }`}
+                <div
+                  key={g.label}
+                  ref={(el) => { triggerRefs.current[i] = el; }}
+                  className="relative"
+                  onMouseEnter={() => openMenu(i)}
                 >
-                  {l.label}
-                </Link>
+                  <button
+                    type="button"
+                    aria-haspopup="true"
+                    aria-expanded={isOpen}
+                    onClick={() => { setOpenIdx(isOpen ? null : i); playClick("ui"); }}
+                    className={`relative z-10 inline-flex items-center px-3 py-1.5 text-sm whitespace-nowrap transition-colors duration-200 ${
+                      groupActive || isOpen
+                        ? "text-fg font-semibold"
+                        : hoverIdx === i
+                        ? "text-fg"
+                        : "text-fg-subtle"
+                    }`}
+                  >
+                    {g.label}
+                    <Chevron open={isOpen} />
+                  </button>
+
+                  {/* Dropdown panel — same glass treatment as the mobile drawer */}
+                  <div
+                    role="menu"
+                    aria-label={g.label}
+                    className={`absolute left-0 top-full mt-2 min-w-[252px] origin-top rounded-xl p-1.5
+                      bg-surface/95 backdrop-blur-[14px] ring-1 ring-border
+                      [box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.12),0_2px_8px_-2px_rgb(0_0_0/0.06)]
+                      dark:[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.5),0_2px_8px_-2px_rgb(0_0_0/0.3)]
+                      transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                        isOpen
+                          ? "visible opacity-100 translate-y-0 scale-100"
+                          : "invisible opacity-0 -translate-y-1 scale-[0.98] pointer-events-none"
+                      }`}
+                  >
+                    {g.items.map((it) => {
+                      const active = pathname.startsWith(it.href);
+                      return (
+                        <Link
+                          key={it.href}
+                          href={it.href}
+                          role="menuitem"
+                          onClick={() => { setOpenIdx(null); playClick("nav"); }}
+                          className={`group/item flex items-start gap-2.5 rounded-lg px-2.5 py-2 transition-colors duration-150 ${
+                            active
+                              ? "bg-surface-raised"
+                              : "hover:bg-surface-raised"
+                          }`}
+                        >
+                          <span className={`mt-0.5 shrink-0 transition-colors ${active ? "text-accent" : "text-fg-faint group-hover/item:text-fg-muted"}`}>
+                            {it.icon}
+                          </span>
+                          <span className="min-w-0">
+                            <span className={`block text-[13px] leading-tight ${active ? "text-fg font-semibold" : "text-fg-muted group-hover/item:text-fg font-medium"}`}>
+                              {it.label}
+                            </span>
+                            <span className="block text-[11px] leading-tight text-fg-faint mt-0.5">
+                              {it.desc}
+                            </span>
+                          </span>
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </div>
               );
             })}
           </div>
-          {/* Cmd+K search trigger */}
+
+          {/* Cmd+K search trigger — wide rounded pill that reads like a search field */}
           <button
             onClick={() => { playClick("ui"); window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })); }}
-            className="inline-flex items-center gap-2 rounded border border-border bg-surface-raised px-2.5 py-1.5 text-xs text-fg-faint hover:text-fg hover:border-fg-muted transition-colors"
+            className="group/search ml-1.5 inline-flex items-center gap-2 w-44 lg:w-56 rounded-full border border-border bg-surface-raised pl-3.5 pr-1.5 py-1.5 text-xs text-fg-faint hover:text-fg hover:border-fg-muted transition-colors"
             aria-label="Search"
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0">
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
-            <kbd className="font-sans text-[10px]">⌘K</kbd>
+            <span className="text-fg-faint group-hover/search:text-fg-muted transition-colors">Search…</span>
+            <kbd className="ml-auto rounded-md border border-border bg-bg px-1.5 py-0.5 font-sans text-[10px] leading-none text-fg-faint">⌘K</kbd>
           </button>
           <SoundToggle />
           <ThemeToggle />
@@ -306,52 +430,65 @@ export default function Nav() {
         </div>
         </div>{/* ↑ pill */}
 
-        {/* ── Mobile drawer — floats below pill, same glass treatment ── */}
+        {/* ── Mobile drawer — floats below pill, same glass treatment, grouped by section ── */}
         {open && (
-          <div className="md:hidden mt-1.5 overflow-hidden
+          <div className="md:hidden mt-1.5 overflow-hidden rounded-xl
             bg-surface/92 backdrop-blur-[14px]
             [box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.10),_0_2px_8px_-2px_rgb(0_0_0/0.06)]
             dark:[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.45),_0_2px_8px_-2px_rgb(0_0_0/0.25)]">
-            <nav className="flex flex-col gap-0.5 px-2 pt-2 pb-2">
-              {links.map((l) => (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  onClick={() => { setOpen(false); playClick("nav"); }}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors ${
-                    pathname.startsWith(l.href)
-                      ? "bg-surface-raised text-fg font-medium"
-                      : "text-fg-muted hover:bg-surface-raised hover:text-fg"
-                  }`}
-                >
-                  <span className={`shrink-0 ${pathname.startsWith(l.href) ? "text-accent" : "text-fg-faint"}`}>
-                    {l.icon}
-                  </span>
-                  {l.label}
-                </Link>
+            <nav className="flex flex-col px-2 pt-2 pb-2">
+              {groups.map((g, gi) => (
+                <div key={g.label} className={gi > 0 ? "mt-1 pt-1 border-t border-border/60" : ""}>
+                  <p className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-fg-faint">
+                    {g.label}
+                  </p>
+                  {g.items.map((it) => {
+                    const active = pathname.startsWith(it.href);
+                    return (
+                      <Link
+                        key={it.href}
+                        href={it.href}
+                        onClick={() => { setOpen(false); playClick("nav"); }}
+                        className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors ${
+                          active
+                            ? "bg-surface-raised text-fg font-medium"
+                            : "text-fg-muted hover:bg-surface-raised hover:text-fg"
+                        }`}
+                      >
+                        <span className={`shrink-0 ${active ? "text-accent" : "text-fg-faint"}`}>
+                          {it.icon}
+                        </span>
+                        {it.label}
+                      </Link>
+                    );
+                  })}
+                </div>
               ))}
-              <a
-                href={profile.resume}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={() => setOpen(false)}
-                className="px-3 py-2.5 rounded text-sm text-fg-muted hover:bg-surface-raised transition-colors flex items-center gap-1.5"
-              >
-                Resume
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M7 17L17 7M17 7H7M17 7v10"/>
-                </svg>
-              </a>
-              <Link
-                href="/admin"
-                onClick={() => setOpen(false)}
-                className="px-3 py-2.5 rounded text-sm text-fg-faint hover:bg-surface-raised transition-colors flex items-center gap-2"
-              >
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-                Admin
-              </Link>
+
+              <div className="mt-1 pt-1 border-t border-border/60">
+                <a
+                  href={profile.resume}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={() => setOpen(false)}
+                  className="px-3 py-2.5 rounded text-sm text-fg-muted hover:bg-surface-raised transition-colors flex items-center gap-1.5"
+                >
+                  Resume
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <path d="M7 17L17 7M17 7H7M17 7v10"/>
+                  </svg>
+                </a>
+                <Link
+                  href="/admin"
+                  onClick={() => setOpen(false)}
+                  className="px-3 py-2.5 rounded text-sm text-fg-faint hover:bg-surface-raised transition-colors flex items-center gap-2"
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                  Admin
+                </Link>
+              </div>
             </nav>
           </div>
         )}

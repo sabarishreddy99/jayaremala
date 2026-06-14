@@ -15,6 +15,8 @@ const META: Record<string, { label: string; icon: string }> = {
   get_skills:       { label: "Reading skills", icon: "🧠" },
   get_education:    { label: "Reading education", icon: "🎓" },
   get_now:          { label: "Checking what he's up to now", icon: "📍" },
+  get_blog:         { label: "Browsing blog posts", icon: "✍️" },
+  get_lab:          { label: "Reading lab / system designs", icon: "🧪" },
   get_resume:       { label: "Fetching resume", icon: "📄" },
   check_availability: { label: "Checking availability", icon: "📅" },
   get_booking_link:   { label: "Finding open times to meet", icon: "📅" },

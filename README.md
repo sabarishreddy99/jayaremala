@@ -4,6 +4,8 @@ Live at **[jayaremala.com](https://jayaremala.com)**
 
 Personal AI-assisted portfolio for **Jaya Sabarish Reddy Remala**. Two entry points: a full-screen RAG-powered AI chatbot (Avocado) and a classic portfolio with experience, projects, education, blog, lab, and quotes. Content is editable via a token-gated admin panel without any git commits.
 
+Avocado is also **agentic**: an opt-in "Agent mode" lets the model pick tools per turn (and call them live), the same read-only tools are exposed over a **public MCP server** (`/mcp/`) so a recruiter can plug their own Claude/Cursor into Jaya's portfolio, and a **book-a-call** flow surfaces real Google Calendar openings + a one-click booking link inside the chat. The model layer fails over across providers — **Gemini → Groq → OpenRouter** — so the chatbot keeps answering after any single free tier is exhausted.
+
 ---
 
 ## System Architecture
@@ -203,14 +205,96 @@ Adding one blog post embeds one document, not the entire corpus. A forced full r
 
 **Embedding model change detection**: If the stored `EMBED_MODEL` name in `.doc_hashes.json` differs from the current constant, `reset_collection()` wipes the ChromaDB collection and a full reingest runs automatically. No manual ChromaDB deletion needed when switching embedding models.
 
-### Gemini fallback chain
+### Multi-provider model fallback chain
 
-On 503 (UNAVAILABLE) or 429 (RESOURCE_EXHAUSTED), the backend retries through the chain automatically:
+On 503 (UNAVAILABLE), 429 (RESOURCE_EXHAUSTED), or a deprecated-model 404, the backend retries
+through a **cross-provider** chain automatically — Gemini first, then the OpenAI-compatible free
+tiers (Groq, OpenRouter). Each provider is included only when its API key is set, so behaviour is
+unchanged when keys are absent. Stacking free tiers behind Gemini keeps Avocado answering after
+Gemini's daily quota is gone. The frontend shows which `provider:model` actually answered via a
+green pill badge, and fallback can switch mid-stream (a `reset` event tells the client to discard
+partial tokens from the failed model).
 
 ```
-GEMINI_MODEL           primary     (default: gemini-2.5-flash)
-GEMINI_FALLBACK_MODELS fallbacks   (gemini-2.0-flash, gemini-2.0-flash-lite, gemini-flash-latest)
+GEMINI_MODEL            primary        (default: gemini-2.0-flash)
+GEMINI_FALLBACK_MODELS  gemini fallbacks (gemini-2.5-flash, gemini-2.0-flash-lite, gemini-flash-latest)
+GROQ_MODELS             groq:…         (llama-3.3-70b-versatile, llama-3.1-8b-instant)   [if GROQ_API_KEY]
+OPENROUTER_MODELS       openrouter:…   (deepseek-chat-v3, llama-3.3-70b-instruct)        [if OPENROUTER_API_KEY]
 ```
+
+The chain is built once in `settings.model_chain` as ordered `provider:model` entries (bare Gemini
+names auto-prefixed `gemini:`). Groq and OpenRouter both speak the OpenAI API, so a single client
+type covers both in `_generate()` / `_stream_tokens()`.
+
+---
+
+## Agentic Mode, MCP & Tools
+
+Beyond classic RAG chat, Avocado exposes a **single shared tool registry** through three independent
+surfaces. The registry lives in `backend/src/app/agent/tools.py` (`TOOLS`) — each tool is a `name`,
+`description`, a plain Python `handler`, and a JSON-Schema `parameters` block. **Handlers do pure
+data / retrieval — no LLM calls** — so the tools are cheap and abuse-safe. Add a tool once and it
+lights up everywhere.
+
+| Surface | Entry point | Who reasons | Transport |
+|---|---|---|---|
+| **MCP server** | `mcp_server.py` → mounted at `/mcp/` | The *client's* model (Claude Desktop / Cursor) | MCP streamable-HTTP |
+| **Agent mode** | `routers/ai.py` `POST /ai/chat/agentic` | Avocado's own model (Gemini/Groq/OpenRouter function-calling) | SSE |
+| **REST playground** | `routers/tools.py` `GET /tools`, `POST /tools/{name}` | None — direct invocation | Plain JSON REST |
+
+### The tools
+
+`search_knowledge` (runs the same hybrid RAG pipeline), `get_profile`, `get_experience`,
+`get_projects`, `get_project`, `get_skills`, `get_education`, `get_now`, `get_blog`,
+`get_lab`, `get_resume`, `check_availability`, and `get_booking_link`. `get_blog` / `get_lab`
+list posts/entries as metadata with no args, or return one in full when passed a `slug` — so
+MCP clients can enumerate and drill into content, not just semantically search it.
+
+### Agent mode (`/ai/chat/agentic`)
+
+An opt-in toggle in the chat UI. The model picks tools per turn over up to 4 tool rounds, and the
+backend streams visible `step` events (a chip per tool, running → done with timing) before the final
+answer tokens. Gemini uses native function-calling; if it's exhausted or returns a `thought_signature`
+error, the request falls over to the Groq/OpenRouter OpenAI-style tool-calling agents — same registry,
+same visible steps.
+
+### Public MCP server (`/mcp/`)
+
+`build_mcp_app()` wraps every `TOOLS` entry into a `FastMCP` app and returns
+`mcp.http_app(path="/", transport="http", stateless_http=True)`. **`stateless_http=True`** drops the
+per-session handshake, so any public client can POST without negotiating an `Mcp-Session-Id` header
+— required for a connect-from-anywhere endpoint and for running behind a load balancer with no session
+affinity. It's mounted in `main.py` at `/mcp` wrapped in a **permissive CORS layer scoped to that
+mount only** (the main API keeps its domain-locked CORS), so browser-based MCP clients aren't blocked.
+
+- **Endpoint:** `https://api.jayaremala.com/mcp/` — note the **trailing slash** (`/mcp` 307-redirects).
+- **Connect config** is generated live on the `/mcp` page (Claude Desktop + Cursor JSON snippets).
+- Browsers can't speak the MCP transport, so the `/mcp` page's live playground calls the REST shim
+  (`/tools`, `/tools/{name}`, rate-limited 30/min) instead — same handlers, same results.
+
+### Book a call (smart handoff)
+
+When a visitor expresses scheduling intent — keyword-detected in classic chat (`_is_calendar_query`)
+or via the model calling `get_booking_link` in agent mode — Avocado surfaces a **booking card**:
+
+```
+Recruiter: "can we set up a call?"
+        │
+        ▼
+get_booking_card()  →  Google Calendar Freebusy API (read-only OAuth)  →  real open 30-min slots
+                       + booking_url + availability.open  (from profile.json)
+        │
+        ▼
+SSE `booking_card` event  →  <BookingCard> renders open slots (clickable) + "Book on Google
+                             Calendar" CTA → existing Google Appointment Schedule link.
+                             Google handles the invite, Meet link, and reminders.
+```
+
+Slots are cached ~3 min (`get_booking_slots`) and the whole fetch is timeout-bounded so the card never
+stalls the stream. It **degrades gracefully**: if the calendar isn't connected, the slots list is empty
+but the booking-link CTA still works. The prompt is nudged to *invite* the visitor to pick a time
+rather than pasting slots/links itself. No calendar-write scope is needed — read-only Freebusy plus a
+static booking link keeps the public endpoint low-risk.
 
 ---
 
@@ -356,6 +440,8 @@ Daily S3 backup → s3://itsjaya-backups-analytics/analytics_db/
 | `/quotes` | Curated quotes by category (Philosophy, Engineering, Science, etc.) |
 | `/gallery` | Photo grid — milestones, events, and achievements |
 | `/now` | What Jaya is currently building, learning, and reading |
+| `/mcp` | Public MCP server explainer + live tool playground + Claude/Cursor connect configs |
+| `/system` | Live observability — latency percentiles, RAG pipeline timing, model fallback |
 | `/admin` | Stats dashboard · content editors · bulk delete · GitHub MDX sync · immediate reingest (no-index, token-gated) |
 
 All portfolio routes share a layout via the `(portfolio)` route group — adds no URL segment.
@@ -422,12 +508,16 @@ itsjaya/
 │
 ├── backend/
 │   ├── src/app/
-│   │   ├── main.py                         FastAPI + lifespan + SlowAPI middleware
-│   │   ├── core/settings.py                Pydantic settings (incl. content_db_path)
+│   │   ├── main.py                         FastAPI + lifespan + SlowAPI middleware + /mcp mount (CORS-wrapped)
+│   │   ├── mcp_server.py                    Public MCP server — wraps TOOLS over streamable-HTTP (stateless)
+│   │   ├── agent/tools.py                   Shared read-only tool registry (TOOLS) — MCP + agent + REST
+│   │   ├── integrations/                    google_auth · calendar (Freebusy + booking card) · gmail · drive
+│   │   ├── core/settings.py                Pydantic settings (content_db_path, model_chain: Gemini→Groq→OpenRouter)
 │   │   ├── core/limiter.py                 SlowAPI Limiter (X-Forwarded-For aware)
 │   │   ├── routers/admin.py                POST /admin/reingest (background task, token-gated)
 │   │                                   GET  /admin/reingest/status (poll running/result/error)
-│   │   ├── routers/ai.py                   /ai/* endpoints + HyDE + RAG orchestration
+│   │   ├── routers/ai.py                   /ai/* endpoints + HyDE + RAG + /ai/chat/agentic (tool-calling) + booking
+│   │   ├── routers/tools.py                /tools · /tools/{name} — browser-friendly REST view of TOOLS
 │   │   ├── routers/blog.py                 /blog/* engagement endpoints
 │   │   ├── routers/content.py              /content/* CRUD (blog, lab, quotes)
 │   │   ├── routers/stats.py                /stats · /stats/overview · /stats/admin
@@ -523,6 +613,10 @@ cd backend  && ruff check src && pytest
 | `FRONTEND_ORIGIN` | `http://localhost:3000` | CORS allowed origins |
 | `APP_ENV` | `dev` | Set to `production` on Lightsail |
 | `ADMIN_TOKEN` | `` | Bearer token for write endpoints + admin stats; empty = disabled |
+| `GROQ_API_KEY` | `` | Optional — appends Groq free-tier models to the fallback chain |
+| `OPENROUTER_API_KEY` | `` | Optional — appends OpenRouter free-tier models to the fallback chain |
+| `GOOGLE_OAUTH_CLIENT_ID` / `_SECRET` | `` | Google OAuth (Gmail/Calendar/Drive) — connected once via the admin panel |
+| `CALENDAR_ID` / `CALENDAR_TZ` | `primary` / `America/New_York` | Calendar used for book-a-call Freebusy lookups |
 
 ---
 

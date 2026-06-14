@@ -97,6 +97,41 @@ def _get_resume() -> dict:
     }
 
 
+def _get_blog(slug: str = "") -> Any:
+    """List blog posts (metadata only), or one full post when `slug` is given.
+
+    Reads blog.json fresh on every call, so new posts (admin-published or pushed
+    as MDX and re-ingested on deploy) appear automatically with no MCP restart.
+    """
+    posts = _load("blog") or []
+    if slug:
+        s = slug.lower().strip()
+        for p in posts:
+            if s in str(p.get("slug", "")).lower() or s in str(p.get("title", "")).lower():
+                return p  # full post incl. content
+        return None
+    # List view: metadata only — keep the payload small, omit the full body.
+    return [
+        {k: p.get(k) for k in ("slug", "title", "date", "description", "tags")}
+        for p in posts
+    ]
+
+
+def _get_lab(slug: str = "") -> Any:
+    """List lab / system-design entries (metadata only), or one full entry by `slug`."""
+    entries = _load("lab") or []
+    if slug:
+        s = slug.lower().strip()
+        for e in entries:
+            if s in str(e.get("slug", "")).lower() or s in str(e.get("title", "")).lower():
+                return e  # full entry incl. content
+        return None
+    return [
+        {k: e.get(k) for k in ("slug", "title", "status", "description", "startedAt", "updatedAt", "tech")}
+        for e in entries
+    ]
+
+
 def _check_availability() -> str:
     try:
         from app.integrations.calendar import get_availability_summary
@@ -191,6 +226,28 @@ TOOLS: list[Tool] = [
         name="get_now",
         description="What Jaya is currently building, learning, and focused on right now.",
         handler=_get_now,
+    ),
+    Tool(
+        name="get_blog",
+        description=(
+            "List Jaya's blog posts — slug, title, date, description, tags. "
+            "Pass `slug` (a slug or title fragment) to fetch one post's full content."
+        ),
+        handler=_get_blog,
+        parameters=_obj(
+            {"slug": {"type": "string", "description": "Optional — slug or title fragment to fetch one post's full content."}},
+        ),
+    ),
+    Tool(
+        name="get_lab",
+        description=(
+            "List Jaya's lab / system-design entries — slug, title, status, tech, dates. "
+            "Pass `slug` (a slug or title fragment) to fetch one entry's full content."
+        ),
+        handler=_get_lab,
+        parameters=_obj(
+            {"slug": {"type": "string", "description": "Optional — slug or title fragment to fetch one entry's full content."}},
+        ),
     ),
     Tool(
         name="get_resume",

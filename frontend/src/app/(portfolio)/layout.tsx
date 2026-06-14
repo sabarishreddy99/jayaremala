@@ -1,4 +1,5 @@
 import Nav from "@/components/Nav";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import Footer from "@/components/Footer";
 import AvocadoChatButton from "@/components/AvocadoChatButton";
 import ScrollToTop from "@/components/ScrollToTop";
@@ -17,7 +18,10 @@ export default function PortfolioLayout({ children }: { children: React.ReactNod
       <SectionIndicator />
       <Nav />
       <SearchModal items={getSearchIndex()} />
-      <main className="flex-1"><PageTransition>{children}</PageTransition></main>
+      <main className="flex-1">
+        <Breadcrumbs />
+        <PageTransition>{children}</PageTransition>
+      </main>
       <Footer />
       <AvocadoChatButton />
       <ScrollToTop />

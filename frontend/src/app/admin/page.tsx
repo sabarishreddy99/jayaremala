@@ -4218,19 +4218,23 @@ function Dashboard({
 const AUTO_REFRESH_MS = 60_000;
 const SESSION_TTL_MS  = 4 * 60 * 60 * 1000; // 4 hours
 
+// Token lives in localStorage (not sessionStorage) so it's readable by the
+// every-helper `localStorage.getItem("avocado_admin_token")` calls AND by the
+// Google OAuth callback, which runs in a separate popup window that does not
+// share the opener's sessionStorage. Expiry is enforced via the companion key.
 function saveSession(t: string) {
-  sessionStorage.setItem("avocado_admin_token", t);
-  sessionStorage.setItem("avocado_admin_exp", String(Date.now() + SESSION_TTL_MS));
+  localStorage.setItem("avocado_admin_token", t);
+  localStorage.setItem("avocado_admin_exp", String(Date.now() + SESSION_TTL_MS));
 }
 
 function clearSession() {
-  sessionStorage.removeItem("avocado_admin_token");
-  sessionStorage.removeItem("avocado_admin_exp");
+  localStorage.removeItem("avocado_admin_token");
+  localStorage.removeItem("avocado_admin_exp");
 }
 
 function loadSession(): string | null {
-  const t   = sessionStorage.getItem("avocado_admin_token");
-  const exp = Number(sessionStorage.getItem("avocado_admin_exp") ?? 0);
+  const t   = localStorage.getItem("avocado_admin_token");
+  const exp = Number(localStorage.getItem("avocado_admin_exp") ?? 0);
   if (!t || Date.now() > exp) { clearSession(); return null; }
   return t;
 }

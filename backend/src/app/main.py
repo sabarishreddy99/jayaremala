@@ -79,12 +79,70 @@ app.add_middleware(SlowAPIMiddleware)
 
 _origins = [o.strip() for o in settings.frontend_origin.split(",") if o.strip()]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_origins,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+class ScopedCORSMiddleware:
+    """Path-aware CORS: permissive for the public /mcp endpoint, restrictive
+    everywhere else.
+
+    A single global CORSMiddleware is the outermost layer and so handles *all*
+    OPTIONS preflights — including those for /mcp — before they can reach a
+    permissive wrapper mounted deeper. That meant preflights from connector
+    origins we can't enumerate (e.g. https://claude.ai) were rejected with
+    400 "Disallowed CORS origin", breaking the connector handshake. Dispatching
+    by path here lets /mcp accept any origin while the rest of the API keeps its
+    locked-down policy.
+    """
+
+    def __init__(self, app):
+        self._permissive = CORSMiddleware(
+            app,
+            allow_origins=["*"],
+            allow_methods=["GET", "POST", "OPTIONS", "DELETE"],
+            allow_headers=["*"],
+            expose_headers=["Mcp-Session-Id", "Mcp-Protocol-Version"],
+        )
+        self._restrictive = CORSMiddleware(
+            app,
+            allow_origins=_origins,
+            allow_methods=["*"],
+            allow_headers=["*"],
+        )
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http" and scope.get("path", "").startswith("/mcp"):
+            await self._permissive(scope, receive, send)
+        else:
+            await self._restrictive(scope, receive, send)
+
+
+class MCPTrailingSlashShim:
+    """Serve the MCP endpoint at both /mcp and /mcp/.
+
+    The streamable-HTTP app is mounted at /mcp, so its route lives at /mcp/; a
+    bare /mcp would otherwise 307-redirect to add the slash. Browser MCP clients
+    (and some connectors) won't follow that redirect on a preflight, so the
+    handshake fails. Rewriting the exact path /mcp -> /mcp/ before the router
+    sees it makes both forms work with no redirect. Must run as app-level
+    middleware: the redirect is decided at routing time, before the mounted app
+    is reached.
+    """
+
+    def __init__(self, app):
+        self._app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope.get("type") == "http" and scope.get("path") == "/mcp":
+            scope = dict(scope)
+            scope["path"] = "/mcp/"
+            raw = scope.get("raw_path")
+            if raw is not None:
+                scope["raw_path"] = raw + b"/"
+        await self._app(scope, receive, send)
+
+
+app.add_middleware(ScopedCORSMiddleware)
+# Added last → outermost, so the rewrite happens before CORS and routing.
+app.add_middleware(MCPTrailingSlashShim)
 
 app.include_router(admin_router)
 app.include_router(ai_router)
@@ -96,24 +154,12 @@ app.include_router(tools_router)
 # Mount the public MCP server (read-only portfolio tools over streamable-HTTP).
 # The main API's CORS is locked to Jaya's domains, but MCP is meant to be reached
 # from anywhere — including browser-based clients (e.g. claude.ai connectors) whose
-# origin we can't enumerate. So wrap *only* the /mcp mount in permissive CORS; the
-# rest of the API keeps its restrictive policy. allow_origins=["*"] precludes
-# credentials, which is correct here — these tools are read-only and unauthenticated.
-# Lifespan is still entered on the unwrapped _mcp_app (see lifespan()), so the
-# session manager that serves requests is the same one started at startup.
+# origin we can't enumerate. Permissive CORS for this path is applied by
+# ScopedCORSMiddleware above (it must run for OPTIONS preflights, which a mount
+# wrapper never sees). Lifespan is still entered on _mcp_app (see lifespan()), so
+# the session manager that serves requests is the same one started at startup.
 if _mcp_app is not None:
-    # CORSMiddleware (imported above from fastapi.middleware.cors) is the Starlette
-    # class and wraps any ASGI app directly.
-    app.mount(
-        "/mcp",
-        CORSMiddleware(
-            _mcp_app,
-            allow_origins=["*"],
-            allow_methods=["GET", "POST", "OPTIONS", "DELETE"],
-            allow_headers=["*"],
-            expose_headers=["Mcp-Session-Id", "Mcp-Protocol-Version"],
-        ),
-    )
+    app.mount("/mcp", _mcp_app)
 
 
 @app.get("/health")

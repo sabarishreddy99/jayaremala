@@ -3,7 +3,15 @@
 import Image from "next/image";
 import GVLink from "@/components/gradevitian/GVLink";
 import ScrollReveal from "@/components/ScrollReveal";
+import GVStats, { type GVStat } from "@/components/gradevitian/GVStats";
 import { useGVAuth } from "@/components/gradevitian/GVAuthProvider";
+
+const METRICS: GVStat[] = [
+  { value: "17K+", label: "Monthly Active Users", sub: "Peak student traffic" },
+  { value: "20K+", label: "Registered Accounts", sub: "VITians onboarded" },
+  { value: "#2", label: "Google Search Rank", sub: "Programmatic SEO" },
+  { value: "<1s", label: "Mobile Load Time", sub: "Sub-second, PWA-optimized" },
+];
 
 const TOOLS = [
   { href: "/gpa", title: "GPA Calculator", desc: "Your semester GPA from grades & credits.", img: "/gradevitian/gpaimg.svg" },
@@ -20,39 +28,35 @@ export default function GVHome() {
 
   return (
     <>
-      {/* Hero */}
+      {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div className="gv-aurora" aria-hidden />
-        <div className="grid-lines pointer-events-none absolute inset-0 opacity-60" aria-hidden />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-10 px-4 py-20 md:grid-cols-[1.15fr_0.85fr] md:py-28">
-          <ScrollReveal>
-            {user ? (
-              <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-nano font-semibold uppercase tracking-[0.16em] text-accent">
-                <span className="h-1.5 w-1.5 rounded-full bg-accent" /> Welcome back
-              </span>
-            ) : (
-              <span className="inline-flex items-center gap-2 rounded-full border border-border bg-surface/70 px-3 py-1 text-nano font-semibold uppercase tracking-[0.16em] text-fg-muted backdrop-blur">
-                Built for VITians
-              </span>
-            )}
+        <div className="grid-lines pointer-events-none absolute inset-0 opacity-50" aria-hidden />
 
-            <h1 className="mt-5 text-[2.5rem] font-bold leading-[1.05] tracking-tight text-fg sm:text-5xl md:text-6xl">
+        <div className="relative mx-auto max-w-3xl px-4 pt-24 pb-16 text-center sm:pt-32 sm:pb-20">
+          <ScrollReveal>
+            <p className="text-nano font-semibold uppercase tracking-[0.22em] text-accent sm:text-micro">
+              {user ? "Welcome back" : "Academic grade forecasting · VIT"}
+            </p>
+
+            <h1
+              className="mx-auto mt-6 font-semibold leading-[1.02] tracking-tight text-fg"
+              style={{ fontFamily: "var(--font-cormorant), Georgia, serif", fontSize: "clamp(2.75rem, 8.5vw, 6rem)" }}
+            >
               {user ? (
                 <>Hi, {firstName}.</>
               ) : (
-                <>grade<span className="bg-gradient-to-r from-accent to-[color:var(--accent-secondary)] bg-clip-text text-transparent">VIT</span>ian</>
+                <>grade<span className="text-accent">VIT</span>ian</>
               )}
             </h1>
 
-            <p className="mt-5 max-w-md text-lead leading-relaxed text-fg-muted">
-              {user ? (
-                <>Your calculators and saved results are right where you left them. Pick a tool and keep going.</>
-              ) : (
-                <>Your all-in-one grading companion — compute your <strong className="font-semibold text-fg">GPA</strong>, <strong className="font-semibold text-fg">CGPA</strong>, predict <strong className="font-semibold text-fg">grades</strong>, and track <strong className="font-semibold text-fg">attendance</strong>, beautifully.</>
-              )}
+            <p className="mx-auto mt-6 max-w-xl text-lead leading-relaxed text-fg-muted">
+              {user
+                ? "Your calculators and saved results are right where you left them — pick a tool and keep going."
+                : "A high-traffic progressive web app for academic grade forecasting at VIT — compute your GPA, CGPA, predict grades, and track attendance."}
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
               {user ? (
                 <>
                   <GVLink href="/account" className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover hover:shadow-md active:scale-[0.97]">
@@ -77,41 +81,39 @@ export default function GVHome() {
             </div>
           </ScrollReveal>
 
-          <ScrollReveal direction="scale" delay={120} className="hidden justify-center md:flex">
-            <div className="relative">
-              <div className="absolute inset-0 -z-10 rounded-full bg-accent/10 blur-3xl" aria-hidden />
-              <Image src="/gradevitian/intro-img.svg" alt="" width={440} height={440} className="w-full max-w-sm drop-shadow-xl" priority />
-            </div>
+          {/* Impact metrics */}
+          <ScrollReveal delay={120} className="mt-14">
+            <GVStats stats={METRICS} />
+            <p className="mx-auto mt-4 max-w-2xl text-micro leading-relaxed text-fg-subtle">
+              Scaled to 17K+ monthly active users and ~20K+ registered accounts. Achieved #2 Google
+              Search ranking via programmatic SEO, with sub-second mobile load times.
+            </p>
           </ScrollReveal>
         </div>
       </section>
 
-      {/* Tool grid */}
-      <section className="mx-auto max-w-6xl px-4 pb-16">
+      {/* ── Tools ────────────────────────────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
         <ScrollReveal>
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-bold tracking-tight text-fg">{user ? "Your tools" : "Pick a tool"}</h2>
-              <p className="mt-1 text-fg-muted">
-                {user ? "Saved results sync to your account automatically." : "Free to use, no sign-up required. Log in to save results."}
-              </p>
-            </div>
-          </div>
+          <h2 className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">{user ? "Your tools" : "Five calculators, one home"}</h2>
+          <p className="mt-2 text-lead text-fg-muted">
+            {user ? "Saved results sync to your account automatically." : "Free to use, no sign-up required. Log in to save your results across devices."}
+          </p>
         </ScrollReveal>
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {TOOLS.map((t, i) => (
             <ScrollReveal key={t.title} delay={i * 60}>
               <GVLink
                 href={t.href}
-                className="group flex h-full items-start gap-4 rounded-3xl border border-border-subtle bg-surface/70 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_12px_40px_-12px_rgba(79,70,229,0.35)]"
+                className="group flex h-full items-start gap-4 rounded-3xl border border-border-subtle bg-surface/70 p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_18px_50px_-16px_rgba(79,70,229,0.4)]"
               >
                 <div className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-accent/15 to-[color:var(--accent-secondary)]/10 ring-1 ring-inset ring-accent/15">
                   <Image src={t.img} alt="" width={32} height={32} className="h-8 w-8" />
                 </div>
                 <div className="min-w-0">
                   <h3 className="font-semibold text-fg transition-colors group-hover:text-accent">{t.title}</h3>
-                  <p className="mt-1 text-sm leading-snug text-fg-muted">{t.desc}</p>
+                  <p className="mt-1 text-body leading-snug text-fg-muted">{t.desc}</p>
                 </div>
               </GVLink>
             </ScrollReveal>
@@ -119,43 +121,43 @@ export default function GVHome() {
         </div>
       </section>
 
-      {/* Bottom band — account-aware */}
+      {/* ── Account band ─────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 pb-8 sm:pb-10">
         <ScrollReveal>
-          {user ? (
-            <div className="overflow-hidden rounded-3xl border border-border-subtle bg-gradient-to-br from-accent/[0.08] to-transparent p-8 sm:p-10">
-              <div className="flex flex-wrap items-center justify-between gap-5">
-                <div className="flex items-center gap-4">
-                  <div className="grid h-14 w-14 place-items-center rounded-2xl bg-accent text-lg font-bold text-accent-fg shadow-sm shadow-accent/30">
-                    {firstName.slice(0, 1).toUpperCase()}
+          <div className="overflow-hidden rounded-3xl border border-border-subtle bg-gradient-to-br from-accent/[0.08] to-transparent p-8 sm:p-10">
+            <div className="flex flex-wrap items-center justify-between gap-5">
+              {user ? (
+                <>
+                  <div className="flex items-center gap-4">
+                    <div className="grid h-14 w-14 place-items-center rounded-2xl bg-accent text-lg font-bold text-accent-fg shadow-sm shadow-accent/30">
+                      {firstName.slice(0, 1).toUpperCase()}
+                    </div>
+                    <div>
+                      <h2 className="text-xl font-bold text-fg">This is your space, {firstName}.</h2>
+                      <p className="mt-1 text-fg-muted">Saved calculations, notifications and more — all in one place.</p>
+                    </div>
                   </div>
+                  <GVLink href="/account" className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
+                    Go to dashboard
+                  </GVLink>
+                </>
+              ) : (
+                <>
                   <div>
-                    <h2 className="text-xl font-bold text-fg">This is your space, {firstName}.</h2>
-                    <p className="mt-1 text-fg-muted">Saved calculations, notifications and more — all in one place.</p>
+                    <h2 className="text-xl font-bold text-fg">Make it yours</h2>
+                    <p className="mt-1 max-w-md text-fg-muted">Create a free account to save your calculations and pick up on any device.</p>
                   </div>
-                </div>
-                <GVLink href="/account" className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
-                  Go to dashboard
-                </GVLink>
-              </div>
+                  <GVLink href="/signup" className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
+                    Create free account
+                  </GVLink>
+                </>
+              )}
             </div>
-          ) : (
-            <div className="overflow-hidden rounded-3xl border border-border-subtle bg-gradient-to-br from-accent/[0.08] to-transparent p-8 sm:p-10">
-              <div className="flex flex-wrap items-center justify-between gap-5">
-                <div>
-                  <h2 className="text-xl font-bold text-fg">Make it yours</h2>
-                  <p className="mt-1 max-w-md text-fg-muted">Create a free account to save your calculations and pick up on any device.</p>
-                </div>
-                <GVLink href="/signup" className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
-                  Create free account
-                </GVLink>
-              </div>
-            </div>
-          )}
+          </div>
         </ScrollReveal>
       </section>
 
-      {/* Feedback tile */}
+      {/* ── Feedback tile ────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 pb-24">
         <ScrollReveal>
           <GVLink
@@ -170,7 +172,7 @@ export default function GVHome() {
               </div>
               <div>
                 <h2 className="font-semibold text-fg">Got a suggestion or found a bug?</h2>
-                <p className="mt-0.5 text-sm text-fg-muted">We read every message — tell us what would make gradeVITian better.</p>
+                <p className="mt-0.5 text-body text-fg-muted">We read every message — tell us what would make gradeVITian better.</p>
               </div>
             </div>
             <span className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-border bg-surface/60 px-4 py-2 text-sm font-semibold text-fg transition-colors group-hover:border-accent/40 group-hover:text-accent sm:self-auto">

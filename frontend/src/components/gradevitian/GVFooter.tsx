@@ -50,8 +50,11 @@ export default function GVFooter() {
             <span className="font-mono text-[11px] font-semibold tracking-[0.06em] text-fg">
               © {new Date().getFullYear()} grade<span className="text-accent">VIT</span>ian
             </span>
-            <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-fg-muted">
-              Grading tools for VITians
+            <span className="font-mono text-[10px] tracking-[0.06em] text-fg-muted">
+              Designed &amp; built by{" "}
+              <a href="https://jayaremala.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-fg-muted hover:text-accent transition-colors">
+                Jaya Sabarish Reddy Remala
+              </a>
             </span>
           </div>
 
@@ -60,7 +63,7 @@ export default function GVFooter() {
             <GVLink href="/privacy" className={link}>Privacy</GVLink>
             <GVLink href="/terms" className={link}>Terms</GVLink>
             <a href="https://jayaremala.com" target="_blank" rel="noopener noreferrer" className={link}>
-              by Jaya ✦
+              Portfolio ✦
             </a>
           </div>
         </div>

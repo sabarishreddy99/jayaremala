@@ -73,6 +73,26 @@ def send_visitor_intro(
     logger.info("Lead-capture email sent to %s for %s %s @ %s", recipient, persona_label, name, company)
 
 
+# ── gradeVITian transactional email ───────────────────────────────────────────
+
+def send_gradevitian_email(to: str, subject: str, html: str) -> None:
+    """Send an HTML email from Jaya's connected Gmail for the gradeVITian app
+    (welcome + password reset). Reuses the existing OAuth service; raises if Gmail
+    isn't connected — callers treat sending as best-effort."""
+    import email.mime.multipart
+    import email.mime.text as mime_text
+
+    service = _gmail_service()
+    msg = email.mime.multipart.MIMEMultipart("alternative")
+    msg["to"] = to
+    msg["from"] = "me"
+    msg["subject"] = subject
+    msg.attach(mime_text.MIMEText(html, "html"))
+    raw = base64.urlsafe_b64encode(msg.as_bytes()).decode()
+    service.users().messages().send(userId="me", body={"raw": raw}).execute()
+    logger.info("gradeVITian email sent to %s (%s)", to, subject)
+
+
 # ── Feature 3: Inbox Signal Parsing ──────────────────────────────────────────
 
 _RECRUITER_QUERY = (

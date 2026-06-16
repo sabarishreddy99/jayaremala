@@ -1011,3 +1011,35 @@ figcaption[data-rehype-pretty-code-title] + pre {
   @page { margin: 1.5cm; }
 }
 
+
+/* ── gradeVITian (gradevitian.jayaremala.com) ──────────────────────────────── */
+@keyframes gv-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0)   scale(1);     }
+}
+.animate-gv-pop { animation: gv-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Soft aurora blobs for hero/section depth — respects reduced motion */
+.gv-aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.gv-aurora::before,
+.gv-aurora::after {
+  content: '';
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.5;
+}
+.gv-aurora::before {
+  width: 38rem; height: 38rem;
+  top: -14rem; right: -8rem;
+  background: radial-gradient(closest-side, var(--accent), transparent);
+  opacity: 0.18;
+}
+.gv-aurora::after {
+  width: 32rem; height: 32rem;
+  bottom: -16rem; left: -10rem;
+  background: radial-gradient(closest-side, var(--accent-secondary), transparent);
+  opacity: 0.14;
+}
+.dark .gv-aurora::before { opacity: 0.22; }
+.dark .gv-aurora::after  { opacity: 0.18; }

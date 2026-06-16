@@ -203,7 +203,7 @@ export default function SearchModal({ items }: Props) {
                       const isActive = idx === selected;
                       return (
                         <button
-                          key={`${r.type}-${r.href}-${r.title}`}
+                          key={`${r.type}-${r.href}-${r.title}-${idx}`}
                           onClick={() => run(r as SearchItem & { action?: () => void })}
                           onMouseEnter={() => setSelected(idx)}
                           className={`w-full text-left flex items-center gap-3 px-4 py-2 transition-colors ${isActive ? "bg-surface-raised" : "hover:bg-surface-raised"}`}

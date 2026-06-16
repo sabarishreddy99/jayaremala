@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     app_env: str = "dev"
-    frontend_origin: str = "http://localhost:3000,http://127.0.0.1:3000,https://jayaremala.com,https://www.jayaremala.com"
+    frontend_origin: str = "http://localhost:3000,http://127.0.0.1:3000,https://jayaremala.com,https://www.jayaremala.com,https://gradevitian.jayaremala.com"
     google_api_key: str = ""
     # 2.0-flash is faster to first token than 2.5-flash; since answers are grounded
     # in retrieved context the quality gap is minimal. 2.5-flash stays as a fallback.
@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     analytics_db_path: str = "./chroma_db/analytics.db"
     content_db_path: str = "./chroma_db/content.db"
     chroma_db_path: str = "./chroma_db"
+    # gradeVITian student-tools app (gradevitian.jayaremala.com)
+    gv_db_path: str = "./chroma_db/gradevitian.db"
+    # Secret for signing gradeVITian auth tokens. Set GV_JWT_SECRET in prod;
+    # empty falls back to an ephemeral per-process dev secret.
+    gv_jwt_secret: str = ""
     # Set ADMIN_TOKEN env var to enable POST /admin/reingest.
     # Empty string (default) disables the endpoint entirely.
     admin_token: str = ""

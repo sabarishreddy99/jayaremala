@@ -84,6 +84,18 @@ jobs:
         with:
           path: frontend/out
 
+      # gradeVITian lives at gradevitian.jayaremala.com, served by nginx on the
+      # Lightsail box (GitHub Pages can only host the single jayaremala.com domain).
+      # Mirror the static export there so the subdomain serves the same build.
+      - name: Sync gradeVITian static export to Lightsail
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.LIGHTSAIL_SSH_KEY }}" > ~/.ssh/lightsail.pem
+          chmod 600 ~/.ssh/lightsail.pem
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/lightsail.pem -o StrictHostKeyChecking=no" \
+            frontend/out/ ubuntu@${{ secrets.LIGHTSAIL_HOST }}:/var/www/gv-site/
+
   deploy:
     needs: build
     runs-on: ubuntu-latest

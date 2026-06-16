@@ -42,5 +42,6 @@ backup_db() {
 # ── Backup both databases ─────────────────────────────────────────────────────
 backup_db "/data/analytics.db" "analytics_db" "latest_analytics.db"
 backup_db "/data/content.db"   "content_db"   "latest_content.db"
+backup_db "/data/gradevitian.db" "gradevitian_db" "latest_gradevitian.db"
 
 echo "[backup] Done."

@@ -11,6 +11,7 @@ from slowapi.middleware import SlowAPIMiddleware
 from app.core.limiter import limiter
 from app.core.settings import settings
 from app.db import analytics, blog_stats, content
+from app.db import gradevitian as gv_db
 from app.rag import graph as rag_graph
 from app.rag.ingest import run_ingest
 from app.rag.store import warmup as rag_warmup
@@ -18,6 +19,7 @@ from app.routers.admin import router as admin_router
 from app.routers.ai import router as ai_router
 from app.routers.blog import router as blog_router
 from app.routers.content import router as content_router
+from app.routers.gradevitian import router as gradevitian_router
 from app.routers.stats import router as stats_router
 from app.routers.tools import router as tools_router
 
@@ -61,6 +63,10 @@ async def lifespan(app: FastAPI):
         content.init_db()
     except Exception as exc:
         logger.error("content.init_db failed (non-fatal): %s", exc)
+    try:
+        gv_db.init_db()
+    except Exception as exc:
+        logger.error("gradevitian.init_db failed (non-fatal): %s", exc)
     threading.Thread(target=_background_startup, daemon=True).start()
     # The MCP streamable-HTTP app manages its own session lifespan — enter it so
     # the mounted /mcp endpoint works.
@@ -148,6 +154,7 @@ app.include_router(admin_router)
 app.include_router(ai_router)
 app.include_router(blog_router)
 app.include_router(content_router)
+app.include_router(gradevitian_router)
 app.include_router(stats_router)
 app.include_router(tools_router)
 
@@ -168,6 +175,7 @@ def health() -> dict:
         "api": "ok",
         "analytics_db": "ok",
         "content_db": "ok",
+        "gradevitian_db": "ok",
         "rag": "ok",
     }
     try:
@@ -180,6 +188,11 @@ def health() -> dict:
             c.execute("SELECT 1")
     except Exception:
         status["content_db"] = "degraded"
+    try:
+        with gv_db._connect() as c:
+            c.execute("SELECT 1")
+    except Exception:
+        status["gradevitian_db"] = "degraded"
     try:
         from app.rag.store import get_collection
         get_collection().count()

@@ -30,6 +30,16 @@ if [ ! -f "${DATA_DIR}/content.db" ]; then
   fi
 fi
 
+# gradeVITian accounts + saved data — restore so user accounts survive redeploys.
+if [ ! -f "${DATA_DIR}/gradevitian.db" ]; then
+  echo "[deploy] gradevitian.db not found — restoring from S3..."
+  if aws s3 cp "s3://${S3_BUCKET}/gradevitian_db/latest_gradevitian.db" "${DATA_DIR}/gradevitian.db" 2>/dev/null; then
+    echo "[deploy] gradevitian.db restored from S3."
+  else
+    echo "[deploy] No gradevitian.db backup in S3 — starting fresh."
+  fi
+fi
+
 # ── 1. Tag current image as :previous for rollback ───────────────────────────
 docker tag "${IMAGE}:latest" "${IMAGE}:previous" 2>/dev/null || true
 

@@ -73,6 +73,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE}/gallery`,    lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
     { url: `${BASE}/now`,        lastModified: new Date(), changeFrequency: "weekly",  priority: 0.6 },
     { url: `${BASE}/quotes`,     lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
+    // gradeVITian lives on its own subdomain (with its own full sitemap at
+    // gradevitian.jayaremala.com/sitemap.xml); list the home here as a discovery hint.
+    { url: "https://gradevitian.jayaremala.com/", lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },
   ];
 
   const blogRoutes: MetadataRoute.Sitemap = [...blogSlugMap.entries()].map(([slug, date]) => ({

@@ -11,6 +11,9 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin/", "/admin"],
       },
     ],
-    sitemap: "https://jayaremala.com/sitemap.xml",
+    sitemap: [
+      "https://jayaremala.com/sitemap.xml",
+      "https://gradevitian.jayaremala.com/sitemap.xml",
+    ],
   };
 }

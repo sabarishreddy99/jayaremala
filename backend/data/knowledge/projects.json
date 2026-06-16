@@ -56,16 +56,16 @@
   {
     "title": "gradeVITian",
     "description": "High-traffic progressive web app for academic grade forecasting at VIT. Scaled to 17K+ monthly active users and around 20K+ registered accounts. Achieved #2 Google Search ranking via programmatic SEO with sub-second mobile load times.",
-    "tags": ["PHP", "MySQL", "JavaScript", "SEO", "PWA"],
-    "featured": false,
+    "tags": ["Next.js", "React", "FastAPI", "SEO", "PWA"],
+    "featured": true,
     "sourceLinks": [
-      { "label": "Preview", "url": "https://sabarishreddy99.github.io/" },
+      { "label": "Live", "url": "https://gradevitian.jayaremala.com" },
       { "label": "GitHub", "url": "https://github.com/sabarishreddy99/gv-official" },
       {"label": "6+ Years", "url": "https://www.linkedin.com/feed/update/urn:li:activity:7346981400148926465/"},
       {"label": "Version 2.0", "url": "https://www.linkedin.com/feed/update/urn:li:activity:6809389656187265024/" },
       {"label": "Promo", "url":"https://www.linkedin.com/posts/jayasabarishreddyr_undergrad-attendance-grades-activity-6699032199272001536-zi52/"}
     ],
-    "note": "To the VITian community (Class of 2020–2025), thank you for making gradeVITian a success. With six years in production and 17,000+ monthly users, your support has been deeply humbling. As I decommission the service to embrace the LLM era, I reflect on the invaluable lessons learned. This journey truly defined me as an engineer. I am profoundly grateful to everyone who was a part of this incredible chapter."
+    "note": "After six years in production and 17,000+ monthly users, gradeVITian has been rebuilt from the ground up — re-engineered on Next.js and FastAPI and relaunched at gradevitian.jayaremala.com. Heartfelt thanks to the VITian community (Class of 2020–2025) for making the original such a success; this journey defined me as an engineer, and this new chapter carries it forward."
   },
 
   {

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /account/
+Disallow: /forgot-password/
+Disallow: /reset-password/
+
+Sitemap: https://gradevitian.jayaremala.com/sitemap.xml

@@ -54,7 +54,7 @@ export default function GVStats({ stats }: { stats: GVStat[] }) {
   }, []);
 
   return (
-    <div ref={ref} className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
+    <div ref={ref} className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
       {parsed.map((s, i) => (
         <div
           key={s.label}

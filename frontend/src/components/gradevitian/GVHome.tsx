@@ -11,6 +11,7 @@ const METRICS: GVStat[] = [
   { value: "20K+", label: "Registered Accounts", sub: "VITians onboarded" },
   { value: "#2", label: "Google Search Rank", sub: "Programmatic SEO" },
   { value: "<1s", label: "Mobile Load Time", sub: "Sub-second, PWA-optimized" },
+  { value: "6+", label: "Years in Production", sub: "Continuously live & maintained" },
 ];
 
 const TOOLS = [
@@ -33,7 +34,7 @@ export default function GVHome() {
         <div className="gv-aurora" aria-hidden />
         <div className="grid-lines pointer-events-none absolute inset-0 opacity-50" aria-hidden />
 
-        <div className="relative mx-auto max-w-3xl px-4 pt-24 pb-16 text-center sm:pt-32 sm:pb-20">
+        <div className="relative mx-auto max-w-4xl px-4 pt-24 pb-16 text-center sm:pt-32 sm:pb-20">
           <ScrollReveal>
             <p className="text-nano font-semibold uppercase tracking-[0.22em] text-accent sm:text-micro">
               {user ? "Welcome back" : "Academic grade forecasting · VIT"}

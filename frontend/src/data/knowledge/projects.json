@@ -1,80 +1,167 @@
 [
   {
-    "title": "jayaremala.com — AI-Powered Portfolio",
-    "description": "Production AI portfolio with Avocado, a streaming RAG chatbot backed by a 4-stage hybrid retrieval pipeline: query expansion (up to 4 variants), batched dense search via ChromaDB (all-MiniLM-L6-v2 ONNX), BM25 lexical search (rank_bm25), and Reciprocal Rank Fusion (k=60) — all before Gemini 2.5 Flash sees the question. Knowledge base of ~80 atomic documents auto-syncs incrementally: new or edited documents are upserted, deleted documents are purged from ChromaDB, unchanged ones are skipped entirely. Runs as a FastAPI Docker container on AWS Lightsail with zero-downtime blue-green deployments, Nginx + Let's Encrypt HTTPS, daily S3 backup of SQLite analytics, and a Next.js 16 static frontend on GitHub Pages — total cost $10/month.",
-    "tags": ["Next.js 16", "FastAPI", "Python", "ChromaDB", "BM25", "RRF", "fastembed ONNX", "Gemini 2.5 Flash", "SQLite", "AWS Lightsail", "Nginx", "Docker", "GitHub Actions", "GitHub Pages"],
+    "title": "jayaremala.com (Avocado AI)",
+    "description": "Production AI portfolio with Avocado, a streaming RAG agentic chatbot backed by a 4-stage hybrid retrieval pipeline: query expansion (up to 4 variants), batched dense search via ChromaDB (all-MiniLM-L6-v2 ONNX), BM25 lexical search (rank_bm25), and Reciprocal Rank Fusion (k=60) — all before Gemini 2.5 Flash sees the question. Implement model fallback mechanism via Gemini, Grow and OpenRouter with the  knowledge base of ~80 atomic documents auto-syncs incrementally: new or edited documents are upserted, deleted documents are purged from ChromaDB, unchanged ones are skipped entirely. Runs as a FastAPI Docker container on AWS Lightsail with zero-downtime blue-green deployments, Nginx + Let's Encrypt HTTPS, daily S3 backup of SQLite analytics, and a Next.js 16 static frontend on GitHub Pages.",
+    "tags": [
+      "Next.js 16",
+      "FastAPI",
+      "Python",
+      "ChromaDB",
+      "BM25",
+      "RRF",
+      "fastembed ONNX",
+      "Gemini",
+      "Groq",
+      "OpenRouter",
+      "SQLite",
+      "AWS Lightsail",
+      "Nginx",
+      "Docker",
+      "GitHub Actions",
+      "Github Pages"
+    ],
     "featured": true,
     "sourceLinks": [
-      { "label": "Live", "url": "https://jayaremala.com" },
-      { "label": "GitHub", "url": "https://github.com/sabarishreddy99/jayaremala" }
+      {
+        "label": "Live",
+        "url": "https://jayaremala.com"
+      },
+      {
+        "label": "GitHub",
+        "url": "https://github.com/sabarishreddy99/jayaremala"
+      }
     ],
     "note": ""
   },
-
   {
     "title": "SnapLog – Edge AI Security Engine",
     "description": "Achieved 15ms token latency on Snapdragon NPUs — a 10× improvement over cloud inference — by fine-tuning Llama 3.2 3B on security logs with QLoRA and deploying via 4-bit AWQ quantization through ONNX Runtime on-device. Guaranteed zero data loss during network partitions via an offline-first SQLite buffer with background sync workers.",
-    "tags": ["Python", "FastAPI", "QLoRA", "AWQ Quantization", "ONNX Runtime", "Llama 3.2", "Snapdragon NPU"],
+    "tags": [
+      "Python",
+      "FastAPI",
+      "QLoRA",
+      "AWQ Quantization",
+      "ONNX Runtime",
+      "Llama 3.2",
+      "Snapdragon NPU"
+    ],
     "featured": true,
     "award": "Qualcomm Edge AI Hackathon Winner",
     "sourceLinks": [
-      { "label": "GitHub", "url": "https://github.com/sabarishreddy99/snap-log" }
+      {
+        "label": "GitHub",
+        "url": "https://github.com/sabarishreddy99/snap-log"
+      }
     ],
     "note": ""
   },
-
   {
     "title": "GeneCart",
     "description": "AI-powered genomics discovery platform currently being built at NYU College of Arts and Science. Focused on making genomic data exploration accessible and actionable for researchers.",
-    "tags": ["Machine Learning", "Python", "TypeScript", "FastAPI", "React", "PostgreSQL", "AWS", "PyTorch", "Kubernetes"],
+    "tags": [
+      "Machine Learning",
+      "Python",
+      "TypeScript",
+      "FastAPI",
+      "React",
+      "PostgreSQL",
+      "AWS",
+      "PyTorch",
+      "Kubernetes"
+    ],
     "featured": false,
     "sourceLinks": [],
     "note": "In active development at NYU CAS."
   },
-
   {
     "title": "Multi-Agent Research Discovery Engine",
     "description": "Production LangGraph + Llama 3.1 70B system that semantically maps global researcher collaboration networks by indexing millions of papers from Elsevier's Science Direct/Scopus. Cut P99 RAG latency by 78% with Write-Through Redis caching; sustained 99.9% uptime at 3,000+ RPS on AWS ECS.",
-    "tags": ["LangGraph", "Llama 3.1 70B", "BGE-M3", "FastAPI", "Redis", "AWS", "Kubernetes"],
+    "tags": [
+      "LangGraph",
+      "Llama 3.1 70B",
+      "BGE-M3",
+      "FastAPI",
+      "Redis",
+      "AWS",
+      "Kubernetes"
+    ],
     "featured": true,
     "sourceLinks": [],
     "note": ""
   },
-
   {
     "title": "CodeCollab – Real-Time Collaborative Code Editor",
     "description": "Conflict-free simultaneous multi-user editing using Yjs (CRDTs) and WebSockets, scaled horizontally via Nginx load balancing across containerized instances. Increased AI auto-complete context quality by 65% with a Context-Aware Coding Agent using AST-based chunking and Voyage-Code-2 embeddings.",
-    "tags": ["AWS", "Claude 3.5", "Voyage AI", "Redis", "CRDTs", "WebSockets", "Nginx", "Docker"],
+    "tags": [
+      "AWS",
+      "Claude 3.5",
+      "Voyage AI",
+      "Redis",
+      "CRDTs",
+      "WebSockets",
+      "Nginx",
+      "Docker"
+    ],
     "featured": true,
     "sourceLinks": [
-      { "label": "GitHub", "url": "https://github.com/sabarishreddy99/CodeCollab" }
+      {
+        "label": "GitHub",
+        "url": "https://github.com/sabarishreddy99/CodeCollab"
+      }
     ],
     "note": ""
   },
- 
- 
   {
     "title": "gradeVITian",
     "description": "High-traffic progressive web app for academic grade forecasting at VIT. Scaled to 17K+ monthly active users and around 20K+ registered accounts. Achieved #2 Google Search ranking via programmatic SEO with sub-second mobile load times.",
-    "tags": ["Next.js", "React", "FastAPI", "SEO", "PWA"],
+    "tags": [
+      "Next.js",
+      "React",
+      "FastAPI",
+      "SEO",
+      "PWA"
+    ],
     "featured": true,
     "sourceLinks": [
-      { "label": "Live", "url": "https://gradevitian.jayaremala.com" },
-      { "label": "GitHub", "url": "https://github.com/sabarishreddy99/gv-official" },
-      {"label": "6+ Years", "url": "https://www.linkedin.com/feed/update/urn:li:activity:7346981400148926465/"},
-      {"label": "Version 2.0", "url": "https://www.linkedin.com/feed/update/urn:li:activity:6809389656187265024/" },
-      {"label": "Promo", "url":"https://www.linkedin.com/posts/jayasabarishreddyr_undergrad-attendance-grades-activity-6699032199272001536-zi52/"}
+      {
+        "label": "Live",
+        "url": "https://gradevitian.jayaremala.com"
+      },
+      {
+        "label": "GitHub",
+        "url": "https://github.com/sabarishreddy99/gv-official"
+      },
+      {
+        "label": "6+ Years",
+        "url": "https://www.linkedin.com/feed/update/urn:li:activity:7346981400148926465/"
+      },
+      {
+        "label": "Version 2.0",
+        "url": "https://www.linkedin.com/feed/update/urn:li:activity:6809389656187265024/"
+      },
+      {
+        "label": "Promo",
+        "url": "https://www.linkedin.com/posts/jayasabarishreddyr_undergrad-attendance-grades-activity-6699032199272001536-zi52/"
+      }
     ],
     "note": "After six years in production and 17,000+ monthly users, gradeVITian has been rebuilt from the ground up — re-engineered on Next.js and FastAPI and relaunched at gradevitian.jayaremala.com. Heartfelt thanks to the VITian community (Class of 2020–2025) for making the original such a success; this journey defined me as an engineer, and this new chapter carries it forward."
   },
-
   {
     "title": "VRF Bricks",
     "description": "A simple online web application that helped people find my dad's business in a mid-sized town in India.",
-    "tags": ["HTML", "JavaScript", "CSS", "SEO"],
+    "tags": [
+      "HTML",
+      "JavaScript",
+      "CSS",
+      "SEO"
+    ],
     "featured": false,
-    "sourceLinks": [{ "label": "GitHub", "url": "https://github.com/sabarishreddy99/vrfbricks.github.io" }],
+    "sourceLinks": [
+      {
+        "label": "GitHub",
+        "url": "https://github.com/sabarishreddy99/vrfbricks.github.io"
+      }
+    ],
     "note": "At its heart, this was a project of purpose: an online gateway built to help people navigate my father's new business within our town. Seeing a simple web application drive real-world sales and provide stability for my family during the COVID-era was a transformative experience. It taught me that engineering is most powerful when it serves a personal and communal need."
-
   }
 ]

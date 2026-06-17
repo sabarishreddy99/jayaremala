@@ -151,7 +151,7 @@ export default function GVNav() {
             ))}
           <button
             onClick={() => setSearch(true)}
-            className="rounded-lg p-1.5 text-fg-muted transition hover:bg-surface-raised"
+            className="hidden rounded-lg p-1.5 text-fg-muted transition hover:bg-surface-raised md:inline-flex"
             aria-label="Search"
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
@@ -226,6 +226,17 @@ export default function GVNav() {
           className="animate-gv-fade fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
         />
       )}
+
+      {/* Mobile: floating search button pinned bottom-right */}
+      <button
+        onClick={() => setSearch(true)}
+        aria-label="Search"
+        className="fixed bottom-5 right-5 z-30 grid h-12 w-12 place-items-center rounded-full bg-accent text-accent-fg shadow-lg shadow-accent/30 transition-transform active:scale-95 md:hidden"
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <circle cx="11" cy="11" r="8" /><path d="m21 21-4.3-4.3" />
+        </svg>
+      </button>
 
       {search && <GVSearchModal onClose={() => setSearch(false)} />}
     </>

@@ -56,6 +56,9 @@ export default function GVFooter() {
                 Jaya Sabarish Reddy Remala
               </a>
             </span>
+            <span className="font-mono text-[10px] tracking-[0.06em] text-fg-muted">
+              From the Class of 2021 · VIT, Vellore
+            </span>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:gap-x-7">

@@ -1,10 +1,12 @@
 import { useState } from "react";
+import { useGitHubStaging } from "@/lib/githubStaging";
 
 const REPO    = "sabarishreddy99/jayaremala";
 const PAT_KEY = "avocado_github_pat";
 const BASE    = `https://api.github.com/repos/${REPO}/contents`;
 
 export function useGitHubFile(filePath: string) {
+  const staging = useGitHubStaging();
   const [pat, setPat]           = useState(() => typeof window !== "undefined" ? localStorage.getItem(PAT_KEY) ?? "" : "");
   const [patVisible, setPatVisible] = useState(false);
   const [loading, setLoading]   = useState(false);
@@ -42,33 +44,19 @@ export function useGitHubFile(filePath: string) {
     }
   }
 
+  // Save now STAGES the change (no commit). The PublishBar commits everything staged
+  // across all editors in a single GitHub commit → one CI deploy.
   async function save(data: unknown, message: string): Promise<boolean> {
     if (!pat || !loaded) return false;
-    setSaving(true);
-    setResult(null);
-    try {
-      const getRes = await fetch(`${BASE}/${filePath}`, { headers: gh() });
-      if (!getRes.ok) throw new Error(`GET failed: ${getRes.status}`);
-      const fileData = await getRes.json();
-      const encoded  = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2) + "\n")));
-      const putRes   = await fetch(`${BASE}/${filePath}`, {
-        method: "PUT",
-        headers: { ...gh(), "Content-Type": "application/json" },
-        body: JSON.stringify({ message, content: encoded, sha: fileData.sha, branch: "main" }),
-      });
-      if (putRes.ok) {
-        setResult({ ok: true, message: "Saved! GH Actions rebuilds the site in ~2 min." });
-        return true;
-      }
-      const err = await putRes.json().catch(() => ({ message: putRes.statusText }));
-      setResult({ ok: false, message: `GitHub: ${(err as { message?: string }).message ?? putRes.statusText}` });
+    if (!staging) {
+      setResult({ ok: false, message: "Staging unavailable (open inside the admin page)." });
       return false;
-    } catch (e: unknown) {
-      setResult({ ok: false, message: `Error: ${(e as Error).message}` });
-      return false;
-    } finally {
-      setSaving(false);
     }
+    setSaving(true);
+    staging.stage(filePath, data, message);
+    setResult({ ok: true, message: "Staged — hit “Publish all” at the bottom to deploy." });
+    setSaving(false);
+    return true;
   }
 
   return { pat, patVisible, setPatVisible, updatePat, loading, saving, loaded, result, load, save };

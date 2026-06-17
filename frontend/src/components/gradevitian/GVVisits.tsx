@@ -47,9 +47,9 @@ export default function GVVisits() {
         <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
       </span>
       <span><span className="font-mono font-semibold tabular-nums text-fg">{counts.page_loads.toLocaleString()}</span> page loads</span>
-      <span className="text-fg-faint">·</span>
+      <span className="text-fg-subtle">·</span>
       <span><span className="font-mono font-semibold tabular-nums text-fg">{counts.visits.toLocaleString()}</span> visits</span>
-      <span className="text-fg-faint">· live</span>
+      <span className="text-fg-subtle">· live</span>
     </div>
   );
 }

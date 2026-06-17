@@ -344,7 +344,7 @@ export default function ContentQuotesEditor() {
                 className="mt-1 shrink-0 accent-accent cursor-pointer"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm text-fg leading-snug line-clamp-2">"{q.text}"</p>
+                <p className="text-sm text-fg leading-snug line-clamp-2">&ldquo;{q.text}&rdquo;</p>
                 <p className="text-[11px] text-fg-faint mt-0.5">— {q.author}{q.source ? `, ${q.source}` : ""}</p>
                 <div className="flex gap-2 mt-1">
                   <span className="text-[10px] bg-surface-raised px-2 py-0.5 rounded-full text-fg-muted">{q.category}</span>

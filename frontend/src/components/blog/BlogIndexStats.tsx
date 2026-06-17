@@ -526,6 +526,9 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
                 {/* ── Cover ── */}
                 <div className="relative aspect-2/1 overflow-hidden bg-surface-raised shrink-0">
                   {p.image ? (
+                    // Static export with images.unoptimized — a plain <img> is intentional
+                    // (next/Image gives no benefit here and would need domain config).
+                    // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={p.image}
                       alt=""

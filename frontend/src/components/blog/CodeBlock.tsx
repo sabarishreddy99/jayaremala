@@ -6,7 +6,6 @@ function extractText(node: React.ReactNode): string {
   if (typeof node === "string" || typeof node === "number") return String(node);
   if (Array.isArray(node)) return node.map(extractText).join("");
   if (node && typeof node === "object" && "props" in (node as React.ReactElement)) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return extractText((node as React.ReactElement<{ children?: React.ReactNode }>).props.children);
   }
   return "";

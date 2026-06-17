@@ -413,7 +413,7 @@ tech: [Next.js, FastAPI, PostgreSQL]
 
               <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded-lg p-2.5">
                 <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">Always update updatedAt</p>
-                <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed mt-0.5">The lab index card shows "last updated [date]". Set it to today&apos;s date every time you make changes or the card will show a stale date.</p>
+                <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed mt-0.5">The lab index card shows &ldquo;last updated [date]&rdquo;. Set it to today&apos;s date every time you make changes or the card will show a stale date.</p>
               </div>
 
               <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-3">Lab MDX components</p>

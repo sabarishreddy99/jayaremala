@@ -6,7 +6,7 @@
     "end": "Present",
     "location": "New York, NY",
     "description": "Building GeneCart — AI-powered genomics tooling at NYU.",
-    "tech": "LangGraph, Machine Learning, PyTorch, Python, AWS, FastAPI, React, PostgreSQL",
+    "tech": "LangGraph, Machine Learning, PyTorch, Python, AWS, FastAPI, React, TypeScript, PostgreSQL",
     "bullets": [
       "Building GeneCart, an AI-assisted genomics discovery platform at NYU's College of Arts and Science."
     ]
@@ -18,7 +18,7 @@
     "end": "May 2025",
     "location": "New York, NY",
     "description": "Led engineering of a production Multi-Agent research discovery platform for NYU's research department.",
-    "tech": "Python, LangGraph, Llama 3.1, FastAPI, Node.js, AWS ECS, Kubernetes, Redis",
+    "tech": "Python, LangGraph, Llama 3.1, FastAPI, Node.js, AWS ECS, Kubernetes, Redis, TypeScript",
     "bullets": [
       "Architected a production Multi-Agent Research Discovery Engine (LangGraph + Llama 3.1 70B) that semantically maps global researcher collaboration networks by indexing millions of papers from Elsevier's (Science Direct/Scopus), enabling cross-institutional discovery at a scale previously requiring manual curation.",
       "Improved scientific query accuracy by 40% by engineering a Multi-Agent Search Router with hybrid retrieval, combining BGE-M3 dense embeddings with Reciprocal Rank Fusion (RRF) to resolve ambiguous cross-domain nomenclature lookups.",

@@ -23,11 +23,12 @@ export default function CgpaEstimator() {
         <Field label="Credits completed so far"><Input type="number" value={v.creditsCompleted} onChange={(e) => setV({ ...v, creditsCompleted: e.target.value })} /></Field>
         <Field label="Credits you'll take next sem"><Input type="number" value={v.creditsTaken} onChange={(e) => setV({ ...v, creditsTaken: e.target.value })} /></Field>
       </div>
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={() => setResult(estimateCGPA({ target: num("target"), current: num("current"), creditsCompleted: num("creditsCompleted"), creditsTaken: num("creditsTaken") }))}>
           Estimate
         </Button>
         <Button variant="ghost" onClick={() => { setV({ target: "", current: "", creditsCompleted: "", creditsTaken: "" }); setResult(null); }}>Reset</Button>
+        {result?.value != null && <SaveCalcButton calcType="cgpa_estimator" payload={v} result={result.message} />}
       </div>
       <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && <SaveCalcButton calcType="cgpa_estimator" payload={v} result={result.message} />}

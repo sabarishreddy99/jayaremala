@@ -14,6 +14,7 @@ import {
   type SavedCalc,
 } from "@/lib/gradevitian/auth";
 import { Card } from "@/components/gradevitian/ui";
+import GVNotes from "@/components/gradevitian/GVNotes";
 import ScrollReveal from "@/components/ScrollReveal";
 
 const CALC_LABELS: Record<string, string> = {
@@ -116,6 +117,11 @@ export default function AccountDashboard() {
           </div>
         </div>
       </ScrollReveal>
+
+      {/* Personal notes & goals */}
+      <div className="mt-8">
+        <GVNotes />
+      </div>
 
       {/* Notifications */}
       <h2 className="mt-12 text-xl font-bold tracking-tight text-fg">Notifications</h2>

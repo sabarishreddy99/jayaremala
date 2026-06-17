@@ -58,9 +58,12 @@ export default function GpaCalculator() {
         ))}
       </div>
 
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={() => setResult(computeGPA(courses))}>Calculate GPA</Button>
         <Button variant="ghost" onClick={reset}>Reset</Button>
+        {result?.value != null && (
+          <SaveCalcButton calcType="gpa" payload={{ courses: courses.filter((c) => c.grade && c.credits) }} result={result.message} />
+        )}
       </div>
 
       <GVResultModal result={result} onClose={() => setResult(null)}>

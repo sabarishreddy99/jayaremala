@@ -58,9 +58,12 @@ function SemWise() {
           </div>
         ))}
       </div>
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={() => setResult(computeCGPA(sems))}>Calculate CGPA</Button>
         <Button variant="ghost" onClick={() => { setSems(emptySems()); setResult(null); }}>Reset</Button>
+        {result?.value != null && (
+          <SaveCalcButton calcType="cgpa" payload={{ sems: sems.filter((s) => s.credits || s.gpa) }} result={result.message} />
+        )}
       </div>
       <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && (
@@ -87,11 +90,12 @@ function Instant() {
         <Field label="Credits completed so far"><Input type="number" value={v.creditsCompleted} onChange={(e) => setV({ ...v, creditsCompleted: e.target.value })} /></Field>
         <Field label="Credits this semester"><Input type="number" value={v.creditsThisSem} onChange={(e) => setV({ ...v, creditsThisSem: e.target.value })} /></Field>
       </div>
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={() => setResult(instantCGPA({ target: num("target"), current: num("current"), creditsCompleted: num("creditsCompleted"), creditsThisSem: num("creditsThisSem") }))}>
           Estimate
         </Button>
         <Button variant="ghost" onClick={() => { setV({ target: "", current: "", creditsCompleted: "", creditsThisSem: "" }); setResult(null); }}>Reset</Button>
+        {result?.value != null && <SaveCalcButton calcType="instant_cgpa" payload={v} result={result.message} />}
       </div>
       <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && <SaveCalcButton calcType="instant_cgpa" payload={v} result={result.message} />}

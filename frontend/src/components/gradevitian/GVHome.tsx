@@ -7,8 +7,9 @@ import GVStats, { type GVStat } from "@/components/gradevitian/GVStats";
 import GVHeroTitle from "@/components/gradevitian/GVHeroTitle";
 import GVVisits from "@/components/gradevitian/GVVisits";
 import GVSearch from "@/components/gradevitian/GVSearch";
+import GVNotes from "@/components/gradevitian/GVNotes";
 import HeroDotGrid from "@/components/HeroDotGrid";
-import GVRedditEmbed from "@/components/gradevitian/GVRedditEmbed";
+import GVLinkedInEmbed from "@/components/gradevitian/GVLinkedInEmbed";
 import GVRefer from "@/components/gradevitian/GVRefer";
 import { useGVAuth } from "@/components/gradevitian/GVAuthProvider";
 
@@ -97,6 +98,15 @@ export default function GVHome() {
           </ScrollReveal>
         </div>
       </section>
+
+      {/* ── Personal notes & goals (logged-in only) ──────────────────────── */}
+      {user && (
+        <section className="mx-auto max-w-6xl px-4 pt-4">
+          <ScrollReveal>
+            <GVNotes />
+          </ScrollReveal>
+        </section>
+      )}
 
       {/* ── Tools ────────────────────────────────────────────────────────── */}
       <section className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
@@ -199,14 +209,20 @@ export default function GVHome() {
         </ScrollReveal>
       </section>
 
-      {/* ── From the community (Reddit) ───────────────────────────────────── */}
-      <section className="mx-auto max-w-2xl px-4 pb-24">
+      {/* ── From the community (LinkedIn) ─────────────────────────────────── */}
+      <section className="mx-auto max-w-5xl px-4 pb-24">
         <ScrollReveal>
           <h2 className="text-center text-2xl font-bold tracking-tight text-fg">From the community</h2>
-          <p className="mt-1 text-center text-fg-muted">The relaunch, shared on r/Vit.</p>
-          <div className="mt-8">
-            <GVRedditEmbed />
+          <p className="mt-1 text-center text-fg-muted">The journey, shared on LinkedIn.</p>
+          <div className="gv-scroll-x mt-8 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto px-1 pb-2 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible md:px-0">
+            <div className="min-w-[85%] shrink-0 snap-center md:min-w-0 md:shrink">
+              <GVLinkedInEmbed activityId="7346981400148926465" title="gradeVITian relaunch on LinkedIn" />
+            </div>
+            <div className="min-w-[85%] shrink-0 snap-center md:min-w-0 md:shrink">
+              <GVLinkedInEmbed activityId="6809389656187265024" title="gradeVITian on LinkedIn" />
+            </div>
           </div>
+          <p className="mt-3 text-center text-micro text-fg-subtle md:hidden">Swipe to see more →</p>
         </ScrollReveal>
       </section>
     </>

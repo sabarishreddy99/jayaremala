@@ -58,10 +58,11 @@ export default function GVFooter() {
             </span>
           </div>
 
-          <div className="flex items-center gap-5 sm:gap-7">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-2 sm:gap-x-7">
             <GVLink href="/feedback" className={link}>Feedback</GVLink>
             <GVLink href="/privacy" className={link}>Privacy</GVLink>
             <GVLink href="/terms" className={link}>Terms</GVLink>
+            <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className={link}>Sitemap</a>
             <a href="https://jayaremala.com" target="_blank" rel="noopener noreferrer" className={link}>
               Portfolio ✦
             </a>

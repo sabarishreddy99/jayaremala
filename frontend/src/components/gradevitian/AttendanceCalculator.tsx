@@ -38,9 +38,10 @@ function Fmt1() {
         <Field label="Classes present"><Input type="number" min={0} value={v.present} onChange={(e) => setV({ ...v, present: e.target.value })} /></Field>
         <Field label="Classes absent"><Input type="number" min={0} value={v.absent} onChange={(e) => setV({ ...v, absent: e.target.value })} /></Field>
       </div>
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={() => setResult(attendanceFmt1(Number(v.present) || 0, Number(v.absent) || 0))}>Calculate</Button>
         <Button variant="ghost" onClick={() => { setV({ present: "", absent: "" }); setResult(null); }}>Reset</Button>
+        {result?.value != null && <SaveCalcButton calcType="attendance" payload={v} result={result.message} />}
       </div>
       <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && <AttendanceBar pct={result.value} />}
@@ -64,9 +65,10 @@ function Fmt2() {
         <Field label="Classes present"><Input type="number" min={0} value={v.present} disabled={v.absent !== ""} onChange={(e) => setV({ ...v, present: e.target.value })} /></Field>
         <Field label="Classes absent"><Input type="number" min={0} value={v.absent} disabled={v.present !== ""} onChange={(e) => setV({ ...v, absent: e.target.value })} /></Field>
       </div>
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={() => setResult(attendanceFmt2(Number(v.total), v.present === "" ? "" : Number(v.present), v.absent === "" ? "" : Number(v.absent)))}>Calculate</Button>
         <Button variant="ghost" onClick={() => { setV({ total: "", present: "", absent: "" }); setResult(null); }}>Reset</Button>
+        {result?.value != null && <SaveCalcButton calcType="attendance" payload={v} result={result.message} />}
       </div>
       <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && <AttendanceBar pct={result.value} />}

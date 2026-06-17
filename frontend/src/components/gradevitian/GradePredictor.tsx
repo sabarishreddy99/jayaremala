@@ -104,9 +104,10 @@ function Grade() {
         </Section>
       )}
 
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={() => setResult(predictGrade(v))}>Predict grade</Button>
         <Button variant="ghost" onClick={() => { setV(blank); setResult(null); }}>Reset</Button>
+        {result?.value != null && <SaveCalcButton calcType="grade_predictor" payload={{ ...v }} result={`${result.message} — ${result.detail ?? ""}`} />}
       </div>
       <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && <SaveCalcButton calcType="grade_predictor" payload={{ ...v }} result={`${result.message} — ${result.detail ?? ""}`} />}
@@ -135,9 +136,10 @@ function Weightage() {
         <Field label="Max weightage"><Input type="number" value={v.maxWeightage} onChange={(e) => setV({ ...v, maxWeightage: e.target.value })} /></Field>
         <Field label="Marks obtained"><Input type="number" value={v.obtained} onChange={(e) => setV({ ...v, obtained: e.target.value })} /></Field>
       </div>
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={() => setResult(convertWeightage(Number(v.maxOriginal) || 0, Number(v.maxWeightage) || 0, Number(v.obtained) || 0))}>Convert</Button>
         <Button variant="ghost" onClick={() => { setV({ maxOriginal: "", maxWeightage: "", obtained: "" }); setResult(null); }}>Reset</Button>
+        {result?.value != null && <SaveCalcButton calcType="weightage" payload={v} result={result.message} />}
       </div>
       <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && <SaveCalcButton calcType="weightage" payload={v} result={result.message} />}

@@ -1078,3 +1078,27 @@ figcaption[data-rehype-pretty-code-title] + pre {
   .gv-rise-inner { animation: none !important; opacity: 1 !important; transform: none !important; }
   .animate-gv-shake { animation: none !important; }
 }
+
+/* ── gradeVITian community embeds — force Reddit + LinkedIn to identical size ── */
+.gv-embed {
+  width: 100%;
+  max-width: 550px;
+  height: 700px;
+  margin-inline: auto;
+  overflow: hidden;
+  border-radius: 1rem;
+  border: 1px solid var(--border-subtle);
+  background: var(--surface);
+}
+.gv-embed iframe {
+  width: 100% !important;
+  height: 100% !important;
+  border: 0 !important;
+  display: block;
+}
+@media (max-width: 639px) {
+  .gv-embed { height: 480px; }
+}
+/* Hide scrollbar on the mobile embed carousel */
+.gv-scroll-x { scrollbar-width: none; -ms-overflow-style: none; }
+.gv-scroll-x::-webkit-scrollbar { display: none; }

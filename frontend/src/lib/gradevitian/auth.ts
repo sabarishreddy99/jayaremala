@@ -1,6 +1,6 @@
 /** gradeVITian auth API + token storage (Bearer token in localStorage, matching the
  *  site's existing admin-token pattern). */
-import { apiGet, apiPost, apiRequest } from "@/lib/api/client";
+import { apiGet, apiRequest } from "@/lib/api/client";
 
 export interface GVUser {
   id: number;
@@ -53,13 +53,13 @@ export function clearToken(): void {
 export async function apiSignup(input: {
   name: string; email: string; username: string; password: string;
 }): Promise<{ token: string; user: GVUser }> {
-  return apiPost("/gv/auth/signup", input);
+  return apiRequest("/gv/auth/signup", "POST", input);
 }
 
 export async function apiLogin(input: {
   identifier: string; password: string;
 }): Promise<{ token: string; user: GVUser }> {
-  return apiPost("/gv/auth/login", input);
+  return apiRequest("/gv/auth/login", "POST", input);
 }
 
 export async function apiMe(token: string): Promise<{ user: GVUser }> {
@@ -67,11 +67,11 @@ export async function apiMe(token: string): Promise<{ user: GVUser }> {
 }
 
 export async function apiForgotPassword(email: string): Promise<{ ok: boolean }> {
-  return apiPost("/gv/auth/forgot-password", { email });
+  return apiRequest("/gv/auth/forgot-password", "POST", { email });
 }
 
 export async function apiResetPassword(token: string, password: string): Promise<{ ok: boolean }> {
-  return apiPost("/gv/auth/reset-password", { token, password });
+  return apiRequest("/gv/auth/reset-password", "POST", { token, password });
 }
 
 // ── Saved calculations ─────────────────────────────────────────────────────────

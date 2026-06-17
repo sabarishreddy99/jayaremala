@@ -5,6 +5,8 @@ import sys
 import tempfile
 from pathlib import Path
 
+import pytest
+
 SRC = Path(__file__).resolve().parents[1] / "src"
 sys.path.insert(0, str(SRC))
 
@@ -12,3 +14,10 @@ sys.path.insert(0, str(SRC))
 _tmp = tempfile.mkdtemp(prefix="gv_test_")
 os.environ.setdefault("GV_DB_PATH", str(Path(_tmp) / "gradevitian.db"))
 os.environ.setdefault("GV_JWT_SECRET", "test-secret-please-ignore")
+
+
+@pytest.fixture(autouse=True)
+def _no_real_emails(monkeypatch):
+    """Never send real email during tests, even if Gmail OAuth is connected locally."""
+    import app.integrations.gmail as gmail
+    monkeypatch.setattr(gmail, "send_gradevitian_email", lambda *a, **k: None)

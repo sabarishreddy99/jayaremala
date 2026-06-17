@@ -41,7 +41,7 @@ export function Button({ variant = "primary", className = "", ...props }: Button
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 ${styles} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 ${styles} ${className}`}
     />
   );
 }
@@ -89,12 +89,12 @@ export function Segmented<T extends string>({
   onChange: (v: T) => void;
 }) {
   return (
-    <div className="inline-flex rounded-2xl border border-border-subtle bg-surface-sunken/60 p-1 text-sm">
+    <div className="inline-flex rounded-full border border-border-subtle bg-surface-sunken/60 p-1 text-sm">
       {options.map((o) => (
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
-          className={`rounded-xl px-3.5 py-1.5 font-medium transition-all duration-200 ${
+          className={`rounded-full px-3.5 py-1.5 font-medium transition-all duration-200 ${
             value === o.value
               ? "bg-surface text-fg shadow-sm"
               : "text-fg-subtle hover:text-fg"

@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { estimateCGPA, type CalcResult } from "@/lib/gradevitian/calc";
-import { Button, Card, Field, Input, ResultCard } from "@/components/gradevitian/ui";
+import { Button, Card, Field, Input } from "@/components/gradevitian/ui";
+import GVResultModal from "@/components/gradevitian/GVResultModal";
 import SaveCalcButton from "@/components/gradevitian/SaveCalcButton";
 import { usePersistentCalc } from "@/lib/gradevitian/usePersistentCalc";
 
@@ -28,9 +29,9 @@ export default function CgpaEstimator() {
         </Button>
         <Button variant="ghost" onClick={() => { setV({ target: "", current: "", creditsCompleted: "", creditsTaken: "" }); setResult(null); }}>Reset</Button>
       </div>
-      <ResultCard result={result}>
+      <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && <SaveCalcButton calcType="cgpa_estimator" payload={v} result={result.message} />}
-      </ResultCard>
+      </GVResultModal>
     </Card>
   );
 }

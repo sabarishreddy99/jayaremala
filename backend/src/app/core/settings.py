@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     # Secret for signing gradeVITian auth tokens. Set GV_JWT_SECRET in prod;
     # empty falls back to an ephemeral per-process dev secret.
     gv_jwt_secret: str = ""
+    # Public base URL of the gradeVITian site — used to build password-reset links so
+    # they point at the SAME environment that created the token. Override locally
+    # (e.g. http://localhost:3000/gradevitian) when testing the reset flow.
+    gv_base_url: str = "https://gradevitian.jayaremala.com"
     # Set ADMIN_TOKEN env var to enable POST /admin/reingest.
     # Empty string (default) disables the endpoint entirely.
     admin_token: str = ""

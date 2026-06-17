@@ -7,7 +7,8 @@ import {
   type CalcResult,
   type GradePredictorInput,
 } from "@/lib/gradevitian/calc";
-import { Button, Card, Field, Input, ResultCard, Segmented, Select } from "@/components/gradevitian/ui";
+import { Button, Card, Field, Input, Segmented, Select } from "@/components/gradevitian/ui";
+import GVResultModal from "@/components/gradevitian/GVResultModal";
 import SaveCalcButton from "@/components/gradevitian/SaveCalcButton";
 import { usePersistentCalc } from "@/lib/gradevitian/usePersistentCalc";
 
@@ -107,9 +108,9 @@ function Grade() {
         <Button onClick={() => setResult(predictGrade(v))}>Predict grade</Button>
         <Button variant="ghost" onClick={() => { setV(blank); setResult(null); }}>Reset</Button>
       </div>
-      <ResultCard result={result}>
+      <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && <SaveCalcButton calcType="grade_predictor" payload={{ ...v }} result={`${result.message} — ${result.detail ?? ""}`} />}
-      </ResultCard>
+      </GVResultModal>
     </>
   );
 }
@@ -138,9 +139,9 @@ function Weightage() {
         <Button onClick={() => setResult(convertWeightage(Number(v.maxOriginal) || 0, Number(v.maxWeightage) || 0, Number(v.obtained) || 0))}>Convert</Button>
         <Button variant="ghost" onClick={() => { setV({ maxOriginal: "", maxWeightage: "", obtained: "" }); setResult(null); }}>Reset</Button>
       </div>
-      <ResultCard result={result}>
+      <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && <SaveCalcButton calcType="weightage" payload={v} result={result.message} />}
-      </ResultCard>
+      </GVResultModal>
     </>
   );
 }

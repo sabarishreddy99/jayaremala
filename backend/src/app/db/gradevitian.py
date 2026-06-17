@@ -101,9 +101,48 @@ def init_db() -> None:
                 PRIMARY KEY (user_id, calc_type)
             )
         """)
+        # Simple named counters (e.g. total site visits — counts every load/reload).
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS gv_counters (
+                name  TEXT PRIMARY KEY,
+                count INTEGER NOT NULL DEFAULT 0
+            )
+        """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_gv_calcs_user  ON gv_saved_calcs(user_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_gv_resets_user ON gv_password_resets(user_id)")
     logger.info("gradeVITian DB ready")
+
+
+# ── Counters (total site visits) ──────────────────────────────────────────────
+
+def _bump(name: str) -> int:
+    with _connect() as conn:
+        conn.execute(
+            "INSERT INTO gv_counters (name, count) VALUES (?, 1) "
+            "ON CONFLICT(name) DO UPDATE SET count = count + 1",
+            (name,),
+        )
+        row = conn.execute("SELECT count FROM gv_counters WHERE name=?", (name,)).fetchone()
+    return row["count"] if row else 0
+
+
+def record_page_load() -> int:
+    """Every page load/reload."""
+    return _bump("page_loads")
+
+
+def record_visit() -> int:
+    """One per browser session (the frontend gates this with sessionStorage)."""
+    return _bump("visits")
+
+
+def get_counts() -> dict:
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT name, count FROM gv_counters WHERE name IN ('page_loads', 'visits')"
+        ).fetchall()
+    d = {r["name"]: r["count"] for r in rows}
+    return {"page_loads": d.get("page_loads", 0), "visits": d.get("visits", 0)}
 
 
 # ── Users ─────────────────────────────────────────────────────────────────────

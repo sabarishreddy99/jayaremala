@@ -114,6 +114,27 @@ def test_calc_state_persists(client):
     assert client.get("/gv/calc-state/gpa").status_code == 401
 
 
+def test_traffic_counters(client):
+    base = client.get("/gv/stats").json()
+    # page loads count every call (reloads included)
+    assert client.post("/gv/page-load").json()["page_loads"] == base["page_loads"] + 1
+    assert client.post("/gv/page-load").json()["page_loads"] == base["page_loads"] + 2
+    # visits are a separate counter
+    assert client.post("/gv/visit").json()["visits"] == base["visits"] + 1
+    stats = client.get("/gv/stats").json()
+    assert stats["page_loads"] == base["page_loads"] + 2
+    assert stats["visits"] == base["visits"] + 1
+
+
+def test_refer(client):
+    # Email sending is mocked (see conftest), so `sent` is True without real mail.
+    r = client.post("/gv/refer", json={"email": "friend@example.com"})
+    assert r.status_code == 200
+    assert r.json() == {"ok": True, "sent": True}
+    # invalid email rejected by validation
+    assert client.post("/gv/refer", json={"email": "not-an-email"}).status_code == 422
+
+
 def test_comments_public(client):
     r = client.post("/gv/comments", json={"name": "Anon", "body": "Great tool!"})
     assert r.status_code == 200

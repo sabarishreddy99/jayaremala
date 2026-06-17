@@ -44,16 +44,22 @@ export const metadata: Metadata = {
   },
 };
 
+// Canonicalize to the subdomain: if the path-form is opened on the main domain
+// (jayaremala.com/gradevitian/...), redirect to gradevitian.jayaremala.com/... at
+// parse time (before render — minimal flash). Never fires on the subdomain or localhost.
+const CANONICAL_REDIRECT = `(function(){try{var h=location.hostname;if(h==='jayaremala.com'||h==='www.jayaremala.com'){var p=location.pathname.replace(/^\\/gradevitian/,'')||'/';location.replace('https://gradevitian.jayaremala.com'+p+location.search+location.hash);}}catch(e){}})();`;
+
 export default function GradeVITianLayout({ children }: { children: React.ReactNode }) {
   return (
-    <GVAuthProvider>
-      <div className="flex min-h-screen flex-col">
-        <GVNav />
-        <main className="relative flex-1">
-          {children}
-        </main>
-        <GVFooter />
-      </div>
-    </GVAuthProvider>
+    <>
+      <script dangerouslySetInnerHTML={{ __html: CANONICAL_REDIRECT }} />
+      <GVAuthProvider>
+        <div className="flex min-h-screen flex-col">
+          <GVNav />
+          <main className="relative flex-1">{children}</main>
+          <GVFooter />
+        </div>
+      </GVAuthProvider>
+    </>
   );
 }

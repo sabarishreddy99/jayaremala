@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { attendanceFmt1, attendanceFmt2, type CalcResult } from "@/lib/gradevitian/calc";
-import { Button, Card, Field, Input, ResultCard, Segmented } from "@/components/gradevitian/ui";
+import { Button, Card, Field, Input, Segmented } from "@/components/gradevitian/ui";
+import GVResultModal from "@/components/gradevitian/GVResultModal";
 import AttendanceBar from "@/components/gradevitian/AttendanceBar";
 import SaveCalcButton from "@/components/gradevitian/SaveCalcButton";
 import { usePersistentCalc } from "@/lib/gradevitian/usePersistentCalc";
@@ -41,10 +42,10 @@ function Fmt1() {
         <Button onClick={() => setResult(attendanceFmt1(Number(v.present) || 0, Number(v.absent) || 0))}>Calculate</Button>
         <Button variant="ghost" onClick={() => { setV({ present: "", absent: "" }); setResult(null); }}>Reset</Button>
       </div>
-      {result?.value != null && <AttendanceBar pct={result.value} />}
-      <ResultCard result={result}>
+      <GVResultModal result={result} onClose={() => setResult(null)}>
+        {result?.value != null && <AttendanceBar pct={result.value} />}
         {result?.value != null && <SaveCalcButton calcType="attendance" payload={v} result={result.message} />}
-      </ResultCard>
+      </GVResultModal>
     </>
   );
 }
@@ -67,10 +68,10 @@ function Fmt2() {
         <Button onClick={() => setResult(attendanceFmt2(Number(v.total), v.present === "" ? "" : Number(v.present), v.absent === "" ? "" : Number(v.absent)))}>Calculate</Button>
         <Button variant="ghost" onClick={() => { setV({ total: "", present: "", absent: "" }); setResult(null); }}>Reset</Button>
       </div>
-      {result?.value != null && <AttendanceBar pct={result.value} />}
-      <ResultCard result={result}>
+      <GVResultModal result={result} onClose={() => setResult(null)}>
+        {result?.value != null && <AttendanceBar pct={result.value} />}
         {result?.value != null && <SaveCalcButton calcType="attendance" payload={v} result={result.message} />}
-      </ResultCard>
+      </GVResultModal>
     </>
   );
 }

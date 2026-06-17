@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { computeCGPA, instantCGPA, type CalcResult, type Semester } from "@/lib/gradevitian/calc";
-import { Button, Card, Field, Input, ResultCard, Segmented } from "@/components/gradevitian/ui";
+import { Button, Card, Field, Input, Segmented } from "@/components/gradevitian/ui";
+import GVResultModal from "@/components/gradevitian/GVResultModal";
 import SaveCalcButton from "@/components/gradevitian/SaveCalcButton";
 import { usePersistentCalc } from "@/lib/gradevitian/usePersistentCalc";
 
@@ -61,11 +62,11 @@ function SemWise() {
         <Button onClick={() => setResult(computeCGPA(sems))}>Calculate CGPA</Button>
         <Button variant="ghost" onClick={() => { setSems(emptySems()); setResult(null); }}>Reset</Button>
       </div>
-      <ResultCard result={result}>
+      <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && (
           <SaveCalcButton calcType="cgpa" payload={{ sems: sems.filter((s) => s.credits || s.gpa) }} result={result.message} />
         )}
-      </ResultCard>
+      </GVResultModal>
     </>
   );
 }
@@ -92,9 +93,9 @@ function Instant() {
         </Button>
         <Button variant="ghost" onClick={() => { setV({ target: "", current: "", creditsCompleted: "", creditsThisSem: "" }); setResult(null); }}>Reset</Button>
       </div>
-      <ResultCard result={result}>
+      <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && <SaveCalcButton calcType="instant_cgpa" payload={v} result={result.message} />}
-      </ResultCard>
+      </GVResultModal>
     </>
   );
 }

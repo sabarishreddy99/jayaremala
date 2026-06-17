@@ -1,0 +1,15 @@
+[
+  { "title": "Home", "href": "/", "category": "Page", "description": "gradeVITian — grade forecasting for VIT.", "keywords": ["start", "landing", "home"] },
+  { "title": "GPA Calculator", "href": "/gpa", "category": "Calculator", "description": "Compute your semester GPA from grades and credits.", "keywords": ["gpa", "grade point average", "semester", "credits"] },
+  { "title": "CGPA Calculator", "href": "/cgpa", "category": "Calculator", "description": "Cumulative CGPA semester-by-semester, plus instant CGPA.", "keywords": ["cgpa", "cumulative", "instant", "overall"] },
+  { "title": "Grade Predictor", "href": "/grade-predictor", "category": "Calculator", "description": "Predict your final grade from CAT, DA, FAT, lab and J-component marks.", "keywords": ["grade", "predict", "cat", "fat", "da", "theory", "lab", "jcomp", "j-component"] },
+  { "title": "Weightage Converter", "href": "/grade-predictor", "category": "Calculator", "description": "Turn raw scores into weighted marks.", "keywords": ["weightage", "weight", "convert", "marks", "scale"] },
+  { "title": "CGPA Estimator", "href": "/cgpa-estimator", "category": "Calculator", "description": "Find the GPA you need next semester to hit your target CGPA.", "keywords": ["estimate", "target", "need", "next sem", "goal"] },
+  { "title": "Attendance Calculator", "href": "/attendance", "category": "Calculator", "description": "Track your attendance percentage and stay above 75%.", "keywords": ["attendance", "75", "present", "absent", "percentage", "bunk"] },
+  { "title": "Your Account", "href": "/account", "category": "Account", "description": "Saved calculations, notifications and profile.", "keywords": ["dashboard", "saved", "profile", "notifications"], "auth": "in" },
+  { "title": "Log in", "href": "/login", "category": "Account", "description": "Access your gradeVITian account.", "keywords": ["signin", "log in"], "auth": "out" },
+  { "title": "Sign up", "href": "/signup", "category": "Account", "description": "Create a free gradeVITian account.", "keywords": ["register", "create account", "join"], "auth": "out" },
+  { "title": "Feedback", "href": "/feedback", "category": "Info", "description": "Share suggestions or report a bug.", "keywords": ["feedback", "contact", "suggestion", "bug", "comment", "support"] },
+  { "title": "Privacy Policy", "href": "/privacy", "category": "Info", "description": "What we store and how we use it.", "keywords": ["privacy", "data", "gdpr"] },
+  { "title": "Terms & Conditions", "href": "/terms", "category": "Info", "description": "The terms of using gradeVITian.", "keywords": ["terms", "conditions", "legal"] }
+]

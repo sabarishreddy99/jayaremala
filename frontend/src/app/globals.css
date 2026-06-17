@@ -1043,3 +1043,38 @@ figcaption[data-rehype-pretty-code-title] + pre {
 }
 .dark .gv-aurora::before { opacity: 0.22; }
 .dark .gv-aurora::after  { opacity: 0.18; }
+
+/* ── gradeVITian — modal + title reveal + error shake ──────────────────────── */
+@keyframes gv-fade { from { opacity: 0; } to { opacity: 1; } }
+.animate-gv-fade { animation: gv-fade 0.25s ease both; }
+
+/* Formal hero title reveal — masked word-rise, matching the portfolio HeroName:
+   each word slides up from behind an overflow-hidden mask. */
+@keyframes gv-rise {
+  from { transform: translateY(110%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.gv-rise-mask {
+  display: inline-block;
+  overflow: hidden;
+  line-height: 1.18;
+  padding-bottom: 0.08em; /* room so descenders aren't clipped at rest */
+}
+.gv-rise-inner {
+  display: inline-block;
+  will-change: transform, opacity;
+  animation: gv-rise 1s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Error shake for auth forms */
+@keyframes gv-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-4px); }
+  40%, 80% { transform: translateX(4px); }
+}
+.animate-gv-shake { animation: gv-shake 0.4s ease-in-out; }
+
+@media (prefers-reduced-motion: reduce) {
+  .gv-rise-inner { animation: none !important; opacity: 1 !important; transform: none !important; }
+  .animate-gv-shake { animation: none !important; }
+}

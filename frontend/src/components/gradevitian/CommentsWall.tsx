@@ -40,6 +40,10 @@ export default function CommentsWall() {
         <p className="mt-1 text-sm text-fg-muted">
           {user ? `Posting as ${user.name}.` : "Tell us what you think — no account needed."}
         </p>
+        <p className="mt-3 flex items-start gap-2 rounded-xl border border-accent/30 bg-accent/[0.07] px-3 py-2 text-sm text-fg">
+          <span aria-hidden>✨</span>
+          <span>Share your feedback — you could be the one featured in our testimonials soon!</span>
+        </p>
         <form onSubmit={submit} className="mt-4 flex flex-col gap-4">
           {error && <p className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">{error}</p>}
           {!user && <Field label="Your name"><Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={60} /></Field>}

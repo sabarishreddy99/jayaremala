@@ -95,7 +95,7 @@ export default function AccountDashboard() {
             </div>
             <button
               onClick={logout}
-              className="rounded-xl border border-border bg-surface/60 px-4 py-2 text-sm font-semibold text-fg backdrop-blur transition-all duration-200 hover:bg-surface-raised active:scale-[0.97]"
+              className="rounded-full border border-border bg-surface/60 px-4 py-2 text-sm font-semibold text-fg backdrop-blur transition-all duration-200 hover:bg-surface-raised active:scale-[0.97]"
             >
               Log out
             </button>

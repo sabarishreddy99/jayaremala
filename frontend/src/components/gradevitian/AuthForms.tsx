@@ -10,7 +10,18 @@ import { Button, Card, Field, Input } from "@/components/gradevitian/ui";
 
 function ErrorNote({ msg }: { msg: string }) {
   if (!msg) return null;
-  return <p className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">{msg}</p>;
+  return (
+    <p
+      key={msg}
+      role="alert"
+      className="animate-gv-shake flex items-start gap-2 rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-2.5 text-sm font-medium text-rose-700 dark:text-rose-300"
+    >
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 shrink-0" aria-hidden>
+        <circle cx="12" cy="12" r="10" /><path d="M12 8v4M12 16h.01" />
+      </svg>
+      <span>{msg}</span>
+    </p>
+  );
 }
 
 function FormShell({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {

@@ -4,6 +4,12 @@ import Image from "next/image";
 import GVLink from "@/components/gradevitian/GVLink";
 import ScrollReveal from "@/components/ScrollReveal";
 import GVStats, { type GVStat } from "@/components/gradevitian/GVStats";
+import GVHeroTitle from "@/components/gradevitian/GVHeroTitle";
+import GVVisits from "@/components/gradevitian/GVVisits";
+import GVSearch from "@/components/gradevitian/GVSearch";
+import HeroDotGrid from "@/components/HeroDotGrid";
+import GVRedditEmbed from "@/components/gradevitian/GVRedditEmbed";
+import GVRefer from "@/components/gradevitian/GVRefer";
 import { useGVAuth } from "@/components/gradevitian/GVAuthProvider";
 
 const METRICS: GVStat[] = [
@@ -31,8 +37,7 @@ export default function GVHome() {
     <>
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
-        <div className="gv-aurora" aria-hidden />
-        <div className="grid-lines pointer-events-none absolute inset-0 opacity-50" aria-hidden />
+        <HeroDotGrid />
 
         <div className="relative mx-auto max-w-4xl px-4 pt-24 pb-16 text-center sm:pt-32 sm:pb-20">
           <ScrollReveal>
@@ -40,16 +45,11 @@ export default function GVHome() {
               {user ? "Welcome back" : "Academic grade forecasting · VIT"}
             </p>
 
-            <h1
-              className="mx-auto mt-6 font-semibold leading-[1.02] tracking-tight text-fg"
-              style={{ fontFamily: "var(--font-cormorant), Georgia, serif", fontSize: "clamp(2.75rem, 8.5vw, 6rem)" }}
-            >
-              {user ? (
-                <>Hi, {firstName}.</>
-              ) : (
-                <>grade<span className="text-accent">VIT</span>ian</>
-              )}
-            </h1>
+            <GVHeroTitle
+              text={user ? `Hi, ${firstName}.` : "gradeVITian"}
+              accent={user ? undefined : "VIT"}
+              className="mt-6 text-fg"
+            />
 
             <p className="mx-auto mt-6 max-w-xl text-lead leading-relaxed text-fg-muted">
               {user
@@ -60,25 +60,29 @@ export default function GVHome() {
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
               {user ? (
                 <>
-                  <GVLink href="/account" className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover hover:shadow-md active:scale-[0.97]">
+                  <GVLink href="/account" className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover hover:shadow-md active:scale-[0.97]">
                     Open your dashboard
                   </GVLink>
-                  <GVLink href="/cgpa" className="rounded-xl border border-border bg-surface/60 px-6 py-3 text-sm font-semibold text-fg backdrop-blur transition-all duration-200 hover:bg-surface-raised active:scale-[0.97]">
+                  <GVLink href="/cgpa" className="rounded-full border border-border bg-surface/60 px-6 py-3 text-sm font-semibold text-fg backdrop-blur transition-all duration-200 hover:bg-surface-raised active:scale-[0.97]">
                     Jump back in
                   </GVLink>
                 </>
               ) : (
                 <>
-                  <GVLink href="/cgpa" className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover hover:shadow-md active:scale-[0.97]">
+                  <GVLink href="/cgpa" className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover hover:shadow-md active:scale-[0.97]">
                     Start calculating
                   </GVLink>
                   {!loading && (
-                    <GVLink href="/signup" className="rounded-xl border border-border bg-surface/60 px-6 py-3 text-sm font-semibold text-fg backdrop-blur transition-all duration-200 hover:bg-surface-raised active:scale-[0.97]">
+                    <GVLink href="/signup" className="rounded-full border border-border bg-surface/60 px-6 py-3 text-sm font-semibold text-fg backdrop-blur transition-all duration-200 hover:bg-surface-raised active:scale-[0.97]">
                       Create a free account
                     </GVLink>
                   )}
                 </>
               )}
+            </div>
+
+            <div className="mt-7">
+              <GVSearch />
             </div>
           </ScrollReveal>
 
@@ -89,6 +93,7 @@ export default function GVHome() {
               Scaled to 17K+ monthly active users and ~20K+ registered accounts. Achieved #2 Google
               Search ranking via programmatic SEO, with sub-second mobile load times.
             </p>
+            <GVVisits />
           </ScrollReveal>
         </div>
       </section>
@@ -138,7 +143,7 @@ export default function GVHome() {
                       <p className="mt-1 text-fg-muted">Saved calculations, notifications and more — all in one place.</p>
                     </div>
                   </div>
-                  <GVLink href="/account" className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
+                  <GVLink href="/account" className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
                     Go to dashboard
                   </GVLink>
                 </>
@@ -148,7 +153,7 @@ export default function GVHome() {
                     <h2 className="text-xl font-bold text-fg">Make it yours</h2>
                     <p className="mt-1 max-w-md text-fg-muted">Create a free account to save your calculations and pick up on any device.</p>
                   </div>
-                  <GVLink href="/signup" className="rounded-xl bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
+                  <GVLink href="/signup" className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
                     Create free account
                   </GVLink>
                 </>
@@ -159,7 +164,7 @@ export default function GVHome() {
       </section>
 
       {/* ── Feedback tile ────────────────────────────────────────────────── */}
-      <section className="mx-auto max-w-6xl px-4 pb-24">
+      <section className="mx-auto max-w-6xl px-4 pb-10">
         <ScrollReveal>
           <GVLink
             href="/feedback"
@@ -174,15 +179,34 @@ export default function GVHome() {
               <div>
                 <h2 className="font-semibold text-fg">Got a suggestion or found a bug?</h2>
                 <p className="mt-0.5 text-body text-fg-muted">We read every message — tell us what would make gradeVITian better.</p>
+                <p className="mt-1.5 text-sm font-medium text-accent">✨ Share yours — you could be featured in our testimonials soon!</p>
               </div>
             </div>
-            <span className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-xl border border-border bg-surface/60 px-4 py-2 text-sm font-semibold text-fg transition-colors group-hover:border-accent/40 group-hover:text-accent sm:self-auto">
+            <span className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full border border-border bg-surface/60 px-4 py-2 text-sm font-semibold text-fg transition-colors group-hover:border-accent/40 group-hover:text-accent sm:self-auto">
               Share feedback
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="transition-transform group-hover:translate-x-0.5">
                 <path d="M5 12h14M12 5l7 7-7 7" />
               </svg>
             </span>
           </GVLink>
+        </ScrollReveal>
+      </section>
+
+      {/* ── Refer a fellow #VITian ────────────────────────────────────────── */}
+      <section className="mx-auto max-w-6xl px-4 pb-16">
+        <ScrollReveal>
+          <GVRefer />
+        </ScrollReveal>
+      </section>
+
+      {/* ── From the community (Reddit) ───────────────────────────────────── */}
+      <section className="mx-auto max-w-2xl px-4 pb-24">
+        <ScrollReveal>
+          <h2 className="text-center text-2xl font-bold tracking-tight text-fg">From the community</h2>
+          <p className="mt-1 text-center text-fg-muted">The relaunch, shared on r/Vit.</p>
+          <div className="mt-8">
+            <GVRedditEmbed />
+          </div>
         </ScrollReveal>
       </section>
     </>

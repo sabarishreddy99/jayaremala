@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { computeGPA, GRADE_OPTIONS, type CalcResult, type GpaCourse } from "@/lib/gradevitian/calc";
-import { Button, Card, ResultCard, Select } from "@/components/gradevitian/ui";
+import { Button, Card, Select } from "@/components/gradevitian/ui";
+import GVResultModal from "@/components/gradevitian/GVResultModal";
 import SaveCalcButton from "@/components/gradevitian/SaveCalcButton";
 import { usePersistentCalc } from "@/lib/gradevitian/usePersistentCalc";
 
@@ -62,7 +63,7 @@ export default function GpaCalculator() {
         <Button variant="ghost" onClick={reset}>Reset</Button>
       </div>
 
-      <ResultCard result={result}>
+      <GVResultModal result={result} onClose={() => setResult(null)}>
         {result?.value != null && (
           <SaveCalcButton
             calcType="gpa"
@@ -70,7 +71,7 @@ export default function GpaCalculator() {
             result={result.message}
           />
         )}
-      </ResultCard>
+      </GVResultModal>
     </Card>
   );
 }

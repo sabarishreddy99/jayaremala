@@ -30,7 +30,6 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/gv", tags=["gradevitian"])
 
 _USERNAME_RE = re.compile(r"^[a-zA-Z0-9._@]+$")
-_RESET_BASE = "https://gradevitian.jayaremala.com/reset-password"
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -69,6 +68,10 @@ class CommentRequest(BaseModel):
 
 class CalcStateRequest(BaseModel):
     payload: Any  # dict or list of the calculator's current field values
+
+
+class ReferRequest(BaseModel):
+    email: EmailStr
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -167,6 +170,34 @@ def put_calc_state(calc_type: str, body: CalcStateRequest, user: dict = Depends(
     return {"ok": True}
 
 
+# ── Traffic counters ─────────────────────────────────────────────────────────
+# page_loads: every load/reload · visits: one per browser session (gated client-side).
+
+@router.post("/page-load")
+def record_page_load() -> dict:
+    return {"page_loads": gv.record_page_load()}
+
+
+@router.post("/visit")
+def record_visit() -> dict:
+    return {"visits": gv.record_visit()}
+
+
+@router.get("/stats")
+def gv_stats() -> dict:
+    return gv.get_counts()
+
+
+# ── Refer a fellow VITian (email invite) ─────────────────────────────────────
+
+@router.post("/refer")
+@limiter.limit("5/hour")
+def refer(body: ReferRequest, request: Request) -> dict:
+    """Email a gradeVITian invite to a friend. Best-effort; `sent` reports whether the
+    email actually went out (false if Gmail isn't connected)."""
+    return {"ok": True, "sent": _send_referral_email(str(body.email))}
+
+
 # ── Comments (feedback wall) ─────────────────────────────────────────────────
 
 @router.get("/comments")
@@ -208,10 +239,26 @@ def _send_welcome_email(user: dict) -> None:
         logger.warning("welcome email skipped: %s", exc)
 
 
+def _send_referral_email(email: str) -> bool:
+    try:
+        from app.core.settings import settings
+        from app.integrations.gmail import send_gradevitian_email
+        send_gradevitian_email(
+            email,
+            "A fellow VITian thinks you'll love gradeVITian 🎓",
+            _REFER_HTML.format(url=settings.gv_base_url.rstrip("/")),
+        )
+        return True
+    except Exception as exc:
+        logger.warning("referral email skipped: %s", exc)
+        return False
+
+
 def _send_reset_email(email: str, name: str, raw_token: str) -> None:
     try:
         from app.integrations.gmail import send_gradevitian_email
-        link = f"{_RESET_BASE}?token={raw_token}"
+        from app.core.settings import settings
+        link = f"{settings.gv_base_url.rstrip('/')}/reset-password/?token={raw_token}"
         send_gradevitian_email(
             email,
             "Reset your gradeVITian password",
@@ -227,6 +274,18 @@ _WELCOME_HTML = """\
   <p>Your account is ready. You can now save your GPA, CGPA, attendance and grade
   calculations and pick up where you left off on any device.</p>
   <p style="color:#6b7280">Happy Learning!<br/>— Sabarish</p>
+</div>
+"""
+
+_REFER_HTML = """\
+<div style="font-family:system-ui,Segoe UI,Roboto,sans-serif;max-width:560px;margin:auto">
+  <h2 style="color:#4f46e5">You've been invited to gradeVITian 🎓</h2>
+  <p>A fellow VITian thought you'd find this useful. <strong>gradeVITian</strong> is a free
+  set of tools to compute your GPA &amp; CGPA, predict grades, estimate the GPA you need,
+  and track attendance — fast and mobile-friendly.</p>
+  <p><a href="{url}" style="background:#4f46e5;color:#fff;padding:10px 18px;
+  border-radius:8px;text-decoration:none">Try gradeVITian</a></p>
+  <p style="color:#6b7280;font-size:13px">Happy Learning! — gradeVITian</p>
 </div>
 """
 

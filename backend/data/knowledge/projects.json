@@ -1,7 +1,7 @@
 [
   {
     "title": "jayaremala.com (Avocado AI)",
-    "description": "Production AI portfolio with Avocado, a streaming RAG agentic chatbot backed by a 4-stage hybrid retrieval pipeline: query expansion (up to 4 variants), batched dense search via ChromaDB (all-MiniLM-L6-v2 ONNX), BM25 lexical search (rank_bm25), and Reciprocal Rank Fusion (k=60) — all before Gemini 2.5 Flash sees the question. Implement model fallback mechanism via Gemini, Grow and OpenRouter with the  knowledge base of ~80 atomic documents auto-syncs incrementally: new or edited documents are upserted, deleted documents are purged from ChromaDB, unchanged ones are skipped entirely. Runs as a FastAPI Docker container on AWS Lightsail with zero-downtime blue-green deployments, Nginx + Let's Encrypt HTTPS, daily S3 backup of SQLite analytics, and a Next.js 16 static frontend on GitHub Pages.",
+    "description": "Production portfolio with Avocado AI, a streaming RAG agentic chatbot backed by a 4-stage hybrid retrieval pipeline: query expansion (up to 4 variants), batched dense search via ChromaDB (all-MiniLM-L6-v2 ONNX), BM25 lexical search (rank_bm25), and Reciprocal Rank Fusion (k=60) — all before Gemini 2.5 Flash sees the question. Implement model fallback mechanism via Gemini, Grow and OpenRouter with the  knowledge base of ~80 atomic documents auto-syncs incrementally: new or edited documents are upserted, deleted documents are purged from ChromaDB, unchanged ones are skipped entirely. Runs as a FastAPI Docker container on AWS Lightsail with zero-downtime blue-green deployments, Nginx + Let's Encrypt HTTPS, daily S3 backup of SQLite analytics, and a Next.js 16 static frontend on GitHub Pages.",
     "tags": [
       "Next.js 16",
       "FastAPI",

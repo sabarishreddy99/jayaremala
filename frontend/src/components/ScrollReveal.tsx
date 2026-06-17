@@ -32,13 +32,15 @@ export default function ScrollReveal({
 
     el.style.opacity = "0";
     el.style.transform = INITIAL[direction];
+    el.style.filter = "blur(6px)";
     el.style.transition =
-      "opacity 0.55s cubic-bezier(0.16,1,0.3,1), transform 0.55s cubic-bezier(0.16,1,0.3,1)";
-    el.style.willChange = "opacity, transform";
+      "opacity 0.7s cubic-bezier(0.16,1,0.3,1), transform 0.7s cubic-bezier(0.16,1,0.3,1), filter 0.7s cubic-bezier(0.16,1,0.3,1)";
+    el.style.willChange = "opacity, transform, filter";
 
     const reveal = () => {
       el.style.opacity = "1";
       el.style.transform = direction === "scale" ? "scale(1) translateY(0)" : "translate(0)";
+      el.style.filter = "blur(0px)";
       el.style.willChange = "auto";
     };
 

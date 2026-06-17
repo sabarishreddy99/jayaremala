@@ -3,6 +3,7 @@ import { GVAuthProvider } from "@/components/gradevitian/GVAuthProvider";
 import GVNav from "@/components/gradevitian/GVNav";
 import GVFooter from "@/components/gradevitian/GVFooter";
 import GVScrollTop from "@/components/gradevitian/GVScrollTop";
+import ScrollProgress from "@/components/ScrollProgress";
 
 const GV_URL = "https://gradevitian.jayaremala.com";
 const GV_TITLE = "gradeVITian — GPA, CGPA, Grade & Attendance calculators for VITians";
@@ -55,6 +56,7 @@ export default function GradeVITianLayout({ children }: { children: React.ReactN
     <>
       <script dangerouslySetInnerHTML={{ __html: CANONICAL_REDIRECT }} />
       <GVAuthProvider>
+        <ScrollProgress />
         <div className="flex min-h-screen flex-col">
           <GVNav />
           <main className="relative flex-1">{children}</main>

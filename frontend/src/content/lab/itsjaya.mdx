@@ -3,8 +3,8 @@ title: "itsjaya — AI Portfolio"
 status: "active"
 description: "AI-powered personal portfolio with a RAG chatbot (Avocado), an agentic tool-calling mode, a public MCP server, in-chat book-a-call, MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade — not a toy."
 startedAt: "2025-11-01"
-updatedAt: "2026-06-14"
-tech: [Next.js 16, React 19, Tailwind CSS v4, TypeScript, FastAPI, ChromaDB, Gemini 2.5 Flash, Groq, OpenRouter, Model Context Protocol, FastMCP, Function Calling, Google Calendar API, BAAI/bge-base-en-v1.5, HyDE, BM25, RRF, Knowledge Graph, FNV-1a Hash, SQLite, SlowAPI, AWS Lightsail, Nginx, S3, GitHub Pages, GitHub Actions]
+updatedAt: "2026-06-17"
+tech: [Next.js 16, React 19, Tailwind CSS v4, TypeScript, FastAPI, ChromaDB, Gemini 2.5 Flash, Groq, OpenRouter, Model Context Protocol, FastMCP, Function Calling, Google Calendar API, BAAI/bge-base-en-v1.5, HyDE, BM25, RRF, Knowledge Graph, FNV-1a Hash, SQLite, SlowAPI, GitHub Git Data API, Scroll Parallax, AWS Lightsail, Nginx, S3, GitHub Pages, GitHub Actions]
 links:
   - label: GitHub
     url: https://github.com/sabarishreddy99/jayaremala
@@ -691,6 +691,38 @@ Chatbot lives outside — no nav, no footer, full screen.
 ---
 
 ## Progress Log
+
+<Update date="2026-06-17">
+  **Admin → one batched GitHub commit.** Each file-based section editor (Profile, Experience,
+  Education, Projects, Skills, Testimonials, Gallery, Hero stats, Availability, Knowledge base)
+  previously committed its own JSON straight to the repo on save — editing five sections meant five
+  commits and five CI deploys. Introduced a shared **staging layer** (`lib/githubStaging.tsx`): a
+  section's *Save* now stages the change, and a sticky **"Publish all (N)"** bar commits everything
+  in a single commit via the GitHub **Git Data API** (read base tree → build one new tree with every
+  changed file → one commit → move `main`). One push, one deploy. Blog/lab/quotes still write to
+  `content.db` and render live via client fetch, untouched.
+</Update>
+
+<Update date="2026-06-17">
+  **Apple-style motion layer.** Added a reusable `Parallax` primitive (GPU `translate3d`,
+  rAF-throttled, `prefers-reduced-motion` aware) driving subtle depth on the hero backgrounds; tuned
+  the shared `ScrollReveal` to a longer, softer ease with a **blur-in** so sections arrive
+  cinematically; added a site-wide **scroll-progress** bar (hidden on blog/lab posts where
+  `ReadingProgress` already runs); and a `ParallaxImage` for card covers. All layered *on top* of the
+  existing editorial identity and the `StackSection` sticky-stacking scroll — motion polish, no
+  redesign.
+</Update>
+
+<Update date="2026-06-17">
+  **gradeVITian relaunched on the same infrastructure.** The 6-year, 17K-MAU VIT student-tools app was
+  rebuilt as a route segment (`app/gradevitian/**`) in this same Next.js app and FastAPI backend, and
+  served at **gradevitian.jayaremala.com** — the Lightsail Nginx points that host's document root at
+  the exported `out/gradevitian/` folder (a CI step rsyncs the static export to the box). It adds its
+  own SQLite store (`gradevitian.db`, S3-backed): accounts (stdlib scrypt + HMAC tokens, no new deps),
+  per-user autosave of calculator inputs + personal notes, a feedback wall with a two-pass moderation
+  pipeline (keyword filter → LLM toxicity check, escalate-only), referrals, notifications, and a
+  dedicated subdomain sitemap/robots/JSON-LD. Honest criticism stays published; abuse is held or blocked.
+</Update>
 
 <Update date="2026-06-14">
   **Structured `get_blog` / `get_lab` tools.** Blog and lab entries were previously reachable over MCP

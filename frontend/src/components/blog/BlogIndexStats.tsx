@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, useCallback, useRef } from "react";
+import ParallaxImage from "@/components/ParallaxImage";
 
 const SITE_URL = "https://jayaremala.com";
 
@@ -526,14 +527,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
                 {/* ── Cover ── */}
                 <div className="relative aspect-2/1 overflow-hidden bg-surface-raised shrink-0">
                   {p.image ? (
-                    // Static export with images.unoptimized — a plain <img> is intentional
-                    // (next/Image gives no benefit here and would need domain config).
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={p.image}
-                      alt=""
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    />
+                    <ParallaxImage src={p.image} className="w-full h-full" />
                   ) : (
                     <BlogCoverSVG slug={p.slug} />
                   )}

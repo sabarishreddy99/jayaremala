@@ -58,7 +58,7 @@ export default function GalleryGrid({ items }: { items: GalleryItem[] }) {
           >
             <GalleryImage item={item} />
             {/* Caption overlay */}
-            <div className="absolute inset-x-0 bottom-0 translate-y-1 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-200 bg-gradient-to-t from-black/75 to-transparent p-3">
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-1 transform-gpu opacity-0 transition-[opacity,transform] duration-300 ease-out [backface-visibility:hidden] will-change-[opacity,transform] group-hover:translate-y-0 group-hover:opacity-100 bg-gradient-to-t from-black/75 to-transparent p-3">
               <p className="text-[12px] font-semibold text-white leading-snug line-clamp-2">{item.title}</p>
               {item.date && <p className="text-[10px] text-white/70 mt-0.5">{item.date}</p>}
             </div>
@@ -115,7 +115,7 @@ function GalleryImage({ item }: { item: GalleryItem }) {
       alt={item.title}
       loading="lazy"
       onError={() => setFailed(true)}
-      className="w-full h-auto object-cover transition-transform duration-300 group-hover:scale-[1.03]"
+      className="w-full h-auto object-cover transform-gpu transition-transform duration-300 ease-out [backface-visibility:hidden] group-hover:scale-[1.03]"
     />
   );
 }

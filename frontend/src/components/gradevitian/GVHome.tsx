@@ -9,6 +9,7 @@ import GVVisits from "@/components/gradevitian/GVVisits";
 import GVSearch from "@/components/gradevitian/GVSearch";
 import GVNotes from "@/components/gradevitian/GVNotes";
 import HeroDotGrid from "@/components/HeroDotGrid";
+import Parallax from "@/components/Parallax";
 import GVLinkedInEmbed from "@/components/gradevitian/GVLinkedInEmbed";
 import GVRefer from "@/components/gradevitian/GVRefer";
 import { useGVAuth } from "@/components/gradevitian/GVAuthProvider";
@@ -38,7 +39,9 @@ export default function GVHome() {
     <>
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
-        <HeroDotGrid />
+        <Parallax speed={0.18} className="pointer-events-none absolute inset-0">
+          <HeroDotGrid />
+        </Parallax>
 
         <div className="relative mx-auto max-w-4xl px-4 pt-24 pb-16 text-center sm:pt-32 sm:pb-20">
           <ScrollReveal>

@@ -8,11 +8,13 @@ import IntroScreen from "@/components/IntroScreen";
 import ScrollAtmosphere from "@/components/ScrollAtmosphere";
 import SectionIndicator from "@/components/SectionIndicator";
 import PageTransition from "@/components/PageTransition";
+import ScrollProgress from "@/components/ScrollProgress";
 import { getSearchIndex } from "@/lib/searchIndex";
 
 export default function PortfolioLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <ScrollProgress />
       <IntroScreen />
       <ScrollAtmosphere />
       <SectionIndicator />

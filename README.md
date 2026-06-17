@@ -2,7 +2,7 @@
 
 Live at **[jayaremala.com](https://jayaremala.com)**
 
-Personal AI-assisted portfolio for **Jaya Sabarish Reddy Remala**. Two entry points: a full-screen RAG-powered AI chatbot (Avocado) and a classic portfolio with experience, projects, education, blog, lab, and quotes. Content is editable via a token-gated admin panel without any git commits.
+Personal AI-assisted portfolio for **Jaya Sabarish Reddy Remala**. Two entry points: a full-screen RAG-powered AI chatbot (Avocado) and a classic portfolio with experience, projects, education, blog, lab, and quotes. Content is editable via a token-gated admin panel — dynamic content (blog/lab/quotes) writes live to a DB, and file-based sections stage their edits and ship in a **single batched GitHub commit** (one push, one deploy). A third surface, **[gradeVITian](https://gradevitian.jayaremala.com)** — the relaunched VIT student-tools app — lives in the same codebase on its own subdomain (see [gradeVITian](#gradevitian--student-tools-subdomain)).
 
 Avocado is also **agentic**: an opt-in "Agent mode" lets the model pick tools per turn (and call them live), the same read-only tools are exposed over a **public MCP server** (`/mcp/`) so a recruiter can plug their own Claude/Cursor into Jaya's portfolio, and a **book-a-call** flow surfaces real Google Calendar openings + a one-click booking link inside the chat. The model layer fails over across providers — **Gemini → Groq → OpenRouter** — so the chatbot keeps answering after any single free tier is exhausted.
 
@@ -92,6 +92,42 @@ Avocado is also **agentic**: an opt-in "Agent mode" lets the model pick tools pe
 │  Gemini 2.5 Flash  (primary)          │
 │  + fallback chain on 503 / 429        │
 └───────────────────────────────────────┘
+```
+
+### Publish & hosting topology
+
+How edits reach production — including the admin **stage → one commit** flow and the
+**gradeVITian** subdomain served off the same box.
+
+```
+  /admin  (token-gated)
+  ├─ Blog / Lab / Quotes  ───────────────►  content.db  ──►  served live via /content API
+  │                                          (DB rows, client-fetched — no rebuild)
+  │
+  └─ File sections (Profile, Experience, Projects, Skills, Gallery, …)
+       each "Save" STAGES the change  ─────►  "Publish all (N)" bar
+                                                  │  GitHub Git Data API:
+                                                  │  base tree → 1 new tree (all files)
+                                                  ▼  → 1 commit → move main
+                                        ┌────────────────────┐
+       git push  ─────────────────────►│  GitHub repo  main │
+                                        └─────────┬──────────┘
+                                                  │  GitHub Actions (deploy.yml)
+          ┌───────────────────────────────────────┼───────────────────────────────────┐
+          ▼                                        ▼                                   ▼
+ ┌──────────────────────┐        ┌──────────────────────────────┐        ┌──────────────────────────┐
+ │  GitHub Pages        │        │  Lightsail · Nginx (static)  │        │  Lightsail · Docker      │
+ │  jayaremala.com      │        │  gradevitian.jayaremala.com  │        │  api.jayaremala.com :8000│
+ │  portfolio + Avocado │        │  root = out/gradevitian/     │        │  FastAPI                 │
+ │  (static  out/)      │        │  (CI rsyncs the export here) │        │  /ai /content /blog      │
+ │                      │        │  clean URLs · own SEO        │        │  /stats /admin /gv       │
+ └──────────────────────┘        └──────────────────────────────┘        └────────────┬─────────────┘
+                                                                                        │
+                                                            ┌───────────────────────────┴─────────────┐
+                                                            │  /data  (Lightsail SSD · daily S3 backup) │
+                                                            │  analytics.db · content.db ·              │
+                                                            │  gradevitian.db · chroma_db/              │
+                                                            └───────────────────────────────────────────┘
 ```
 
 ---
@@ -309,6 +345,28 @@ The database is seeded from existing JSON files on first startup — no manual m
 **MDX GitHub sync from admin** — When a blog post or lab entry is created, updated, or deleted via the Content API admin editors, the corresponding `.mdx` file in the repo is also committed (or deleted) via the GitHub Contents API. This keeps the static frontend and MDX-rendered routes in sync with what the Content API serves, even when editing through the admin panel instead of a git commit.
 
 **MDX content sync** — `content.db` is only seeded on first startup (empty table). Blog posts and lab entries written as MDX files and pushed via GH Actions go into `blog.json` / `lab.json` but were not reaching `content.db` after the initial seed. `sync_blog_json_to_db()` and `sync_lab_json_to_db()` (called from `_sync_content_db()` before every ingest) insert any new slugs found in the JSON files but missing from `content.db`, ensuring every MDX post is ingested on the next deploy or re-ingest button click.
+
+**Batched GitHub publish (file-based sections)** — Profile, Experience, Education, Projects, Skills, Testimonials, Gallery, Hero stats, Availability and the Knowledge base are file-based JSON, not DB rows. Their admin editors don't commit on save — they **stage** the change into a shared store (`lib/githubStaging.tsx`). A sticky **"Publish all (N)"** bar then commits every staged file in a **single commit** via the GitHub **Git Data API** (resolve `main`'s base tree → build one new tree with all changed files → create one commit → move the ref), so editing many sections triggers **one** CI deploy instead of one per section. The PAT is entered once in any editor (kept in `localStorage`).
+
+---
+
+## gradeVITian — student-tools subdomain
+
+**[gradevitian.jayaremala.com](https://gradevitian.jayaremala.com)** — the relaunched VIT grade-forecasting app (6+ years in production, peak 17K+ MAU / 20K+ accounts). It lives in this same Next.js app under the `app/gradevitian/**` segment and the same FastAPI backend, but is served on its own subdomain: the Lightsail Nginx points that host's document **root** at the exported `out/gradevitian/` folder, and a CI step rsyncs the static export to the box (so the same `git push` ships it). All routes use clean URLs (`/gpa`, `/cgpa`, …); a dev-only `proxy.ts` emulates the subdomain locally, and main-domain `/gradevitian/*` hits redirect to the subdomain.
+
+| Area | What it does |
+|---|---|
+| **Calculators** | GPA, CGPA (semester-wise + instant), CGPA Estimator, Attendance (two formats), Grade Predictor, Weightage Converter — pure typed client-side math in `lib/gradevitian/calc.ts`; results shown in a popup. |
+| **Accounts** | Signup / login / password-reset. **Stdlib only** — `hashlib.scrypt` passwords + HMAC-signed tokens (no `pyjwt`/`bcrypt`). Bearer token in `localStorage`. |
+| **Autosave** | Every calculator field and the personal notes/goals autosave per-user (debounced) to `gv_calc_state` and restore on any device. |
+| **Saved results** | Explicit "Save result" persists a calculation to the account dashboard. |
+| **Feedback wall** | Public comments with a **two-pass moderation pipeline**: a dependency-free keyword/obfuscation filter (leet/spacing/Scunthorpe-safe) → an **LLM toxicity second pass** (reuses the Gemini→Groq→OpenRouter chain) that can only *escalate*. Honest negative feedback stays published; abuse is rejected, spam held. Admin review queue gated by `ADMIN_TOKEN`. |
+| **Notifications · Notes · Referral** | Per-user notifications, inspirational notes + semester goals, and an email "refer a friend" + social-share (X/LinkedIn/WhatsApp/copy). |
+| **Live counters** | `page_loads` (every load) and session `visits`, polled live in the hero. |
+| **Search** | Command palette (⌘K + mobile FAB) over a single source list (`data/gradevitian/pages.json`) that also generates the subdomain sitemap. |
+| **SEO** | Own `metadataBase`, OG/Twitter, JSON-LD `WebApplication`, plus `robots.txt` + a `sitemap.xml` generated from `pages.json` (`scripts/gen-gv-sitemap.mjs`, runs on prebuild). |
+
+Data lives in `gradevitian.db` (SQLite on the `/data` volume, S3-backed via `backup.sh`). All endpoints are under `POST/GET /gv/*` (`routers/gradevitian.py`). Welcome/reset/referral emails reuse the connected Gmail account — best-effort, so signup/reset never block. See `frontend/GRADEVITIAN.md` for the deploy specifics.
 
 ---
 
@@ -617,6 +675,10 @@ cd backend  && ruff check src && pytest
 | `OPENROUTER_API_KEY` | `` | Optional — appends OpenRouter free-tier models to the fallback chain |
 | `GOOGLE_OAUTH_CLIENT_ID` / `_SECRET` | `` | Google OAuth (Gmail/Calendar/Drive) — connected once via the admin panel |
 | `CALENDAR_ID` / `CALENDAR_TZ` | `primary` / `America/New_York` | Calendar used for book-a-call Freebusy lookups |
+| `GV_JWT_SECRET` | `` | **Required in prod** — signs gradeVITian auth tokens (empty = ephemeral dev secret) |
+| `GV_DB_PATH` | `./chroma_db/gradevitian.db` | gradeVITian SQLite; set to `/data/gradevitian.db` on Lightsail |
+| `GV_BASE_URL` | `https://gradevitian.jayaremala.com` | Base URL for gradeVITian password-reset links (override locally) |
+| `GV_LLM_MODERATION` | `true` | Second-pass LLM moderation for gradeVITian feedback; `false` = keyword-only |
 
 ---
 
@@ -625,6 +687,7 @@ cd backend  && ruff check src && pytest
 | Layer | Platform | Trigger |
 |---|---|---|
 | Frontend | GitHub Pages → `jayaremala.com` | Push to `main` → GH Actions builds + deploys |
+| gradeVITian | Lightsail Nginx → `gradevitian.jayaremala.com` | Push to `main` → CI rsyncs `out/gradevitian/` to the box; Nginx serves it |
 | Backend API | AWS Lightsail 2GB (`api.jayaremala.com`) | Push to `main` → SSH → zero-downtime deploy |
 | Knowledge base | Lightsail SSD (`/data/chroma_db`) | Incremental ingest on startup — only changed docs re-embedded |
 | Analytics DB | Lightsail SSD (`/data/analytics.db`) | Persists on disk, daily backup to S3 |

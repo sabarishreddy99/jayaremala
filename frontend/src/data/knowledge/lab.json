@@ -5,7 +5,7 @@
     "status": "active",
     "description": "AI-powered personal portfolio with a RAG chatbot (Avocado), an agentic tool-calling mode, a public MCP server, in-chat book-a-call, MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade — not a toy.",
     "startedAt": "2025-11-01",
-    "updatedAt": "2026-06-14",
+    "updatedAt": "2026-06-17",
     "tech": [
       "Next.js 16",
       "React 19",
@@ -28,6 +28,8 @@
       "FNV-1a Hash",
       "SQLite",
       "SlowAPI",
+      "GitHub Git Data API",
+      "Scroll Parallax",
       "AWS Lightsail",
       "Nginx",
       "S3",

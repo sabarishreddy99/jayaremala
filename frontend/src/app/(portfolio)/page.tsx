@@ -9,6 +9,7 @@ import ContactForm from "@/components/ContactForm";
 import ScrollReveal from "@/components/ScrollReveal";
 import HeroName from "@/components/HeroName";
 import HeroStats from "@/components/HeroStats";
+import Parallax from "@/components/Parallax";
 import RagPipelineCard from "@/components/RagPipelineCard";
 import StackSection from "@/components/StackSection";
 import SkillsSection from "@/components/SkillsSection";
@@ -215,9 +216,11 @@ export default function PortfolioHome() {
       {/* ── 1 · Hero — full-viewport, scrolls away naturally ──────── */}
       <section id="hero" className="relative overflow-x-clip scroll-mt-[50px] hero-section-bg min-h-[calc(100dvh-50px)] flex flex-col">
 
-        {/* ── Hero background — interactive dot grid ── */}
-        <div aria-hidden className="pointer-events-none absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-accent/[0.05] via-transparent to-transparent" />
-        <HeroDotGrid />
+        {/* ── Hero background — interactive dot grid with subtle scroll parallax ── */}
+        <Parallax speed={0.18} className="pointer-events-none absolute inset-0">
+          <div aria-hidden className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-accent/[0.05] via-transparent to-transparent" />
+          <HeroDotGrid />
+        </Parallax>
 
         {/* ── Main content — vertically centered in available viewport height ── */}
         <div className="flex-1 flex flex-col justify-center">

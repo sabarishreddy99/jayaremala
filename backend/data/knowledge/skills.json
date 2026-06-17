@@ -1,22 +1,74 @@
 [
   {
     "category": "Languages",
-    "items": ["Python", "Java", "C++", "TypeScript", "JavaScript", "SQL", "Apex", "Bash", "C"]
+    "items": [
+      "Python",
+      "Java",
+      "C++",
+      "TypeScript",
+      "JavaScript",
+      "SQL",
+      "Apex",
+      "Bash",
+      "C"
+    ]
   },
   {
-    "category": "AI & Agents",
-    "items": ["LangGraph", "RAG", "FAISS", "QLoRA", "AWQ Quantization", "ONNX Runtime", "Voyage AI", "PyTorch", "BGE-M3"]
+    "category": "AI, ML & Agents",
+    "items": [
+      "LangGraph",
+      "RAG",
+      "FAISS",
+      "QLoRA",
+      "AWQ Quantization",
+      "ONNX Runtime",
+      "Voyage AI",
+      "PyTorch",
+      "BGE-M3",
+      "Vertex AI",
+      "Model Context Protocol (MCP)",
+      "Knowledge Graph"
+    ]
   },
   {
     "category": "Systems & Cloud",
-    "items": ["AWS (ECS, S3, EC2, SNS, SQS, Bedrock)", "Apache Kafka", "Docker", "Kubernetes", "Redis", "Nginx", "Jenkins", "CI/CD"]
+    "items": [
+      "Apache Kafka",
+      "Docker",
+      "Kubernetes",
+      "Redis",
+      "Nginx",
+      "Jenkins",
+      "CI/CD",
+      "Databricks",
+      "Snowflake",
+      "AWS",
+      "Salesforce",
+      "GCP",
+      "Terraform (IaC)"
+    ]
   },
   {
     "category": "Frameworks & Databases",
-    "items": ["FastAPI", "Django", "Spring Boot", "Next.js", "React", "Node.js", "PostgreSQL", "DynamoDB", "MongoDB"]
+    "items": [
+      "FastAPI",
+      "Django",
+      "Spring Boot",
+      "Next.js",
+      "React",
+      "Node.js",
+      "PostgreSQL",
+      "DynamoDB",
+      "MongoDB"
+    ]
   },
   {
     "category": "Certifications",
-    "items": ["Salesforce Certified Platform Developer I", "LangGraph Essentials – Python", "SQL (Advanced)", "Microsoft AI Classroom Series"]
+    "items": [
+      "Salesforce Certified Platform Developer I",
+      "LangGraph Essentials – Python",
+      "SQL (Advanced)",
+      "Microsoft AI Classroom Series"
+    ]
   }
 ]

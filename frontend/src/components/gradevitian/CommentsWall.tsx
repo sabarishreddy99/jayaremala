@@ -11,6 +11,7 @@ export default function CommentsWall() {
   const [name, setName] = useState("");
   const [body, setBody] = useState("");
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -20,10 +21,17 @@ export default function CommentsWall() {
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    setNotice("");
     setBusy(true);
     try {
-      const { comment } = await apiAddComment({ name: user?.name ?? name, body }, token);
-      setComments((prev) => [comment, ...prev]);
+      const res = await apiAddComment({ name: user?.name ?? name, body }, token);
+      if (res.published && res.comment) {
+        setComments((prev) => [res.comment as GVComment, ...prev]);
+        setNotice("Posted — thanks for the feedback!");
+      } else {
+        // Held by moderation (abuse/spam/borderline) — don't reveal specifics.
+        setNotice("Thanks! Your comment was submitted and is awaiting review.");
+      }
       setBody("");
       if (!user) setName("");
     } catch (err) {
@@ -46,6 +54,7 @@ export default function CommentsWall() {
         </p>
         <form onSubmit={submit} className="mt-4 flex flex-col gap-4">
           {error && <p className="rounded-lg border border-rose-500/40 bg-rose-500/10 px-3 py-2 text-sm text-rose-700 dark:text-rose-300">{error}</p>}
+          {notice && <p className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-700 dark:text-emerald-300">{notice}</p>}
           {!user && <Field label="Your name"><Input value={name} onChange={(e) => setName(e.target.value)} required maxLength={60} /></Field>}
           <Field label="Comment">
             <textarea

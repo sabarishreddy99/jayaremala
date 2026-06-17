@@ -135,6 +135,53 @@ def test_refer(client):
     assert client.post("/gv/refer", json={"email": "not-an-email"}).status_code == 422
 
 
+def test_comment_moderation(client):
+    # clean comment publishes and shows up
+    r = client.post("/gv/comments", json={"name": "Anon", "body": "This is genuinely useful, thanks!"})
+    assert r.json()["published"] is True
+    assert any(c["body"].startswith("This is genuinely useful") for c in client.get("/gv/comments").json()["comments"])
+
+    # honest negative feedback is NOT blocked
+    r = client.post("/gv/comments", json={"name": "Anon", "body": "The UI is confusing and slow, please fix it."})
+    assert r.json()["published"] is True
+
+    # abuse is blocked — held back, never shown publicly
+    r = client.post("/gv/comments", json={"name": "Troll", "body": "you are a f*cking idiot"})
+    assert r.json()["published"] is False
+    assert r.json()["comment"] is None
+    assert not any("idiot" in c["body"] for c in client.get("/gv/comments").json()["comments"])
+
+    # spam (link) is held for review, not shown
+    r = client.post("/gv/comments", json={"name": "Spam", "body": "buy cheap stuff at spam.shop now"})
+    assert r.json()["published"] is False
+
+
+def test_comment_moderation_unit():
+    from app.core.gv_moderation import classify
+    assert classify("a", "great tool")[0] == "approved"
+    assert classify("a", "this is bad and slow")[0] == "approved"   # negative ≠ blocked
+    assert classify("a", "f u c k this")[0] == "rejected"            # spaced obfuscation
+    assert classify("a", "sh1t")[0] == "rejected"                    # leet
+    assert classify("a", "check http://evil.example")[0] == "pending"
+    assert classify("a", "my assignment in class")[0] == "approved"  # no Scunthorpe false-positive
+
+
+def test_moderate_llm_escalation(monkeypatch):
+    import app.core.gv_moderation as mod
+    # LLM catches nuanced abuse with no banned words → rejected
+    monkeypatch.setattr(mod, "llm_classify", lambda n, b: "toxic")
+    assert mod.moderate("a", "you are worthless and should quit")[0] == "rejected"
+    # LLM spam on otherwise-clean → held for review
+    monkeypatch.setattr(mod, "llm_classify", lambda n, b: "spam")
+    assert mod.moderate("a", "amazing product")[0] == "pending"
+    # LLM ok → honest criticism stays published
+    monkeypatch.setattr(mod, "llm_classify", lambda n, b: "ok")
+    assert mod.moderate("a", "the app feels slow and clunky")[0] == "approved"
+    # LLM can't weaken a keyword block
+    monkeypatch.setattr(mod, "llm_classify", lambda n, b: "ok")
+    assert mod.moderate("a", "fuck this")[0] == "rejected"
+
+
 def test_comments_public(client):
     r = client.post("/gv/comments", json={"name": "Anon", "body": "Great tool!"})
     assert r.status_code == 200

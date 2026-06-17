@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, EmailStr, Field
 
 from app.core.gv_auth import (
@@ -22,6 +23,7 @@ from app.core.gv_auth import (
     optional_user,
     verify_password,
 )
+from app.core.gv_moderation import moderate
 from app.core.limiter import limiter
 from app.db import gradevitian as gv
 
@@ -30,6 +32,17 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/gv", tags=["gradevitian"])
 
 _USERNAME_RE = re.compile(r"^[a-zA-Z0-9._@]+$")
+
+_bearer = HTTPBearer(auto_error=False)
+
+
+def _require_admin(creds: HTTPAuthorizationCredentials | None = Depends(_bearer)) -> None:
+    """Guards the comment-moderation queue with ADMIN_TOKEN (same as /admin/*)."""
+    from app.core.settings import settings
+    if not settings.admin_token:
+        raise HTTPException(status_code=403, detail="Admin endpoint disabled")
+    if creds is None or creds.credentials != settings.admin_token:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 # ── Schemas ───────────────────────────────────────────────────────────────────
@@ -72,6 +85,10 @@ class CalcStateRequest(BaseModel):
 
 class ReferRequest(BaseModel):
     email: EmailStr
+
+
+class ModerateRequest(BaseModel):
+    status: str  # approved | pending | rejected
 
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
@@ -209,7 +226,27 @@ def list_comments() -> dict:
 @limiter.limit("15/hour")
 def add_comment(body: CommentRequest, request: Request, user: dict | None = Depends(optional_user)) -> dict:
     name = user["name"] if user else body.name.strip()
-    return {"comment": gv.add_comment(name, body.body.strip(), user["id"] if user else None)}
+    text = body.body.strip()
+    status, reason = moderate(name, text)
+    comment = gv.add_comment(name, text, user["id"] if user else None, status, reason)
+    published = status == "approved"
+    # Only return the comment when it's live; held/blocked ones aren't exposed.
+    return {"published": published, "comment": comment if published else None}
+
+
+@router.get("/comments/review", dependencies=[Depends(_require_admin)])
+def review_comments(status: str | None = None) -> dict:
+    """Admin: list held/blocked comments (default: everything not approved)."""
+    return {"comments": gv.list_comments_for_review(status)}
+
+
+@router.post("/comments/{comment_id}/moderate", dependencies=[Depends(_require_admin)])
+def moderate_comment(comment_id: int, body: ModerateRequest) -> dict:
+    if body.status not in ("approved", "pending", "rejected"):
+        raise HTTPException(status_code=400, detail="Invalid status")
+    if not gv.set_comment_status(comment_id, body.status):
+        raise HTTPException(status_code=404, detail="Not found")
+    return {"ok": True}
 
 
 # ── Notifications ────────────────────────────────────────────────────────────

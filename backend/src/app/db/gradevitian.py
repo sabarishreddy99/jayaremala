@@ -70,9 +70,17 @@ def init_db() -> None:
                 user_id    INTEGER REFERENCES gv_users(id) ON DELETE SET NULL,
                 name       TEXT    NOT NULL,
                 body       TEXT    NOT NULL,
+                status     TEXT    NOT NULL DEFAULT 'approved',
+                reason     TEXT    NOT NULL DEFAULT '',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         """)
+        # Migrate older DBs that predate moderation columns.
+        cols = {r[1] for r in conn.execute("PRAGMA table_info(gv_comments)").fetchall()}
+        if "status" not in cols:
+            conn.execute("ALTER TABLE gv_comments ADD COLUMN status TEXT NOT NULL DEFAULT 'approved'")
+        if "reason" not in cols:
+            conn.execute("ALTER TABLE gv_comments ADD COLUMN reason TEXT NOT NULL DEFAULT ''")
         conn.execute("""
             CREATE TABLE IF NOT EXISTS gv_notifications (
                 id         INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -313,31 +321,56 @@ def _calc_row(row: sqlite3.Row) -> dict:
 
 # ── Comments (feedback wall) ─────────────────────────────────────────────────
 
-def add_comment(name: str, body: str, user_id: int | None) -> dict:
+def add_comment(name: str, body: str, user_id: int | None, status: str = "approved", reason: str = "") -> dict:
     with _connect() as conn:
         cur = conn.execute(
-            "INSERT INTO gv_comments (user_id, name, body) VALUES (?, ?, ?)",
-            (user_id, name, body),
+            "INSERT INTO gv_comments (user_id, name, body, status, reason) VALUES (?, ?, ?, ?, ?)",
+            (user_id, name, body, status, reason),
         )
         row = conn.execute("SELECT * FROM gv_comments WHERE id=?", (cur.lastrowid,)).fetchone()
     return _comment_row(row)
 
 
 def list_comments(limit: int = 100) -> list[dict]:
+    """Public list — only approved comments are ever returned."""
     with _connect() as conn:
         rows = conn.execute(
-            "SELECT * FROM gv_comments ORDER BY id DESC LIMIT ?", (limit,)
+            "SELECT * FROM gv_comments WHERE status='approved' ORDER BY id DESC LIMIT ?", (limit,)
         ).fetchall()
     return [_comment_row(r) for r in rows]
 
 
-def _comment_row(row: sqlite3.Row) -> dict:
-    return {
+def list_comments_for_review(status: str | None = None, limit: int = 200) -> list[dict]:
+    """Admin list — defaults to everything not yet approved (pending + rejected)."""
+    with _connect() as conn:
+        if status:
+            rows = conn.execute(
+                "SELECT * FROM gv_comments WHERE status=? ORDER BY id DESC LIMIT ?", (status, limit)
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM gv_comments WHERE status!='approved' ORDER BY id DESC LIMIT ?", (limit,)
+            ).fetchall()
+    return [_comment_row(r, include_status=True) for r in rows]
+
+
+def set_comment_status(comment_id: int, status: str) -> bool:
+    with _connect() as conn:
+        cur = conn.execute("UPDATE gv_comments SET status=? WHERE id=?", (status, comment_id))
+        return cur.rowcount > 0
+
+
+def _comment_row(row: sqlite3.Row, include_status: bool = False) -> dict:
+    out = {
         "id": row["id"],
         "name": row["name"],
         "body": row["body"],
         "created_at": row["created_at"],
     }
+    if include_status:
+        out["status"] = row["status"]
+        out["reason"] = row["reason"]
+    return out
 
 
 # ── Notifications ────────────────────────────────────────────────────────────

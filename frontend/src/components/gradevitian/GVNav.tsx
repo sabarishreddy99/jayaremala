@@ -53,12 +53,20 @@ export default function GVNav() {
     return () => document.removeEventListener("mousedown", onDown);
   }, [userMenu]);
 
+  // Lock background scroll while the mobile menu is open.
+  useEffect(() => {
+    if (!open) return;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = ""; };
+  }, [open]);
+
   // Normalize trailing slashes (trailingSlash:true means the path is e.g. "/gpa/")
   // and the /gradevitian prefix used on the path-form mount.
   const cur = (pathname || "/").replace(/\/+$/, "") || "/";
   const active = (href: string) => cur === href || cur === `/gradevitian${href}`;
 
   return (
+    <>
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
         scrolled
@@ -136,7 +144,7 @@ export default function GVNav() {
                 <GVLink href="/login" className="hidden rounded-full px-3 py-1.5 text-sm font-semibold text-fg-muted transition hover:text-fg sm:inline">
                   Log in
                 </GVLink>
-                <GVLink href="/signup" className="rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
+                <GVLink href="/signup" className="hidden rounded-full bg-accent px-4 py-1.5 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97] sm:inline-flex">
                   Sign up
                 </GVLink>
               </>
@@ -163,7 +171,7 @@ export default function GVNav() {
       </nav>
 
       {open && (
-        <div className="border-t border-border-subtle bg-surface/90 px-4 py-2 backdrop-blur-xl md:hidden">
+        <div className="relative z-50 border-t border-border-subtle bg-surface px-4 py-2 shadow-lg md:hidden">
           {TOOLS.map((t) => (
             <GVLink
               key={t.href}
@@ -183,10 +191,15 @@ export default function GVNav() {
             Feedback
           </GVLink>
           {!loading && !user && (
-            <GVLink href="/login" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-fg-muted">
-              <svg {...ic}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" /></svg>
-              Log in
-            </GVLink>
+            <>
+              <GVLink href="/login" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-fg-muted">
+                <svg {...ic}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" /></svg>
+                Log in
+              </GVLink>
+              <GVLink href="/signup" onClick={() => setOpen(false)} className="mt-1 flex items-center justify-center gap-2 rounded-full bg-accent px-3 py-2.5 text-sm font-semibold text-accent-fg">
+                Sign up
+              </GVLink>
+            </>
           )}
           {!loading && user && (
             <>
@@ -202,8 +215,19 @@ export default function GVNav() {
           )}
         </div>
       )}
+    </header>
+
+      {/* Dim + blur the rest of the site to focus the mobile menu */}
+      {open && (
+        <button
+          type="button"
+          aria-label="Close menu"
+          onClick={() => setOpen(false)}
+          className="animate-gv-fade fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
+        />
+      )}
 
       {search && <GVSearchModal onClose={() => setSearch(false)} />}
-    </header>
+    </>
   );
 }

@@ -17,7 +17,10 @@ os.environ.setdefault("GV_JWT_SECRET", "test-secret-please-ignore")
 
 
 @pytest.fixture(autouse=True)
-def _no_real_emails(monkeypatch):
-    """Never send real email during tests, even if Gmail OAuth is connected locally."""
+def _no_external_calls(monkeypatch):
+    """Keep tests offline & deterministic: no real email, no real LLM moderation calls
+    (even though .env may carry live API keys locally)."""
     import app.integrations.gmail as gmail
+    import app.core.gv_moderation as moderation
     monkeypatch.setattr(gmail, "send_gradevitian_email", lambda *a, **k: None)
+    monkeypatch.setattr(moderation, "llm_classify", lambda *a, **k: None)

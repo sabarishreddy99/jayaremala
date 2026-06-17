@@ -34,6 +34,9 @@ class Settings(BaseSettings):
     # they point at the SAME environment that created the token. Override locally
     # (e.g. http://localhost:3000/gradevitian) when testing the reset flow.
     gv_base_url: str = "https://gradevitian.jayaremala.com"
+    # Second-pass LLM moderation for feedback comments (catches nuanced abuse the
+    # keyword filter misses). Set false to rely on keywords only.
+    gv_llm_moderation: bool = True
     # Set ADMIN_TOKEN env var to enable POST /admin/reingest.
     # Empty string (default) disables the endpoint entirely.
     admin_token: str = ""

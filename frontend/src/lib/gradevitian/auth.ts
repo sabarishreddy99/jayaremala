@@ -100,7 +100,7 @@ export async function apiListComments(): Promise<{ comments: GVComment[] }> {
 export async function apiAddComment(
   input: { name: string; body: string },
   token?: string | null,
-): Promise<{ comment: GVComment }> {
+): Promise<{ published: boolean; comment: GVComment | null }> {
   return apiRequest("/gv/comments", "POST", input, token ?? undefined);
 }
 

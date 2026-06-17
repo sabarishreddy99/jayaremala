@@ -282,7 +282,7 @@ def _send_referral_email(email: str) -> bool:
         from app.integrations.gmail import send_gradevitian_email
         send_gradevitian_email(
             email,
-            "A fellow VITian thinks you'll love gradeVITian 🎓",
+            "A fellow VITian thinks you'll love gradeVITian",
             _REFER_HTML.format(url=settings.gv_base_url.rstrip("/")),
         )
         return True
@@ -316,7 +316,7 @@ _WELCOME_HTML = """\
 
 _REFER_HTML = """\
 <div style="font-family:system-ui,Segoe UI,Roboto,sans-serif;max-width:560px;margin:auto">
-  <h2 style="color:#4f46e5">You've been invited to gradeVITian 🎓</h2>
+  <h2 style="color:#4f46e5">You've been invited to gradeVITian</h2>
   <p>A fellow VITian thought you'd find this useful. <strong>gradeVITian</strong> is a free
   set of tools to compute your GPA &amp; CGPA, predict grades, estimate the GPA you need,
   and track attendance — fast and mobile-friendly.</p>

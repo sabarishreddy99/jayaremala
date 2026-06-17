@@ -63,8 +63,9 @@ export default function GVFooter() {
             <GVLink href="/privacy" className={link}>Privacy</GVLink>
             <GVLink href="/terms" className={link}>Terms</GVLink>
             <a href="/sitemap.xml" target="_blank" rel="noopener noreferrer" className={link}>Sitemap</a>
-            <a href="https://jayaremala.com" target="_blank" rel="noopener noreferrer" className={link}>
-              Portfolio ✦
+            <a href="https://jayaremala.com" target="_blank" rel="noopener noreferrer" className={`${link} inline-flex items-center gap-1`}>
+              Portfolio
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z" /></svg>
             </a>
           </div>
         </div>

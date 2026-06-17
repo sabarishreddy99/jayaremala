@@ -5,7 +5,7 @@ import type { CalcResult, Tone } from "@/lib/gradevitian/calc";
 /** Shared, Apple-grade styled primitives for gradeVITian — all theme-token based so
  *  they inherit the portfolio's light/dark palette and motion automatically. */
 
-export function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
+export function Field({ label, hint, children }: { label: React.ReactNode; hint?: string; children: React.ReactNode }) {
   return (
     <label className="flex flex-col gap-1.5">
       <span className="text-[13px] font-medium text-fg-muted">{label}</span>

@@ -5,7 +5,7 @@ import { apiRequest } from "@/lib/api/client";
 import { Button, Card, Input } from "@/components/gradevitian/ui";
 
 const SITE = "https://gradevitian.jayaremala.com";
-const SHARE_TEXT = "gradeVITian is back! 🎓 Free GPA, CGPA, grade & attendance calculators for VITians.";
+const SHARE_TEXT = "gradeVITian is back! Free GPA, CGPA, grade & attendance calculators for VITians.";
 
 const SHARES = [
   {
@@ -73,7 +73,12 @@ export default function GVRefer() {
         </Button>
       </form>
 
-      {status === "ok" && <p className="mt-2 text-center text-sm font-medium text-emerald-600 dark:text-emerald-400">Invite sent! 🎉</p>}
+      {status === "ok" && (
+        <p className="mt-2 flex items-center justify-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M20 6 9 17l-5-5" /></svg>
+          Invite sent!
+        </p>
+      )}
       {status === "nogmail" && <p className="mt-2 text-center text-sm text-fg-muted">Couldn&apos;t send the email right now — share via the buttons below instead.</p>}
       {status === "error" && <p className="mt-2 text-center text-sm text-rose-600 dark:text-rose-400">Something went wrong. Please try again.</p>}
 

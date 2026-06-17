@@ -189,7 +189,10 @@ export default function GVHome() {
               <div>
                 <h2 className="font-semibold text-fg">Got a suggestion or found a bug?</h2>
                 <p className="mt-0.5 text-body text-fg-muted">We read every message — tell us what would make gradeVITian better.</p>
-                <p className="mt-1.5 text-sm font-medium text-accent">✨ Share yours — you could be featured in our testimonials soon!</p>
+                <p className="mt-1.5 flex items-center gap-1.5 text-sm font-medium text-accent">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="shrink-0"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z" /></svg>
+                  Share yours — you could be featured in our testimonials soon!
+                </p>
               </div>
             </div>
             <span className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full border border-border bg-surface/60 px-4 py-2 text-sm font-semibold text-fg transition-colors group-hover:border-accent/40 group-hover:text-accent sm:self-auto">

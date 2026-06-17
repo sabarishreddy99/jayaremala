@@ -49,7 +49,7 @@ export default function CommentsWall() {
           {user ? `Posting as ${user.name}.` : "Tell us what you think — no account needed."}
         </p>
         <p className="mt-3 flex items-start gap-2 rounded-xl border border-accent/30 bg-accent/[0.07] px-3 py-2 text-sm text-fg">
-          <span aria-hidden>✨</span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="mt-0.5 shrink-0 text-accent"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z" /></svg>
           <span>Share your feedback — you could be the one featured in our testimonials soon!</span>
         </p>
         <form onSubmit={submit} className="mt-4 flex flex-col gap-4">

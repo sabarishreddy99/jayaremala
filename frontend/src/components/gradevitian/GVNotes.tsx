@@ -42,7 +42,14 @@ export default function GVNotes() {
       </div>
 
       <div className="mt-6 grid gap-4 sm:grid-cols-2">
-        <Field label="🎯 Target for next semester">
+        <Field
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden className="text-accent"><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.5" /></svg>
+              Target for next semester
+            </span>
+          }
+        >
           <textarea
             value={v.goal}
             onChange={(e) => setV({ ...v, goal: e.target.value })}
@@ -52,7 +59,14 @@ export default function GVNotes() {
             className={textareaCls}
           />
         </Field>
-        <Field label="📝 Notes to self">
+        <Field
+          label={
+            <span className="inline-flex items-center gap-1.5">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="text-accent"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z" /></svg>
+              Notes to self
+            </span>
+          }
+        >
           <textarea
             value={v.notes}
             onChange={(e) => setV({ ...v, notes: e.target.value })}

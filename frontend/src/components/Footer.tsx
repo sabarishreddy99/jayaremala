@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { profile } from "@/data/profile";
 import LiquidWave from "@/components/LiquidWave";
+import InstallPWA from "@/components/InstallPWA";
 
 // ── Footer ────────────────────────────────────────────────────────────────────
 export default function Footer() {
@@ -130,6 +131,7 @@ export default function Footer() {
             >
               Sitemap
             </a>
+            <InstallPWA variant="footer" />
             <Link
               href="/mcp"
               title="Model Context Protocol server"

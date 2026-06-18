@@ -7,6 +7,7 @@ import { profile } from "@/data/profile";
 import ThemeToggle from "@/components/ThemeToggle";
 import SoundToggle from "@/components/SoundToggle";
 import SparkleIcon from "@/components/SparkleIcon";
+import InstallPWA from "@/components/InstallPWA";
 import ReadingProgress from "@/components/blog/ReadingProgress";
 import { playClick } from "@/lib/sound";
 
@@ -378,6 +379,7 @@ export default function Nav() {
 
           {/* Utility buttons — visually separated at the far right */}
           <div className="flex items-center gap-0.5 ml-2 pl-2 border-l border-border">
+            <InstallPWA variant="nav" />
             <Link
               href="/admin"
               title="Admin"
@@ -466,6 +468,7 @@ export default function Nav() {
               ))}
 
               <div className="mt-1 pt-1 border-t border-border/60">
+                <InstallPWA variant="mobile" onTrigger={() => setOpen(false)} />
                 <a
                   href={profile.resume}
                   target="_blank"

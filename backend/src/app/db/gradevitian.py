@@ -119,6 +119,47 @@ def init_db() -> None:
         conn.execute("CREATE INDEX IF NOT EXISTS idx_gv_calcs_user  ON gv_saved_calcs(user_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_gv_resets_user ON gv_password_resets(user_id)")
     logger.info("gradeVITian DB ready")
+    try:
+        seed_legacy_comments()
+    except Exception as exc:
+        logger.warning("seed_legacy_comments failed (non-fatal): %s", exc)
+
+
+def seed_legacy_comments() -> int:
+    """One-time, idempotent import of feedback from the previous gradeVITian version.
+
+    Reads data/gv_legacy_comments.json and inserts each comment (approved) only when a
+    comment with the same name+body doesn't already exist in ANY status — so an admin
+    removing one won't be undone on the next deploy, and re-runs never duplicate.
+    Backdates created_at so they read as older entries.
+    """
+    path = Path(__file__).parents[3] / "data" / "gv_legacy_comments.json"
+    try:
+        items = json.loads(path.read_text(encoding="utf-8"))
+    except FileNotFoundError:
+        return 0
+
+    inserted = 0
+    with _connect() as conn:
+        for i, item in enumerate(items):
+            name = (item.get("name") or "").strip()
+            body = (item.get("body") or "").strip()
+            if not name or not body:
+                continue
+            if conn.execute(
+                "SELECT 1 FROM gv_comments WHERE name=? AND body=? LIMIT 1", (name, body)
+            ).fetchone():
+                continue
+            created_at = item.get("created_at") or f"2024-{(i % 12) + 1:02d}-15 12:00:00"
+            conn.execute(
+                "INSERT INTO gv_comments (user_id, name, body, status, reason, created_at) "
+                "VALUES (NULL, ?, ?, 'approved', 'legacy import', ?)",
+                (name, body, created_at),
+            )
+            inserted += 1
+    if inserted:
+        logger.info("seed_legacy_comments: imported %d legacy comment(s)", inserted)
+    return inserted
 
 
 # ── Counters (total site visits) ──────────────────────────────────────────────

@@ -13,6 +13,7 @@ import Parallax from "@/components/Parallax";
 import GVLinkedInEmbed from "@/components/gradevitian/GVLinkedInEmbed";
 import GVRefer from "@/components/gradevitian/GVRefer";
 import GVInstall from "@/components/gradevitian/GVInstall";
+import GVWallOfLove from "@/components/gradevitian/GVWallOfLove";
 import { useGVAuth } from "@/components/gradevitian/GVAuthProvider";
 
 const METRICS: GVStat[] = [
@@ -308,7 +309,7 @@ export default function GVHome() {
       </section>
 
       {/* ── From the community (LinkedIn) ─────────────────────────────────── */}
-      <section className="mx-auto max-w-5xl px-4 pb-24">
+      <section className="mx-auto max-w-5xl px-4 pb-16">
         <ScrollReveal>
           <h2 className="text-center text-2xl font-bold tracking-tight text-fg">From the community</h2>
           <p className="mt-1 text-center text-fg-muted">The journey, shared on LinkedIn.</p>
@@ -323,6 +324,9 @@ export default function GVHome() {
           <p className="mt-3 text-center text-micro text-fg-subtle md:hidden">Swipe to see more →</p>
         </ScrollReveal>
       </section>
+
+      {/* ── Wall of love — scrolling student feedback + post CTA ──────────── */}
+      <GVWallOfLove />
     </>
   );
 }

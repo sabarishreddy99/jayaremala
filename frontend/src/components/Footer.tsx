@@ -49,9 +49,9 @@ export default function Footer() {
                     transition-[opacity,transform] duration-700 ease-out
                     ${revealed ? "opacity-100 translate-y-0" : "opacity-0 translate-y-3"}`}
       >
-        <div className="mx-auto flex w-full max-w-6xl xl:max-w-7xl 2xl:max-w-360 flex-wrap items-center justify-between gap-3">
+        <div className="mx-auto flex w-full max-w-6xl xl:max-w-7xl 2xl:max-w-360 flex-col items-center gap-4 text-center sm:flex-row sm:justify-between sm:gap-3 sm:text-left">
           {/* Left: copyright — fg-muted: 15:1 light · 12:1 dark */}
-          <div className="flex flex-col gap-0.5">
+          <div className="flex flex-col items-center gap-0.5 sm:items-start">
             <span className="font-mono text-[11px] tracking-[0.06em] text-fg-muted">
               © {new Date().getFullYear()} Jaya Sabarish Reddy Remala
             </span>
@@ -65,8 +65,9 @@ export default function Footer() {
             </span>
           </div>
 
-          {/* Right: links — fg-muted at rest, fg on hover */}
-          <div className="flex items-center gap-5 sm:gap-7">
+          {/* Right: links — centered wrap on mobile, right-aligned wrap on sm/md,
+              single row only once there's room at lg */}
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2.5 sm:justify-end sm:gap-x-5 lg:flex-nowrap lg:gap-x-7">
             {profile.github && (
               <a
                 href={profile.github}

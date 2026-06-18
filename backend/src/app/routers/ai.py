@@ -377,10 +377,12 @@ def _generate(system: str, prompt: str) -> str:
 _RESET_SENTINEL = object()  # yielded to signal "discard partial output, retrying next model"
 
 
-def _stream_tokens(full_prompt: str, used_model: list[str]) -> Iterator:
+def _stream_tokens(full_prompt: str, used_model: list[str], usage: dict | None = None) -> Iterator:
     """Yields str tokens, or _RESET_SENTINEL when switching models mid-stream.
     Dispatches per chain entry: Gemini via google-genai, Groq/OpenRouter via the
-    OpenAI-compatible streaming API. Appends the served `provider:model` to used_model."""
+    OpenAI-compatible streaming API. Appends the served `provider:model` to used_model.
+    When `usage` is provided, populates it with prompt/completion token counts from the
+    serving provider (best-effort — left at 0 when a provider omits usage)."""
     chain = settings.model_chain
     last_exc: Exception | None = None
     for entry in chain:
@@ -392,17 +394,26 @@ def _stream_tokens(full_prompt: str, used_model: list[str]) -> Iterator:
                     if chunk.text:
                         yield chunk.text
                         yielded_any = True
+                    meta = getattr(chunk, "usage_metadata", None)
+                    if usage is not None and meta:
+                        usage["prompt_tokens"] = getattr(meta, "prompt_token_count", 0) or 0
+                        usage["completion_tokens"] = getattr(meta, "candidates_token_count", 0) or 0
             else:
                 stream = _openai_client(provider).chat.completions.create(
                     model=model,
                     messages=[{"role": "user", "content": full_prompt}],
                     stream=True,
+                    stream_options={"include_usage": True},
                 )
                 for chunk in stream:
                     delta = chunk.choices[0].delta.content if chunk.choices else None
                     if delta:
                         yield delta
                         yielded_any = True
+                    u = getattr(chunk, "usage", None)
+                    if usage is not None and u:
+                        usage["prompt_tokens"] = getattr(u, "prompt_tokens", 0) or 0
+                        usage["completion_tokens"] = getattr(u, "completion_tokens", 0) or 0
             used_model.append(entry)
             if entry != chain[0]:
                 logger.info("Streamed via fallback: %s", entry)
@@ -530,6 +541,8 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
         top_chunks = await rag_store.query_multi_async(queries)
     context = _build_context(top_chunks)
     sources = [f"{c['type']}:{c['id']}" for c in top_chunks]
+    # Best retrieval score for this query — drives the /system retrieval-quality metric.
+    top_score = max((c.get("rrf_score", c.get("score", 0)) for c in top_chunks), default=0.0)
 
     # Gather live context blocks in parallel (calendar + inbox signals)
     extra_blocks: dict[str, str] = {}
@@ -628,17 +641,29 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
 
     def event_stream():
         used_model: list[str] = []
+        usage: dict = {}
         try:
             llm_start = time.perf_counter()
-            for item in _stream_tokens(full_prompt, used_model):
+            first_token_seen = False
+            for item in _stream_tokens(full_prompt, used_model, usage):
                 if item is _RESET_SENTINEL:
                     yield f"data: {json.dumps({'reset': True})}\n\n"
                 else:
+                    if not first_token_seen:
+                        # Time-to-first-token: a key latency signal — the moment the
+                        # visitor sees the answer start, not when it finishes.
+                        trace.add("ttft", (time.perf_counter() - llm_start) * 1000)
+                        first_token_seen = True
                     yield f"data: {json.dumps({'token': item})}\n\n"
             trace.add("llm", (time.perf_counter() - llm_start) * 1000)
             model_used = used_model[0] if used_model else settings.gemini_model
             latency_ms = int(trace.total_ms())
-            row_id = analytics.record(identifier, model_used, latency_ms)
+            row_id = analytics.record(
+                identifier, model_used, latency_ms,
+                prompt_tokens=usage.get("prompt_tokens", 0),
+                completion_tokens=usage.get("completion_tokens", 0),
+                top_score=top_score,
+            )
             stages = trace.as_list()
             done_payload: dict = {
                 "done": True, "sources": sources, "model": model_used,
@@ -664,6 +689,8 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
         except Exception as exc:
             logger.error("Streaming error: %s", exc)
             error_code = "quota_exhausted" if _is_capacity_error(exc) else "stream_error"
+            model_attempted = used_model[0] if used_model else settings.gemini_model
+            analytics.record_error(identifier, model_attempted, error_code, int(trace.total_ms()))
             yield f"data: {json.dumps({'error': error_code})}\n\n"
 
     return StreamingResponse(

@@ -115,6 +115,12 @@ def _migrate(conn: sqlite3.Connection) -> None:
         ("interactions", "city TEXT DEFAULT ''"),
         ("interactions", "model TEXT DEFAULT ''"),
         ("interactions", "latency_ms INTEGER DEFAULT 0"),
+        # Observability columns for the /system dashboard
+        ("interactions", "status TEXT DEFAULT 'ok'"),         # 'ok' | 'error'
+        ("interactions", "error_code TEXT DEFAULT ''"),       # e.g. quota_exhausted
+        ("interactions", "prompt_tokens INTEGER DEFAULT 0"),  # cost accounting
+        ("interactions", "completion_tokens INTEGER DEFAULT 0"),
+        ("interactions", "top_score REAL DEFAULT 0"),         # max RRF score of retrieved context
         ("site_visits",  "page TEXT DEFAULT '/'"),
         ("site_visits",  "country TEXT DEFAULT ''"),
         ("site_visits",  "city TEXT DEFAULT ''"),
@@ -164,30 +170,56 @@ def geo_update_sync(table: str, row_id: int, ip: str) -> None:
 # ── Record helpers ────────────────────────────────────────────────────────────
 
 _CUTOFFS = {
+    "day":   "datetime('now', '-1 days')",
     "week":  "datetime('now', '-7 days')",
     "month": "datetime('now', '-30 days')",
     "year":  "datetime('now', '-365 days')",
 }
 
+# Grounded-context threshold — mirrors the value used when assembling RAG context
+# in routers/ai.py (_build_context). A response whose best retrieved chunk scores
+# below this answered from the system-prompt fallback rather than fresh retrieval.
+GROUNDED_SCORE_THRESHOLD = 0.005
+
 SESSION_GAP_SECONDS = 600  # 10 minutes
 
 
-def record(identifier: str, model: str = "", latency_ms: int = 0) -> int | None:
+def record(
+    identifier: str,
+    model: str = "",
+    latency_ms: int = 0,
+    *,
+    status: str = "ok",
+    error_code: str = "",
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+    top_score: float = 0.0,
+) -> int | None:
     """Record a chat response. identifier is a visitor UUID or raw IP.
-    `model` is the Gemini model that served it; `latency_ms` the end-to-end time.
-    Returns the new row id (for geo back-fill).
+    `model` is the model that served it; `latency_ms` the end-to-end time. The
+    keyword-only observability fields feed the /system dashboard (reliability,
+    token cost, retrieval relevance). Returns the new row id (for geo back-fill).
     """
     id_hash = hashlib.sha256(identifier.encode()).hexdigest()
     try:
         with _connect() as conn:
             cur = conn.execute(
-                "INSERT INTO interactions (ip_hash, model, latency_ms) VALUES (?, ?, ?)",
-                (id_hash, model or "", int(latency_ms) or 0),
+                "INSERT INTO interactions "
+                "(ip_hash, model, latency_ms, status, error_code, prompt_tokens, completion_tokens, top_score) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                (id_hash, model or "", int(latency_ms) or 0, status or "ok", error_code or "",
+                 int(prompt_tokens) or 0, int(completion_tokens) or 0, float(top_score) or 0.0),
             )
             return cur.lastrowid
     except Exception as exc:
         logger.warning("Analytics record failed (non-fatal): %s", exc)
         return None
+
+
+def record_error(identifier: str, model: str, error_code: str, latency_ms: int = 0) -> None:
+    """Record a failed chat response so it counts toward the error/success rate.
+    Best-effort and non-fatal — the user already saw an error, this is just telemetry."""
+    record(identifier, model, latency_ms, status="error", error_code=error_code or "stream_error")
 
 
 def record_stage_timings(interaction_id: int | None, stages: list[dict]) -> None:
@@ -227,7 +259,7 @@ def get_latency_percentiles(period: str = "all") -> dict:
     SQLite lacks percentile functions, so we pull non-zero samples and compute
     in Python — the sample count is small (one row per chat response).
     """
-    where_clauses = ["latency_ms > 0"]
+    where_clauses = ["latency_ms > 0", "status = 'ok'"]
     if period in _CUTOFFS:
         where_clauses.append(f"created_at >= {_CUTOFFS[period]}")
     where = "WHERE " + " AND ".join(where_clauses)
@@ -260,7 +292,7 @@ def get_latency_percentiles(period: str = "all") -> dict:
 def get_model_breakdown(period: str = "all") -> list[dict]:
     """Per-model response count + avg latency in the period.
     If the primary isn't dominant, the fallback chain is churning (quota/429)."""
-    clauses = ["model != ''"]
+    clauses = ["model != ''", "status = 'ok'"]
     if period in _CUTOFFS:
         clauses.append(f"created_at >= {_CUTOFFS[period]}")
     where = "WHERE " + " AND ".join(clauses)
@@ -418,8 +450,13 @@ def get_experience_rating_summary(period: str = "all") -> dict:
 
 
 def get_stats(period: str = "all") -> dict[str, int]:
-    """Chat interaction stats. sessions = distinct 10-min windows (via SQL LAG)."""
-    where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
+    """Chat interaction stats. sessions = distinct 10-min windows (via SQL LAG).
+    Counts successful responses only (status='ok') — failures are tracked separately
+    via get_reliability()."""
+    clauses = ["status = 'ok'"]
+    if period in _CUTOFFS:
+        clauses.append(f"created_at >= {_CUTOFFS[period]}")
+    where = "WHERE " + " AND ".join(clauses)
     try:
         with _connect() as conn:
             total  = conn.execute(f"SELECT COUNT(*) FROM interactions {where}").fetchone()[0]
@@ -555,4 +592,181 @@ def get_page_stats(period: str = "all") -> list[dict]:
         return [{"page": r[0], "sessions": r[1], "unique_visitors": r[2]} for r in rows]
     except Exception as exc:
         logger.warning("get_page_stats failed: %s", exc)
+        return []
+
+
+# ── System observability helpers (public /system dashboard) ───────────────────
+
+def get_reliability(period: str = "all") -> dict:
+    """Error / success rate over chat requests (status='ok' vs 'error') + a breakdown
+    of error codes. Powers the reliability strip an EM scans first."""
+    where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
+    try:
+        with _connect() as conn:
+            total = conn.execute(f"SELECT COUNT(*) FROM interactions {where}").fetchone()[0]
+            and_clause = f"AND created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
+            errors = conn.execute(
+                f"SELECT COUNT(*) FROM interactions WHERE status='error' {and_clause}"
+            ).fetchone()[0]
+            codes = conn.execute(
+                f"SELECT error_code, COUNT(*) AS c FROM interactions "
+                f"WHERE status='error' AND error_code != '' {and_clause} "
+                f"GROUP BY error_code ORDER BY c DESC"
+            ).fetchall()
+        error_rate = round(errors / total * 100, 2) if total else 0.0
+        return {
+            "total": total,
+            "errors": errors,
+            "error_rate_pct": error_rate,
+            "success_rate_pct": round(100 - error_rate, 2),
+            "by_code": [{"code": r[0], "count": r[1]} for r in codes],
+        }
+    except Exception as exc:
+        logger.warning("get_reliability failed: %s", exc)
+        return {"total": 0, "errors": 0, "error_rate_pct": 0.0, "success_rate_pct": 100.0, "by_code": []}
+
+
+def _percentiles(samples: list[float]) -> dict:
+    """Nearest-rank p50/p95 on a pre-sorted list (same approach as get_latency_percentiles)."""
+    if not samples:
+        return {"p50": 0, "p95": 0}
+
+    def _pct(p: float) -> int:
+        idx = min(len(samples) - 1, max(0, round(p / 100 * len(samples)) - 1))
+        return int(samples[idx])
+
+    return {"p50": _pct(50), "p95": _pct(95)}
+
+
+def get_stage_percentiles(period: str = "all") -> list[dict]:
+    """Per-stage p50 + p95 latency (ms) from stage_timings — fine-grained latency view.
+    Returns stages ordered by p95 descending."""
+    where = f"WHERE created_at >= {_CUTOFFS[period]}" if period in _CUTOFFS else ""
+    try:
+        with _connect() as conn:
+            rows = conn.execute(
+                f"SELECT stage, ms FROM stage_timings {where} ORDER BY stage, ms"
+            ).fetchall()
+    except Exception as exc:
+        logger.warning("get_stage_percentiles failed: %s", exc)
+        return []
+    by_stage: dict[str, list[float]] = {}
+    for stage, ms in rows:
+        by_stage.setdefault(stage, []).append(ms)
+    out = []
+    for stage, samples in by_stage.items():
+        pct = _percentiles(samples)  # samples already sorted by the ORDER BY
+        out.append({"stage": stage, "p50": pct["p50"], "p95": pct["p95"], "count": len(samples)})
+    return sorted(out, key=lambda s: s["p95"], reverse=True)
+
+
+def get_peak_throughput(period: str = "all") -> dict:
+    """Busiest one-minute bucket of successful chat responses in the period (req/min)."""
+    where = "WHERE status='ok'"
+    if period in _CUTOFFS:
+        where += f" AND created_at >= {_CUTOFFS[period]}"
+    try:
+        with _connect() as conn:
+            row = conn.execute(
+                f"SELECT strftime('%Y-%m-%d %H:%M', created_at) AS m, COUNT(*) AS c "
+                f"FROM interactions {where} GROUP BY m ORDER BY c DESC LIMIT 1"
+            ).fetchone()
+        return {"peak_rpm": row[1] if row else 0, "at": row[0] if row else ""}
+    except Exception as exc:
+        logger.warning("get_peak_throughput failed: %s", exc)
+        return {"peak_rpm": 0, "at": ""}
+
+
+def get_token_cost_summary(period: str = "all") -> dict:
+    """Token usage + estimated USD cost over successful responses, using the
+    per-model price map. Models without a price (free tiers / unknown) cost 0."""
+    from app.core.settings import MODEL_PRICES
+    where = "WHERE status='ok'"
+    if period in _CUTOFFS:
+        where += f" AND created_at >= {_CUTOFFS[period]}"
+    try:
+        with _connect() as conn:
+            rows = conn.execute(
+                f"SELECT model, SUM(prompt_tokens), SUM(completion_tokens), COUNT(*) "
+                f"FROM interactions {where} GROUP BY model"
+            ).fetchall()
+    except Exception as exc:
+        logger.warning("get_token_cost_summary failed: %s", exc)
+        return {"total_tokens": 0, "avg_prompt": 0, "avg_completion": 0, "est_cost_usd": 0.0}
+    total_prompt = total_completion = total_count = 0
+    est_cost = 0.0
+    for model, p, c, n in rows:
+        p, c, n = int(p or 0), int(c or 0), int(n or 0)
+        total_prompt += p
+        total_completion += c
+        total_count += n
+        price = MODEL_PRICES.get(model) or MODEL_PRICES.get(model.split(":")[-1])
+        if price:
+            est_cost += p / 1000 * price.get("in", 0) + c / 1000 * price.get("out", 0)
+    return {
+        "total_tokens": total_prompt + total_completion,
+        "avg_prompt": round(total_prompt / total_count) if total_count else 0,
+        "avg_completion": round(total_completion / total_count) if total_count else 0,
+        "est_cost_usd": round(est_cost, 4),
+    }
+
+
+def get_retrieval_quality(period: str = "all") -> dict:
+    """Average top retrieval score + grounded-context rate (share of answers whose best
+    retrieved chunk cleared the grounding threshold) over successful responses."""
+    where = "WHERE status='ok' AND top_score > 0"
+    if period in _CUTOFFS:
+        where += f" AND created_at >= {_CUTOFFS[period]}"
+    try:
+        with _connect() as conn:
+            row = conn.execute(
+                f"SELECT COUNT(*), AVG(top_score), "
+                f"SUM(CASE WHEN top_score >= {GROUNDED_SCORE_THRESHOLD} THEN 1 ELSE 0 END) "
+                f"FROM interactions {where}"
+            ).fetchone()
+        total, avg, grounded = row[0] or 0, row[1] or 0.0, row[2] or 0
+        return {
+            "samples": total,
+            "avg_top_score": round(avg, 4),
+            "grounded_pct": round(grounded / total * 100) if total else 0,
+        }
+    except Exception as exc:
+        logger.warning("get_retrieval_quality failed: %s", exc)
+        return {"samples": 0, "avg_top_score": 0.0, "grounded_pct": 0}
+
+
+def get_recent_traces(n: int = 12) -> list[dict]:
+    """Last `n` chat responses with their per-stage timing breakdown, for the live
+    trace waterfall. PII-free by construction — selects no ip_hash, question, or geo."""
+    try:
+        with _connect() as conn:
+            interactions = conn.execute(
+                "SELECT id, model, latency_ms, status, created_at "
+                "FROM interactions ORDER BY id DESC LIMIT ?",
+                (int(n),),
+            ).fetchall()
+            if not interactions:
+                return []
+            ids = [r[0] for r in interactions]
+            ph = ",".join("?" * len(ids))
+            stage_rows = conn.execute(
+                f"SELECT interaction_id, stage, ms FROM stage_timings "
+                f"WHERE interaction_id IN ({ph}) ORDER BY id",
+                ids,
+            ).fetchall()
+        stages_by_id: dict[int, list[dict]] = {}
+        for iid, stage, ms in stage_rows:
+            stages_by_id.setdefault(iid, []).append({"stage": stage, "ms": round(ms, 1)})
+        return [
+            {
+                "model": r[1],
+                "latency_ms": r[2],
+                "status": r[3] or "ok",
+                "created_at": r[4],
+                "stages": stages_by_id.get(r[0], []),
+            }
+            for r in interactions
+        ]
+    except Exception as exc:
+        logger.warning("get_recent_traces failed: %s", exc)
         return []

@@ -1,3 +1,4 @@
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -53,6 +54,10 @@ class Settings(BaseSettings):
     calendar_id: str = "primary"
     calendar_tz: str = "America/New_York"
 
+    # Deploy identity for the /system dashboard. Railway injects RAILWAY_GIT_COMMIT_SHA;
+    # alias lets either DEPLOY_SHA or that var populate it.
+    deploy_sha: str = Field(default="", validation_alias=AliasChoices("DEPLOY_SHA", "RAILWAY_GIT_COMMIT_SHA"))
+
     @property
     def model_chain(self) -> list[str]:
         """Cross-provider fallback chain as `provider:model` entries, in priority
@@ -81,4 +86,16 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+
+# Per-model token prices in USD per 1K tokens, for the /system cost estimate.
+# Keyed by both `provider:model` and the bare model name (get_token_cost_summary
+# tries both). Free tiers (Groq / OpenRouter ":free") and unknown models cost 0.
+# Update these as provider pricing changes — public Gemini Flash list prices shown.
+MODEL_PRICES: dict[str, dict[str, float]] = {
+    "gemini-2.0-flash":      {"in": 0.0001,  "out": 0.0004},
+    "gemini-2.0-flash-lite": {"in": 0.000075, "out": 0.0003},
+    "gemini-2.5-flash":      {"in": 0.0003,  "out": 0.0025},
+    "gemini-flash-latest":   {"in": 0.0003,  "out": 0.0025},
+}
 

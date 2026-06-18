@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import logging
+import time
+from pathlib import Path
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, Header, HTTPException, Request
@@ -14,6 +16,22 @@ router = APIRouter(prefix="/stats", tags=["stats"])
 
 _PERIODS = ["week", "month", "year", "all"]
 _ADMIN_PERIODS = ["week", "month", "all"]
+_SYSTEM_PERIODS = ("day", "week", "month", "all")
+
+# Process boot time — uptime for the /system reliability strip.
+_BOOT = time.time()
+
+
+def _last_ingest_at() -> str | None:
+    """ISO timestamp of the last knowledge-base ingest, from the .ingest_hash file mtime."""
+    try:
+        from datetime import datetime, timezone
+        hash_file = Path(settings.chroma_db_path) / ".ingest_hash"
+        if hash_file.exists():
+            return datetime.fromtimestamp(hash_file.stat().st_mtime, tz=timezone.utc).isoformat()
+    except Exception:
+        pass
+    return None
 
 
 # ── Geo helper (runs as background task) ──────────────────────────────────────
@@ -61,12 +79,18 @@ def get_overview() -> dict:
 
 
 @router.get("/system")
-def get_system() -> dict:
-    """Public observability snapshot for the /system dashboard: end-to-end latency
-    percentiles, per-stage RAG pipeline timing, model mix + fallback rate, request
-    volume trend, knowledge-base size, and live component health.
+def get_system(period: str = "all") -> dict:
+    """Public observability snapshot for the /system dashboard: end-to-end + per-stage
+    latency, model mix + fallback, reliability (uptime/error rate/deploy), token cost,
+    answer quality, request volume, knowledge-base size, and live component health.
+
+    `period` (day|week|month|all) windows the time-series + aggregate metrics.
+    Privacy: only aggregates here — top questions, geo, and lead captures stay admin-only.
     """
-    models = analytics.get_model_breakdown("all")
+    if period not in _SYSTEM_PERIODS:
+        period = "all"
+
+    models = analytics.get_model_breakdown(period)
     total_model = sum(m["count"] for m in models) or 1
     primary = settings.gemini_model
     fallback = sum(m["count"] for m in models if m["model"] != primary)
@@ -84,16 +108,35 @@ def get_system() -> dict:
         health["rag"] = "degraded"
         kb_docs = 0
 
+    reliability = analytics.get_reliability(period)
+    quality = {
+        "satisfaction_pct": analytics.get_feedback_summary(period)["satisfaction_pct"],
+        "experience": analytics.get_experience_rating_summary(period),
+        **analytics.get_retrieval_quality(period),
+    }
+
     return {
-        "latency": analytics.get_latency_percentiles("all"),
-        "stages": analytics.get_stage_latency_averages("all"),
+        "period": period,
+        "latency": analytics.get_latency_percentiles(period),
+        "stages": analytics.get_stage_latency_averages(period),
+        "latency_stages": analytics.get_stage_percentiles(period),
+        "throughput": analytics.get_peak_throughput(period),
         "models": models,
         "fallback_rate_pct": round(fallback / total_model * 100, 1),
         "primary_model": primary,
         "model_chain": settings.model_chain,
+        "cost": analytics.get_token_cost_summary(period),
+        "quality": quality,
         "volume": analytics.get_daily_counts("interactions", 30),
-        "totals": analytics.get_stats("all"),
+        "totals": analytics.get_stats(period),
+        "pages": analytics.get_page_stats(period),
         "kb_docs": kb_docs,
+        "reliability": {
+            "uptime_seconds": int(time.time() - _BOOT),
+            "deploy_sha": settings.deploy_sha[:7] if settings.deploy_sha else "",
+            "last_ingest_at": _last_ingest_at(),
+            **reliability,
+        },
         "health": {"status": "ok" if all(v == "ok" for v in health.values()) else "degraded", **health},
         "retrieval": {
             "embed_model": "BAAI/bge-base-en-v1.5",
@@ -101,6 +144,13 @@ def get_system() -> dict:
             "method": "hybrid dense + BM25 → Reciprocal Rank Fusion (k=60) → 1-hop graph expansion",
         },
     }
+
+
+@router.get("/system/traces")
+def get_system_traces() -> dict:
+    """Live trace feed for the /system waterfall — the last ~12 chat responses with
+    their per-stage timing breakdown. PII-free: no IP, question text, or geo."""
+    return {"traces": analytics.get_recent_traces(12)}
 
 
 @router.post("/visit", status_code=204)

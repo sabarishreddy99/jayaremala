@@ -70,8 +70,8 @@ export default function GVNav() {
     <>
     <header
       className={`sticky top-0 z-50 transition-all duration-300 ${
-        scrolled
-          ? "border-b border-border-subtle bg-surface/75 shadow-[0_1px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-xl"
+        scrolled || open
+          ? "border-b border-border-subtle bg-surface/80 shadow-[0_1px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-xl"
           : "border-b border-transparent bg-transparent"
       }`}
     >
@@ -173,7 +173,7 @@ export default function GVNav() {
       </nav>
 
       {open && (
-        <div className="relative z-50 border-t border-border-subtle bg-surface px-4 py-2 shadow-lg md:hidden">
+        <div className="animate-gv-fade relative z-50 max-h-[calc(100dvh-3.75rem)] overflow-y-auto overscroll-contain border-t border-border-subtle bg-surface/95 px-4 py-2 shadow-lg backdrop-blur-xl md:hidden">
           {TOOLS.map((t) => (
             <GVLink
               key={t.href}

@@ -75,7 +75,7 @@ export default function InstallPWA({
   variant = "nav",
   onTrigger,
 }: {
-  variant?: "nav" | "mobile" | "footer";
+  variant?: "nav" | "mobile" | "footer" | "chip" | "icon";
   onTrigger?: () => void;
 }) {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
@@ -142,7 +142,25 @@ export default function InstallPWA({
   }
 
   const trigger =
-    variant === "footer" ? (
+    variant === "icon" ? (
+      <button
+        onClick={handleClick}
+        aria-label="Install this site as an app"
+        title="Install this site as an app"
+        className="grid h-9 w-9 place-items-center rounded-full border border-border bg-surface/60 text-fg-muted backdrop-blur transition-colors hover:border-fg-muted hover:text-fg"
+      >
+        <DownloadIcon size={16} />
+      </button>
+    ) : variant === "chip" ? (
+      <button
+        onClick={handleClick}
+        className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface px-3.5 py-1.5 text-[11px] font-medium text-fg-muted transition-all hover:border-fg-muted hover:text-fg dark:border-border-strong dark:bg-surface-raised"
+      >
+        <DownloadIcon size={12} />
+        Install this site as an app
+        <span className="text-fg-faint transition-transform group-hover:translate-x-0.5">→</span>
+      </button>
+    ) : variant === "footer" ? (
       <button
         onClick={handleClick}
         className="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.06em] text-fg-muted transition-colors hover:text-accent"

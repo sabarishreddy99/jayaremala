@@ -1,7 +1,7 @@
 export default function LiquidWave({ className = "" }: { className?: string }) {
   return (
     <svg
-      className={`lw-svg absolute bottom-0 left-0 w-full pointer-events-none ${className}`}
+      className={`lw-svg pointer-events-none absolute bottom-0 left-1/2 w-full min-w-[680px] -translate-x-1/2 ${className}`}
       style={{ height: "clamp(110px, 22vh, 220px)", zIndex: 0 }}
       viewBox="0 0 1440 180"
       preserveAspectRatio="none"

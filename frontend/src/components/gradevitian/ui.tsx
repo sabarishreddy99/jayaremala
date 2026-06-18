@@ -16,8 +16,8 @@ export function Field({ label, hint, children }: { label: React.ReactNode; hint?
 }
 
 const inputBase =
-  "w-full rounded-xl border border-border bg-surface-raised/60 px-3.5 py-2.5 text-fg " +
-  "shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-all duration-200 " +
+  "w-full rounded-xl border border-border bg-surface-raised/60 px-3.5 py-2.5 text-[15px] text-fg " +
+  "shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] outline-none transition-all duration-200 ease-out " +
   "focus:border-accent focus:bg-surface-raised focus:ring-4 focus:ring-accent/15 " +
   "placeholder:text-fg-faint disabled:opacity-40 disabled:cursor-not-allowed";
 
@@ -41,7 +41,7 @@ export function Button({ variant = "primary", className = "", ...props }: Button
   return (
     <button
       {...props}
-      className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 ${styles} ${className}`}
+      className={`inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold transition-all duration-200 ease-out outline-none focus-visible:ring-2 focus-visible:ring-accent/45 focus-visible:ring-offset-2 focus-visible:ring-offset-bg active:scale-[0.97] disabled:opacity-50 disabled:active:scale-100 ${styles} ${className}`}
     />
   );
 }
@@ -49,7 +49,7 @@ export function Button({ variant = "primary", className = "", ...props }: Button
 export function Card({ className = "", children }: { className?: string; children: React.ReactNode }) {
   return (
     <div
-      className={`rounded-3xl border border-border-subtle bg-surface/70 p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_8px_30px_-12px_rgba(0,0,0,0.12)] backdrop-blur-xl sm:p-7 ${className}`}
+      className={`rounded-3xl border border-border-subtle bg-surface/70 p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_12px_40px_-16px_rgba(0,0,0,0.16)] backdrop-blur-xl sm:p-7 ${className}`}
     >
       {children}
     </div>
@@ -94,9 +94,9 @@ export function Segmented<T extends string>({
         <button
           key={o.value}
           onClick={() => onChange(o.value)}
-          className={`rounded-full px-3.5 py-1.5 font-medium transition-all duration-200 ${
+          className={`rounded-full px-3.5 py-1.5 font-medium outline-none transition-all duration-200 ease-out focus-visible:ring-2 focus-visible:ring-accent/40 ${
             value === o.value
-              ? "bg-surface text-fg shadow-sm"
+              ? "bg-surface text-fg shadow-[0_1px_3px_rgba(0,0,0,0.1)]"
               : "text-fg-subtle hover:text-fg"
           }`}
         >

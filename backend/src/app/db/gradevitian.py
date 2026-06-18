@@ -373,10 +373,12 @@ def add_comment(name: str, body: str, user_id: int | None, status: str = "approv
 
 
 def list_comments(limit: int = 100) -> list[dict]:
-    """Public list — only approved comments are ever returned."""
+    """Public list — only approved comments are ever returned, newest first.
+    Sorts by created_at (then id) so backdated legacy imports sit below newer posts."""
     with _connect() as conn:
         rows = conn.execute(
-            "SELECT * FROM gv_comments WHERE status='approved' ORDER BY id DESC LIMIT ?", (limit,)
+            "SELECT * FROM gv_comments WHERE status='approved' ORDER BY created_at DESC, id DESC LIMIT ?",
+            (limit,),
         ).fetchall()
     return [_comment_row(r) for r in rows]
 

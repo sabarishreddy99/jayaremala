@@ -90,7 +90,7 @@ export default function AccountDashboard() {
                 {initials}
               </div>
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">Hi, {user.name.split(" ")[0]}.</h1>
+                <h1 className="text-balance text-2xl font-bold tracking-[-0.02em] text-fg sm:text-3xl">Hi, {user.name.split(" ")[0]}.</h1>
                 <p className="mt-0.5 text-fg-muted">@{user.username} · {user.email}</p>
               </div>
             </div>
@@ -146,7 +146,7 @@ export default function AccountDashboard() {
       </div>
 
       {/* Saved calculations */}
-      <h2 className="mt-10 text-xl font-bold text-fg">Saved calculations</h2>
+      <h2 className="mt-10 text-xl font-bold tracking-tight text-fg">Saved calculations</h2>
       <div className="mt-4 flex flex-col gap-3">
         {ready && calcs.length === 0 && (
           <p className="text-sm text-fg-muted">

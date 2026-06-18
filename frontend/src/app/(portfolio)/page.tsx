@@ -18,6 +18,7 @@ import MobileNoBg from "@/components/MobileNoBg";
 import HeroDotGrid from "@/components/HeroDotGrid";
 import SiteVitals from "@/components/SiteVitals";
 import GradeVITianSpotlight from "@/components/GradeVITianSpotlight";
+import InstallPWA from "@/components/InstallPWA";
 import SparkleIcon from "@/components/SparkleIcon";
 import { experience } from "@/data/experience";
 
@@ -343,6 +344,7 @@ export default function PortfolioHome() {
               </svg>
               <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">Want your LLM to read my work?</span>
             </a>
+            <InstallPWA variant="chip" />
           </div>
         </Inner>
 

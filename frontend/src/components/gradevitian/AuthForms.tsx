@@ -37,8 +37,8 @@ function FormShell({ title, subtitle, children }: { title: string; subtitle?: st
           grade<span className="text-accent">VIT</span>ian
         </div>
         <Card>
-          <h1 className="text-2xl font-bold tracking-tight text-fg">{title}</h1>
-          {subtitle ? <p className="mt-1.5 text-sm text-fg-muted">{subtitle}</p> : null}
+          <h1 className="text-2xl font-bold tracking-[-0.02em] text-fg">{title}</h1>
+          {subtitle ? <p className="mt-1.5 text-balance text-sm leading-relaxed text-fg-muted">{subtitle}</p> : null}
           <div className="mt-6 flex flex-col gap-4">{children}</div>
         </Card>
       </div>

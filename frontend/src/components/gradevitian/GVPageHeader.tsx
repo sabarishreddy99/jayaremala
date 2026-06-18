@@ -14,8 +14,8 @@ export default function GVPageHeader({
   return (
     <ScrollReveal>
       <p className="text-nano font-semibold uppercase tracking-[0.18em] text-accent">{eyebrow}</p>
-      <h1 className="mt-2 text-4xl font-bold tracking-tight text-fg sm:text-[2.75rem]">{title}</h1>
-      <p className="mt-3 max-w-xl text-lead text-fg-muted">{subtitle}</p>
+      <h1 className="mt-2.5 text-balance text-4xl font-bold tracking-[-0.02em] text-fg sm:text-[2.75rem]">{title}</h1>
+      <p className="mt-3.5 max-w-xl text-pretty text-lead leading-relaxed text-fg-muted">{subtitle}</p>
     </ScrollReveal>
   );
 }

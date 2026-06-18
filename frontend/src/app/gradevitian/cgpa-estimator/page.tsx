@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import CgpaEstimator from "@/components/gradevitian/CgpaEstimator";
 import GVPageHeader from "@/components/gradevitian/GVPageHeader";
+import GVExploreMore from "@/components/gradevitian/GVExploreMore";
 import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
@@ -14,11 +15,12 @@ export default function CgpaEstimatorPage() {
       <GVPageHeader
         eyebrow="Planning"
         title="CGPA Estimator"
-        subtitle="Work out the GPA you need next semester to hit your target."
+        subtitle="Set your dream CGPA, and find out exactly what next semester needs to look like."
       />
       <ScrollReveal delay={80} className="mt-10">
         <CgpaEstimator />
       </ScrollReveal>
+      <GVExploreMore current="/cgpa-estimator" />
     </section>
   );
 }

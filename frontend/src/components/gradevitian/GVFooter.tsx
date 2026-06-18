@@ -47,6 +47,9 @@ export default function GVFooter() {
       >
         <div className="mx-auto flex w-full max-w-6xl flex-wrap items-center justify-between gap-3">
           <div className="flex flex-col gap-0.5">
+            <span className="font-mono text-[10px] font-semibold tracking-[0.08em] text-accent">
+              Built by a VITian · for every VITian
+            </span>
             <span className="font-mono text-[11px] font-semibold tracking-[0.06em] text-fg">
               © {new Date().getFullYear()} grade<span className="text-accent">VIT</span>ian
             </span>

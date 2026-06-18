@@ -11,7 +11,7 @@ export default function FeedbackPage() {
       <GVPageHeader
         eyebrow="We're listening"
         title="Feedback"
-        subtitle="Suggestions, bugs, or just a hello — we read everything."
+        subtitle="This is your product too — tell us what to build next. We read every single word."
       />
       <ScrollReveal delay={80} className="mt-10">
         <CommentsWall />

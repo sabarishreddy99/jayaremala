@@ -17,6 +17,7 @@ import SkillsConstellation from "@/components/SkillsConstellation";
 import MobileNoBg from "@/components/MobileNoBg";
 import HeroDotGrid from "@/components/HeroDotGrid";
 import SiteVitals from "@/components/SiteVitals";
+import GradeVITianSpotlight from "@/components/GradeVITianSpotlight";
 import SparkleIcon from "@/components/SparkleIcon";
 import { experience } from "@/data/experience";
 
@@ -561,8 +562,8 @@ export default function PortfolioHome() {
               ))}
             </div>
           <div className="mt-10 pt-5 border-t border-border flex items-center justify-end">
-            <a href="#skills" className="inline-flex items-center gap-1.5 text-[11px] text-fg-faint hover:text-fg transition-colors">
-              Technologies I work with
+            <a href="#gradevitian" className="inline-flex items-center gap-1.5 text-[11px] text-fg-faint hover:text-fg transition-colors">
+              A product I run
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
             </a>
           </div>
@@ -570,8 +571,21 @@ export default function PortfolioHome() {
         </StackSection>
       )}
 
-      {/* ── 4 · Skills ── z-[4] ────────────────────────────────── */}
-      <StackSection z={4} id="skills">
+      {/* ── Product Spotlight · gradeVITian ── z-[4] ───────────── */}
+      <StackSection z={4} id="gradevitian">
+        <Inner className="py-20 sm:py-28 relative">
+          <GradeVITianSpotlight />
+          <div className="mt-10 pt-5 border-t border-border flex items-center justify-end">
+            <a href="#skills" className="inline-flex items-center gap-1.5 text-[11px] text-fg-faint hover:text-fg transition-colors">
+              Technologies I work with
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
+            </a>
+          </div>
+        </Inner>
+      </StackSection>
+
+      {/* ── 4 · Skills ── z-[5] ────────────────────────────────── */}
+      <StackSection z={5} id="skills">
         <Inner className="py-20 sm:py-28 relative">
           {/* Ghost number */}
           <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
@@ -596,8 +610,8 @@ export default function PortfolioHome() {
         </Inner>
       </StackSection>
 
-      {/* ── 5 · Testimonials ── z-[5] ──────────────────────────── */}
-      <StackSection z={5} id="testimonials">
+      {/* ── 5 · Testimonials ── z-[6] ──────────────────────────── */}
+      <StackSection z={6} id="testimonials">
         <Inner className="py-20 sm:py-28 relative">
           {/* Ghost number */}
           <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
@@ -612,8 +626,8 @@ export default function PortfolioHome() {
         </Inner>
       </StackSection>
 
-      {/* ── 6 · Contact ── z-[6] ───────────────────────────────── */}
-      <StackSection z={6} className="pb-16 sm:pb-24" id="contact">
+      {/* ── 6 · Contact ── z-[7] ───────────────────────────────── */}
+      <StackSection z={7} className="pb-16 sm:pb-24" id="contact">
         <Inner className="py-20 sm:py-28 relative">
           {/* Ghost number */}
           <span aria-hidden className="pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"

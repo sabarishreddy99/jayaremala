@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import GpaCalculator from "@/components/gradevitian/GpaCalculator";
 import GVPageHeader from "@/components/gradevitian/GVPageHeader";
+import GVExploreMore from "@/components/gradevitian/GVExploreMore";
 import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
@@ -14,11 +15,12 @@ export default function GpaPage() {
       <GVPageHeader
         eyebrow="Semester"
         title="GPA Calculator"
-        subtitle="Compute your semester GPA from your course grades and credits."
+        subtitle="Drop in your grades and credits — your semester GPA lands the moment you stop typing."
       />
       <ScrollReveal delay={80} className="mt-10">
         <GpaCalculator />
       </ScrollReveal>
+      <GVExploreMore current="/gpa" />
     </section>
   );
 }

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import AttendanceCalculator from "@/components/gradevitian/AttendanceCalculator";
 import GVPageHeader from "@/components/gradevitian/GVPageHeader";
+import GVExploreMore from "@/components/gradevitian/GVExploreMore";
 import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
@@ -14,11 +15,12 @@ export default function AttendancePage() {
       <GVPageHeader
         eyebrow="Attendance"
         title="Attendance Calculator"
-        subtitle="See your attendance percentage and whether you're safely above 75%."
+        subtitle="Know exactly how many classes you can afford to miss — and stay safely above the 75% line."
       />
       <ScrollReveal delay={80} className="mt-10">
         <AttendanceCalculator />
       </ScrollReveal>
+      <GVExploreMore current="/attendance" />
     </section>
   );
 }

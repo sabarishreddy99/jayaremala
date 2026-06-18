@@ -12,6 +12,7 @@ import HeroDotGrid from "@/components/HeroDotGrid";
 import Parallax from "@/components/Parallax";
 import GVLinkedInEmbed from "@/components/gradevitian/GVLinkedInEmbed";
 import GVRefer from "@/components/gradevitian/GVRefer";
+import GVInstall from "@/components/gradevitian/GVInstall";
 import { useGVAuth } from "@/components/gradevitian/GVAuthProvider";
 
 const METRICS: GVStat[] = [
@@ -31,6 +32,82 @@ const TOOLS = [
   { href: "/grade-predictor", title: "Weightage Converter", desc: "Turn raw scores into weighted marks.", img: "/gradevitian/weightage-conv.svg" },
 ];
 
+// Every environment gradeVITian runs on — it's an installable PWA, so it lives on
+// any phone, laptop, or browser, and keeps working offline.
+const PLATFORMS: { label: string; icon: React.ReactNode }[] = [
+  {
+    label: "iPhone",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <rect x="7" y="2" width="10" height="20" rx="2.5" /><path d="M11 18h2" />
+      </svg>
+    ),
+  },
+  {
+    label: "Android",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M5 11a7 7 0 0 1 14 0Z" /><path d="M5 11v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" />
+        <path d="M8 7 6.5 5M16 7l1.5-2M9.5 8.5h.01M14.5 8.5h.01" /><path d="M9 19v1.5M15 19v1.5" />
+      </svg>
+    ),
+  },
+  {
+    label: "macOS",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <rect x="3" y="4" width="18" height="12" rx="2" /><path d="M2 20h20l-2-4H4Z" />
+      </svg>
+    ),
+  },
+  {
+    label: "Windows",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <rect x="3" y="3" width="8" height="8" rx="0.5" /><rect x="13" y="3" width="8" height="8" rx="0.5" />
+        <rect x="3" y="13" width="8" height="8" rx="0.5" /><rect x="13" y="13" width="8" height="8" rx="0.5" />
+      </svg>
+    ),
+  },
+  {
+    label: "Any browser",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18" />
+      </svg>
+    ),
+  },
+  {
+    label: "Works offline",
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <path d="M5 12.55a11 11 0 0 1 14 0M8.5 16.1a6 6 0 0 1 7 0M2 8.82a15 15 0 0 1 20 0" /><path d="M12 20h.01" />
+      </svg>
+    ),
+  },
+];
+
+function PlatformStrip() {
+  return (
+    <div className="mt-9 flex flex-col items-center gap-3.5">
+      <p className="text-micro font-medium text-fg-subtle">
+        Yours on every device — install it once, use it like a native app
+      </p>
+      <div className="flex flex-wrap items-center justify-center gap-x-2.5 gap-y-2">
+        {PLATFORMS.map((p) => (
+          <span
+            key={p.label}
+            className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle bg-surface/60 px-3 py-1.5 text-micro font-medium text-fg-muted backdrop-blur"
+          >
+            <span className="h-3.5 w-3.5 text-accent [&>svg]:h-full [&>svg]:w-full">{p.icon}</span>
+            {p.label}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function GVHome() {
   const { user, loading } = useGVAuth();
   const firstName = user?.name.split(" ")[0] ?? "";
@@ -45,9 +122,19 @@ export default function GVHome() {
 
         <div className="relative mx-auto max-w-4xl px-4 pt-24 pb-16 text-center sm:pt-32 sm:pb-20">
           <ScrollReveal>
-            <p className="text-nano font-semibold uppercase tracking-[0.22em] text-accent sm:text-micro">
-              {user ? "Welcome back" : "Academic grade forecasting · VIT"}
-            </p>
+            {user ? (
+              <p className="text-nano font-semibold uppercase tracking-[0.22em] text-accent sm:text-micro">
+                Welcome back
+              </p>
+            ) : (
+              <span className="inline-flex items-center gap-2 rounded-full border border-accent/20 bg-accent-light px-3.5 py-1.5 text-nano font-semibold uppercase tracking-[0.18em] text-accent sm:text-micro">
+                <span className="relative flex h-1.5 w-1.5" aria-hidden>
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
+                </span>
+                By a VITian · for every VITian
+              </span>
+            )}
 
             <GVHeroTitle
               text={user ? `Hi, ${firstName}.` : "gradeVITian"}
@@ -58,7 +145,7 @@ export default function GVHome() {
             <p className="mx-auto mt-6 max-w-xl text-lead leading-relaxed text-fg-muted">
               {user
                 ? "Your calculators and saved results are right where you left them — pick a tool and keep going."
-                : "A high-traffic progressive web app for academic grade forecasting at VIT — compute your GPA, CGPA, predict grades, and track attendance."}
+                : "Compute your GPA & CGPA, predict grades, and track attendance — fast and free. Built by a VITian, for every VITian, and made to feel like yours."}
             </p>
 
             <div className="mt-9 flex flex-wrap items-center justify-center gap-3">
@@ -70,20 +157,25 @@ export default function GVHome() {
                   <GVLink href="/cgpa" className="rounded-full border border-border bg-surface/60 px-6 py-3 text-sm font-semibold text-fg backdrop-blur transition-all duration-200 hover:bg-surface-raised active:scale-[0.97]">
                     Jump back in
                   </GVLink>
+                  <GVInstall variant="hero" />
                 </>
               ) : (
                 <>
-                  <GVLink href="/cgpa" className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover hover:shadow-md active:scale-[0.97]">
+                  <GVInstall variant="hero" prominent />
+                  <GVLink href="/cgpa" className="rounded-full border border-border bg-surface/60 px-6 py-3 text-sm font-semibold text-fg backdrop-blur transition-all duration-200 hover:bg-surface-raised active:scale-[0.97]">
                     Start calculating
                   </GVLink>
                   {!loading && (
-                    <GVLink href="/signup" className="rounded-full border border-border bg-surface/60 px-6 py-3 text-sm font-semibold text-fg backdrop-blur transition-all duration-200 hover:bg-surface-raised active:scale-[0.97]">
+                    <GVLink href="/signup" className="group inline-flex items-center gap-1 px-2 py-3 text-sm font-semibold text-fg-muted transition-colors hover:text-fg">
                       Create a free account
+                      <span className="transition-transform group-hover:translate-x-0.5">→</span>
                     </GVLink>
                   )}
                 </>
               )}
             </div>
+
+            <PlatformStrip />
 
             <div className="mt-7">
               <GVSearch />
@@ -94,8 +186,8 @@ export default function GVHome() {
           <ScrollReveal delay={120} className="mt-14">
             <GVStats stats={METRICS} />
             <p className="mx-auto mt-4 max-w-2xl text-micro leading-relaxed text-fg-subtle">
-              Scaled to 17K+ monthly active users and ~20K+ registered accounts. Achieved #2 Google
-              Search ranking via programmatic SEO, with sub-second mobile load times.
+              Started by one VITian, made theirs by 20K+ more. Around 17K students reach for
+              gradeVITian every month — #2 on Google, sub-second loads, and six years strong.
             </p>
             <GVVisits />
           </ScrollReveal>
@@ -163,8 +255,8 @@ export default function GVHome() {
               ) : (
                 <>
                   <div>
-                    <h2 className="text-xl font-bold text-fg">Make it yours</h2>
-                    <p className="mt-1 max-w-md text-fg-muted">Create a free account to save your calculations and pick up on any device.</p>
+                    <h2 className="text-xl font-bold text-fg">Make gradeVITian yours</h2>
+                    <p className="mt-1 max-w-md text-fg-muted">Create a free account to save your calculations, set goals, and pick up right where you left off — on any device.</p>
                   </div>
                   <GVLink href="/signup" className="rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
                     Create free account

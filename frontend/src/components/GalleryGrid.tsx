@@ -6,13 +6,36 @@ import type { GalleryItem } from "@/data/gallery";
 
 export default function GalleryGrid({ items }: { items: GalleryItem[] }) {
   const [active, setActive] = useState<string | null>(null);   // category filter
+  const [focus, setFocus] = useState<string | null>(null);     // keyword deep-link (?focus=)
+  const [query, setQuery] = useState("");                      // free-text search
   const [lightbox, setLightbox] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
 
-  useEffect(() => { setMounted(true); }, []);
+  // Read a deep-link focus keyword from the URL once on mount (e.g. /gallery?focus=gradeVITian).
+  // Done here rather than via useSearchParams so the page stays statically prerendered.
+  useEffect(() => {
+    setMounted(true);
+    const f = new URLSearchParams(window.location.search).get("focus");
+    if (f) setFocus(f);
+  }, []);
 
   const categories = Array.from(new Set(items.map((i) => i.category).filter(Boolean))) as string[];
-  const shown = active ? items.filter((i) => i.category === active) : items;
+  const matchesFocus = (i: GalleryItem) =>
+    `${i.title} ${i.caption ?? ""}`.toLowerCase().includes((focus ?? "").toLowerCase());
+  const focusCount = focus ? items.filter(matchesFocus).length : 0;
+
+  // Base set from the active category / focus deep-link, then refined by free-text search.
+  const base = focus
+    ? items.filter(matchesFocus)
+    : active
+      ? items.filter((i) => i.category === active)
+      : items;
+  const q = query.trim().toLowerCase();
+  const shown = q
+    ? base.filter((i) =>
+        `${i.title} ${i.caption ?? ""} ${i.category ?? ""} ${i.date ?? ""}`.toLowerCase().includes(q),
+      )
+    : base;
 
   // Keyboard nav for the lightbox
   useEffect(() => {
@@ -37,14 +60,71 @@ export default function GalleryGrid({ items }: { items: GalleryItem[] }) {
 
   return (
     <>
+      {/* Search */}
+      <div className="relative mb-4 max-w-sm">
+        <svg
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-fg-faint"
+          width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden
+        >
+          <circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" />
+        </svg>
+        <input
+          type="search"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search moments, milestones…"
+          aria-label="Search the gallery"
+          className="w-full rounded-full border border-border bg-surface py-2 pl-9 pr-9 text-sm text-fg placeholder:text-fg-faint focus:border-accent/60 focus:outline-none focus:ring-1 focus:ring-accent/30 transition-colors"
+        />
+        {query && (
+          <button
+            onClick={() => setQuery("")}
+            aria-label="Clear search"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 flex h-5 w-5 items-center justify-center rounded-full text-fg-faint hover:bg-surface-raised hover:text-fg transition-colors"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12" /></svg>
+          </button>
+        )}
+      </div>
+
       {/* Category filter */}
       {categories.length > 0 && (
         <div className="flex flex-wrap gap-2 mb-6">
-          <FilterChip label="All" count={items.length} active={!active} onClick={() => setActive(null)} />
+          <FilterChip
+            label="All"
+            count={items.length}
+            active={!active && !focus}
+            onClick={() => { setActive(null); setFocus(null); }}
+          />
+          {focus && focusCount > 0 && (
+            <FilterChip
+              label={`${focus} journey`}
+              count={focusCount}
+              active
+              dismissible
+              onClick={() => setFocus(null)}
+            />
+          )}
           {categories.map((c) => (
             <FilterChip key={c} label={c} count={items.filter((i) => i.category === c).length}
-              active={active === c} onClick={() => setActive(active === c ? null : c)} />
+              active={active === c && !focus}
+              onClick={() => { setFocus(null); setActive(active === c ? null : c); }} />
           ))}
+        </div>
+      )}
+
+      {/* Empty state — search/filter matched nothing */}
+      {shown.length === 0 && (
+        <div className="rounded-2xl border border-dashed border-border bg-surface p-12 text-center">
+          <p className="text-sm text-fg-faint">
+            No matches{query ? <> for &ldquo;<span className="text-fg-muted">{query}</span>&rdquo;</> : null}.
+          </p>
+          <button
+            onClick={() => { setQuery(""); setActive(null); setFocus(null); }}
+            className="mt-3 text-xs font-medium text-accent hover:text-accent-hover"
+          >
+            Clear filters
+          </button>
         </div>
       )}
 
@@ -120,7 +200,7 @@ function GalleryImage({ item }: { item: GalleryItem }) {
   );
 }
 
-function FilterChip({ label, count, active, onClick }: { label: string; count: number; active: boolean; onClick: () => void }) {
+function FilterChip({ label, count, active, onClick, dismissible = false }: { label: string; count: number; active: boolean; onClick: () => void; dismissible?: boolean }) {
   return (
     <button onClick={onClick}
       className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-medium border transition-all duration-150 ${
@@ -128,6 +208,11 @@ function FilterChip({ label, count, active, onClick }: { label: string; count: n
       }`}>
       {label}
       <span className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 ${active ? "bg-white/20 text-white" : "bg-surface-raised text-fg-faint"}`}>{count}</span>
+      {dismissible && (
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className="-mr-0.5 opacity-80" aria-hidden>
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
+      )}
     </button>
   );
 }

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import ThemeToggle from "@/components/ThemeToggle";
 import GVLink from "@/components/gradevitian/GVLink";
 import GVSearchModal from "@/components/gradevitian/GVSearchModal";
+import GVInstall from "@/components/gradevitian/GVInstall";
 import { useGVAuth } from "@/components/gradevitian/GVAuthProvider";
 
 const ic = {
@@ -103,6 +104,7 @@ export default function GVNav() {
         </div>
 
         <div className="flex items-center gap-2">
+          <GVInstall variant="nav" />
           <ThemeToggle />
           {!loading &&
             (user ? (
@@ -190,6 +192,7 @@ export default function GVNav() {
             <svg {...ic}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
             Feedback
           </GVLink>
+          <GVInstall variant="mobile" onTrigger={() => setOpen(false)} />
           {!loading && !user && (
             <>
               <GVLink href="/login" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-fg-muted">

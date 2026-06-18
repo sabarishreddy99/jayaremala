@@ -26,8 +26,9 @@ function ErrorNote({ msg }: { msg: string }) {
 
 function FormShell({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
-    <section className="relative grid min-h-[calc(100vh-8rem)] place-items-center px-4 py-14">
+    <section className="relative grid min-h-[calc(100vh-8rem)] place-items-center overflow-hidden px-4 py-14">
       <div className="gv-aurora" aria-hidden />
+      <div className="hero-dot-grid pointer-events-none absolute inset-0 opacity-[0.35]" aria-hidden />
       <div className="relative w-full max-w-md animate-gv-pop">
         <div
           className="mb-6 text-center text-xl font-normal tracking-widest text-fg"
@@ -69,7 +70,7 @@ export function LoginForm() {
   }
 
   return (
-    <FormShell title="Log in" subtitle="Welcome back to gradeVITian.">
+    <FormShell title="Log in" subtitle="Welcome back, VITian — your saved work is right where you left it.">
       <form onSubmit={submit} className="flex flex-col gap-4">
         <ErrorNote msg={error} />
         <Field label="Email or username"><Input value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoComplete="username" required /></Field>
@@ -111,7 +112,7 @@ export function SignupForm() {
   }
 
   return (
-    <FormShell title="Create your account" subtitle="Free forever. Save your calculations across devices.">
+    <FormShell title="Make it yours" subtitle="Free forever. Join 20K+ VITians and keep your calculations, goals and grades on every device.">
       <form onSubmit={submit} className="flex flex-col gap-4">
         <ErrorNote msg={error} />
         <Field label="Name"><Input value={v.name} onChange={(e) => setV({ ...v, name: e.target.value })} required /></Field>

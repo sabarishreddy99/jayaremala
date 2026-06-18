@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import CgpaCalculator from "@/components/gradevitian/CgpaCalculator";
 import GVPageHeader from "@/components/gradevitian/GVPageHeader";
+import GVExploreMore from "@/components/gradevitian/GVExploreMore";
 import ScrollReveal from "@/components/ScrollReveal";
 
 export const metadata: Metadata = {
@@ -14,11 +15,12 @@ export default function CgpaPage() {
       <GVPageHeader
         eyebrow="Cumulative"
         title="CGPA Calculator"
-        subtitle="Add up your CGPA across semesters, or instantly project it for this one."
+        subtitle="Watch your CGPA come together semester by semester — and see where this one takes it."
       />
       <ScrollReveal delay={80} className="mt-10">
         <CgpaCalculator />
       </ScrollReveal>
+      <GVExploreMore current="/cgpa" />
     </section>
   );
 }

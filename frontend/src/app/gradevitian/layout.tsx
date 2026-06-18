@@ -3,6 +3,9 @@ import { GVAuthProvider } from "@/components/gradevitian/GVAuthProvider";
 import GVNav from "@/components/gradevitian/GVNav";
 import GVFooter from "@/components/gradevitian/GVFooter";
 import GVScrollTop from "@/components/gradevitian/GVScrollTop";
+import GVServiceWorker from "@/components/gradevitian/GVServiceWorker";
+import GVIntroScreen from "@/components/gradevitian/GVIntroScreen";
+import GVCanonicalRedirect from "@/components/gradevitian/GVCanonicalRedirect";
 import ScrollProgress from "@/components/ScrollProgress";
 
 const GV_URL = "https://gradevitian.jayaremala.com";
@@ -24,6 +27,16 @@ export const metadata: Metadata = {
     "attendance calculator", "VIT grading", "gradeVITian",
   ],
   manifest: "/gradevitian/manifest.webmanifest",
+  // Graduation-cap icon for the browser tab and the installed/home-screen app.
+  icons: {
+    icon: [
+      { url: "/gradevitian/gv-icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/gradevitian/gv-icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [{ url: "/gradevitian/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
+  },
+  // Ensures iOS shows "gradeVITian" (not the page title) under the home-screen icon.
+  appleWebApp: { capable: true, title: "gradeVITian", statusBarStyle: "default" },
   robots: {
     index: true,
     follow: true,
@@ -46,16 +59,12 @@ export const metadata: Metadata = {
   },
 };
 
-// Canonicalize to the subdomain: if the path-form is opened on the main domain
-// (jayaremala.com/gradevitian/...), redirect to gradevitian.jayaremala.com/... at
-// parse time (before render — minimal flash). Never fires on the subdomain or localhost.
-const CANONICAL_REDIRECT = `(function(){try{var h=location.hostname;if(h==='jayaremala.com'||h==='www.jayaremala.com'){var p=location.pathname.replace(/^\\/gradevitian/,'')||'/';location.replace('https://gradevitian.jayaremala.com'+p+location.search+location.hash);}}catch(e){}})();`;
-
 export default function GradeVITianLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: CANONICAL_REDIRECT }} />
+      <GVCanonicalRedirect />
       <GVAuthProvider>
+        <GVIntroScreen />
         <ScrollProgress />
         <div className="flex min-h-screen flex-col">
           <GVNav />
@@ -63,6 +72,7 @@ export default function GradeVITianLayout({ children }: { children: React.ReactN
           <GVFooter />
         </div>
         <GVScrollTop />
+        <GVServiceWorker />
       </GVAuthProvider>
     </>
   );

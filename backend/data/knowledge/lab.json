@@ -1,7 +1,7 @@
 [
   {
     "slug": "itsjaya",
-    "title": "jayaremala (Avocado AI)",
+    "title": "jayaremala.com (Avocado AI)",
     "status": "active",
     "description": "AI-powered personal portfolio with a RAG chatbot (Avocado), an agentic tool-calling mode, a public MCP server, in-chat book-a-call, MDX blog, engagement analytics, and a fully automated deploy pipeline. Every layer is production-grade.",
     "startedAt": "2025-11-01",

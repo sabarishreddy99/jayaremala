@@ -5,34 +5,7 @@ import { useState, useEffect, useRef } from "react";
 import { profile } from "@/data/profile";
 import LiquidWave from "@/components/LiquidWave";
 import InstallPWA from "@/components/InstallPWA";
-
-const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
-  {
-    title: "Explore",
-    links: [
-      { label: "Experience", href: "/experience" },
-      { label: "Projects", href: "/projects" },
-      { label: "Lab", href: "/lab" },
-      { label: "Now", href: "/now" },
-    ],
-  },
-  {
-    title: "Writing",
-    links: [
-      { label: "Blog", href: "/blog" },
-      { label: "Quotes", href: "/quotes" },
-      { label: "Gallery", href: "/gallery" },
-    ],
-  },
-  {
-    title: "Build",
-    links: [
-      { label: "System", href: "/system" },
-      { label: "MCP", href: "/mcp" },
-      { label: "Ask Avocado", href: "/chat" },
-    ],
-  },
-];
+import { footerColumns as COLUMNS } from "@/lib/site-nav";
 
 function IconLink({ href, label, children }: { href: string; label: string; children: React.ReactNode }) {
   return (

@@ -242,6 +242,53 @@ def _build_lab_documents() -> list[tuple[str, str, str]]:
     return docs
 
 
+def _build_apps_documents() -> list[tuple[str, str, str]]:
+    """Build one chunk per hosted app/property from apps.json, plus a summary doc.
+
+    The apps registry lists everything Jaya hosts under his domain (the portfolio
+    itself, Gradevitian, and any future products/sub-domains). Read fresh each
+    ingest, so new entries appear automatically with no code change.
+    """
+    path = DATA_DIR / "apps.json"
+    if not path.exists():
+        return []
+    apps = json.loads(path.read_text())
+    if not apps:
+        return []
+    docs: list[tuple[str, str, str]] = []
+    for app in apps:
+        slug   = app.get("slug", "unknown")
+        name   = app.get("name", "")
+        url    = app.get("url", "")
+        status = app.get("status", "")
+        cat    = app.get("category", "")
+        tag    = app.get("tagline", "")
+        desc   = app.get("description", "")
+        tech   = ", ".join(app.get("tech", []))
+        docs.append((
+            f"app_{slug}",
+            (
+                f"{name} is an application Jaya builds and hosts under his domain "
+                f"(jayaremala.com). Live at {url} (status: {status}, category: {cat}). "
+                f"{tag}. {desc} Tech stack: {tech}."
+            ),
+            "app",
+        ))
+    # Summary doc — answers "what else has Jaya built / what's hosted on his domain".
+    names = ", ".join(f"{a.get('name', '')} ({a.get('url', '')})" for a in apps)
+    docs.append((
+        "faq_hosted_apps",
+        (
+            f"Beyond the portfolio itself, Jaya hosts {len(apps)} live "
+            f"application(s)/product(s) under his domain (jayaremala.com): {names}. "
+            "These are independent apps he designed, built, and operates — ask about "
+            "any of them by name for details."
+        ),
+        "app",
+    ))
+    return docs
+
+
 def _build_faq_documents(
     p: dict | None,
     exp_list: list | None,
@@ -760,6 +807,9 @@ def _build_documents() -> list[tuple[str, str, str]]:
 
     # ── LAB ENTRIES ───────────────────────────────────────────────────────────
     docs.extend(_build_lab_documents())
+
+    # ── HOSTED APPS (everything Jaya hosts under his domain) ──────────────────
+    docs.extend(_build_apps_documents())
 
     # ── QUOTES ────────────────────────────────────────────────────────────────
     docs.extend(_build_quotes_documents())

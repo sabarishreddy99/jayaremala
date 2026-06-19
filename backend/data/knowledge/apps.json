@@ -1,0 +1,14 @@
+[
+  {
+    "slug": "gradevitian",
+    "name": "gradeVITian",
+    "url": "https://gradevitian.jayaremala.com",
+    "tagline": "GPA, CGPA, grade & attendance calculators for VIT students",
+    "description": "A free, mobile-first grading toolkit for VIT students hosted under jayaremala.com. Compute GPA and CGPA, predict your grades, estimate the GPA you still need, and track attendance — fast and accurate. Installable as a PWA, with optional accounts to save calculations and a feedback/social layer. Built as a Next.js frontend on a FastAPI backend (Bearer-token auth, saved results, notifications, SQLite).",
+    "status": "live",
+    "category": "Web App (PWA)",
+    "tech": ["Next.js", "React", "TypeScript", "FastAPI", "SQLite", "PWA", "Tailwind"],
+    "featured": true,
+    "launchedAt": "2025"
+  }
+]

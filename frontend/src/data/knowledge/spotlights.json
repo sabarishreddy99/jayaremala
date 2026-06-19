@@ -1,0 +1,22 @@
+[
+  {
+    "slug": "gradevitian",
+    "enabled": true,
+    "eyebrow": "Live Product · Spotlight",
+    "name": "gradeVITian",
+    "logo": "/gradevitian/LOGO-512px.png",
+    "subtitle": "A product, not just a project",
+    "headline": "The grade & attendance calculators tens of thousands of VIT students reach for every exam season —",
+    "headlineEmphasis": "designed, shipped, and still run by me.",
+    "description": "A high-traffic progressive web app for academic grade forecasting — GPA, CGPA, grade prediction, and attendance, with sub-second mobile loads and #2 Google ranking from programmatic SEO. Six years live, rebuilt on Next.js + FastAPI.",
+    "primaryCta": { "label": "See it live", "url": "https://gradevitian.jayaremala.com" },
+    "secondaryCta": { "label": "Explore the journey", "url": "/gallery?focus=gradeVITian" },
+    "footnote": "Milestones & achievements in the gallery · free, no sign-up at gradevitian.jayaremala.com",
+    "metrics": [
+      { "value": "17K+", "label": "Monthly active users" },
+      { "value": "20K+", "label": "Registered accounts" },
+      { "value": "#2", "label": "On Google Search" },
+      { "value": "6+ yrs", "label": "Live in production" }
+    ]
+  }
+]

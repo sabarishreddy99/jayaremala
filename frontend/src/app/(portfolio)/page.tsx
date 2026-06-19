@@ -17,7 +17,7 @@ import SkillsConstellation from "@/components/SkillsConstellation";
 import MobileNoBg from "@/components/MobileNoBg";
 import HeroDotGrid from "@/components/HeroDotGrid";
 import SiteVitals from "@/components/SiteVitals";
-import GradeVITianSpotlight from "@/components/GradeVITianSpotlight";
+import SpotlightSection from "@/components/SpotlightSection";
 import InstallPWA from "@/components/InstallPWA";
 import SparkleIcon from "@/components/SparkleIcon";
 import { experience } from "@/data/experience";
@@ -576,7 +576,7 @@ export default function PortfolioHome() {
       {/* ── Product Spotlight · gradeVITian ── z-[4] ───────────── */}
       <StackSection z={4} id="gradevitian">
         <Inner className="py-20 sm:py-28 relative">
-          <GradeVITianSpotlight />
+          <SpotlightSection />
           <div className="mt-10 pt-5 border-t border-border flex items-center justify-end">
             <a href="#skills" className="inline-flex items-center gap-1.5 text-[11px] text-fg-faint hover:text-fg transition-colors">
               Technologies I work with

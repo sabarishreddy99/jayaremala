@@ -91,6 +91,7 @@ def sync_status() -> dict:
         "experience":   count_json("experience.json"),
         "education":    count_json("education.json"),
         "projects":     count_json("projects.json"),
+        "apps":         count_json("apps.json"),
         "skills":       count_json("skills.json"),
         "testimonials": count_json("testimonials.json"),
         "gallery":      count_json("gallery.json"),
@@ -105,7 +106,7 @@ def sync_status() -> dict:
         chroma_total = collection.count()
         if chroma_total > 0:
             all_ids: list[str] = collection.get(include=[])["ids"]
-            prefixes = ["blog", "lab", "quote", "exp", "edu", "proj", "skills",
+            prefixes = ["blog", "lab", "quote", "exp", "edu", "proj", "app", "skills",
                         "testimonial", "gallery", "faq", "profile"]
             for prefix in prefixes:
                 chroma_by_type[prefix] = sum(1 for id_ in all_ids if id_.startswith(f"{prefix}_"))

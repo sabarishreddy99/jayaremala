@@ -5,6 +5,7 @@ import Link from "next/link";
 import { API_BASE_URL } from "@/lib/api/client";
 import ContentBlogEditor from "@/components/admin/ContentBlogEditor";
 import ContentLabEditor from "@/components/admin/ContentLabEditor";
+import LabEditor from "@/components/admin/LabEditor";
 import ContentQuotesEditor from "@/components/admin/ContentQuotesEditor";
 import AvailabilityEditor from "@/components/admin/AvailabilityEditor";
 import NowEditor from "@/components/admin/NowEditor";
@@ -13,6 +14,8 @@ import HeroStatsEditor from "@/components/admin/HeroStatsEditor";
 import ExperienceEditor from "@/components/admin/ExperienceEditor";
 import EducationEditor from "@/components/admin/EducationEditor";
 import ProjectsEditor from "@/components/admin/ProjectsEditor";
+import AppsEditor from "@/components/admin/AppsEditor";
+import SpotlightsEditor from "@/components/admin/SpotlightsEditor";
 import SkillsEditor from "@/components/admin/SkillsEditor";
 import TestimonialsEditor from "@/components/admin/TestimonialsEditor";
 import GalleryEditor from "@/components/admin/GalleryEditor";
@@ -333,7 +336,7 @@ function PruneAnalyticsPanel() {
 // ── Reingest panel ─────────────────────────────────────────────────────────────
 
 const REINGEST_SOURCES = [
-  "Profile", "Experience", "Education", "Projects",
+  "Profile", "Experience", "Education", "Projects", "Apps",
   "Skills", "Testimonials", "Gallery", "Blog", "Lab", "Quotes", "FAQ",
 ];
 
@@ -794,6 +797,7 @@ function SyncStatusPanel() {
     { key: "experience",   label: "Experience",    source: "json"    },
     { key: "education",    label: "Education",     source: "json"    },
     { key: "projects",     label: "Projects",      source: "json"    },
+    { key: "apps",         label: "Hosted Apps",   source: "json"    },
     { key: "skills",       label: "Skills",        source: "json"    },
     { key: "testimonials", label: "Testimonials",  source: "json"    },
     { key: "gallery",      label: "Gallery",       source: "json"    },
@@ -813,7 +817,7 @@ function SyncStatusPanel() {
   function chromaCount(key: string): number {
     const map: Record<string, string> = {
       blog: "blog", lab: "lab", quotes: "quote",
-      experience: "exp", education: "edu", projects: "proj",
+      experience: "exp", education: "edu", projects: "proj", apps: "app",
       skills: "skills", testimonials: "testimonial", gallery: "gallery",
     };
     return chromaByType[map[key] ?? key] ?? 0;
@@ -3510,11 +3514,25 @@ function Dashboard({
 }) {
   const [period, setPeriod] = useState<Period>("all");
   const [activeView, setActiveView] = useState<
-    "analytics" | "write-blog" | "quotes" | "blog-api" | "lab" | "quotes-api" |
+    "analytics" | "write-blog" | "write-lab" | "quotes" | "blog-api" | "lab" | "quotes-api" |
     "availability" | "now" | "data" | "sync" | "integrations" |
-    "profile" | "hero-stats" | "experience" | "education" | "projects" | "skills" | "testimonials" | "gallery"
+    "profile" | "hero-stats" | "spotlights" | "experience" | "education" | "projects" | "apps" | "skills" | "testimonials" | "gallery"
   >("analytics");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [navQuery, setNavQuery] = useState("");
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try { return new Set(JSON.parse(localStorage.getItem("avocado_admin_collapsed_groups") ?? "[]")); }
+    catch { return new Set(); }
+  });
+  function toggleGroup(g: string) {
+    setCollapsedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(g)) next.delete(g); else next.add(g);
+      if (typeof window !== "undefined") localStorage.setItem("avocado_admin_collapsed_groups", JSON.stringify([...next]));
+      return next;
+    });
+  }
   const [hasPat, setHasPat] = useState(() =>
     typeof window !== "undefined" ? !!localStorage.getItem("avocado_github_pat") : false
   );
@@ -3541,14 +3559,17 @@ function Dashboard({
     { key: "analytics",    label: "Analytics",    group: "Overview"  },
     { key: "write-blog",   label: "Write Blog",   group: "Content"   },
     { key: "blog-api",     label: "Blog · API",   group: "Content"   },
+    { key: "write-lab",    label: "Write Lab",    group: "Content"   },
     { key: "lab",          label: "Lab · API",    group: "Content"   },
     { key: "quotes",       label: "Quotes",       group: "Content"   },
     { key: "quotes-api",   label: "Quotes · API", group: "Content"   },
     { key: "profile",      label: "Profile",      group: "Portfolio" },
     { key: "hero-stats",   label: "Hero Stats",   group: "Portfolio" },
+    { key: "spotlights",   label: "Spotlights",   group: "Portfolio" },
     { key: "experience",   label: "Experience",   group: "Portfolio" },
     { key: "education",    label: "Education",    group: "Portfolio" },
     { key: "projects",     label: "Projects",     group: "Portfolio" },
+    { key: "apps",         label: "Hosted Apps",  group: "Portfolio" },
     { key: "skills",       label: "Skills",       group: "Portfolio" },
     { key: "testimonials", label: "Testimonials", group: "Portfolio" },
     { key: "gallery",      label: "Gallery",      group: "Portfolio" },
@@ -3561,19 +3582,20 @@ function Dashboard({
   const groups = ["Overview", "Content", "Portfolio", "Settings"] as const;
 
   const VIEW_LABELS: Record<typeof activeView, string> = {
-    analytics: "Analytics", "write-blog": "Write Blog", quotes: "Quotes",
+    analytics: "Analytics", "write-blog": "Write Blog", "write-lab": "Write Lab", quotes: "Quotes",
     "blog-api": "Blog (API)", lab: "Lab (API)", "quotes-api": "Quotes (API)",
     availability: "Availability", now: "Now Page", data: "Raw JSON", sync: "Sync Status",
     integrations: "Google Integrations",
     profile: "Profile", "hero-stats": "Hero Stats", experience: "Experience",
-    education: "Education", projects: "Projects", skills: "Skills", testimonials: "Testimonials",
-    gallery: "Gallery",
+    education: "Education", projects: "Projects", apps: "Hosted Apps", skills: "Skills", testimonials: "Testimonials",
+    gallery: "Gallery", spotlights: "Spotlights",
   };
 
   function NavIcon({ navKey }: { navKey: string }) {
     const paths: Record<string, React.ReactNode> = {
       analytics:     <><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></>,
       "write-blog":  <><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"/></>,
+      "write-lab":   <><path d="M8 3v8l-4 9h16l-4-9V3M6 3h12"/><path d="M9 14h6"/></>,
       "blog-api":    <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,
       lab:           <><path d="M8 3v8l-4 9h16l-4-9V3M6 3h12"/></>,
       quotes:        <><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></>,
@@ -3583,6 +3605,8 @@ function Dashboard({
       experience:    <><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></>,
       education:     <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>,
       projects:      <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
+      apps:          <><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/></>,
+      spotlights:    <><path d="M12 3l1.9 5.8H20l-4.9 3.6 1.9 5.8L12 14.6 7 18.2l1.9-5.8L4 8.8h6.1z"/></>,
       skills:        <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
       testimonials:  <><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></>,
       gallery:       <><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></>,
@@ -3599,33 +3623,85 @@ function Dashboard({
     );
   }
 
-  function NavList({ onSelect }: { onSelect?: () => void }) {
+  // Rendered as a plain function (not <NavList/>) so it never remounts and keeps
+  // its collapse/search state stable across renders.
+  function renderNav(onSelect?: () => void) {
+    const q = navQuery.trim().toLowerCase();
+    const matched = NAV.filter(n => !q || n.label.toLowerCase().includes(q));
     return (
-      <nav className="flex-1 overflow-y-auto py-3 space-y-4" style={{ scrollbarWidth: "none" }}>
-        {groups.map(g => (
-          <div key={g}>
-            <p className="text-[9px] font-bold uppercase tracking-widest text-fg-subtle px-4 mb-1">{g}</p>
-            <div className="space-y-px">
-              {NAV.filter(n => n.group === g).map(n => {
-                const isActive = activeView === n.key;
-                return (
-                  <button
-                    key={n.key}
-                    onClick={() => { setActiveView(n.key); onSelect?.(); }}
-                    className={`w-full flex items-center gap-2.5 pl-3.5 pr-3 py-2.5 text-xs font-medium transition-all text-left border-l-2 ${
-                      isActive
-                        ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300"
-                        : "border-transparent text-fg-muted hover:text-fg hover:bg-surface-raised"
-                    }`}
-                  >
-                    <NavIcon navKey={n.key} />
-                    <span className="truncate">{n.label}</span>
-                  </button>
-                );
-              })}
-            </div>
+      <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-1" style={{ scrollbarWidth: "none" }}>
+        {/* Quick filter */}
+        <div className="px-1 pb-2">
+          <div className="relative">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-fg-faint pointer-events-none">
+              <circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>
+            </svg>
+            <input
+              value={navQuery}
+              onChange={(e) => setNavQuery(e.target.value)}
+              placeholder="Find a section…"
+              className="w-full rounded-lg border border-border bg-bg pl-8 pr-7 py-1.5 text-xs text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
+            />
+            {navQuery && (
+              <button onClick={() => setNavQuery("")} aria-label="Clear"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 text-fg-faint hover:text-fg p-0.5 rounded">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              </button>
+            )}
           </div>
-        ))}
+        </div>
+
+        {groups.map(g => {
+          const items = matched.filter(n => n.group === g);
+          if (items.length === 0) return null;
+          const collapsed = !q && collapsedGroups.has(g);
+          const groupActive = items.some(n => n.key === activeView);
+          return (
+            <div key={g}>
+              <button
+                onClick={() => toggleGroup(g)}
+                className="w-full flex items-center gap-1.5 px-2 py-1.5 rounded-md text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
+              >
+                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
+                  className={`shrink-0 transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}>
+                  <path d="M6 9l6 6 6-6"/>
+                </svg>
+                <span className="text-[9px] font-bold uppercase tracking-widest">{g}</span>
+                {groupActive && <span className="w-1 h-1 rounded-full bg-indigo-500 shrink-0" />}
+                <span className="ml-auto text-[9px] font-semibold tabular-nums text-fg-faint bg-surface-raised rounded px-1.5 py-0.5">{items.length}</span>
+              </button>
+              {!collapsed && (
+                <div className="mt-0.5 mb-1.5 space-y-px">
+                  {items.map(n => {
+                    const isActive = activeView === n.key;
+                    return (
+                      <button
+                        key={n.key}
+                        onClick={() => { setActiveView(n.key); setNavQuery(""); onSelect?.(); }}
+                        className={`group/i w-full flex items-center gap-2.5 pl-2.5 pr-2 py-2 rounded-lg text-xs font-medium transition-all text-left ${
+                          isActive
+                            ? "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 shadow-sm shadow-indigo-500/5"
+                            : "text-fg-muted hover:text-fg hover:bg-surface-raised"
+                        }`}
+                      >
+                        <span className={`shrink-0 transition-colors ${isActive ? "text-indigo-500" : "text-fg-faint group-hover/i:text-fg-muted"}`}>
+                          <NavIcon navKey={n.key} />
+                        </span>
+                        <span className="truncate">{n.label}</span>
+                        {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+
+        {q && matched.length === 0 && (
+          <p className="px-3 py-6 text-[11px] text-fg-faint text-center">No sections match &ldquo;{navQuery}&rdquo;</p>
+        )}
       </nav>
     );
   }
@@ -3643,7 +3719,7 @@ function Dashboard({
 
       {/* ── Sidebar ── */}
       <aside className={`
-        fixed inset-y-0 left-0 z-50 w-56 flex flex-col bg-surface border-r border-border
+        fixed inset-y-0 left-0 z-50 w-60 max-w-[85vw] flex flex-col bg-surface border-r border-border
         transition-transform duration-200 ease-in-out
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
         lg:translate-x-0 lg:static lg:z-auto
@@ -3669,7 +3745,7 @@ function Dashboard({
         </div>
 
         {/* Nav items */}
-        <NavList onSelect={() => setSidebarOpen(false)} />
+        {renderNav(() => setSidebarOpen(false))}
 
         {/* Sidebar footer */}
         <div className="shrink-0 px-4 pt-2 pb-3 border-t border-border" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
@@ -3829,6 +3905,7 @@ function Dashboard({
         )}
 
         {activeView === "write-blog" && <BlogEditor />}
+        {activeView === "write-lab" && <LabEditor />}
         {activeView === "quotes" && <QuotesEditor />}
         {activeView === "blog-api" && <ContentBlogEditor />}
         {activeView === "lab" && <ContentLabEditor />}
@@ -3837,9 +3914,11 @@ function Dashboard({
         {activeView === "now"          && <NowEditor />}
         {activeView === "profile"      && <ProfileEditor />}
         {activeView === "hero-stats"   && <HeroStatsEditor />}
+        {activeView === "spotlights"   && <SpotlightsEditor />}
         {activeView === "experience"   && <ExperienceEditor />}
         {activeView === "education"    && <EducationEditor />}
         {activeView === "projects"     && <ProjectsEditor />}
+        {activeView === "apps"         && <AppsEditor />}
         {activeView === "skills"       && <SkillsEditor />}
         {activeView === "testimonials" && <TestimonialsEditor />}
         {activeView === "gallery" && <GalleryEditor />}

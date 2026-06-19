@@ -33,6 +33,7 @@ export default function LabPage() {
             posts={staticEntries.map((e) => ({ slug: e.slug, title: e.title, date: e.updatedAt }))}
             label="Browse"
             listTitle="All entries"
+            basePath="/lab"
           />
         </div>
 

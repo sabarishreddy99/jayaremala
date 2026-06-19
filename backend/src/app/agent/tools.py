@@ -132,6 +132,31 @@ def _get_lab(slug: str = "") -> Any:
     ]
 
 
+def _get_apps() -> list:
+    """List every app/product Jaya hosts under his domain (Gradevitian, future ones).
+
+    Reads apps.json fresh on every call, so new hosted properties appear
+    automatically with no MCP restart or code change.
+    """
+    apps = _load("apps") or []
+    return [
+        {k: a.get(k) for k in ("slug", "name", "url", "tagline", "status", "category", "tech")}
+        for a in apps
+    ]
+
+
+def _get_app(name: str) -> dict | None:
+    """Full details for one hosted app matched by name, slug, or domain."""
+    q = (name or "").lower().strip()
+    if not q:
+        return None
+    for a in _load("apps") or []:
+        haystack = " ".join(str(a.get(k, "")) for k in ("slug", "name", "url")).lower()
+        if q in haystack:
+            return a
+    return None
+
+
 def _check_availability() -> str:
     try:
         from app.integrations.calendar import get_availability_summary
@@ -176,8 +201,8 @@ TOOLS: list[Tool] = [
         name="search_knowledge",
         description=(
             "Semantic + keyword search over Jaya's full portfolio knowledge base "
-            "(experience, projects, skills, education, blog, lab notes). Returns the "
-            "most relevant grounded snippets. Use this for open-ended questions."
+            "(experience, projects, skills, education, blog, lab notes, hosted apps). "
+            "Returns the most relevant grounded snippets. Use this for open-ended questions."
         ),
         handler=_search_knowledge,
         parameters=_obj(
@@ -247,6 +272,25 @@ TOOLS: list[Tool] = [
         handler=_get_lab,
         parameters=_obj(
             {"slug": {"type": "string", "description": "Optional — slug or title fragment to fetch one entry's full content."}},
+        ),
+    ),
+    Tool(
+        name="get_apps",
+        description=(
+            "List every app and product Jaya hosts under his domain (jayaremala.com) — "
+            "e.g. Gradevitian — with name, URL, status, category, and tech. Use this for "
+            "'what else has he built / what's hosted on his site / what products does he run' "
+            "questions. The registry is dynamic, so future apps appear here automatically."
+        ),
+        handler=_get_apps,
+    ),
+    Tool(
+        name="get_app",
+        description="Full details for one hosted app matched by name, slug, or domain (e.g. 'gradevitian').",
+        handler=_get_app,
+        parameters=_obj(
+            {"name": {"type": "string", "description": "App name, slug, or domain fragment."}},
+            required=["name"],
         ),
     ),
     Tool(

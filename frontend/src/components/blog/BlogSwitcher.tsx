@@ -14,9 +14,10 @@ interface Props {
   currentSlug?: string;
   label?: string;
   listTitle?: string;
+  basePath?: string;
 }
 
-export default function BlogSwitcher({ posts, currentSlug, label = "Browse", listTitle = "All posts" }: Props) {
+export default function BlogSwitcher({ posts, currentSlug, label = "Browse", listTitle = "All posts", basePath = "/blog" }: Props) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -72,7 +73,7 @@ export default function BlogSwitcher({ posts, currentSlug, label = "Browse", lis
               return (
                 <li key={post.slug} role="option" aria-selected={isCurrent}>
                   <Link
-                    href={`/blog/${post.slug}`}
+                    href={`${basePath}/${post.slug}`}
                     onClick={() => setOpen(false)}
                     className={`flex items-start gap-2.5 px-3 py-2.5 hover:bg-surface-raised transition-colors group ${isCurrent ? "bg-accent/5" : ""}`}
                   >

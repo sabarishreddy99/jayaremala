@@ -71,7 +71,7 @@ function LabEntryApiView({ entry, allEntries }: { entry: ApiLabEntry; allEntries
           Lab
         </Link>
         <div className="hidden sm:block">
-          <BlogSwitcher posts={switcherEntries} currentSlug={entry.slug} label="Browse" listTitle="All entries" />
+          <BlogSwitcher posts={switcherEntries} currentSlug={entry.slug} label="Browse" listTitle="All entries" basePath="/lab" />
         </div>
       </div>
 
@@ -120,7 +120,7 @@ function LabEntryApiView({ entry, allEntries }: { entry: ApiLabEntry; allEntries
               </div>
 
               <div className="sm:hidden mt-4">
-                <BlogSwitcher posts={switcherEntries} currentSlug={entry.slug} label="Browse" listTitle="All entries" />
+                <BlogSwitcher posts={switcherEntries} currentSlug={entry.slug} label="Browse" listTitle="All entries" basePath="/lab" />
               </div>
             </header>
 
@@ -276,6 +276,7 @@ export default async function LabEntryPage({ params }: Props) {
             currentSlug={slug}
             label="Browse"
             listTitle="All entries"
+            basePath="/lab"
           />
         </div>
       </div>
@@ -331,6 +332,7 @@ export default async function LabEntryPage({ params }: Props) {
                   currentSlug={slug}
                   label="Browse"
                   listTitle="All entries"
+                  basePath="/lab"
                 />
               </div>
             </header>

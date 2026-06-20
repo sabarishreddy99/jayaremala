@@ -1048,6 +1048,16 @@ figcaption[data-rehype-pretty-code-title] + pre {
 @keyframes gv-fade { from { opacity: 0; } to { opacity: 1; } }
 .animate-gv-fade { animation: gv-fade 0.25s ease both; }
 
+/* Mobile menu drawer — slides down from the top edge of the viewport */
+@keyframes gv-drawer {
+  from { opacity: 0; transform: translateY(-12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-gv-drawer { animation: gv-drawer 0.28s cubic-bezier(0.16, 1, 0.3, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .animate-gv-drawer { animation: gv-fade 0.2s ease both; }
+}
+
 /* Formal hero title reveal — masked word-rise, matching the portfolio HeroName:
    each word slides up from behind an overflow-hidden mask. */
 @keyframes gv-rise {

@@ -172,62 +172,95 @@ export default function GVNav() {
         </div>
       </nav>
 
-      {open && (
-        <div className="animate-gv-fade relative z-50 max-h-[calc(100dvh-3.75rem)] overflow-y-auto overscroll-contain border-t border-border-subtle bg-surface/95 px-4 py-2 shadow-lg backdrop-blur-xl md:hidden">
-          {TOOLS.map((t) => (
-            <GVLink
-              key={t.href}
-              href={t.href}
-              onClick={() => setOpen(false)}
-              aria-current={active(t.href) ? "page" : undefined}
-              className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                active(t.href) ? "bg-accent-light text-accent" : "text-fg-muted"
-              }`}
-            >
-              {t.icon}
-              {t.label}
-            </GVLink>
-          ))}
-          <GVLink href="/feedback" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-fg-muted">
-            <svg {...ic}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
-            Feedback
-          </GVLink>
-          <GVInstall variant="mobile" onTrigger={() => setOpen(false)} />
-          {!loading && !user && (
-            <>
-              <GVLink href="/login" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-fg-muted">
-                <svg {...ic}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" /></svg>
-                Log in
-              </GVLink>
-              <GVLink href="/signup" onClick={() => setOpen(false)} className="mt-1 flex items-center justify-center gap-2 rounded-full bg-accent px-3 py-2.5 text-sm font-semibold text-accent-fg">
-                Sign up
-              </GVLink>
-            </>
-          )}
-          {!loading && user && (
-            <>
-              <GVLink href="/account" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-fg-muted">
-                <svg {...ic}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
-                Your account
-              </GVLink>
-              <button onClick={() => { setOpen(false); logout(); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-600 dark:text-rose-400">
-                <svg {...ic}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
-                Log out
-              </button>
-            </>
-          )}
-        </div>
-      )}
     </header>
 
-      {/* Dim + blur the rest of the site to focus the mobile menu */}
+      {/* ── Mobile menu — a fixed, viewport-pinned drawer ──────────────────────
+          Anchored to the device viewport (position: fixed) with its own header +
+          close button, so it stays put on scroll regardless of how the page sticky
+          context behaves. Slides down from the top; tap the dim layer to close. */}
       {open && (
-        <button
-          type="button"
-          aria-label="Close menu"
-          onClick={() => setOpen(false)}
-          className="animate-gv-fade fixed inset-0 z-40 bg-black/40 backdrop-blur-sm md:hidden"
-        />
+        <>
+          <button
+            type="button"
+            aria-label="Close menu"
+            onClick={() => setOpen(false)}
+            className="animate-gv-fade fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm md:hidden"
+          />
+          <div
+            role="dialog"
+            aria-modal="true"
+            className="animate-gv-drawer fixed inset-x-0 top-0 z-[61] flex max-h-[100dvh] flex-col overflow-hidden rounded-b-3xl border-b border-border-subtle bg-surface/95 shadow-2xl backdrop-blur-2xl md:hidden"
+            style={{ paddingTop: "max(0px, env(safe-area-inset-top))" }}
+          >
+            {/* Drawer header — logo + close, mirrors the nav bar */}
+            <div className="flex items-center justify-between px-4 py-3">
+              <GVLink
+                href="/"
+                onClick={() => setOpen(false)}
+                className="inline-flex items-center gap-2 text-xl font-normal tracking-widest text-fg"
+                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
+              >
+                <span className="text-accent"><GradHat /></span>
+                <span>grade<span className="text-accent">VIT</span>ian</span>
+              </GVLink>
+              <button
+                onClick={() => setOpen(false)}
+                aria-label="Close menu"
+                className="rounded-lg p-1.5 text-fg-muted transition hover:bg-surface-raised"
+              >
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Scrollable links */}
+            <div className="flex-1 overflow-y-auto overscroll-contain border-t border-border-subtle px-3 py-3" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
+              {TOOLS.map((t) => (
+                <GVLink
+                  key={t.href}
+                  href={t.href}
+                  onClick={() => setOpen(false)}
+                  aria-current={active(t.href) ? "page" : undefined}
+                  className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                    active(t.href) ? "bg-accent-light text-accent" : "text-fg-muted"
+                  }`}
+                >
+                  {t.icon}
+                  {t.label}
+                </GVLink>
+              ))}
+              <GVLink href="/feedback" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-fg-muted">
+                <svg {...ic}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
+                Feedback
+              </GVLink>
+              <GVInstall variant="mobile" onTrigger={() => setOpen(false)} />
+              {!loading && !user && (
+                <>
+                  <GVLink href="/login" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-fg-muted">
+                    <svg {...ic}><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3" /></svg>
+                    Log in
+                  </GVLink>
+                  <GVLink href="/signup" onClick={() => setOpen(false)} className="mt-1 flex items-center justify-center gap-2 rounded-full bg-accent px-3 py-2.5 text-sm font-semibold text-accent-fg">
+                    Sign up
+                  </GVLink>
+                </>
+              )}
+              {!loading && user && (
+                <>
+                  <GVLink href="/account" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-fg-muted">
+                    <svg {...ic}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>
+                    Your account
+                  </GVLink>
+                  <button onClick={() => { setOpen(false); logout(); }} className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-rose-600 dark:text-rose-400">
+                    <svg {...ic}><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" /></svg>
+                    Log out
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       {/* Mobile: floating search button pinned bottom-right */}

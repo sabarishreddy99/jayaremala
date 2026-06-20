@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Privacy Policy" };
 
 export default function PrivacyPage() {
   return (
-    <section className="mx-auto max-w-2xl px-4 py-14">
+    <section className="mx-auto max-w-2xl px-5 py-16 sm:py-24">
       <GVPageHeader eyebrow="Your data" title="Privacy Policy" subtitle="What we store, what we don't, and how to reach us." />
       <div className="mt-8 flex flex-col gap-4 text-fg-muted leading-relaxed">
         <p>

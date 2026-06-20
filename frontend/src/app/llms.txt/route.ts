@@ -1,6 +1,7 @@
 import { getAllPosts } from "@/lib/blog";
 import { getAllLabEntries } from "@/lib/lab";
 import { profile } from "@/data/profile";
+import { siteGroups } from "@/lib/site-nav";
 
 // Revalidate hourly — picks up admin-published content without a rebuild.
 // Mirrors the sitemap / feed.xml cadence.
@@ -91,18 +92,26 @@ export async function GET() {
   const posts = merge(mdxPosts, apiPosts);
   const lab   = merge(mdxLab, apiLab);
 
+  // Key pages are derived from the shared nav config (lib/site-nav), so any page
+  // added to the nav/footer automatically shows up here too. Optional richer copy
+  // per route lives in LLMS_DESC; new pages fall back to their nav description.
+  const LLMS_DESC: Record<string, string> = {
+    "/experience": "work history timeline",
+    "/education":  "degrees and highlights",
+    "/projects":   "production systems, hackathon winners, and side projects",
+    "/lab":        "live designs and progress logs for in-flight projects",
+    "/apps":       "live apps and products I build, host, and run under my domain",
+    "/now":        "what I'm focused on right now",
+    "/gallery":    "visual log of achievements and milestones",
+    "/quotes":     "words that shaped how I think and build",
+    "/mcp":        "connect your own LLM (Claude/Cursor) to read-only portfolio tools",
+    "/system":     "live observability — latency percentiles, RAG pipeline timing, model fallback",
+  };
   const keyPages = [
     `- [Portfolio](${BASE}/portfolio): hero, featured projects, skills, testimonials, contact`,
-    `- [Experience](${BASE}/experience): work history timeline`,
-    `- [Education](${BASE}/education): degrees and highlights`,
-    `- [Projects](${BASE}/projects): production systems, hackathon winners, and side projects`,
-    `- [Lab](${BASE}/lab): live designs and progress logs for in-flight projects`,
-    `- [Now](${BASE}/now): what I'm focused on right now`,
-    `- [Gallery](${BASE}/gallery): visual log of achievements and milestones`,
-    `- [Quotes](${BASE}/quotes): words that shaped how I think and build`,
+    ...siteGroups.flatMap((g) => g.items).map((i) =>
+      `- [${i.label}](${BASE}${i.href}): ${LLMS_DESC[i.href] ?? i.desc}`),
     `- [Chat with Avocado](${BASE}/chat): RAG chatbot that answers recruiter questions about my work`,
-    `- [MCP server](${BASE}/mcp): connect your own LLM (Claude/Cursor) to read-only portfolio tools`,
-    `- [System](${BASE}/system): live observability — latency percentiles, RAG pipeline timing, model fallback`,
   ].join("\n");
 
   const blogSection = posts.length

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function CgpaPage() {
   return (
-    <section className="mx-auto max-w-3xl px-4 py-14">
+    <section className="mx-auto max-w-3xl px-5 py-16 sm:py-24">
       <GVPageHeader
         eyebrow="Cumulative"
         title="CGPA Calculator"

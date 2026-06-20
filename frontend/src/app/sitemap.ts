@@ -1,12 +1,32 @@
 import type { MetadataRoute } from "next";
 import { getAllPosts } from "@/lib/blog";
 import { getAllLabEntries } from "@/lib/lab";
+import { siteGroups } from "@/lib/site-nav";
 
 // Revalidate every hour so admin-published content appears without a rebuild
 export const revalidate = 3600;
 
 const BASE = "https://jayaremala.com";
 const API  = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
+
+type ChangeFreq = MetadataRoute.Sitemap[number]["changeFrequency"];
+
+// Per-route SEO weighting. Any page not listed here falls back to DEFAULT_META,
+// so a newly added page still lands in the sitemap with sensible values.
+const ROUTE_META: Record<string, { priority: number; changeFrequency: ChangeFreq }> = {
+  "/":           { priority: 1.0,  changeFrequency: "weekly"  },
+  "/portfolio":  { priority: 0.95, changeFrequency: "weekly"  },
+  "/blog":       { priority: 0.9,  changeFrequency: "weekly"  },
+  "/experience": { priority: 0.8,  changeFrequency: "monthly" },
+  "/projects":   { priority: 0.8,  changeFrequency: "monthly" },
+  "/apps":       { priority: 0.7,  changeFrequency: "monthly" },
+  "/education":  { priority: 0.7,  changeFrequency: "monthly" },
+  "/lab":        { priority: 0.7,  changeFrequency: "weekly"  },
+  "/now":        { priority: 0.6,  changeFrequency: "weekly"  },
+  "/gallery":    { priority: 0.6,  changeFrequency: "monthly" },
+  "/quotes":     { priority: 0.5,  changeFrequency: "monthly" },
+};
+const DEFAULT_META = { priority: 0.6, changeFrequency: "monthly" as const };
 
 /* ── API fetchers (silent on failure — MDX posts are the fallback) ─── */
 
@@ -61,19 +81,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Blog tag pages (from MDX only — API posts may not have tags indexed)
   const allTags = [...new Set(mdxPosts.flatMap((p) => p.tags))];
 
-  /* ── Static routes ─────────────────────────────────────────────── */
+  /* ── Static routes — derived from the shared nav config (lib/site-nav) ──
+     so any page added to the nav/footer automatically appears here too.
+     Plus a few routes that aren't in the nav (home, portfolio, chat). ── */
+  const pageHrefs = [...new Set([
+    "/", "/portfolio", "/chat",
+    ...siteGroups.flatMap((g) => g.items.map((i) => i.href)),
+  ])];
+
   const staticRoutes: MetadataRoute.Sitemap = [
-    { url: `${BASE}/`,           lastModified: new Date(), changeFrequency: "weekly",  priority: 1.0 },
-    { url: `${BASE}/portfolio`,  lastModified: new Date(), changeFrequency: "weekly",  priority: 0.95 },
-    { url: `${BASE}/experience`, lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/education`,  lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
-    { url: `${BASE}/projects`,   lastModified: new Date(), changeFrequency: "monthly", priority: 0.8 },
-    { url: `${BASE}/apps`,       lastModified: new Date(), changeFrequency: "monthly", priority: 0.7 },
-    { url: `${BASE}/blog`,       lastModified: new Date(), changeFrequency: "weekly",  priority: 0.9 },
-    { url: `${BASE}/lab`,        lastModified: new Date(), changeFrequency: "weekly",  priority: 0.7 },
-    { url: `${BASE}/gallery`,    lastModified: new Date(), changeFrequency: "monthly", priority: 0.6 },
-    { url: `${BASE}/now`,        lastModified: new Date(), changeFrequency: "weekly",  priority: 0.6 },
-    { url: `${BASE}/quotes`,     lastModified: new Date(), changeFrequency: "monthly", priority: 0.5 },
+    ...pageHrefs.map((href) => ({
+      url: `${BASE}${href}`,
+      lastModified: new Date(),
+      ...(ROUTE_META[href] ?? DEFAULT_META),
+    })),
     // gradeVITian lives on its own subdomain (with its own full sitemap at
     // gradevitian.jayaremala.com/sitemap.xml); list the home here as a discovery hint.
     { url: "https://gradevitian.jayaremala.com/", lastModified: new Date(), changeFrequency: "weekly", priority: 0.8 },

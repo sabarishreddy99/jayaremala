@@ -7,7 +7,7 @@ export const metadata: Metadata = { title: "Feedback" };
 
 export default function FeedbackPage() {
   return (
-    <section className="mx-auto max-w-4xl px-4 py-14">
+    <section className="mx-auto max-w-4xl px-5 py-16 sm:py-24">
       <GVPageHeader
         eyebrow="We're listening"
         title="Feedback"

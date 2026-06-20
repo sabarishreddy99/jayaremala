@@ -5,7 +5,7 @@ export const metadata: Metadata = { title: "Terms & Conditions" };
 
 export default function TermsPage() {
   return (
-    <section className="mx-auto max-w-2xl px-4 py-14">
+    <section className="mx-auto max-w-2xl px-5 py-16 sm:py-24">
       <GVPageHeader eyebrow="The fine print" title="Terms & Conditions" subtitle="Free, as-is, and built to help VITians — here's the deal." />
       <div className="mt-8 flex flex-col gap-4 text-fg-muted leading-relaxed">
         <p>

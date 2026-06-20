@@ -1,6 +1,6 @@
 [
   {
-    "company": "NYU College of Arts and Science",
+    "company": "NYU CAS - Center for Genomics and Systems Biology",
     "role": "Software Engineer",
     "start": "Jun 2025",
     "end": "Present",
@@ -8,12 +8,13 @@
     "description": "Building GeneCart — AI-powered genomics tooling at NYU.",
     "tech": "LangGraph, Machine Learning, PyTorch, Python, AWS, FastAPI, React, TypeScript, PostgreSQL",
     "bullets": [
-      "Building GeneCart, an AI-assisted genomics discovery platform at NYU's College of Arts and Science."
+      "Building GeneCart, an AI-assisted genomics discovery platform, owning the agent/LLM layer with LangGraph and PyTorch to make genomic data exploration actionable for researchers.",
+      "Designing the full-stack delivery path, FastAPI services, a React/TypeScript frontend, and PostgreSQL on AWS and Kubernetes."
     ]
   },
   {
     "company": "NYU IT – High-Speed Research Network",
-    "role": "Web Applications Lead",
+    "role": "Software Engineer - Research Infrastructure",
     "start": "Sep 2024",
     "end": "May 2025",
     "location": "New York, NY",

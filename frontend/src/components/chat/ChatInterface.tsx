@@ -495,7 +495,7 @@ export default function ChatInterface() {
                 agentMode ? "bg-accent text-white" : "text-fg-faint hover:text-fg-muted"
               }`}
             >
-              <span aria-hidden>⚡</span> Agent
+              <svg aria-hidden width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="inline-block align-[-1px] mr-1"><path d="M13 2 4 14h6l-1 8 9-12h-6z" /></svg>Agent
             </button>
           </div>
         </div>

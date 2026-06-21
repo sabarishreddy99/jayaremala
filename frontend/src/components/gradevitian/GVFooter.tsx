@@ -4,32 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import GVLink from "@/components/gradevitian/GVLink";
 import GVInstall from "@/components/gradevitian/GVInstall";
 import LiquidWave from "@/components/LiquidWave";
+import { GV_GROUPS, GV_FOOTER_LINKS } from "@/lib/gradevitian/nav";
 
+// Feature columns are derived from the shared nav config, so adding a page there
+// surfaces it in the footer automatically. Account/legal columns are appended.
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
-  {
-    title: "Calculators",
-    links: [
-      { label: "GPA", href: "/gpa" },
-      { label: "CGPA", href: "/cgpa" },
-      { label: "Grade Predictor", href: "/grade-predictor" },
-      { label: "CGPA Estimator", href: "/cgpa-estimator" },
-      { label: "Attendance", href: "/attendance" },
-    ],
-  },
-  {
-    title: "gradeVITian",
-    links: [
-      { label: "Your account", href: "/account" },
-      { label: "Feedback", href: "/feedback" },
-    ],
-  },
-  {
-    title: "Legal",
-    links: [
-      { label: "Privacy", href: "/privacy" },
-      { label: "Terms", href: "/terms" },
-    ],
-  },
+  ...GV_GROUPS.map((g) => ({ title: g.label, links: g.items.map((i) => ({ label: i.label, href: i.href })) })),
+  ...GV_FOOTER_LINKS,
 ];
 
 const GradHat = () => (

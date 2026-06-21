@@ -28,6 +28,30 @@ function Quote({ c }: { c: GVComment }) {
   );
 }
 
+// One infinite-scrolling row. Content is doubled so the -50% translate loops
+// seamlessly; pauses on hover and respects reduced-motion.
+function MarqueeRow({ items, dir }: { items: GVComment[]; dir: "left" | "right" }) {
+  const loop = [...items, ...items];
+  const anim = dir === "left"
+    ? "animate-[marquee-left_55s_linear_infinite]"
+    : "animate-[marquee-right_55s_linear_infinite]";
+  return (
+    <div
+      className="group relative overflow-hidden"
+      style={{
+        maskImage: "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
+        WebkitMaskImage: "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
+      }}
+    >
+      <div className={`flex w-max gap-4 ${anim} group-hover:[animation-play-state:paused] motion-reduce:animate-none`}>
+        {loop.map((c, i) => (
+          <Quote key={`${c.id}-${i}`} c={c} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function GVWallOfLove() {
   const [comments, setComments] = useState<GVComment[] | null>(null);
 
@@ -38,12 +62,17 @@ export default function GVWallOfLove() {
   }, []);
 
   const base = comments ?? [];
-  // Repeat so the marquee always looks full, then double it for a seamless -50% loop.
+  // Repeat so the marquees always look full.
   let filled = base;
   if (base.length > 0 && base.length < 6) {
     filled = Array.from({ length: Math.ceil(6 / base.length) }, () => base).flat();
   }
-  const loop = [...filled, ...filled];
+  // Two rows for a fuller "wall" — the second drifts the opposite way and is
+  // offset so it never mirrors the first. Only shown when there's enough variety.
+  const twoRows = base.length >= 3;
+  const half = Math.ceil(filled.length / 2);
+  const rowA = filled;
+  const rowB = twoRows ? [...filled.slice(half), ...filled.slice(0, half)] : filled;
 
   return (
     <section className="mx-auto max-w-6xl px-4 pb-24 pt-4">
@@ -79,18 +108,9 @@ export default function GVWallOfLove() {
           </div>
         </ScrollReveal>
       ) : (
-        <div
-          className="group relative mt-10 overflow-hidden"
-          style={{
-            maskImage: "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
-            WebkitMaskImage: "linear-gradient(to right, transparent, #000 6%, #000 94%, transparent)",
-          }}
-        >
-          <div className="flex w-max gap-4 animate-[marquee-left_50s_linear_infinite] group-hover:[animation-play-state:paused] motion-reduce:animate-none">
-            {loop.map((c, i) => (
-              <Quote key={`${c.id}-${i}`} c={c} />
-            ))}
-          </div>
+        <div className="mt-10 space-y-4">
+          <MarqueeRow items={rowA} dir="left" />
+          {twoRows && <MarqueeRow items={rowB} dir="right" />}
         </div>
       )}
 

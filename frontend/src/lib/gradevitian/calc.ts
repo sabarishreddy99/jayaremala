@@ -160,6 +160,61 @@ export function estimateCGPA(input: {
   };
 }
 
+// ── CGPA goal trajectory ──────────────────────────────────────────────────────
+/**
+ * Projects the path to a target CGPA: the constant GPA you'd need each remaining
+ * semester, plus the CGPA you'd hit after each of those semesters (for a chart).
+ * `points[0]` is your current CGPA.
+ */
+export function projectTrajectory(input: {
+  current: number; creditsCompleted: number; target: number; semsRemaining: number; creditsPerSem: number;
+}): { points: number[]; requiredGpa: number | null; result: CalcResult } {
+  const { current, creditsCompleted: cc, target, semsRemaining: sr, creditsPerSem: cps } = input;
+  const bad = (msg: string, detail?: string): { points: number[]; requiredGpa: null; result: CalcResult } =>
+    ({ points: [], requiredGpa: null, result: { value: null, message: msg, detail, tone: "danger" } });
+
+  if ([current, target].some((v) => v <= 0 || v > 10)) return bad("Kindly check your entries.", "CGPA and target must be within 0 < x ≤ 10.");
+  if (cc <= 0 || cc > 300) return bad("Kindly check your entries.", "Credits completed must be 1–300.");
+  if (sr <= 0 || sr > 14) return bad("Kindly check your entries.", "Semesters remaining must be 1–14.");
+  if (cps <= 0 || cps > 40) return bad("Kindly check your entries.", "Credits per semester must be 1–40.");
+
+  const remainingCredits = sr * cps;
+  const requiredGpa = (target * (cc + remainingCredits) - current * cc) / remainingCredits;
+
+  const points = [round(current, 2)];
+  let cumCredits = cc, cumPoints = current * cc;
+  for (let i = 0; i < sr; i++) {
+    cumCredits += cps;
+    cumPoints += requiredGpa * cps;
+    points.push(round(cumPoints / cumCredits, 2));
+  }
+
+  if (requiredGpa > 10) {
+    return {
+      points,
+      requiredGpa: null,
+      result: {
+        value: null,
+        message: `Reaching ${target} needs an average of ${requiredGpa.toFixed(2)} GPA — above the 10.0 ceiling.`,
+        detail: "Add another semester or ease the goal slightly.",
+        tone: "warning",
+      },
+    };
+  }
+
+  const onTrack = requiredGpa <= current;
+  return {
+    points,
+    requiredGpa: round(requiredGpa, 2),
+    result: {
+      value: round(requiredGpa, 2),
+      message: `Average ${requiredGpa.toFixed(2)} GPA across your remaining ${sr} semester${sr > 1 ? "s" : ""} gets you to a ${target} CGPA.`,
+      detail: onTrack ? "You're on track — hold your current pace." : "A step up from your current pace, but reachable.",
+      tone: onTrack ? "success" : "neutral",
+    },
+  };
+}
+
 // ── Attendance ────────────────────────────────────────────────────────────────
 function attendanceResult(pct: number): CalcResult {
   if (pct < 0 || pct > 100) {

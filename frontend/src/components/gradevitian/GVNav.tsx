@@ -7,19 +7,16 @@ import GVLink from "@/components/gradevitian/GVLink";
 import GVSearchModal from "@/components/gradevitian/GVSearchModal";
 import GVInstall from "@/components/gradevitian/GVInstall";
 import { useGVAuth } from "@/components/gradevitian/GVAuthProvider";
+import { GV_GROUPS } from "@/lib/gradevitian/nav";
 
 const ic = {
   width: 16, height: 16, viewBox: "0 0 24 24", fill: "none",
   stroke: "currentColor", strokeWidth: 2, strokeLinecap: "round" as const, strokeLinejoin: "round" as const,
 };
 
-const TOOLS = [
-  { href: "/gpa", label: "GPA", icon: <svg {...ic}><rect x="4" y="2" width="16" height="20" rx="2" /><path d="M8 6h8M8 10h2M8 14h2M8 18h2M14 10h2M14 14h2v4h-2z" /></svg> },
-  { href: "/cgpa", label: "CGPA", icon: <svg {...ic}><path d="M3 3v18h18" /><rect x="7" y="12" width="3" height="6" /><rect x="12" y="8" width="3" height="10" /><rect x="17" y="5" width="3" height="13" /></svg> },
-  { href: "/grade-predictor", label: "Grade Predictor", icon: <svg {...ic}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.5" /></svg> },
-  { href: "/cgpa-estimator", label: "CGPA Estimator", icon: <svg {...ic}><path d="M3 17 9 11l4 4 8-8" /><path d="M16 7h5v5" /></svg> },
-  { href: "/attendance", label: "Attendance", icon: <svg {...ic}><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18M9 16l2 2 4-4" /></svg> },
-];
+const NewTag = () => (
+  <span className="rounded-full bg-accent/15 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-accent">New</span>
+);
 
 const GradHat = () => (
   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -36,7 +33,25 @@ export default function GVNav() {
   const [scrolled, setScrolled] = useState(false);
   const [userMenu, setUserMenu] = useState(false);
   const [search, setSearch] = useState(false);
+  const [openCat, setOpenCat] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  const catRef = useRef<HTMLDivElement>(null);
+
+  // Close the category dropdown on outside click and on Escape.
+  useEffect(() => {
+    if (openCat === null) return;
+    const onDown = (e: MouseEvent) => {
+      if (catRef.current && !catRef.current.contains(e.target as Node)) setOpenCat(null);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpenCat(null); };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => { document.removeEventListener("mousedown", onDown); document.removeEventListener("keydown", onKey); };
+  }, [openCat]);
+
+  // Close the dropdown whenever the route changes.
+  const [navPath, setNavPath] = useState(pathname);
+  if (navPath !== pathname) { setNavPath(pathname); if (openCat !== null) setOpenCat(null); }
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -86,21 +101,56 @@ export default function GVNav() {
           <span>grade<span className="text-accent">VIT</span>ian</span>
         </GVLink>
 
-        <div className="hidden items-center gap-0.5 rounded-2xl border border-border-subtle bg-surface/50 p-1 backdrop-blur md:flex">
-          {TOOLS.map((t) => (
-            <GVLink
-              key={t.href}
-              href={t.href}
-              title={t.label}
-              aria-current={active(t.href) ? "page" : undefined}
-              className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-[13px] font-medium transition-all duration-200 ${
-                active(t.href) ? "bg-accent-light text-accent shadow-sm" : "text-fg-subtle hover:text-fg"
-              }`}
-            >
-              {t.icon}
-              <span className="hidden lg:inline">{t.label}</span>
-            </GVLink>
-          ))}
+        {/* Desktop: categorical dropdowns */}
+        <div ref={catRef} className="hidden items-center gap-0.5 rounded-2xl border border-border-subtle bg-surface/50 p-1 backdrop-blur md:flex">
+          {GV_GROUPS.map((g) => {
+            const groupActive = g.items.some((it) => active(it.href));
+            const isOpen = openCat === g.label;
+            return (
+              <div
+                key={g.label}
+                className="relative"
+                onMouseEnter={() => setOpenCat(g.label)}
+                onMouseLeave={() => setOpenCat(null)}
+              >
+                <button
+                  onClick={() => setOpenCat(isOpen ? null : g.label)}
+                  aria-haspopup="true"
+                  aria-expanded={isOpen}
+                  className={`flex items-center gap-1 rounded-xl px-3 py-1.5 text-[13px] font-medium transition-all duration-200 ${
+                    groupActive || isOpen ? "bg-accent-light text-accent shadow-sm" : "text-fg-subtle hover:text-fg"
+                  }`}
+                >
+                  {g.label}
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform duration-200 ${isOpen ? "rotate-180" : ""}`} aria-hidden>
+                    <path d="m6 9 6 6 6-6" />
+                  </svg>
+                </button>
+                {/* pt-2 bridges the gap so the panel stays open on hover travel */}
+                <div className={`absolute left-1/2 top-full -translate-x-1/2 pt-2 ${isOpen ? "block" : "hidden"}`}>
+                  <div className="animate-gv-pop w-72 overflow-hidden rounded-2xl border border-border-subtle bg-surface p-1.5 shadow-xl">
+                    {g.items.map((it) => (
+                      <GVLink
+                        key={it.href}
+                        href={it.href}
+                        onClick={() => setOpenCat(null)}
+                        aria-current={active(it.href) ? "page" : undefined}
+                        className={`flex items-start gap-3 rounded-xl px-3 py-2.5 transition ${active(it.href) ? "bg-accent-light" : "hover:bg-surface-raised"}`}
+                      >
+                        <span className={`mt-0.5 shrink-0 ${active(it.href) ? "text-accent" : "text-fg-subtle"}`}>{it.icon}</span>
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-1.5 text-sm font-semibold text-fg">
+                            {it.label}{it.isNew && <NewTag />}
+                          </span>
+                          <span className="mt-0.5 block text-xs leading-snug text-fg-muted">{it.desc}</span>
+                        </span>
+                      </GVLink>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
         </div>
 
         <div className="flex items-center gap-2">
@@ -216,20 +266,26 @@ export default function GVNav() {
 
             {/* Scrollable links */}
             <div className="flex-1 overflow-y-auto overscroll-contain border-t border-border-subtle px-3 py-3" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
-              {TOOLS.map((t) => (
-                <GVLink
-                  key={t.href}
-                  href={t.href}
-                  onClick={() => setOpen(false)}
-                  aria-current={active(t.href) ? "page" : undefined}
-                  className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
-                    active(t.href) ? "bg-accent-light text-accent" : "text-fg-muted"
-                  }`}
-                >
-                  {t.icon}
-                  {t.label}
-                </GVLink>
+              {GV_GROUPS.map((g) => (
+                <div key={g.label} className="mb-1">
+                  <p className="px-3 pb-1 pt-2 text-[10px] font-bold uppercase tracking-widest text-fg-subtle">{g.label}</p>
+                  {g.items.map((it) => (
+                    <GVLink
+                      key={it.href}
+                      href={it.href}
+                      onClick={() => setOpen(false)}
+                      aria-current={active(it.href) ? "page" : undefined}
+                      className={`flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium transition ${
+                        active(it.href) ? "bg-accent-light text-accent" : "text-fg-muted"
+                      }`}
+                    >
+                      <span className="shrink-0">{it.icon}</span>
+                      <span className="flex items-center gap-1.5">{it.label}{it.isNew && <NewTag />}</span>
+                    </GVLink>
+                  ))}
+                </div>
               ))}
+              <div className="my-1 h-px bg-border-subtle" />
               <GVLink href="/feedback" onClick={() => setOpen(false)} className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm font-medium text-fg-muted">
                 <svg {...ic}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>
                 Feedback

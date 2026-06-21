@@ -91,6 +91,39 @@ export async function apiDeleteCalc(token: string, id: number): Promise<{ ok: bo
   return apiRequest(`/gv/calcs/${id}`, "DELETE", undefined, token);
 }
 
+// ── Ask the Rulebook (VIT regulations Q&A) ────────────────────────────────────
+
+export interface RulebookAnswer {
+  answer: string;
+  sources: { section: string; heading: string; source?: string }[];
+  grounded?: boolean;
+  /** Questions left in the user's hourly quota after this one. */
+  remaining?: number;
+}
+
+// Signed-in only (premium feature) — pass the auth token; the server enforces a
+// per-user 5/hour quota and returns the remaining count.
+export async function apiAskRulebook(token: string, question: string): Promise<RulebookAnswer> {
+  return apiRequest("/gv/ask", "POST", { question }, token);
+}
+
+// ── Achievements & streak ─────────────────────────────────────────────────────
+
+export interface GVBadge {
+  badge: string;
+  earned_at: string;
+}
+
+export async function apiListAchievements(token: string): Promise<{ badges: GVBadge[] }> {
+  return apiGet("/gv/achievements", token);
+}
+
+export async function apiPing(
+  token: string,
+): Promise<{ count: number; advanced: boolean; new_badges: string[] }> {
+  return apiRequest("/gv/ping", "POST", undefined, token);
+}
+
 // ── Comments ────────────────────────────────────────────────────────────────
 
 export async function apiListComments(): Promise<{ comments: GVComment[] }> {

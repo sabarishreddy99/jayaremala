@@ -262,6 +262,99 @@ def read_notification(notification_id: int, user: dict = Depends(current_user)) 
     return {"ok": True}
 
 
+# ── Ask the Rulebook (VIT regulations Q&A) ────────────────────────────────────
+
+class AskRequest(BaseModel):
+    question: str = Field(min_length=3, max_length=500)
+
+
+_RULEBOOK_SYSTEM = (
+    "You are gradeVITian's rulebook assistant. Answer ONLY from the numbered VIT "
+    "Academic Regulations and Student Code of Conduct excerpts provided. Be concise "
+    "and student-friendly. If the excerpts do not contain the answer, say you couldn't "
+    "find it and suggest checking with the school office. Never invent clause numbers, "
+    "percentages, or rules that aren't in the excerpts."
+)
+
+
+# Per-user hourly quota for the LLM-backed rulebook assistant (a signed-in-only
+# premium feature). In-memory sliding window — fine for the single-instance deploy.
+_ASK_LIMIT = 5
+_ASK_WINDOW_S = 3600
+_ask_hits: dict[int, list[float]] = {}
+
+
+@router.post("/ask")
+def ask_rulebook(body: AskRequest, user: dict = Depends(current_user)) -> dict:
+    """Grounded Q&A over the VIT Academic Regulations — signed-in only, limited to
+    5 questions/hour per user. Isolated from the portfolio RAG; degrades to an
+    extractive answer when no LLM key is configured."""
+    import time
+    now = time.time()
+    hits = [t for t in _ask_hits.get(user["id"], []) if now - t < _ASK_WINDOW_S]
+    if len(hits) >= _ASK_LIMIT:
+        wait_min = max(1, int((_ASK_WINDOW_S - (now - hits[0])) // 60))
+        raise HTTPException(
+            status_code=429,
+            detail=f"You've used your {_ASK_LIMIT} rulebook questions this hour. Try again in ~{wait_min} min.",
+        )
+    hits.append(now)
+    _ask_hits[user["id"]] = hits
+    remaining = _ASK_LIMIT - len(hits)
+
+    from app.rag import gv_rulebook
+
+    chunks = gv_rulebook.rulebook_query(body.question, n=6)
+    sources = [{"section": c["section"], "heading": c["heading"], "source": c.get("source", "")} for c in chunks]
+
+    if not chunks:
+        return {
+            "answer": "I couldn't find anything about that in the VIT Academic "
+                      "Regulations. Try rephrasing, or check with your school office.",
+            "sources": [],
+            "remaining": remaining,
+        }
+
+    excerpts = "\n\n".join(
+        f"[{i + 1}] ({c.get('source', 'VIT')} — {c['heading']}): {c['text']}"
+        for i, c in enumerate(chunks)
+    )
+
+    # Extractive fallback — used when no LLM key is set or generation fails. Never 500s.
+    def _extractive() -> str:
+        top = chunks[0]
+        return (f"From the {top.get('source', 'VIT Academic Regulations')} ({top['heading']}):\n\n"
+                f"{top['text'][:700]}").strip()
+
+    try:
+        from app.core.settings import settings
+        if not settings.google_api_key:
+            return {"answer": _extractive(), "sources": sources, "grounded": False, "remaining": remaining}
+        from app.routers.ai import _generate
+        prompt = f"Regulation excerpts:\n{excerpts}\n\nStudent question: {body.question}\n\nAnswer:"
+        answer = _generate(_RULEBOOK_SYSTEM, prompt).strip()
+        if not answer:
+            answer = _extractive()
+        return {"answer": answer, "sources": sources, "grounded": True, "remaining": remaining}
+    except Exception as exc:
+        logger.warning("rulebook generation failed, using extractive: %s", exc)
+        return {"answer": _extractive(), "sources": sources, "grounded": False, "remaining": remaining}
+
+
+# ── Achievements & streak (gamification) ──────────────────────────────────────
+
+@router.get("/achievements")
+def get_achievements(user: dict = Depends(current_user)) -> dict:
+    return {"badges": gv.list_badges(user["id"])}
+
+
+@router.post("/ping")
+def ping(user: dict = Depends(current_user)) -> dict:
+    """Called on app open by signed-in users — advances the daily visit streak and
+    may award streak badges. Idempotent within a day."""
+    return gv.bump_streak(user["id"])
+
+
 # ── Email helpers (best-effort; failures never block the request) ──────────────
 
 def _send_welcome_email(user: dict) -> None:

@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useState } from "rea
 import {
   apiLogin,
   apiMe,
+  apiPing,
   apiSignup,
   clearToken,
   getToken,
@@ -51,6 +52,13 @@ export function GVAuthProvider({ children }: { children: React.ReactNode }) {
       cancelled = true;
     };
   }, []);
+
+  // Advance the daily-visit streak whenever a session is active (best-effort,
+  // idempotent within a day server-side). Powers streak badges.
+  useEffect(() => {
+    if (!token) return;
+    apiPing(token).catch(() => {});
+  }, [token]);
 
   const login = useCallback(async (identifier: string, password: string) => {
     const { token: t, user: u } = await apiLogin({ identifier, password });

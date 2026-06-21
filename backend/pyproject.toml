@@ -26,6 +26,11 @@ dev = [
   "httpx>=0.27",
   "ruff>=0.5",
 ]
+# Only needed to re-run backend/scripts/parse_regulations.py (regenerates the
+# gradeVITian regulations data). Not imported at runtime.
+scrape = [
+  "pymupdf>=1.24",
+]
 
 [tool.ruff]
 line-length = 100

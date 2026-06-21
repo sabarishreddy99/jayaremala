@@ -3,46 +3,48 @@
 import { useState } from "react";
 import KnowledgeBaseEditor from "./KnowledgeBaseEditor";
 
+const si = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.8, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
+
 const FILES = [
   {
     key: "profile",
     label: "Profile",
-    icon: "👤",
+    icon: <svg {...si}><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>,
     filePath: "backend/data/knowledge/profile.json",
     description: "Name · tagline · bio · hero stats · availability · contact links · domains",
   },
   {
     key: "experience",
     label: "Experience",
-    icon: "💼",
+    icon: <svg {...si}><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></svg>,
     filePath: "backend/data/knowledge/experience.json",
     description: "Work history — roles, companies, locations, dates, bullet points",
   },
   {
     key: "education",
     label: "Education",
-    icon: "🎓",
+    icon: <svg {...si}><path d="M22 10 12 5 2 10l10 5 10-5Z" /><path d="M6 12v4c0 1 2.7 2.5 6 2.5s6-1.5 6-2.5v-4" /></svg>,
     filePath: "backend/data/knowledge/education.json",
     description: "Degrees, institutions, GPA, highlights",
   },
   {
     key: "projects",
     label: "Projects",
-    icon: "🚀",
+    icon: <svg {...si}><path d="M4.5 16.5c-1.5 1.3-2 5-2 5s3.7-.5 5-2a3 3 0 0 0-3-3z" /><path d="M12 15l-3-3a22 22 0 0 1 8-10c4 0 5 1 5 1s1 1 1 5a22 22 0 0 1-10 8z" /><circle cx="15" cy="9" r="1.5" /></svg>,
     filePath: "backend/data/knowledge/projects.json",
     description: "Title, description, tags, featured flag, award, source links, notes",
   },
   {
     key: "skills",
     label: "Skills",
-    icon: "⚡",
+    icon: <svg {...si}><path d="M13 2 4 14h6l-1 8 9-12h-6z" /></svg>,
     filePath: "backend/data/knowledge/skills.json",
     description: "Skill categories and items shown as Lego bricks on the homepage",
   },
   {
     key: "testimonials",
     label: "Testimonials",
-    icon: "💬",
+    icon: <svg {...si}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>,
     filePath: "backend/data/knowledge/testimonials.json",
     description: "Name, designation, company, LinkedIn, quote, date, source",
   },
@@ -77,7 +79,7 @@ export default function KnowledgeDataView() {
                 : "border border-border text-fg-muted hover:text-fg hover:border-fg-muted"
             }`}
           >
-            <span>{f.icon}</span>
+            <span className="[&>svg]:h-4 [&>svg]:w-4">{f.icon}</span>
             {f.label}
           </button>
         ))}
@@ -86,7 +88,7 @@ export default function KnowledgeDataView() {
       {/* Active editor — key forces re-mount on tab switch so each file has isolated state */}
       <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
         <div className="flex items-center gap-2 mb-5">
-          <span className="text-lg">{current.icon}</span>
+          <span className="text-accent [&>svg]:h-5 [&>svg]:w-5">{current.icon}</span>
           <h3 className="text-sm font-bold text-fg">{current.label}</h3>
         </div>
         <KnowledgeBaseEditor

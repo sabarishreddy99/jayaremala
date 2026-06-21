@@ -67,6 +67,11 @@ async def lifespan(app: FastAPI):
         gv_db.init_db()
     except Exception as exc:
         logger.error("gradevitian.init_db failed (non-fatal): %s", exc)
+    try:
+        from app.rag import gv_rulebook
+        gv_rulebook.build_rulebook_index()
+    except Exception as exc:
+        logger.error("rulebook index build failed (non-fatal): %s", exc)
     threading.Thread(target=_background_startup, daemon=True).start()
     # The MCP streamable-HTTP app manages its own session lifespan — enter it so
     # the mounted /mcp endpoint works.

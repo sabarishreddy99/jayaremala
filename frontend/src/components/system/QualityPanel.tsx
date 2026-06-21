@@ -14,7 +14,7 @@ export default function QualityPanel({ data }: { data: SystemData }) {
         <Stat
           label="Satisfaction"
           value={`${q.satisfaction_pct}%`}
-          sub="👍 on answers"
+          sub="rated helpful"
           tone={q.satisfaction_pct >= 70 ? "good" : "default"}
         />
         <Stat

@@ -8,6 +8,7 @@ import remarkGfm from "remark-gfm";
 import BlogEngagement from "@/components/blog/BlogEngagement";
 import ShareButtons from "@/components/blog/ShareButtons";
 import { fetchBlogPost, fetchLabEntry } from "@/lib/api/content";
+import { siteGroups } from "@/lib/site-nav";
 
 // ── Icons ─────────────────────────────────────────────────────────────────────
 // All 18×18, stroke-based, theme-aware via currentColor
@@ -18,65 +19,6 @@ function IconHome() {
       strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
       <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
       <path d="M9 22V12h6v10" />
-    </svg>
-  );
-}
-
-function IconBriefcase() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <rect x="2" y="7" width="20" height="14" rx="2" />
-      <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" />
-      <line x1="12" y1="12" x2="12" y2="17" />
-      <line x1="9.5" y1="14.5" x2="14.5" y2="14.5" />
-    </svg>
-  );
-}
-
-function IconCode() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <polyline points="16 18 22 12 16 6" />
-      <polyline points="8 6 2 12 8 18" />
-    </svg>
-  );
-}
-
-function IconFileText() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-      <polyline points="14 2 14 8 20 8" />
-      <line x1="16" y1="13" x2="8" y2="13" />
-      <line x1="16" y1="17" x2="8" y2="17" />
-      <line x1="10" y1="9" x2="8" y2="9" />
-    </svg>
-  );
-}
-
-function IconBook() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-      <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-      <line x1="12" y1="6" x2="16" y2="6" />
-      <line x1="12" y1="10" x2="16" y2="10" />
-    </svg>
-  );
-}
-
-function IconFlask() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-      strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M10 2v7.31l-4.72 8.09A2 2 0 0 0 7 20h10a2 2 0 0 0 1.72-2.6L14 9.31V2" />
-      <line x1="8.5" y1="2" x2="15.5" y2="2" />
-      <circle cx="9" cy="15" r="0.8" fill="currentColor" stroke="none" />
-      <circle cx="13" cy="16.5" r="0.8" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -95,13 +37,11 @@ function IconMessageAI() {
 
 // ── Data ──────────────────────────────────────────────────────────────────────
 
+// Derived from the shared nav config so every page on the site shows up here
+// automatically — add a page to site-nav and it appears on the 404 too.
 const LINKS: { href: string; label: string; desc: string; icon: ReactNode }[] = [
-  { href: "/",           label: "Portfolio",  desc: "Home — hero, projects & contact", icon: <IconHome /> },
-  { href: "/experience", label: "Experience", desc: "Work history & roles",            icon: <IconBriefcase /> },
-  { href: "/projects",   label: "Projects",   desc: "Things I've built",               icon: <IconCode /> },
-  { href: "/blog",       label: "Blog",       desc: "Notes & long-form writing",       icon: <IconFileText /> },
-  { href: "/education",  label: "Education",  desc: "Degrees & highlights",            icon: <IconBook /> },
-  { href: "/lab",        label: "Lab",        desc: "Living system docs",              icon: <IconFlask /> },
+  { href: "/", label: "Portfolio", desc: "Home — hero, projects & contact", icon: <IconHome /> },
+  ...siteGroups.flatMap((g) => g.items),
 ];
 
 // ── Inline blog/lab post renderer (for admin-published posts not yet in static HTML) ──

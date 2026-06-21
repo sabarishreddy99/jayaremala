@@ -111,3 +111,15 @@ for (const file of jsonFiles) {
   copyFileSync(join(BACKEND_KNOWLEDGE, file), join(FRONTEND_KNOWLEDGE, file));
 }
 console.log(`sync: copied ${jsonFiles.length} JSON file(s) → frontend/src/data/knowledge/`);
+
+// ── 4. Copy curated gradeVITian regulations (structured rules only) ───────────
+// regulation_chunks.json is server-only (assistant retrieval) and is intentionally
+// NOT shipped to the frontend bundle.
+const GV_BACKEND = join(__dirname, "../backend/data/gradevitian");
+const GV_FRONTEND = join(__dirname, "../frontend/src/data/gradevitian");
+const GV_REGS = "regulations.json";
+if (existsSync(join(GV_BACKEND, GV_REGS))) {
+  mkdirSync(GV_FRONTEND, { recursive: true });
+  copyFileSync(join(GV_BACKEND, GV_REGS), join(GV_FRONTEND, GV_REGS));
+  console.log(`sync: copied ${GV_REGS} → frontend/src/data/gradevitian/`);
+}

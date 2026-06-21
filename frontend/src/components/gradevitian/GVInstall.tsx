@@ -177,10 +177,10 @@ export default function GVInstall({
       <button
         onClick={handleClick}
         title="Install gradeVITian as an app"
-        className="hidden items-center gap-1.5 rounded-full border border-border-subtle bg-surface/60 px-3 py-1.5 text-sm font-semibold text-fg-muted backdrop-blur transition hover:border-border-strong hover:text-fg md:inline-flex"
+        aria-label="Install gradeVITian as an app"
+        className="hidden rounded-lg p-1.5 text-fg-muted transition hover:bg-surface-raised hover:text-fg md:inline-flex"
       >
-        <DownloadIcon />
-        Install
+        <DownloadIcon size={20} />
       </button>
     );
 

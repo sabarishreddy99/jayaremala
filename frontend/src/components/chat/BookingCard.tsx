@@ -26,7 +26,7 @@ export default function BookingCard({ data }: { data: BookingCardData }) {
   return (
     <div className="mt-3 rounded-xl border border-border bg-surface p-4 animate-fade-up">
       <div className="flex items-center gap-2 mb-3">
-        <span aria-hidden className="text-base leading-none">📅</span>
+        <span aria-hidden className="text-accent"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" /></svg></span>
         <div>
           <p className="text-[13px] font-semibold text-fg">Book a call with Jaya</p>
           <p className="text-[11px] text-fg-faint mt-0.5">

@@ -103,7 +103,7 @@ export default function SkillsSection({ skills, featuredProjects }: Props) {
                       <h3 className="text-sm font-semibold text-fg leading-snug">{p.title}</h3>
                       {p.award && (
                         <span className="text-[10px] font-semibold rounded-sm bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 px-1.5 py-0.5 whitespace-nowrap shrink-0">
-                          🏆 {p.award}
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="inline-block align-[-1px] mr-1" aria-hidden><path d="M8 21h8M12 17v4M6 4h12v5a6 6 0 0 1-12 0zM6 6H3v2a3 3 0 0 0 3 3M18 6h3v2a3 3 0 0 0-3 3" /></svg>{p.award}
                         </span>
                       )}
                     </div>

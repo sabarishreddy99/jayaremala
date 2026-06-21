@@ -10,6 +10,10 @@ const TOOLS = [
   { href: "/grade-predictor", label: "Grade Predictor", tease: "Know your grade before results drop" },
   { href: "/cgpa-estimator", label: "CGPA Estimator", tease: "The GPA you'll need to hit your goal" },
   { href: "/attendance", label: "Attendance", tease: "Stay safely above the 75% line" },
+  { href: "/planner", label: "Semester Planner", tease: "Your whole semester on one screen" },
+  { href: "/cgpa-goal", label: "CGPA Goal Tracker", tease: "Map the path to your dream CGPA" },
+  { href: "/rules", label: "VIT Rules", tease: "The rules that actually matter" },
+  { href: "/ask", label: "Ask the Rulebook", tease: "Any regulation, answered in plain English" },
 ];
 
 const norm = (p: string) => p.replace(/\/+$/, "") || "/";

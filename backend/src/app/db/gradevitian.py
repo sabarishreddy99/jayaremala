@@ -116,6 +116,21 @@ def init_db() -> None:
                 count INTEGER NOT NULL DEFAULT 0
             )
         """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS gv_achievements (
+                user_id   INTEGER NOT NULL REFERENCES gv_users(id) ON DELETE CASCADE,
+                badge     TEXT    NOT NULL,
+                earned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                PRIMARY KEY (user_id, badge)
+            )
+        """)
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS gv_streaks (
+                user_id     INTEGER PRIMARY KEY REFERENCES gv_users(id) ON DELETE CASCADE,
+                last_active TEXT,
+                count       INTEGER NOT NULL DEFAULT 0
+            )
+        """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_gv_calcs_user  ON gv_saved_calcs(user_id)")
         conn.execute("CREATE INDEX IF NOT EXISTS idx_gv_resets_user ON gv_password_resets(user_id)")
     logger.info("gradeVITian DB ready")
@@ -281,7 +296,58 @@ def save_calc(user_id: int, calc_type: str, payload: dict, result: str) -> dict:
             (user_id, calc_type, json.dumps(payload), result),
         )
         row = conn.execute("SELECT * FROM gv_saved_calcs WHERE id=?", (cur.lastrowid,)).fetchone()
+    # Milestone badges (best-effort, never blocks the save)
+    try:
+        award_badge(user_id, f"first_{calc_type}")
+        if len(list_calcs(user_id)) >= 10:
+            award_badge(user_id, "ten_calcs")
+    except Exception:
+        pass
     return _calc_row(row)
+
+
+# ── Achievements & streaks (gamification) ─────────────────────────────────────
+
+def award_badge(user_id: int, badge: str) -> bool:
+    """Award a badge if not already earned. Returns True only when newly awarded."""
+    with _connect() as conn:
+        cur = conn.execute(
+            "INSERT OR IGNORE INTO gv_achievements (user_id, badge) VALUES (?, ?)",
+            (user_id, badge),
+        )
+        return cur.rowcount > 0
+
+
+def list_badges(user_id: int) -> list[dict]:
+    with _connect() as conn:
+        rows = conn.execute(
+            "SELECT badge, earned_at FROM gv_achievements WHERE user_id=? ORDER BY earned_at",
+            (user_id,),
+        ).fetchall()
+    return [{"badge": r["badge"], "earned_at": r["earned_at"]} for r in rows]
+
+
+def bump_streak(user_id: int) -> dict:
+    """Advance the daily-visit streak. Returns {count, last_active, advanced, new_badges}."""
+    from datetime import date, timedelta
+    today = date.today().isoformat()
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
+    with _connect() as conn:
+        row = conn.execute("SELECT last_active, count FROM gv_streaks WHERE user_id=?", (user_id,)).fetchone()
+        if row is None:
+            conn.execute("INSERT INTO gv_streaks (user_id, last_active, count) VALUES (?, ?, 1)", (user_id, today))
+            count, advanced = 1, True
+        elif row["last_active"] == today:
+            count, advanced = row["count"], False
+        else:
+            count = row["count"] + 1 if row["last_active"] == yesterday else 1
+            conn.execute("UPDATE gv_streaks SET last_active=?, count=? WHERE user_id=?", (today, count, user_id))
+            advanced = True
+    new_badges: list[str] = []
+    for milestone in (3, 7, 30):
+        if count >= milestone and award_badge(user_id, f"streak_{milestone}"):
+            new_badges.append(f"streak_{milestone}")
+    return {"count": count, "last_active": today, "advanced": advanced, "new_badges": new_badges}
 
 
 def list_calcs(user_id: int) -> list[dict]:

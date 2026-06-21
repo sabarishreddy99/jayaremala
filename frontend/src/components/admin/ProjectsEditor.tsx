@@ -95,7 +95,7 @@ export default function ProjectsEditor() {
                   {e.featured && <span className="text-amber-400 text-[10px]">★</span>}
                   <p className="text-xs font-semibold text-fg truncate">{e.title || "New Project"}</p>
                 </div>
-                {e.award && <p className="text-[10px] text-amber-600 dark:text-amber-400 truncate">🏆 {e.award}</p>}
+                {e.award && <p className="text-[10px] text-amber-600 dark:text-amber-400 truncate"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="inline-block align-[-1px] mr-1" aria-hidden><path d="M8 21h8M12 17v4M6 4h12v5a6 6 0 0 1-12 0zM6 6H3v2a3 3 0 0 0 3 3M18 6h3v2a3 3 0 0 0-3 3" /></svg>{e.award}</p>}
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <MoveButtons idx={i} total={entries.length} onMove={d => move(i, d)} />

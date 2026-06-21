@@ -1,0 +1,57 @@
+{
+  "version": "FFCS Academic Regulations — Version 4.0",
+  "source": {
+    "title": "VIT Academic Regulations (FFCS)",
+    "url": "https://vit.ac.in/sites/default/files/academic/Academic-Regulations.pdf"
+  },
+  "grade_scale": [
+    { "grade": "S", "points": 10, "min_marks": 90, "remark": "Outstanding — pass" },
+    { "grade": "A", "points": 9, "min_marks": 80, "remark": "Pass" },
+    { "grade": "B", "points": 8, "min_marks": 70, "remark": "Pass" },
+    { "grade": "C", "points": 7, "min_marks": 60, "remark": "Pass" },
+    { "grade": "D", "points": 6, "min_marks": 55, "remark": "Pass" },
+    { "grade": "E", "points": 5, "min_marks": 50, "remark": "Pass (lowest)" },
+    { "grade": "F", "points": 0, "min_marks": 0, "remark": "Failed — re-register the course" },
+    { "grade": "N", "points": 0, "min_marks": null, "remark": "Component not cleared / debarred / absent in FAT — re-register" }
+  ],
+  "special_grades": [
+    { "grade": "W", "remark": "Course registration withdrawn" },
+    { "grade": "U", "remark": "Audit course successfully completed" },
+    { "grade": "P", "remark": "Passed a Pass/Fail course (not counted in CGPA)" }
+  ],
+  "pass_grades": ["S", "A", "B", "C", "D", "E", "P"],
+  "attendance": {
+    "minimum_percent": 75,
+    "expected_percent": 100,
+    "consequence": "Falling below 75% in a course means you are 'debarred' from the next exam component. Being debarred from the FAT results in an 'N' grade — you must re-register the course and clear it with a performance grade.",
+    "relaxation": "Students with CGPA ≥ 9.00 may receive an attendance relaxation, but it is withdrawn the moment CGPA falls below 9.00 and never extends to FAT eligibility."
+  },
+  "gpa": {
+    "formula": "GPA = Σ(Cᵢ × GPᵢ) / Σ Cᵢ  (per semester)",
+    "description": "Weighted average of the grade points across all courses registered in a semester — each course's grade point times its credits, divided by total credits registered."
+  },
+  "cgpa": {
+    "formula": "CGPA = Σ(Cᵢ × GPᵢ) / Σ Cᵢ  (across all semesters since the first)",
+    "percentage_equivalent": "% equivalent = CGPA × 10  (e.g. a CGPA of 8.75 ≈ 87.5%)",
+    "rounding": "Rounded to two decimal places. 'F' grade credits ARE included; Pass/Fail, audit, Minor and Honours courses are excluded from CGPA."
+  },
+  "academic_standing": {
+    "probation_cgpa_below": 4.0,
+    "rule": "A CGPA below 4.0 at any time means you are advised to register for a maximum of 16 credits. Continued failure to improve can lead to cancellation of studentship (reviewed by a Dean of Academics committee)."
+  },
+  "credit_limits": {
+    "note": "Per-semester minimum/maximum credit limits are fixed by the regulations; the final registration may drop below the minimum to complete the programme. Total credits required to graduate are programme-specific.",
+    "low_cgpa_max_credits": 16
+  },
+  "reexam": {
+    "re_cat": "Missing a CAT forfeits its weightage — there is no general Re-CAT. A Re-CAT-I is allowed only for specific cases (approved internships abroad, academy fellowships, placement activities, hospitalization), and only if the attendance requirement is met.",
+    "re_fat": "A Re-FAT is granted only under extraordinary conditions (in-patient hospitalization beyond a week, or death of a family member). You apply to the Vice Chancellor within 14 calendar days of the FAT with proper evidence. An 'N' grade is converted to a performance grade after the Re-FAT (Section 9.11)."
+  },
+  "ffcs": {
+    "description": "Fully Flexible Credit System — you choose your courses, slots and faculty each semester. Course components: Theory (L), Tutorial (T), Lab/Practical (P) and Project / J-component.",
+    "categories": ["University Core", "Programme Core", "Programme Elective", "University Elective", "Project / J-component", "Honours", "Minor", "Audit"]
+  },
+  "honours": {
+    "description": "An 'Honours' credential is offered for completing additional Discipline/Specialization Elective credits beyond your curriculum requirement. Honours and Minor courses are not counted in the programme CGPA. High performers may also be recognised in the 'Honours Club'."
+  }
+}

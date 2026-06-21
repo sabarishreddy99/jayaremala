@@ -1,7 +1,8 @@
 "use client";
 
-import Image from "next/image";
+import { useState } from "react";
 import GVLink from "@/components/gradevitian/GVLink";
+import { GV_GROUPS } from "@/lib/gradevitian/nav";
 import ScrollReveal from "@/components/ScrollReveal";
 import StackSection from "@/components/StackSection";
 import GVStats, { type GVStat } from "@/components/gradevitian/GVStats";
@@ -21,9 +22,10 @@ import { useGVAuth } from "@/components/gradevitian/GVAuthProvider";
 // across every chapter headline to give the page one calm, premium voice.
 const SERIF = "var(--font-cormorant), Georgia, serif";
 
-// Portfolio-style identity line: three "·"-separated facets, rendered thin (the
-// same font-light treatment as the portfolio home hero).
-const TAGLINE = "By a VITian, for VITians · 20K+ students, #2 on Google · GPA, CGPA & attendance, always free";
+// Warm, personal identity line — calm and a little inviting, rendered thin (the
+// same font-light treatment as the portfolio home hero). Kept stat-free on purpose
+// so the hero feels like a quiet home, not a pitch (the numbers live in Act 02).
+const TAGLINE = "A calm little home for your GPA, CGPA and attendance — free forever, works offline, and quietly becomes yours.";
 
 const METRICS: GVStat[] = [
   { value: "17K+", label: "Monthly Active Users", sub: "Peak student traffic" },
@@ -31,15 +33,6 @@ const METRICS: GVStat[] = [
   { value: "#2", label: "Google Search Rank", sub: "Programmatic SEO" },
   { value: "<1s", label: "Mobile Load Time", sub: "Sub-second, PWA-optimized" },
   { value: "6+", label: "Years in Production", sub: "Continuously live & maintained" },
-];
-
-const TOOLS = [
-  { href: "/gpa", title: "GPA Calculator", desc: "Your semester GPA from grades & credits.", img: "/gradevitian/gpaimg.svg" },
-  { href: "/cgpa", title: "CGPA Calculator", desc: "Cumulative CGPA, semester by semester.", img: "/gradevitian/instant-cgpaimg.svg" },
-  { href: "/grade-predictor", title: "Grade Predictor", desc: "See your final grade before results drop.", img: "/gradevitian/target.svg" },
-  { href: "/cgpa-estimator", title: "CGPA Estimator", desc: "The GPA you need next sem to hit your goal.", img: "/gradevitian/growth.svg" },
-  { href: "/attendance", title: "Attendance", desc: "Stay safely above the 75% line.", img: "/gradevitian/improve.svg" },
-  { href: "/grade-predictor", title: "Weightage Converter", desc: "Turn raw scores into weighted marks.", img: "/gradevitian/weightage-conv.svg" },
 ];
 
 // Every environment gradeVITian runs on — it's an installable PWA, so it lives on
@@ -159,6 +152,34 @@ function PlatformStrip() {
   );
 }
 
+// Quiet "tell a friend" affordance — uses the native share sheet on mobile and a
+// copy-link fallback elsewhere. Low-key by design so the hero stays calm.
+function HeroShare() {
+  const [copied, setCopied] = useState(false);
+  async function share() {
+    const url = "https://gradevitian.jayaremala.com";
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({ title: "gradeVITian", text: "A calm little home for your GPA, CGPA & attendance.", url });
+      } catch { /* user dismissed the share sheet */ }
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch { /* clipboard unavailable */ }
+  }
+  return (
+    <button onClick={share} className="mt-6 inline-flex items-center gap-1.5 text-[13px] font-medium text-fg-subtle transition-colors hover:text-accent">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+        <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
+      </svg>
+      {copied ? "Link copied — pass it on" : "Share it with a friend"}
+    </button>
+  );
+}
+
 export default function GVHome() {
   const { user } = useGVAuth();
   const firstName = user?.name.split(" ")[0] ?? "";
@@ -170,10 +191,12 @@ export default function GVHome() {
         <Parallax speed={0.18} className="pointer-events-none absolute inset-0">
           <HeroDotGrid />
         </Parallax>
+        {/* Faint accent halo — kept very light so the page reads as the same clean
+            white (--bg #fefefb) as the portfolio, with only the gentlest warmth. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute left-1/2 top-[-8rem] h-[34rem] w-[34rem] -translate-x-1/2 rounded-full opacity-60 blur-3xl"
-          style={{ background: "radial-gradient(circle, color-mix(in oklab, var(--accent) 18%, transparent), transparent 70%)" }}
+          className="pointer-events-none absolute left-1/2 top-[-10rem] h-[30rem] w-[30rem] -translate-x-1/2 rounded-full opacity-35 blur-3xl"
+          style={{ background: "radial-gradient(circle, color-mix(in oklab, var(--accent) 10%, transparent), transparent 70%)" }}
         />
 
         <div className="relative mx-auto max-w-3xl px-5 pt-28 pb-24 text-center sm:pt-40 sm:pb-32">
@@ -188,14 +211,15 @@ export default function GVHome() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-accent" />
                 </span>
-                Free forever · No sign-up · Works offline
+                Made by a VITian, for you
               </span>
             )}
 
             <GVHeroTitle
-              text={user ? `Hi, ${firstName}.` : "gradeVITian"}
-              accent={user ? undefined : "VIT"}
+              text={user ? `Hi, ${firstName}.` : "Your grades, kept calm."}
+              accent={user ? undefined : "calm"}
               className="mt-8 text-fg"
+              style={user ? undefined : { fontSize: "clamp(2.5rem, 7vw, 5rem)" }}
             />
 
             {/* Tagline — portfolio-style identity line, thin font */}
@@ -224,6 +248,8 @@ export default function GVHome() {
                 </>
               )}
             </div>
+
+            <HeroShare />
           </ScrollReveal>
 
           <ScrollReveal delay={120} className="mt-16">
@@ -251,32 +277,41 @@ export default function GVHome() {
         <Inner className="py-20 sm:py-28">
           <ScrollReveal className="text-center">
             <Chapter index="01" label="The toolkit" />
-            <Headline className="mt-6">{user ? "Your tools" : "Six tiny tools, one calm home."}</Headline>
+            <Headline className="mt-6">{user ? "Your tools" : "Everything you need, in one place."}</Headline>
             <Lead className="mx-auto mt-5 max-w-xl">
               {user
-                ? "Saved results sync to your account automatically — pick up wherever you left off."
-                : "Each one quietly handles the math every VITian dreads, so you can get back to actually living."}
+                ? "Saved results sync to your account — pick up wherever you left off."
+                : "Calculators for exam season, planners for the long game, and the rulebook for when you're not sure — all free."}
             </Lead>
           </ScrollReveal>
 
-          <div className="mx-auto mt-14 grid max-w-5xl gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
-            {TOOLS.map((t, i) => (
-              <ScrollReveal key={t.title} delay={i * 70}>
-                <GVLink
-                  href={t.href}
-                  className="group flex h-full items-start gap-5 rounded-3xl border border-border-subtle bg-surface/70 p-7 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1.5 hover:border-accent/40 hover:shadow-[0_22px_60px_-18px_rgba(79,70,229,0.42)] sm:p-8"
-                >
-                  <div className="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-accent/15 to-[color:var(--accent-secondary)]/10 ring-1 ring-inset ring-accent/15 transition-transform duration-300 group-hover:scale-105">
-                    <Image src={t.img} alt="" width={34} height={34} className="h-[34px] w-[34px]" />
-                  </div>
-                  <div className="min-w-0 pt-0.5">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-[1.05rem] font-semibold text-fg transition-colors group-hover:text-accent">{t.title}</h3>
-                      <span className="text-fg-subtle opacity-0 transition-all duration-300 group-hover:translate-x-0.5 group-hover:opacity-100" aria-hidden>→</span>
-                    </div>
-                    <p className="mt-1.5 text-body font-light leading-relaxed text-fg-muted">{t.desc}</p>
-                  </div>
-                </GVLink>
+          <div className="mx-auto mt-14 max-w-5xl space-y-12">
+            {GV_GROUPS.map((g, gi) => (
+              <ScrollReveal key={g.label} delay={gi * 60}>
+                <div className="mb-5 flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                  <h3 style={{ fontFamily: SERIF, fontWeight: 600 }} className="text-xl text-fg sm:text-2xl">{g.label}</h3>
+                  <span className="text-sm font-light text-fg-muted">{g.blurb}</span>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3">
+                  {g.items.map((it) => (
+                    <GVLink
+                      key={it.href}
+                      href={it.href}
+                      className="group flex h-full items-start gap-4 rounded-2xl border border-border-subtle bg-surface/70 p-5 shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-xl transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-[0_18px_50px_-16px_rgba(79,70,229,0.4)]"
+                    >
+                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-gradient-to-br from-accent/15 to-[color:var(--accent-secondary)]/10 text-accent ring-1 ring-inset ring-accent/15 transition-transform duration-300 group-hover:scale-105">
+                        {it.icon}
+                      </span>
+                      <span className="min-w-0 pt-0.5">
+                        <span className="flex items-center gap-2">
+                          <span className="text-[0.97rem] font-semibold text-fg transition-colors group-hover:text-accent">{it.label}</span>
+                          {it.isNew && <span className="rounded-full bg-accent/15 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-accent">New</span>}
+                        </span>
+                        <span className="mt-1 block text-sm font-light leading-relaxed text-fg-muted">{it.desc}</span>
+                      </span>
+                    </GVLink>
+                  ))}
+                </div>
               </ScrollReveal>
             ))}
           </div>
@@ -329,6 +364,38 @@ export default function GVHome() {
       {/* ══ Act V — Make it yours (account + feedback + refer) ══════════════════ */}
       <StackSection z={5} id="make-it-yours">
         <Inner className="space-y-6 py-20 sm:py-28">
+          {/* Curiosity hook — reasons to make a free account (logged-out only) */}
+          {!user && (
+            <ScrollReveal className="text-center">
+              <Chapter index="04" label="A reason to stay" />
+              <Headline className="mx-auto mt-6 max-w-2xl">More than a calculator once you sign in.</Headline>
+              <Lead className="mx-auto mt-5 max-w-xl">
+                A free account turns gradeVITian into your own academic command centre — and it&apos;s the
+                same login on every device.
+              </Lead>
+              <div className="mx-auto mt-12 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4">
+                {[
+                  { title: "Save your semester", desc: "Enter courses once, reuse everywhere.", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 9v12" /></svg> },
+                  { title: "Chase a CGPA goal", desc: "See exactly what each sem needs.", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.6 5.7 21l2.3-7.2-6-4.4h7.6z" /></svg> },
+                  { title: "Earn badges", desc: "Unlock milestones as you go.", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="15" r="6" /><path d="M9 9.5 7 2h10l-2 7.5" /></svg> },
+                  { title: "Keep a streak", desc: "Little wins, every day.", icon: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2c1.6 3 4 4.5 4 8a4 4 0 0 1-8 0c0-1.6.6-2.6 1.6-3.6C10.6 7.4 11 4.4 12 2z" /></svg> },
+                ].map((b) => (
+                  <div key={b.title} className="rounded-2xl border border-border-subtle bg-surface/60 p-4 text-center backdrop-blur">
+                    <div className="text-accent [&>svg]:mx-auto [&>svg]:h-7 [&>svg]:w-7">{b.icon}</div>
+                    <p className="mt-2 text-sm font-semibold text-fg">{b.title}</p>
+                    <p className="mt-1 text-[11px] font-light leading-snug text-fg-muted">{b.desc}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-9">
+                <GVLink href="/signup" className="inline-flex items-center gap-2 rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover hover:shadow-md active:scale-[0.97]">
+                  Create your free account
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><path d="M5 12h14M12 5l7 7-7 7" /></svg>
+                </GVLink>
+              </div>
+            </ScrollReveal>
+          )}
+
           {/* Account band */}
           <ScrollReveal>
             <div className="overflow-hidden rounded-[2rem] border border-border-subtle bg-gradient-to-br from-accent/[0.09] to-transparent p-9 sm:p-12">
@@ -404,7 +471,7 @@ export default function GVHome() {
       <StackSection z={6} id="community">
         <Inner className="py-20 sm:py-28">
           <ScrollReveal className="text-center">
-            <Chapter index="04" label="In their words" />
+            <Chapter index="05" label="In their words" />
             <Headline className="mt-6">From the community.</Headline>
             <Lead className="mx-auto mt-4">The journey, shared on LinkedIn.</Lead>
           </ScrollReveal>

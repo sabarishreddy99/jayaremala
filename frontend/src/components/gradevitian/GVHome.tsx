@@ -13,6 +13,7 @@ import GVNotes from "@/components/gradevitian/GVNotes";
 import HeroDotGrid from "@/components/HeroDotGrid";
 import Parallax from "@/components/Parallax";
 import GVLinkedInEmbed from "@/components/gradevitian/GVLinkedInEmbed";
+import GVRedditEmbed from "@/components/gradevitian/GVRedditEmbed";
 import GVRefer from "@/components/gradevitian/GVRefer";
 import GVInstall from "@/components/gradevitian/GVInstall";
 import GVWallOfLove from "@/components/gradevitian/GVWallOfLove";
@@ -473,18 +474,35 @@ export default function GVHome() {
           <ScrollReveal className="text-center">
             <Chapter index="05" label="In their words" />
             <Headline className="mt-6">From the community.</Headline>
-            <Lead className="mx-auto mt-4">The journey, shared on LinkedIn.</Lead>
+            <Lead className="mx-auto mt-4">The journey, shared on LinkedIn &amp; Reddit.</Lead>
           </ScrollReveal>
-          <ScrollReveal delay={100} className="mx-auto max-w-5xl">
-            <div className="gv-scroll-x mt-12 flex snap-x snap-mandatory items-start gap-4 overflow-x-auto px-1 pb-2 md:grid md:grid-cols-2 md:gap-6 md:overflow-visible md:px-0">
-              <div className="min-w-[85%] shrink-0 snap-center md:min-w-0 md:shrink">
-                <GVLinkedInEmbed activityId="7346981400148926465" title="gradeVITian relaunch on LinkedIn" />
-              </div>
-              <div className="min-w-[85%] shrink-0 snap-center md:min-w-0 md:shrink">
-                <GVLinkedInEmbed activityId="6809389656187265024" title="gradeVITian on LinkedIn" />
+          <ScrollReveal delay={100}>
+            {/* Auto-scrolling marquee — compact, premium, pauses on hover. The set is
+                duplicated so the -50% loop is seamless; the copy is aria-hidden. */}
+            <div
+              className="group relative mt-12 overflow-hidden"
+              style={{
+                maskImage: "linear-gradient(to right, transparent, #000 5%, #000 95%, transparent)",
+                WebkitMaskImage: "linear-gradient(to right, transparent, #000 5%, #000 95%, transparent)",
+              }}
+            >
+              <div className="flex w-max gap-5 animate-[marquee-left_44s_linear_infinite] group-hover:[animation-play-state:paused] motion-reduce:animate-none">
+                {[0, 1].map((copy) => (
+                  <div key={copy} className="flex w-max gap-5" aria-hidden={copy === 1}>
+                    <GVLinkedInEmbed activityId="7346981400148926465" title="gradeVITian relaunch on LinkedIn" />
+                    <GVLinkedInEmbed activityId="6809389656187265024" title="gradeVITian on LinkedIn" />
+                    <GVRedditEmbed
+                      url="https://www.reddit.com/r/Vit/comments/1uc5cqx/6_years_of_community_love_built_this_welcome_to/"
+                      title="6+ years of community love built this: Welcome to GradeVITian V3.0! Thank you, VIT!"
+                      author="u/Advanced-Copy4124"
+                      authorUrl="https://www.reddit.com/user/Advanced-Copy4124/"
+                      subreddit="Vit"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
-            <p className="mt-4 text-center text-micro text-fg-subtle md:hidden">Swipe to see more →</p>
+            <p className="mt-5 text-center text-micro text-fg-subtle">Auto-scrolling · hover to pause</p>
           </ScrollReveal>
         </Inner>
       </StackSection>

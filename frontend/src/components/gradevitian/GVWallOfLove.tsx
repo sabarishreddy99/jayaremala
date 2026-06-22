@@ -75,7 +75,7 @@ export default function GVWallOfLove() {
   const rowB = twoRows ? [...filled.slice(half), ...filled.slice(0, half)] : filled;
 
   return (
-    <section className="mx-auto max-w-6xl px-4 pb-24 pt-4">
+    <section className="relative z-10 mx-auto max-w-6xl bg-bg px-4 pb-24 pt-4">
       <ScrollReveal>
         <div className="text-center">
           <p className="text-nano font-semibold uppercase tracking-[0.22em] text-accent sm:text-micro">

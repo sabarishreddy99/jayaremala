@@ -1,8 +1,13 @@
-import type { Metadata } from "next";
 import { Suspense } from "react";
 import { ResetPasswordForm } from "@/components/gradevitian/AuthForms";
+import { gvMetadata } from "@/lib/gradevitian/seo";
 
-export const metadata: Metadata = { title: "Reset password" };
+export const metadata = gvMetadata({
+  path: "/reset-password",
+  title: "Reset password",
+  description: "Set a new gradeVITian password.",
+  noindex: true,
+});
 
 export default function ResetPasswordPage() {
   // useSearchParams (inside ResetPasswordForm) needs a Suspense boundary and keeps

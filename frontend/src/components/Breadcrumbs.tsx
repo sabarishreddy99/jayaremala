@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import blogData from "@/data/knowledge/blog.json";
 import labData from "@/data/knowledge/lab.json";
 import { playClick } from "@/lib/sound";
+import JsonLd from "@/components/JsonLd";
+import { SITE_URL } from "@/lib/seo";
 
 type Section = { group: string; label: string };
 
@@ -69,8 +71,25 @@ export default function Breadcrumbs() {
     ? "max-w-3xl lg:max-w-[68rem] px-4 sm:px-6"
     : "max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl px-4 sm:px-6 xl:px-8";
 
+  // BreadcrumbList structured data — mirrors the visible trail. Only the crumbs
+  // that map to a real URL become positioned items (the Work/Writing category has
+  // no page), so it stays valid and matches what users can click.
+  const breadcrumbLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: crumbs
+      .filter((c) => c.href)
+      .map((c, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        name: c.label,
+        item: `${SITE_URL}${(c.href as string).replace(/\/+$/, "")}`,
+      })),
+  };
+
   return (
     <div className={`mx-auto w-full ${container} pt-6 sm:pt-8 -mb-6 sm:-mb-9`}>
+      <JsonLd data={breadcrumbLd} />
       <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-xs min-w-0">
         {crumbs.map((c, i) => {
           const last = i === crumbs.length - 1;

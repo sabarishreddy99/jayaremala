@@ -1,13 +1,18 @@
-import type { Metadata } from "next";
 import GVPageHeader from "@/components/gradevitian/GVPageHeader";
 import GVExploreMore from "@/components/gradevitian/GVExploreMore";
 import AskRulebook from "@/components/gradevitian/AskRulebook";
+import GVJsonLd from "@/components/gradevitian/GVJsonLd";
 import ScrollReveal from "@/components/ScrollReveal";
+import { gvMetadata, breadcrumbLd, toolLd } from "@/lib/gradevitian/seo";
 
-export const metadata: Metadata = {
-  title: "Ask the Rulebook",
-  description: "Ask any question about VIT's academic regulations and student code of conduct — attendance, grading, CGPA, Re-FAT, malpractice, ragging and more — answered in plain English, straight from the official rules.",
-};
+const DESC = "Ask any question about VIT's academic regulations and student code of conduct — attendance, grading, CGPA, Re-FAT, malpractice, ragging and more — answered in plain English, straight from the official rules.";
+
+export const metadata = gvMetadata({
+  path: "/ask",
+  title: "Ask the Rulebook — VIT Rules Q&A",
+  description: DESC,
+  keywords: ["VIT rules", "ask VIT regulations", "VIT code of conduct", "VIT academic rules Q&A", "VIT ragging rules", "VIT malpractice rules"],
+});
 
 const si = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: 1.7, strokeLinecap: "round" as const, strokeLinejoin: "round" as const };
 
@@ -37,6 +42,7 @@ const BENEFITS = [
 export default function AskPage() {
   return (
     <section className="mx-auto max-w-3xl px-5 py-16 sm:py-24">
+      <GVJsonLd data={[breadcrumbLd("/ask", "Ask the Rulebook"), toolLd({ path: "/ask", name: "Ask the Rulebook — VIT Rules Q&A", description: DESC })]} />
       <GVPageHeader
         eyebrow="Rulebook"
         title="Ask the Rulebook"

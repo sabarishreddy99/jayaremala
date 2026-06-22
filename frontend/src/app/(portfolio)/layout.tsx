@@ -9,11 +9,14 @@ import ScrollAtmosphere from "@/components/ScrollAtmosphere";
 import SectionIndicator from "@/components/SectionIndicator";
 import PageTransition from "@/components/PageTransition";
 import ScrollProgress from "@/components/ScrollProgress";
+import JsonLd from "@/components/JsonLd";
 import { getSearchIndex } from "@/lib/searchIndex";
+import { webSiteLd } from "@/lib/seo";
 
 export default function PortfolioLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <JsonLd data={webSiteLd()} />
       <ScrollProgress />
       <IntroScreen />
       <ScrollAtmosphere />

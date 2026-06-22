@@ -6,11 +6,13 @@ import GVSearchModal from "@/components/gradevitian/GVSearchModal";
 /** A search-bar trigger that opens the gradeVITian command palette. Also binds ⌘K / Ctrl-K. */
 export default function GVSearch() {
   const [open, setOpen] = useState(false);
+  const [initialQuery, setInitialQuery] = useState("");
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
+        setInitialQuery("");
         setOpen((o) => !o);
       }
     };
@@ -18,10 +20,24 @@ export default function GVSearch() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Honour the WebSite SearchAction target (/?q=…): when a visitor arrives from
+  // Google's sitelinks search box, open the palette pre-filled with their query.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q && q.trim()) {
+      // The search param is only readable on the client, so this mount-time
+      // open-from-URL is exactly the case where setState in an effect is correct.
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setInitialQuery(q);
+      setOpen(true);
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, []);
+
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => { setInitialQuery(""); setOpen(true); }}
         className="group mx-auto flex w-full max-w-sm items-center gap-2.5 rounded-full border border-border bg-surface/60 px-5 py-2.5 text-sm text-fg-subtle backdrop-blur transition-all duration-200 hover:border-accent/40 hover:text-fg"
         aria-label="Search the site"
       >
@@ -32,7 +48,7 @@ export default function GVSearch() {
         <kbd className="hidden rounded-md border border-border bg-surface-raised px-1.5 py-0.5 text-[10px] font-medium text-fg-faint sm:block">⌘K</kbd>
       </button>
 
-      {open && <GVSearchModal onClose={() => setOpen(false)} />}
+      {open && <GVSearchModal initialQuery={initialQuery} onClose={() => setOpen(false)} />}
     </>
   );
 }

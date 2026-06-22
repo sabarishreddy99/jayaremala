@@ -6,6 +6,8 @@ import GVScrollTop from "@/components/gradevitian/GVScrollTop";
 import GVServiceWorker from "@/components/gradevitian/GVServiceWorker";
 import GVIntroScreen from "@/components/gradevitian/GVIntroScreen";
 import GVCanonicalRedirect from "@/components/gradevitian/GVCanonicalRedirect";
+import GVJsonLd from "@/components/gradevitian/GVJsonLd";
+import { gvSiteLd } from "@/lib/gradevitian/seo";
 import ScrollProgress from "@/components/ScrollProgress";
 
 const GV_URL = "https://gradevitian.jayaremala.com";
@@ -62,6 +64,7 @@ export const metadata: Metadata = {
 export default function GradeVITianLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
+      <GVJsonLd data={gvSiteLd()} />
       <GVCanonicalRedirect />
       <GVAuthProvider>
         <GVIntroScreen />

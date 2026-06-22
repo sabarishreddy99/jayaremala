@@ -9,11 +9,11 @@ import { GV_PAGES, searchGV } from "@/lib/gradevitian/searchIndex";
 
 /** Site-wide command/search palette. Rendered only while open (parent unmounts it on
  *  close), so it always starts clean — no open-reset effects, no setState-in-effect. */
-export default function GVSearchModal({ onClose }: { onClose: () => void }) {
+export default function GVSearchModal({ onClose, initialQuery = "" }: { onClose: () => void; initialQuery?: string }) {
   const router = useRouter();
   const base = useGvBase();
   const { user } = useGVAuth();
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [selected, setSelected] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 

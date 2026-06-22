@@ -123,6 +123,18 @@ export default function SearchModal({ items }: Props) {
     return () => window.removeEventListener("keydown", onKey);
   }, [close]);
 
+  // Sitelinks search box (/?q=…): open the palette pre-filled when a visitor
+  // arrives from Google's search box. The URL param is only readable client-side.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q");
+    if (q && q.trim()) {
+      /* eslint-disable react-hooks/set-state-in-effect */
+      setQuery(q);
+      setOpen(true);
+      /* eslint-enable react-hooks/set-state-in-effect */
+    }
+  }, []);
+
   useEffect(() => { if (open) setTimeout(() => inputRef.current?.focus(), 30); }, [open]);
 
   // Scroll selected item into view

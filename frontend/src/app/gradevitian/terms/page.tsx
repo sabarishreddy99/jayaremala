@@ -1,7 +1,11 @@
-import type { Metadata } from "next";
 import GVPageHeader from "@/components/gradevitian/GVPageHeader";
+import { gvMetadata } from "@/lib/gradevitian/seo";
 
-export const metadata: Metadata = { title: "Terms & Conditions" };
+export const metadata = gvMetadata({
+  path: "/terms",
+  title: "Terms & Conditions",
+  description: "The terms of using gradeVITian — free, as-is, and built to help VIT students.",
+});
 
 export default function TermsPage() {
   return (

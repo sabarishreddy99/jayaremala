@@ -1,9 +1,13 @@
-import type { Metadata } from "next";
 import CommentsWall from "@/components/gradevitian/CommentsWall";
 import GVPageHeader from "@/components/gradevitian/GVPageHeader";
 import ScrollReveal from "@/components/ScrollReveal";
+import { gvMetadata } from "@/lib/gradevitian/seo";
 
-export const metadata: Metadata = { title: "Feedback" };
+export const metadata = gvMetadata({
+  path: "/feedback",
+  title: "Feedback",
+  description: "Share feedback, suggestions or bugs for gradeVITian — we read every message and build what VITians ask for.",
+});
 
 export default function FeedbackPage() {
   return (

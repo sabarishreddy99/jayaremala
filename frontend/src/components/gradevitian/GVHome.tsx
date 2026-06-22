@@ -253,6 +253,11 @@ export default function GVHome() {
             <HeroShare />
           </ScrollReveal>
 
+          {/* Live site metrics — real-time page loads + visits */}
+          <ScrollReveal delay={90} className="mt-10">
+            <GVVisits />
+          </ScrollReveal>
+
           <ScrollReveal delay={120} className="mt-16">
             <p className="mb-4 text-micro font-medium uppercase tracking-[0.18em] text-fg-subtle">
               Jump straight to a tool
@@ -338,9 +343,6 @@ export default function GVHome() {
 
           <ScrollReveal delay={140} className="mx-auto mt-14 max-w-5xl">
             <GVStats stats={METRICS} />
-            <div className="mt-6">
-              <GVVisits />
-            </div>
           </ScrollReveal>
         </Inner>
       </StackSection>

@@ -1,8 +1,12 @@
-import type { Metadata } from "next";
 import GVLink from "@/components/gradevitian/GVLink";
 import GVPageHeader from "@/components/gradevitian/GVPageHeader";
+import { gvMetadata } from "@/lib/gradevitian/seo";
 
-export const metadata: Metadata = { title: "Privacy Policy" };
+export const metadata = gvMetadata({
+  path: "/privacy",
+  title: "Privacy Policy",
+  description: "How gradeVITian handles your data — what we store, what we don't, and how to reach us.",
+});
 
 export default function PrivacyPage() {
   return (

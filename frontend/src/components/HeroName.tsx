@@ -3,7 +3,7 @@ const nameStyle: React.CSSProperties = {
   fontSize: "clamp(4.25rem, 20vw, 14rem)",
   fontWeight: 800,
   lineHeight: 1.0,
-  color: "var(--fg-muted)",
+  color: "var(--fg-subtle)",
   whiteSpace: "nowrap",
   paddingBottom: "0.08em",
 };

@@ -216,7 +216,7 @@ export default function PortfolioHome() {
       />
 
       {/* ── 1 · Hero — full-viewport, scrolls away naturally ──────── */}
-      <section id="hero" className="relative overflow-x-clip scroll-mt-[50px] hero-section-bg min-h-[calc(100dvh-50px)] flex flex-col">
+      <section id="hero" className="relative overflow-x-clip scroll-mt-[50px] hero-section-bg sm:min-h-[calc(100dvh-50px)] flex flex-col">
 
         {/* ── Hero background — interactive dot grid with subtle scroll parallax ── */}
         <Parallax speed={0.18} className="pointer-events-none absolute inset-0">
@@ -224,140 +224,157 @@ export default function PortfolioHome() {
           <HeroDotGrid />
         </Parallax>
 
-        {/* ── Main content — vertically centered in available viewport height ── */}
-        <div className="flex-1 flex flex-col justify-center">
+        {/* ── Editorial cover — meta intro on top, oversized scrolling name anchored bottom ── */}
+        <div className="relative z-[1] flex-1 flex flex-col">
 
-        {/* ── Focal hero — single centered column ── */}
-        <Inner className="flex flex-col items-center text-center py-16 sm:py-24 gap-8 max-w-5xl">
+          {/* ── Top — editorial intro, left-aligned ── */}
+          <Inner className="pt-8 sm:pt-14">
+            <div className="flex flex-col gap-5 sm:gap-7">
 
-          {/* Status badge */}
-          {(() => {
-            const avail = profile.availability;
-            const isOpen = avail?.open ?? true;
-            const label = avail?.label ?? "Open to opportunities";
-            const parts = avail
-              ? [...(avail.types ?? []), ...(avail.locations ?? [])]
-              : [profile.location];
-            const chipText = parts.length > 0 ? `${label} · ${parts.join(" · ")}` : label;
-            return (
-              <div
-                className="animate-fade-up flex items-center gap-2"
-                style={{ animationDelay: "0ms" }}
-              >
-                <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${isOpen ? "bg-green-500 animate-pulse" : "bg-zinc-400 dark:bg-zinc-500"}`} />
-                <span className="text-[11px] font-medium tracking-wide text-fg-faint/80">
-                  {chipText}
-                </span>
+              {/* Status badge — eyebrow */}
+              {(() => {
+                const avail = profile.availability;
+                const isOpen = avail?.open ?? true;
+                const label = avail?.label ?? "Open to opportunities";
+                const parts = avail
+                  ? [...(avail.types ?? []), ...(avail.locations ?? [])]
+                  : [profile.location];
+                const chipText = parts.length > 0 ? `${label} · ${parts.join(" · ")}` : label;
+                return (
+                  <div className="animate-fade-up flex items-center gap-2" style={{ animationDelay: "0ms" }}>
+                    <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${isOpen ? "bg-green-500 animate-pulse" : "bg-zinc-400 dark:bg-zinc-500"}`} />
+                    <span className="text-[11px] font-medium tracking-wide text-fg-faint/80">{chipText}</span>
+                  </div>
+                );
+              })()}
+
+              {/* Headline + tagline */}
+              <div className="animate-fade-up flex flex-col gap-2.5 sm:gap-3 max-w-3xl" style={{ animationDelay: "100ms" }}>
+                <p
+                  className="text-[1.7rem] sm:text-3xl lg:text-4xl font-bold leading-[1.12] tracking-tight text-fg text-balance"
+                  style={{ fontFamily: "var(--font-display), 'Helvetica Neue', Arial, sans-serif" }}
+                >
+                  {profile.bio.split(". ")[0]}.
+                </p>
+                <p className="text-sm sm:text-lg font-light text-fg-muted leading-relaxed text-balance">
+                  {profile.tagline}
+                </p>
               </div>
-            );
-          })()}
 
-          {/* Name — the single anchor */}
-          <HeroName name={profile.name} />
+              {/* CTAs + social */}
+              <div className="animate-fade-up flex flex-col gap-3.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3" style={{ animationDelay: "200ms" }}>
+                {/* Primary actions */}
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5">
+                  <Link
+                    href="/chat"
+                    className="group inline-flex items-center justify-center gap-2 rounded-full bg-fg text-bg px-7 py-3 text-sm font-medium hover:opacity-75 transition-opacity duration-200"
+                  >
+                    <SparkleIcon size={14} className="shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-12" />
+                    Ask Avocado
+                  </Link>
+                  <a
+                    href="#contact"
+                    className="group inline-flex items-center gap-1.5 text-sm font-medium text-fg-muted hover:text-fg transition-colors duration-200"
+                  >
+                    Schedule a Call
+                    <span className="group-hover:translate-x-0.5 transition-transform duration-200">→</span>
+                  </a>
+                </div>
 
-          {/* Tagline — one balanced line, constrained for readability */}
-          <p
-            className="animate-fade-up text-xl sm:text-2xl font-light text-fg-muted leading-relaxed w-full max-w-2xl text-balance text-center mt-6 sm:mt-0"
-            style={{ animationDelay: "140ms" }}
-          >
-            {profile.tagline}
-          </p>
+                <span className="w-px h-5 bg-border shrink-0 hidden sm:inline-block" aria-hidden />
 
-          {/* CTAs — one primary, one secondary, one tertiary */}
-          <div
-            className="animate-fade-up flex flex-row flex-wrap items-center justify-center gap-2.5 sm:gap-3 mt-1"
-            style={{ animationDelay: "240ms" }}
-          >
-            <Link
-              href="/chat"
-              className="group inline-flex items-center justify-center gap-2 rounded-full bg-fg text-bg px-8 py-3.5 text-sm font-medium hover:opacity-75 transition-opacity duration-200"
-            >
-              <SparkleIcon size={14} className="shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-12" />
-              Ask Avocado
-            </Link>
-            <a
-              href="#contact"
-              className="group inline-flex items-center gap-1.5 text-sm font-medium text-fg-muted hover:text-fg transition-colors duration-200"
-            >
-              Schedule a Call
-              <span className="group-hover:translate-x-0.5 transition-transform duration-200">→</span>
-            </a>
-          </div>
+                {/* Social + resume — comfortable tap targets */}
+                <div className="flex items-center gap-1 -ml-2 sm:ml-0">
+                  <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-fg-faint hover:text-accent hover:bg-surface-raised transition-colors">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
+                  </a>
+                  <a href={profile.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-fg-faint hover:text-fg hover:bg-surface-raised transition-colors">
+                    <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                  </a>
+                  {profile.resume && (
+                    <a href={profile.resume} target="_blank" rel="noopener noreferrer"
+                      className="ml-2 inline-flex items-center text-[11px] font-medium text-fg-faint hover:text-fg bg-surface dark:bg-surface-raised border border-border/60 dark:border-border-strong rounded-sm px-3 py-1.5 hover:border-fg-muted transition-all">
+                      Resume ↗
+                    </a>
+                  )}
+                </div>
+              </div>
 
-          {/* Minimal social row */}
-          <div className="animate-fade-up flex items-center justify-center gap-4 mt-0.5" style={{ animationDelay: "300ms" }}>
-            <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
-              className="text-fg-faint hover:text-accent transition-colors">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
-            </a>
-            <a href={profile.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub"
-              className="text-fg-faint hover:text-fg transition-colors">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
-            </a>
-            <a href={profile.booking_url ?? "https://calendar.app.google/3sScGpHpeSpvPjpSA"} target="_blank" rel="noopener noreferrer" aria-label="Book a call"
-              className="text-fg-faint hover:text-fg transition-colors">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
-              </svg>
-            </a>
-            {profile.resume && (
-              <a href={profile.resume} target="_blank" rel="noopener noreferrer"
-                className="text-[11px] font-medium text-fg-faint hover:text-fg bg-surface dark:bg-surface-raised border border-border/60 dark:border-border-strong rounded-sm px-3 py-1 hover:border-fg-muted transition-all">
-                Resume ↗
-              </a>
-            )}
-          </div>
-        </Inner>
+              {/* Proof stats */}
+              <div className="animate-fade-up max-w-3xl" style={{ animationDelay: "300ms" }}>
+                <div className="hidden sm:block">
+                  <HeroStats stats={profile.heroStats} />
+                </div>
+                {profile.heroStats && profile.heroStats.length >= 2 && (
+                  <div className="sm:hidden">
+                    <HeroStats stats={profile.heroStats.slice(0, 2)} cols={2} />
+                  </div>
+                )}
+              </div>
 
-        {/* ── Second beat — proof stats ── */}
-        <Inner className="pb-6 max-w-3xl">
-          {/* Desktop: 4-col animated stat cards */}
-          <div className="animate-fade-up hidden sm:block" style={{ animationDelay: "360ms" }}>
-            <HeroStats stats={profile.heroStats} />
-          </div>
-          {/* Mobile: compact 2-col animated (same count-up as desktop) */}
-          {profile.heroStats && profile.heroStats.length >= 2 && (
-            <div className="animate-fade-up sm:hidden" style={{ animationDelay: "360ms" }}>
-              <HeroStats stats={profile.heroStats.slice(0, 2)} cols={2} />
+              {/* Utility chips — latest post + install + LLM hint */}
+              <div className="animate-fade-up flex flex-wrap items-center gap-2" style={{ animationDelay: "360ms" }}>
+                {latestPost && (
+                  <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 rounded-sm border border-border/60 dark:border-border-strong bg-surface dark:bg-surface-raised px-3.5 py-1.5 hover:border-border-strong transition-all">
+                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-fg-faint shrink-0">Latest</span>
+                    <span className="w-px h-3 bg-border shrink-0" />
+                    <span className="text-[11px] text-fg-subtle group-hover:text-accent transition-colors line-clamp-1 max-w-[55vw] sm:max-w-xs">
+                      {latestPost.title}
+                    </span>
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-fg-faint group-hover:text-accent shrink-0 transition-colors">
+                      <path d="M5 12h14M12 5l7 7-7 7"/>
+                    </svg>
+                  </Link>
+                )}
+                <span className="inline-flex"><InstallPWA variant="chip" /></span>
+                <a href="/llms.txt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-1.5 text-fg-faint hover:text-accent transition-colors px-1">
+                  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 animate-pulse group-hover:animate-none text-accent">
+                    <path d="M4 17l6-6-6-6"/><path d="M12 19h8"/>
+                  </svg>
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">Want your LLM to read my work?</span>
+                </a>
+              </div>
             </div>
-          )}
+          </Inner>
 
-          {/* Latest post + LLM scrape hint — subtle teasers, centered */}
-          <div className="flex flex-col items-center gap-2 mt-6">
-            {latestPost && (
-              <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 rounded-sm border border-border/60 dark:border-border-strong bg-surface dark:bg-surface-raised px-3.5 py-1.5 hover:border-border-strong transition-all">
-                <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-fg-faint shrink-0">Latest</span>
-                <span className="w-px h-3 bg-border shrink-0" />
-                <span className="text-[11px] text-fg-subtle group-hover:text-accent transition-colors line-clamp-1 max-w-[60vw] sm:max-w-xs">
-                  {latestPost.title}
-                </span>
-                <span className="w-px h-3 bg-border shrink-0" />
-                <span className="text-[10px] text-fg-faint shrink-0">{latestPost.publishedAt ?? latestPost.date}</span>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-fg-faint group-hover:text-accent shrink-0 transition-colors">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </Link>
-            )}
-            <a href="/llms.txt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-1.5 text-fg-faint hover:text-accent transition-colors">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 animate-pulse group-hover:animate-none text-accent">
-                <path d="M4 17l6-6-6-6"/><path d="M12 19h8"/>
-              </svg>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">Want your LLM to read my work?</span>
-            </a>
-            <InstallPWA variant="chip" />
+          {/* Spacer — pushes the wordmark to the bottom of the viewport (desktop only) */}
+          <div className="hidden sm:block sm:flex-1 sm:min-h-[5vh]" />
+
+          {/* ── Bottom — meta row + oversized scrolling name ── */}
+          <div className="flex flex-col gap-2 sm:gap-3 mt-9 sm:mt-0">
+            <Inner>
+              <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end sm:justify-between gap-x-8 gap-y-2 border-t border-border pt-3 sm:pt-4">
+                {/* Roles — left */}
+                <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-sm font-medium text-fg-muted">
+                  {["Software Engineer", "AI Infrastructure", "Distributed Systems"].map((role, i, arr) => (
+                    <span key={role} className="flex items-center gap-2.5">
+                      {role}
+                      {i < arr.length - 1 && <span className="text-accent" aria-hidden>/</span>}
+                    </span>
+                  ))}
+                </p>
+                {/* Contact — right */}
+                <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs sm:text-sm text-fg-muted">
+                  <a href={`mailto:${profile.email}`} className="hover:text-accent transition-colors break-all">{profile.email}</a>
+                  <span className="text-fg-subtle">{profile.location}</span>
+                </div>
+              </div>
+            </Inner>
+
+            {/* Name — oversized grotesque, scrolls right → left */}
+            <HeroName name={profile.name} />
+
+            {/* Signature tagline */}
+            <Inner className="pt-1.5 pb-6 sm:pb-7">
+              <p className="flex items-center gap-2.5 text-[11px] sm:text-xs font-semibold uppercase tracking-[0.22em] text-fg-subtle">
+                <span className="h-px w-7 bg-accent shrink-0" aria-hidden />
+                Do hard things!
+              </p>
+            </Inner>
           </div>
-        </Inner>
-
-        </div>{/* end flex-1 content wrapper */}
-
-        {/* Scroll hint — pinned to bottom of viewport */}
-        <Inner className="pb-6 flex justify-center shrink-0">
-          <div className="flex flex-col items-center gap-1 opacity-30 animate-bounce" aria-hidden>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-fg-faint">
-              <path d="M6 9l6 6 6-6"/>
-            </svg>
-          </div>
-        </Inner>
+        </div>
 
       </section>
 

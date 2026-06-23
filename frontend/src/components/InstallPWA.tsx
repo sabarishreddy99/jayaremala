@@ -154,11 +154,13 @@ export default function InstallPWA({
     ) : variant === "chip" ? (
       <button
         onClick={handleClick}
-        className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-surface px-3.5 py-1.5 text-[11px] font-medium text-fg-muted transition-all hover:border-fg-muted hover:text-fg dark:border-border-strong dark:bg-surface-raised"
+        className="group inline-flex items-center gap-2 rounded-sm border border-border/60 bg-surface px-3.5 py-1.5 text-[11px] font-medium text-fg-muted transition-all hover:border-border-strong hover:text-fg dark:border-border-strong dark:bg-surface-raised"
       >
         <DownloadIcon size={12} />
-        Install this site as an app
-        <span className="text-fg-faint transition-transform group-hover:translate-x-0.5">→</span>
+        <span className="text-fg-subtle group-hover:text-accent transition-colors">Install as app</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-fg-faint group-hover:text-accent shrink-0 transition-colors">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
       </button>
     ) : variant === "footer" ? (
       <button

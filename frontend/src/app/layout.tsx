@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Source_Serif_4, Playfair_Display, EB_Garamond, Roboto, Cormorant_Garamond } from "next/font/google";
+import { Geist, Geist_Mono, Source_Serif_4, Playfair_Display, EB_Garamond, Roboto, Cormorant_Garamond, Inter } from "next/font/google";
 import "./globals.css";
 import ThemeProvider from "@/components/ThemeProvider";
 import SiteTracker from "@/components/SiteTracker";
@@ -36,6 +36,12 @@ const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
+});
+// Display grotesque for the oversized hero wordmark (Helvetica-grotesque feel)
+const inter = Inter({
+  variable: "--font-display",
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800", "900"],
 });
 
 const SITE_URL = "https://jayaremala.com";
@@ -109,7 +115,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} ${playfair.variable} ${ebGaramond.variable} ${roboto.variable} ${cormorant.variable} h-full antialiased`}
+      className={`${geistSans.variable} ${geistMono.variable} ${sourceSerif.variable} ${playfair.variable} ${ebGaramond.variable} ${roboto.variable} ${cormorant.variable} ${inter.variable} h-full antialiased`}
     >
       <head>
         {/* Anti-FOUC: apply data-theme + dark class before first paint so bg never flashes white */}

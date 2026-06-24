@@ -744,7 +744,8 @@ figcaption[data-rehype-pretty-code-title] + pre {
           mask-image: linear-gradient(to right, transparent, #000 10%, #000 90%, transparent);
 }
 .hero-name-track {
-  animation: marquee-left 110s linear infinite;
+  /* Transform is driven per-frame in JS (HeroName.tsx) so the marquee can
+     react to scroll velocity — no CSS animation, which would override it. */
   will-change: transform;
 }
 .hero-name-word {
@@ -756,7 +757,6 @@ figcaption[data-rehype-pretty-code-title] + pre {
 
 /* Hover — the title settles, breathes, and warms to life */
 .hero-name-band:hover { cursor: default; }
-.hero-name-band:hover .hero-name-track { animation-play-state: paused; }
 .hero-name-band:hover .hero-name-word {
   animation: hero-name-breathe 4.5s ease-in-out infinite;
 }

@@ -21,6 +21,7 @@ import TestimonialsEditor from "@/components/admin/TestimonialsEditor";
 import GalleryEditor from "@/components/admin/GalleryEditor";
 import KnowledgeDataView from "@/components/admin/KnowledgeDataView";
 import { StatCard, fmt } from "@/components/admin/StatCard";
+import GradevitianPanel from "@/components/admin/GradevitianPanel";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -3492,7 +3493,7 @@ function Dashboard({
 }) {
   const [period, setPeriod] = useState<Period>("all");
   const [activeView, setActiveView] = useState<
-    "analytics" | "write-blog" | "write-lab" | "quotes" | "blog-api" | "lab" | "quotes-api" |
+    "analytics" | "gradevitian" | "write-blog" | "write-lab" | "quotes" | "blog-api" | "lab" | "quotes-api" |
     "availability" | "now" | "data" | "sync" | "integrations" |
     "profile" | "hero-stats" | "spotlights" | "experience" | "education" | "projects" | "apps" | "skills" | "testimonials" | "gallery"
   >("analytics");
@@ -3535,6 +3536,7 @@ function Dashboard({
   type NavItem = { key: typeof activeView; label: string; group: string };
   const NAV: NavItem[] = [
     { key: "analytics",    label: "Analytics",    group: "Overview"  },
+    { key: "gradevitian",  label: "gradeVITian",  group: "Overview"  },
     { key: "write-blog",   label: "Write Blog",   group: "Content"   },
     { key: "blog-api",     label: "Blog · API",   group: "Content"   },
     { key: "write-lab",    label: "Write Lab",    group: "Content"   },
@@ -3560,7 +3562,7 @@ function Dashboard({
   const groups = ["Overview", "Content", "Portfolio", "Settings"] as const;
 
   const VIEW_LABELS: Record<typeof activeView, string> = {
-    analytics: "Analytics", "write-blog": "Write Blog", "write-lab": "Write Lab", quotes: "Quotes",
+    analytics: "Analytics", gradevitian: "gradeVITian", "write-blog": "Write Blog", "write-lab": "Write Lab", quotes: "Quotes",
     "blog-api": "Blog (API)", lab: "Lab (API)", "quotes-api": "Quotes (API)",
     availability: "Availability", now: "Now Page", data: "Raw JSON", sync: "Sync Status",
     integrations: "Google Integrations",
@@ -3572,6 +3574,7 @@ function Dashboard({
   function NavIcon({ navKey }: { navKey: string }) {
     const paths: Record<string, React.ReactNode> = {
       analytics:     <><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></>,
+      gradevitian:   <><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5"/></>,
       "write-blog":  <><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"/></>,
       "write-lab":   <><path d="M8 3v8l-4 9h16l-4-9V3M6 3h12"/><path d="M9 14h6"/></>,
       "blog-api":    <><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></>,
@@ -4262,6 +4265,8 @@ function Dashboard({
         </p>
 
         </>)}
+
+        {activeView === "gradevitian" && <GradevitianPanel />}
 
           </div>
         </main>

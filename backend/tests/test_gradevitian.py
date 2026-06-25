@@ -272,3 +272,12 @@ def test_admin_metrics_endpoint_requires_token(client, monkeypatch):
     assert r.status_code == 200, r.text
     body = r.json()
     assert set(body.keys()) == {"users", "saved_calcs", "comments", "engagement"}
+
+
+def test_admin_metrics_endpoint_disabled_without_admin_token(client, monkeypatch):
+    # No ADMIN_TOKEN configured → the endpoint is disabled and fails closed (403),
+    # so the PII it returns (user names + emails) can never be served unguarded.
+    from app.core.settings import settings
+    monkeypatch.setattr(settings, "admin_token", "", raising=False)
+    assert client.get("/gv/admin/metrics",
+                      headers={"Authorization": "Bearer anything"}).status_code == 403

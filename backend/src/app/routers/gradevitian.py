@@ -205,6 +205,12 @@ def gv_stats() -> dict:
     return gv.get_counts()
 
 
+@router.get("/admin/metrics", dependencies=[Depends(_require_admin)])
+def gv_admin_metrics() -> dict:
+    """Admin: aggregate gradeVITian usage metrics (users, saved calcs, comments, engagement)."""
+    return gv.get_admin_metrics()
+
+
 # ── Refer a fellow VITian (email invite) ─────────────────────────────────────
 
 @router.post("/refer")

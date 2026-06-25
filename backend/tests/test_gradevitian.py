@@ -256,3 +256,19 @@ def test_get_admin_metrics_aggregates():
     assert m["engagement"]["badges_total"] == 3
     badge_counts = {row["badge"]: row["count"] for row in m["engagement"]["badges_by_type"]}
     assert badge_counts == {"first_gpa": 1, "first_attendance": 1, "first_calc": 1}
+
+
+def test_admin_metrics_endpoint_requires_token(client, monkeypatch):
+    from app.core.settings import settings
+    monkeypatch.setattr(settings, "admin_token", "sekret", raising=False)
+
+    # no token → 401
+    assert client.get("/gv/admin/metrics").status_code == 401
+    # wrong token → 401
+    assert client.get("/gv/admin/metrics",
+                      headers={"Authorization": "Bearer nope"}).status_code == 401
+    # correct token → 200 with expected top-level keys
+    r = client.get("/gv/admin/metrics", headers={"Authorization": "Bearer sekret"})
+    assert r.status_code == 200, r.text
+    body = r.json()
+    assert set(body.keys()) == {"users", "saved_calcs", "comments", "engagement"}

@@ -253,5 +253,6 @@ def test_get_admin_metrics_aggregates():
     assert m["engagement"]["visits"] == 2
     assert m["engagement"]["active_streaks"] == 1
     assert m["engagement"]["longest_streak"] >= 1
-    assert m["engagement"]["badges_total"] == 1
-    assert m["engagement"]["badges_by_type"] == [{"badge": "first_calc", "count": 1}]
+    assert m["engagement"]["badges_total"] == 3
+    badge_counts = {row["badge"]: row["count"] for row in m["engagement"]["badges_by_type"]}
+    assert badge_counts == {"first_gpa": 1, "first_attendance": 1, "first_calc": 1}

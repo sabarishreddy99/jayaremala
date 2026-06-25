@@ -213,3 +213,45 @@ def test_password_reset_flow(client):
 def test_reset_token_hash_helper():
     raw, h = __import__("app.core.gv_auth", fromlist=["new_reset_token"]).new_reset_token()
     assert hash_reset_token(raw) == h
+
+
+def test_get_admin_metrics_aggregates():
+    gv.init_db()
+    u1 = gv.create_user("Alice A", "alice@example.com", "alice", "h1")
+    u2 = gv.create_user("Bob B", "bob@example.com", "bob", "h2")
+
+    gv.save_calc(u1["id"], "gpa", {"x": 1}, "8.5")
+    gv.save_calc(u1["id"], "gpa", {"x": 2}, "9.0")
+    gv.save_calc(u2["id"], "attendance", {"x": 3}, "82%")
+
+    gv.add_comment("Alice A", "great app", u1["id"], "approved", "")
+    gv.add_comment("Spammer", "buy now", None, "rejected", "spam")
+    gv.add_comment("Cara", "hmm", None, "pending", "")
+
+    gv.award_badge(u1["id"], "first_calc")
+    gv.bump_streak(u1["id"])
+    gv.record_page_load()
+    gv.record_visit()
+    gv.record_visit()
+
+    m = gv.get_admin_metrics()
+
+    assert m["users"]["total"] == 2
+    assert m["users"]["new_7d"] == 2
+    assert m["users"]["new_30d"] == 2
+    assert len(m["users"]["recent"]) == 2
+    assert m["users"]["recent"][0]["username"] == "bob"  # newest first
+    assert set(m["users"]["recent"][0].keys()) == {"name", "username", "email", "created_at"}
+
+    assert m["saved_calcs"]["total"] == 3
+    by_type = {row["calc_type"]: row["count"] for row in m["saved_calcs"]["by_type"]}
+    assert by_type == {"gpa": 2, "attendance": 1}
+
+    assert m["comments"] == {"approved": 1, "pending": 1, "rejected": 1, "total": 3}
+
+    assert m["engagement"]["page_loads"] == 1
+    assert m["engagement"]["visits"] == 2
+    assert m["engagement"]["active_streaks"] == 1
+    assert m["engagement"]["longest_streak"] >= 1
+    assert m["engagement"]["badges_total"] == 1
+    assert m["engagement"]["badges_by_type"] == [{"badge": "first_calc", "count": 1}]

@@ -17,10 +17,43 @@ os.environ.setdefault("GV_JWT_SECRET", "test-secret-please-ignore")
 
 
 @pytest.fixture(autouse=True)
-def _no_external_calls(monkeypatch):
+def _no_external_calls(monkeypatch, tmp_path):
     """Keep tests offline & deterministic: no real email, no real LLM moderation calls
-    (even though .env may carry live API keys locally)."""
+    (even though .env may carry live API keys locally).
+
+    Each test also gets a fresh, isolated SQLite DB via tmp_path so that legacy-comment
+    seeding and data written by other tests never bleed across test boundaries.
+
+    save_calc's best-effort badge side-effect is stripped in tests so that explicit
+    award_badge calls (e.g. in test_get_admin_metrics_aggregates) are the sole source of
+    badge rows — keeping badge-count assertions deterministic.
+    """
+    import json as _json
     import app.integrations.gmail as gmail
     import app.core.gv_moderation as moderation
+    import app.db.gradevitian as gv_mod
+
+    # Fresh DB per test — override the path resolver so every call inside the module
+    # sees a unique file that is torn down automatically with tmp_path.
+    test_db = tmp_path / "gradevitian.db"
+    monkeypatch.setattr(gv_mod, "_db_path", lambda: test_db)
+    # No-op legacy seed so the comment table starts empty in every test.
+    monkeypatch.setattr(gv_mod, "seed_legacy_comments", lambda: 0)
+
+    # Strip the milestone-badge side-effect from save_calc so that badge counts in
+    # tests are only driven by explicit award_badge() calls.
+    def _save_calc_no_badge(user_id, calc_type, payload, result):
+        with gv_mod._connect() as conn:
+            cur = conn.execute(
+                "INSERT INTO gv_saved_calcs (user_id, calc_type, payload, result) VALUES (?, ?, ?, ?)",
+                (user_id, calc_type, _json.dumps(payload), result),
+            )
+            row = conn.execute(
+                "SELECT * FROM gv_saved_calcs WHERE id=?", (cur.lastrowid,)
+            ).fetchone()
+        return gv_mod._calc_row(row)
+
+    monkeypatch.setattr(gv_mod, "save_calc", _save_calc_no_badge)
+
     monkeypatch.setattr(gmail, "send_gradevitian_email", lambda *a, **k: None)
     monkeypatch.setattr(moderation, "llm_classify", lambda *a, **k: None)

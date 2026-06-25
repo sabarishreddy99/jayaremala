@@ -209,6 +209,84 @@ def get_counts() -> dict:
     return {"page_loads": d.get("page_loads", 0), "visits": d.get("visits", 0)}
 
 
+def get_admin_metrics() -> dict:
+    """Aggregate gradeVITian usage metrics for the admin dashboard.
+
+    Single connection, all COUNT/GROUP BY — no per-row queries.
+    `last_active` is a 'YYYY-MM-DD' string, so an ISO string comparison against
+    date('now','-1 day') captures users active today or yesterday.
+    """
+    with _connect() as conn:
+        users_total = conn.execute("SELECT COUNT(*) AS c FROM gv_users").fetchone()["c"]
+        new_7d = conn.execute(
+            "SELECT COUNT(*) AS c FROM gv_users WHERE created_at >= datetime('now','-7 days')"
+        ).fetchone()["c"]
+        new_30d = conn.execute(
+            "SELECT COUNT(*) AS c FROM gv_users WHERE created_at >= datetime('now','-30 days')"
+        ).fetchone()["c"]
+        recent = [
+            {"name": r["name"], "username": r["username"], "email": r["email"], "created_at": r["created_at"]}
+            for r in conn.execute(
+                "SELECT name, username, email, created_at FROM gv_users ORDER BY id DESC LIMIT 10"
+            ).fetchall()
+        ]
+
+        calcs_total = conn.execute("SELECT COUNT(*) AS c FROM gv_saved_calcs").fetchone()["c"]
+        calcs_by_type = [
+            {"calc_type": r["calc_type"], "count": r["c"]}
+            for r in conn.execute(
+                "SELECT calc_type, COUNT(*) AS c FROM gv_saved_calcs GROUP BY calc_type ORDER BY c DESC"
+            ).fetchall()
+        ]
+
+        status_counts = {
+            r["status"]: r["c"]
+            for r in conn.execute(
+                "SELECT status, COUNT(*) AS c FROM gv_comments GROUP BY status"
+            ).fetchall()
+        }
+        comments = {
+            "approved": status_counts.get("approved", 0),
+            "pending": status_counts.get("pending", 0),
+            "rejected": status_counts.get("rejected", 0),
+            "total": sum(status_counts.values()),
+        }
+
+        counters = {
+            r["name"]: r["count"]
+            for r in conn.execute(
+                "SELECT name, count FROM gv_counters WHERE name IN ('page_loads','visits')"
+            ).fetchall()
+        }
+        active_streaks = conn.execute(
+            "SELECT COUNT(*) AS c FROM gv_streaks WHERE last_active >= date('now','-1 day')"
+        ).fetchone()["c"]
+        longest_streak = conn.execute(
+            "SELECT COALESCE(MAX(count), 0) AS m FROM gv_streaks"
+        ).fetchone()["m"]
+        badges_total = conn.execute("SELECT COUNT(*) AS c FROM gv_achievements").fetchone()["c"]
+        badges_by_type = [
+            {"badge": r["badge"], "count": r["c"]}
+            for r in conn.execute(
+                "SELECT badge, COUNT(*) AS c FROM gv_achievements GROUP BY badge ORDER BY c DESC"
+            ).fetchall()
+        ]
+
+    return {
+        "users": {"total": users_total, "new_7d": new_7d, "new_30d": new_30d, "recent": recent},
+        "saved_calcs": {"total": calcs_total, "by_type": calcs_by_type},
+        "comments": comments,
+        "engagement": {
+            "page_loads": counters.get("page_loads", 0),
+            "visits": counters.get("visits", 0),
+            "active_streaks": active_streaks,
+            "longest_streak": longest_streak,
+            "badges_total": badges_total,
+            "badges_by_type": badges_by_type,
+        },
+    }
+
+
 # ── Users ─────────────────────────────────────────────────────────────────────
 
 def get_user_by_id(user_id: int) -> dict | None:

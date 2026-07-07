@@ -212,3 +212,16 @@ GEMINI_MODEL=gemini-2.5-flash            # swap model here without code changes
 - **ChromaDB**: persists to `backend/chroma_db/` (git-ignored); hash file at `chroma_db/.ingest_hash`
 - **Backend module path**: uvicorn must use `--app-dir backend/src`
 - **Favicon**: `src/app/icon.png` (Next.js App Router auto-detects)
+
+---
+
+## gstack
+
+- **Team install** (each developer runs once):
+  ```bash
+  git clone --depth 1 https://github.com/garrytan/gstack.git ~/.claude/skills/gstack
+  cd ~/.claude/skills/gstack && ./setup --team
+  ```
+- **Web browsing**: use the `/browse` skill from gstack for all web browsing. **Never** use `mcp__claude-in-chrome__*` tools.
+- **Available gstack skills**: `/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/setup-gbrain`, `/retro`, `/investigate`, `/document-release`, `/document-generate`, `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`
+

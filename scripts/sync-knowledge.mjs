@@ -108,7 +108,19 @@ console.log(`sync: generated lab.json (${labEntries.length} entr${labEntries.len
 
 const jsonFiles = readdirSync(BACKEND_KNOWLEDGE).filter(f => f.endsWith(".json"));
 for (const file of jsonFiles) {
-  copyFileSync(join(BACKEND_KNOWLEDGE, file), join(FRONTEND_KNOWLEDGE, file));
+  // Validate before overwriting the frontend copy: an empty or malformed source
+  // JSON must fail the sync loudly, not silently ship a broken file that breaks
+  // the Next build (Turbopack can't import invalid JSON). See quotes.json regression.
+  const content = readFileSync(join(BACKEND_KNOWLEDGE, file), "utf8");
+  if (!content.trim()) {
+    throw new Error(`sync: backend/data/knowledge/${file} is empty — refusing to overwrite frontend copy`);
+  }
+  try {
+    JSON.parse(content);
+  } catch (err) {
+    throw new Error(`sync: backend/data/knowledge/${file} is not valid JSON — ${err.message}`);
+  }
+  writeFileSync(join(FRONTEND_KNOWLEDGE, file), content);
 }
 console.log(`sync: copied ${jsonFiles.length} JSON file(s) → frontend/src/data/knowledge/`);
 

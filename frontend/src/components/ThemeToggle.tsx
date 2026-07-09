@@ -59,7 +59,7 @@ export default function ThemeToggle() {
   useEffect(() => setMounted(true), []);
 
   if (!mounted) {
-    return <button aria-label="Toggle theme" className="w-8 h-8 rounded-lg flex items-center justify-center text-fg-faint" />;
+    return <button aria-label="Toggle theme" className="w-11 h-11 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-fg-faint" />;
   }
 
   const current = (CYCLE.includes(theme as Mode) ? theme : "system") as Mode;
@@ -70,7 +70,7 @@ export default function ThemeToggle() {
       onClick={() => setTheme(next)}
       aria-label={LABELS[current]}
       title={LABELS[current]}
-      className="w-8 h-8 rounded-lg flex items-center justify-center text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
+      className="w-11 h-11 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
     >
       {ICONS[current]}
     </button>

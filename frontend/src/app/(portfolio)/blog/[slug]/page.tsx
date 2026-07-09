@@ -152,7 +152,7 @@ function BlogPostApiView({ post, allPosts }: { post: ApiBlogPost; allPosts: Post
                   <Link
                     key={p.slug}
                     href={`/blog/${p.slug}`}
-                    className="group block rounded-xl border border-border bg-surface p-4 hover:border-border-strong transition-all card-lift"
+                    className="group block rounded-card border border-border bg-surface p-4 hover:border-border-strong transition-all card-lift"
                   >
                     <h3 className="text-sm font-semibold text-fg group-hover:text-accent transition-colors leading-snug mb-1.5">
                       {p.title}
@@ -172,11 +172,11 @@ function BlogPostApiView({ post, allPosts }: { post: ApiBlogPost; allPosts: Post
           )}
 
           <div className="mt-16 pt-8 border-t border-border">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {prevPost ? (
                 <Link
                   href={`/blog/${prevPost.slug}`}
-                  className="group flex flex-col gap-1 p-4 rounded-xl border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all"
+                  className="group flex flex-col gap-1 p-4 rounded-card border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all"
                 >
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-fg-faint group-hover:text-fg-subtle transition-colors">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -190,14 +190,14 @@ function BlogPostApiView({ post, allPosts }: { post: ApiBlogPost; allPosts: Post
                   <span className="text-[10px] text-fg-faint">{prevPost.date}</span>
                 </Link>
               ) : (
-                <div />
+                <div className="hidden sm:block" />
               )}
               {nextPost ? (
                 <Link
                   href={`/blog/${nextPost.slug}`}
-                  className="group flex flex-col gap-1 p-4 rounded-xl border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all text-right"
+                  className="group flex flex-col gap-1 p-4 rounded-card border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all sm:text-right"
                 >
-                  <span className="inline-flex items-center justify-end gap-1 text-[10px] font-semibold uppercase tracking-widest text-fg-faint group-hover:text-fg-subtle transition-colors">
+                  <span className="inline-flex items-center sm:justify-end gap-1 text-[10px] font-semibold uppercase tracking-widest text-fg-faint group-hover:text-fg-subtle transition-colors">
                     Next
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -209,7 +209,7 @@ function BlogPostApiView({ post, allPosts }: { post: ApiBlogPost; allPosts: Post
                   <span className="text-[10px] text-fg-faint">{nextPost.date}</span>
                 </Link>
               ) : (
-                <div />
+                <div className="hidden sm:block" />
               )}
             </div>
             <div className="mt-6 text-center">
@@ -462,7 +462,7 @@ export default async function BlogPostPage({ params }: Props) {
                   <Link
                     key={p.slug}
                     href={`/blog/${p.slug}`}
-                    className="group block rounded-xl border border-border bg-surface p-4 hover:border-border-strong transition-all card-lift"
+                    className="group block rounded-card border border-border bg-surface p-4 hover:border-border-strong transition-all card-lift"
                   >
                     <h3 className="text-sm font-semibold text-fg group-hover:text-accent transition-colors leading-snug mb-1.5">
                       {p.title}
@@ -483,12 +483,12 @@ export default async function BlogPostPage({ params }: Props) {
 
           {/* Next / Previous post navigation */}
           <div className="mt-16 pt-8 border-t border-border">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {/* Prev = older post */}
               {prevPost ? (
                 <Link
                   href={`/blog/${prevPost.slug}`}
-                  className="group flex flex-col gap-1 p-4 rounded-xl border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all"
+                  className="group flex flex-col gap-1 p-4 rounded-card border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all"
                 >
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-fg-faint group-hover:text-fg-subtle transition-colors">
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
@@ -502,16 +502,16 @@ export default async function BlogPostPage({ params }: Props) {
                   <span className="text-[10px] text-fg-faint">{prevPost.date}</span>
                 </Link>
               ) : (
-                <div />
+                <div className="hidden sm:block" />
               )}
 
               {/* Next = newer post */}
               {nextPost ? (
                 <Link
                   href={`/blog/${nextPost.slug}`}
-                  className="group flex flex-col gap-1 p-4 rounded-xl border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all text-right"
+                  className="group flex flex-col gap-1 p-4 rounded-card border border-border hover:border-border-strong bg-surface hover:bg-surface-raised transition-all sm:text-right"
                 >
-                  <span className="inline-flex items-center justify-end gap-1 text-[10px] font-semibold uppercase tracking-widest text-fg-faint group-hover:text-fg-subtle transition-colors">
+                  <span className="inline-flex items-center sm:justify-end gap-1 text-[10px] font-semibold uppercase tracking-widest text-fg-faint group-hover:text-fg-subtle transition-colors">
                     Next
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                       <path d="M5 12h14M12 5l7 7-7 7"/>
@@ -523,7 +523,7 @@ export default async function BlogPostPage({ params }: Props) {
                   <span className="text-[10px] text-fg-faint">{nextPost.date}</span>
                 </Link>
               ) : (
-                <div />
+                <div className="hidden sm:block" />
               )}
             </div>
 

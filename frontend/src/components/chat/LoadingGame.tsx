@@ -28,7 +28,7 @@ export default function LoadingGame() {
         {/* Avatar with counter-rotating thinking rings */}
         <div className="flex-shrink-0 relative mt-0.5" style={{ width: 28, height: 28 }}>
 
-          {/* Outer ring — clockwise, indigo */}
+          {/* Outer ring — clockwise, tracks the accent token */}
           <svg
             className="absolute animate-spin"
             style={{ top: -7, left: -7, width: 42, height: 42, animationDuration: "2.8s" }}
@@ -38,7 +38,7 @@ export default function LoadingGame() {
             <circle
               cx="21" cy="21" r="19"
               fill="none"
-              stroke="#818cf8"
+              style={{ stroke: "var(--accent)" }}
               strokeWidth="1.5"
               strokeDasharray="32 88"
               strokeLinecap="round"

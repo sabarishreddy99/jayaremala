@@ -23,7 +23,7 @@ function formatDate(iso: string) {
 
 function TestimonialCard({ item }: { item: Testimonial }) {
   return (
-    <div className="rounded-2xl border border-border bg-surface p-6 sm:p-7 flex flex-col flex-shrink-0 relative overflow-hidden">
+    <div className="rounded-card border border-border bg-surface p-6 sm:p-7 flex flex-col flex-shrink-0 relative overflow-hidden">
       {/* Corner bracket accents */}
       <svg className="absolute top-2.5 left-2.5 text-border/50 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
         <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -43,7 +43,7 @@ function TestimonialCard({ item }: { item: Testimonial }) {
       <div className="mt-5 pt-4 border-t border-border-subtle">
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="shrink-0 w-9 h-9 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold">
+            <div className="shrink-0 w-9 h-9 rounded-full bg-accent flex items-center justify-center text-accent-fg text-xs font-bold">
               {initials(item.name)}
             </div>
             <div className="min-w-0">
@@ -121,7 +121,7 @@ export default function TestimonialsCarousel() {
       {/* ── Mobile: header + inline nav arrows (always visible at top, never clipped) */}
       <div className="flex items-center justify-between mb-4 sm:hidden">
         <div className="flex items-center gap-2.5 flex-1 min-w-0">
-          <div className="w-[3px] h-5 rounded-full bg-border-strong shrink-0" />
+          <div className="w-[3px] h-5 rounded-full bg-gradient-to-b from-emerald-500 to-teal-500 shrink-0" />
           <h2 className="text-sm font-bold uppercase tracking-wider text-fg-faint">Testimonials</h2>
           <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" aria-hidden />
         </div>
@@ -130,7 +130,7 @@ export default function TestimonialsCarousel() {
             <button
               onClick={prev}
               aria-label="Previous testimonial"
-              className="w-7 h-7 rounded-full border border-border bg-surface flex items-center justify-center text-fg-subtle hover:text-fg hover:border-border-strong transition-all"
+              className="w-11 h-11 rounded-full border border-border bg-surface flex items-center justify-center text-fg-subtle hover:text-fg hover:border-border-strong transition-all"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M15 18l-6-6 6-6" />
@@ -140,7 +140,7 @@ export default function TestimonialsCarousel() {
             <button
               onClick={next}
               aria-label="Next testimonial"
-              className="w-7 h-7 rounded-full border border-border bg-surface flex items-center justify-center text-fg-subtle hover:text-fg hover:border-border-strong transition-all"
+              className="w-11 h-11 rounded-full border border-border bg-surface flex items-center justify-center text-fg-subtle hover:text-fg hover:border-border-strong transition-all"
             >
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                 <path d="M9 18l6-6-6-6" />
@@ -173,19 +173,23 @@ export default function TestimonialsCarousel() {
           ))}
         </div>
 
-        {/* Dot indicators */}
+        {/* Dot indicators — small visual dot, 44px-tall tap area */}
         {total > 1 && (
-          <div className="flex justify-center gap-1.5 mt-3">
+          <div className="flex justify-center mt-1">
             {testimonials.map((item, i) => (
               <button
                 key={i}
                 onClick={() => setCurrent(i)}
                 aria-label={`Show testimonial from ${item.name}`}
                 aria-pressed={i === current}
-                className={`rounded-full transition-all duration-200 ${
-                  i === current ? "w-5 h-2 bg-accent" : "w-2 h-2 bg-border-strong hover:bg-fg-subtle"
-                }`}
-              />
+                className="group/dot inline-flex items-center justify-center min-h-11 px-1.5"
+              >
+                <span
+                  className={`rounded-full transition-all duration-200 ${
+                    i === current ? "w-5 h-2 bg-accent" : "w-2 h-2 bg-border-strong group-hover/dot:bg-fg-subtle"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         )}

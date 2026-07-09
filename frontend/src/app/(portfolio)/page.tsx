@@ -185,15 +185,6 @@ const EXPLORE_PAGES = [
   },
 ] as const;
 
-const CARD_PALETTES = [
-  "from-blue-500 to-cyan-500",
-  "from-violet-500 to-purple-500",
-  "from-emerald-500 to-teal-500",
-  "from-rose-500 to-pink-500",
-  "from-amber-500 to-yellow-400",
-  "from-indigo-500 to-blue-400",
-] as const;
-
 /** Find the most relevant experience entry for a company chip name */
 function findExp(chipName: string) {
   const n = chipName.toLowerCase().trim();
@@ -286,16 +277,16 @@ export default function PortfolioHome() {
                 {/* Social + resume — comfortable tap targets */}
                 <div className="flex items-center gap-1 -ml-2 sm:ml-0">
                   <a href={profile.linkedin} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-fg-faint hover:text-accent hover:bg-surface-raised transition-colors">
+                    className="inline-flex h-11 w-11 sm:h-9 sm:w-9 items-center justify-center rounded-full text-fg-faint hover:text-accent hover:bg-surface-raised transition-colors">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg>
                   </a>
                   <a href={profile.github} target="_blank" rel="noopener noreferrer" aria-label="GitHub"
-                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-fg-faint hover:text-fg hover:bg-surface-raised transition-colors">
+                    className="inline-flex h-11 w-11 sm:h-9 sm:w-9 items-center justify-center rounded-full text-fg-faint hover:text-fg hover:bg-surface-raised transition-colors">
                     <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
                   </a>
                   {profile.resume && (
                     <a href={profile.resume} target="_blank" rel="noopener noreferrer"
-                      className="ml-2 inline-flex items-center text-[11px] font-medium text-fg-faint hover:text-fg bg-surface dark:bg-surface-raised border border-border/60 dark:border-border-strong rounded-sm px-3 py-1.5 hover:border-fg-muted transition-all">
+                      className="ml-2 inline-flex items-center text-[11px] font-medium text-fg-faint hover:text-fg bg-surface dark:bg-surface-raised border border-border/60 dark:border-border-strong rounded-chip px-3 py-2.5 sm:py-1.5 hover:border-fg-muted transition-all">
                       Resume ↗
                     </a>
                   )}
@@ -449,11 +440,14 @@ export default function PortfolioHome() {
                           )}
                         </div>
                         <div className="relative group/co pb-4">
-                          <span className={`text-xs cursor-default ${i === 0 ? "text-fg font-medium" : "text-fg-subtle"}`}>
+                          <span
+                            tabIndex={exp ? 0 : undefined}
+                            aria-label={exp ? `${co.trim()}: ${exp.role}, ${exp.start} – ${exp.end}` : undefined}
+                            className={`text-xs rounded-chip outline-offset-2 ${exp ? "cursor-help" : "cursor-default"} ${i === 0 ? "text-fg font-medium" : "text-fg-subtle"}`}>
                             {co.trim()}
                           </span>
                           {exp && (
-                            <div className="absolute left-0 top-full mt-1 z-10 hidden group-hover/co:block bg-surface border border-border rounded px-3 py-2 shadow-md whitespace-nowrap pointer-events-none">
+                            <div className="absolute left-0 top-full mt-1 z-10 hidden group-hover/co:block group-focus-within/co:block bg-surface border border-border rounded-chip px-3 py-2 shadow-md whitespace-nowrap pointer-events-none">
                               <p className="text-[11px] font-semibold text-fg">{exp.role}</p>
                               <p className="text-[10px] text-fg-faint font-mono tabular-nums">{exp.start} – {exp.end}</p>
                             </div>
@@ -477,10 +471,10 @@ export default function PortfolioHome() {
                 <Link
                   key={href}
                   href={href}
-                  className="group relative flex flex-col gap-2.5 p-4 rounded-2xl border border-border bg-surface hover:bg-surface-raised hover:border-border-strong transition-all overflow-hidden"
+                  className="group relative flex flex-col gap-2.5 p-4 rounded-card border border-border bg-surface hover:bg-surface-raised hover:border-border-strong transition-all overflow-hidden"
                 >
-                  {/* Sweep bar */}
-                  <div className="absolute inset-x-0 top-0 h-px bg-fg/20 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
+                  {/* Sweep bar — per-page accent gradient */}
+                  <div className={`absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r ${accent} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
                   {/* Icon */}
                   <span className="text-fg-faint group-hover:text-accent transition-colors">{icon}</span>
                   {/* Label + desc */}
@@ -534,7 +528,7 @@ export default function PortfolioHome() {
                       sourceLinks={p.sourceLinks}
                     />
                   ) : (
-                    <div className="group relative flex-1 rounded-2xl border border-border bg-surface p-6 space-y-3 hover:border-border-strong card-lift overflow-hidden">
+                    <div className="group relative flex-1 rounded-card border border-border bg-surface p-6 space-y-3 hover:border-border-strong card-lift overflow-hidden">
                       <div className={`absolute inset-x-0 top-0 h-px ${p.award ? "bg-gradient-to-r from-amber-500 to-orange-400" : "bg-fg/20"} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
                       {/* Corner bracket accents — ridealso-style geometric marks */}
                       <svg className="absolute top-2.5 left-2.5 text-border/50 group-hover:text-accent/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>

@@ -70,7 +70,7 @@ export default function ExperiencePage() {
             </div>
 
             <ScrollReveal delay={Math.min(i * 70, 280)} className="w-full">
-              <div className="group relative rounded-2xl border border-border bg-surface p-5 sm:p-6 hover:border-border-strong transition-all overflow-hidden card-lift">
+              <div className="group relative rounded-card border border-border bg-surface p-5 sm:p-6 hover:border-border-strong transition-all overflow-hidden card-lift">
                 {/* Hover sweep */}
                 <div className="absolute inset-x-0 top-0 h-px bg-fg/20 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 {/* Corner bracket accents */}

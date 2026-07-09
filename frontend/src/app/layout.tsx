@@ -13,6 +13,8 @@ const sourceSerif = Source_Serif_4({
   weight: ["300", "400", "600"],
   style: ["normal", "italic"],
 });
+// Playfair Display — the serif brand wordmark ("Jaya") in Nav/Footer, used
+// directly via var(--font-playfair). NOT the h1 heading face (that's Inter).
 const playfair = Playfair_Display({
   variable: "--font-playfair",
   subsets: ["latin"],
@@ -37,7 +39,8 @@ const cormorant = Cormorant_Garamond({
   weight: ["300", "400", "500", "600", "700"],
   style: ["normal", "italic"],
 });
-// Display grotesque for the oversized hero wordmark (Helvetica-grotesque feel)
+// Inter grotesque — bound to --font-display, the heading + hero wordmark face
+// (Helvetica-grotesque feel). This is what h1 and HeroName actually render.
 const inter = Inter({
   variable: "--font-display",
   subsets: ["latin"],
@@ -105,8 +108,9 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    // Match the actual --bg tokens so the browser chrome blends with the page.
+    { media: "(prefers-color-scheme: light)", color: "#fefefb" },
+    { media: "(prefers-color-scheme: dark)", color: "#000000" },
   ],
 };
 

@@ -195,8 +195,8 @@
 [data-theme="midnight"] h2 { letter-spacing: -0.014em; }
 [data-theme="midnight"] h3 { letter-spacing: -0.006em; font-weight: 500; }
 
-/* Hero name: HeroName uses var(--font-cormorant) inline — unaffected   */
-/* by --font-display, so it stays Cormorant Garamond in all themes.     */
+/* Hero name: HeroName renders var(--font-display) inline, so it follows */
+/* the heading face — Inter by default, Roboto under this midnight theme. */
 
 /* Blog/reading prose — match antique's serif rhythm (Source Serif 4     */
 /* via the un-overridden --font-blog).                                  */
@@ -218,6 +218,31 @@
   --text-caption: var(--text-micro);
 }
 
+/* ── Radius scale — 3 semantic corners ─────────────────── */
+:root {
+  --radius-card:  1rem;      /* cards — the canonical content-card corner   */
+  --radius-panel: 0.75rem;   /* dropdowns, drawers, code blocks             */
+  --radius-chip:  0.5rem;    /* chips, tags, small controls                 */
+}
+
+/* ── Elevation scale — card + section stacking shadows ─── */
+/* Single source of truth; dark variants override the token */
+:root {
+  --shadow-card:       none;
+  --shadow-card-hover: 0 12px 32px -8px rgb(0 0 0 / 0.08);
+  --shadow-stack:      0 -16px 48px -8px rgb(0 0 0 / 0.12);
+}
+.dark {
+  --shadow-card:
+    0 1px 3px 0 rgb(5 3 15 / 0.5),
+    0 1px 2px -1px rgb(5 3 15 / 0.35);
+  --shadow-card-hover:
+    0 4px 16px -2px rgb(5 3 15 / 0.65),
+    0 8px 32px -4px rgb(5 3 15 / 0.50),
+    0 1px 3px 0 rgb(5 3 15 / 0.35);
+  --shadow-stack: 0 -16px 48px -8px rgb(0 0 0 / 0.50);
+}
+
 @theme inline {
   /* Colors */
   --color-background:     var(--bg);
@@ -233,13 +258,21 @@
   --color-fg-muted:       var(--fg-muted);
   --color-fg-subtle:      var(--fg-subtle);
   --color-fg-faint:       var(--fg-faint);
-  --color-accent:         var(--accent);
-  --color-accent-hover:   var(--accent-hover);
-  --color-accent-light:   var(--accent-light);
+  --color-accent:           var(--accent);
+  --color-accent-hover:     var(--accent-hover);
+  --color-accent-light:     var(--accent-light);
+  --color-accent-fg:        var(--accent-fg);
+  --color-accent-secondary: var(--accent-secondary);
+  /* Radii — rounded-card / rounded-panel / rounded-chip */
+  --radius-card:  var(--radius-card);
+  --radius-panel: var(--radius-panel);
+  --radius-chip:  var(--radius-chip);
   /* Fonts */
+  /* --font-display (h1 + hero wordmark) is provided directly by the Inter    */
+  /* binding in layout.tsx as a real custom property, so it is intentionally  */
+  /* not redeclared here (and can be overridden per-theme, e.g. midnight).    */
   --font-sans:     var(--font-geist-sans);
   --font-mono:     var(--font-geist-mono);
-  --font-display:  var(--font-playfair);      /* Playfair Display — headings */
   --font-blog:     var(--font-source-serif);  /* Source Serif 4 — long-form  */
   --font-garamond: var(--font-eb-garamond);   /* EB Garamond — editorial serif */
   /* Type-scale utilities — text-nano, text-micro, text-body, text-lead */
@@ -291,12 +324,12 @@ body::after {
 
 /* ── Typography defaults ──────────────────────────────────── */
 /* Applied via @layer base; Tailwind utility classes always win. */
-/* h1 gets Playfair Display for formal editorial page headings;  */
-/* h2–h6 use Geist Sans for clean UI readability. Prose headings */
-/* override via .prose rules; HeroName sets Cormorant inline.    */
+/* h1 gets the Inter grotesque (--font-display, from layout.tsx) for the  */
+/* oversized editorial page headings; h2–h6 use Geist Sans for clean UI   */
+/* readability. Prose headings override via .prose rules.                 */
 @layer base {
   h1 {
-    font-family: var(--font-display), Georgia, serif;
+    font-family: var(--font-display), "Helvetica Neue", Arial, sans-serif;
     line-height: 1.1;
     letter-spacing: -0.02em;
   }
@@ -372,16 +405,11 @@ a[role="button"]:active {
 
 /* ── Card depth + lift ─────────────────────────────────────── */
 .card-lift {
-  box-shadow: none;
+  box-shadow: var(--shadow-card);
   transition:
     box-shadow 0.3s cubic-bezier(0.16, 1, 0.3, 1),
     transform   0.3s cubic-bezier(0.16, 1, 0.3, 1),
     border-color 0.3s ease;
-}
-.dark .card-lift {
-  box-shadow:
-    0 1px 3px 0 rgb(5 3 15 / 0.5),
-    0 1px 2px -1px rgb(5 3 15 / 0.35);
 }
 .card-lift:active {
   transform: translateY(0px) scale(0.99);
@@ -389,13 +417,7 @@ a[role="button"]:active {
 }
 .card-lift:hover {
   transform: translateY(-3px);
-  box-shadow: 0 12px 32px -8px rgb(0 0 0 / 0.08);
-}
-.dark .card-lift:hover {
-  box-shadow:
-    0 4px 16px -2px rgb(5 3 15 / 0.65),
-    0 8px 32px -4px rgb(5 3 15 / 0.50),
-    0 1px 3px 0 rgb(5 3 15 / 0.35);
+  box-shadow: var(--shadow-card-hover);
 }
 
 /* ── Blog prose ───────────────────────────────────────── */
@@ -883,10 +905,7 @@ figcaption[data-rehype-pretty-code-title] + pre {
 
 /* ── Section stacking depth shadow ─────────────────────── */
 .stack-sect {
-  box-shadow: 0 -16px 48px -8px rgb(0 0 0 / 0.12);
-}
-.dark .stack-sect {
-  box-shadow: 0 -16px 48px -8px rgb(0 0 0 / 0.50);
+  box-shadow: var(--shadow-stack);
 }
 
 /* ── Mobile: disable the sticky card-stacking entirely ──────
@@ -980,6 +999,10 @@ figcaption[data-rehype-pretty-code-title] + pre {
 /* ── Chat textarea — hide scrollbar ─────────────────────── */
 .chat-textarea { scrollbar-width: none; }
 .chat-textarea::-webkit-scrollbar { display: none; }
+
+/* ── Generic scrollbar-hidden scroller (e.g. mobile chip rows) ── */
+.no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
 
 /* ── Ask Avocado button — avocado icon ──────────────────── */
 .avocado-icon {

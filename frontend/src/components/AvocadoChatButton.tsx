@@ -21,19 +21,10 @@ export default function AvocadoChatButton() {
   const [mounted, setMounted]     = useState(false);
   const [show, setShow]           = useState(false); // card is in DOM
   const [closing, setClosing]     = useState(false); // exit animation playing
-  const [scrolled, setScrolled]   = useState(false); // mobile visibility gate
   const autoTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
-
-  // On mobile (< md = 768px) hide the FAB until the user scrolls
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 80);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
 
   const openCard = useCallback(() => {
     setClosing(false);
@@ -81,13 +72,8 @@ export default function AvocadoChatButton() {
   if (!mounted || hidden) return null;
 
   return (
-    <div className={`fixed bottom-6 right-5 sm:bottom-8 sm:right-8 z-50 flex flex-col items-end gap-3
-      transition-[opacity,transform] duration-300 ease-out
-      md:opacity-100 md:translate-y-0 md:pointer-events-auto
-      ${scrolled
-        ? "opacity-100 translate-y-0 pointer-events-auto"
-        : "opacity-0 translate-y-4 pointer-events-none"
-      }`}>
+    <div className="fixed bottom-6 right-5 sm:bottom-8 sm:right-8 z-50 flex flex-col items-end gap-3
+      transition-[opacity,transform] duration-300 ease-out">
 
       {/* ── Popup card ─────────────────────────────────────────────── */}
       {show && (
@@ -177,7 +163,7 @@ export default function AvocadoChatButton() {
                 href="/chat"
                 onClick={closeCard}
                 className="group flex items-center justify-between w-full rounded-xl
-                           px-4 py-2.5 text-[12px] font-semibold text-white
+                           px-4 py-2.5 text-[12px] font-semibold text-accent-fg
                            transition-opacity duration-150 hover:opacity-90
                            active:scale-[0.98] transition-transform"
                 style={{

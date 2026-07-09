@@ -139,7 +139,7 @@ export default function ChatInput({ onSend, disabled, prefill, onPrefillConsumed
         onKeyDown={handleKeyDown}
         onInput={handleInput}
         disabled={disabled}
-        style={{ maxHeight: "80px" }}
+        style={{ maxHeight: "140px" }}
       />
 
       {/* Send button */}
@@ -152,7 +152,7 @@ export default function ChatInput({ onSend, disabled, prefill, onPrefillConsumed
           shrink-0 w-9 h-9 rounded-full flex items-center justify-center
           transition-all duration-200
           ${hasContent && !disabled
-            ? "bg-accent hover:bg-accent-hover text-white shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
+            ? "bg-accent hover:bg-accent-hover text-accent-fg shadow-sm hover:shadow-md hover:scale-105 active:scale-95"
             : "bg-surface-raised text-fg-faint cursor-not-allowed"
           }
         `}

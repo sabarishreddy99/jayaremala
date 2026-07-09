@@ -138,7 +138,7 @@ export default function LeadCaptureCard({ messages, persona }: LeadCaptureCardPr
           <button
             type="submit"
             disabled={sending}
-            className="flex-1 rounded-lg bg-accent px-4 py-2 text-[12px] font-semibold text-white hover:bg-accent/90 disabled:opacity-50 transition-colors"
+            className="flex-1 rounded-lg bg-accent px-4 py-2 text-[12px] font-semibold text-accent-fg hover:bg-accent/90 disabled:opacity-50 transition-colors"
           >
             {sending ? "Sending…" : "Send intro to Jaya"}
           </button>

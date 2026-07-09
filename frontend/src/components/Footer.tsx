@@ -48,7 +48,7 @@ export default function Footer() {
       <div aria-hidden className="hero-dot-grid pointer-events-none absolute inset-0 opacity-[0.3]" />
 
       <div
-        className={`relative z-10 mx-auto w-full max-w-6xl xl:max-w-7xl 2xl:max-w-360 px-4 sm:px-6 pt-16 pb-7 sm:pt-20
+        className={`relative z-10 mx-auto w-full max-w-6xl xl:max-w-7xl 2xl:max-w-[90rem] px-4 sm:px-6 pt-16 pb-7 sm:pt-20
                     transition-[opacity,transform] duration-700 ease-out
                     ${revealed ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0"}`}
       >

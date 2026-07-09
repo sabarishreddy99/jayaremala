@@ -28,6 +28,11 @@ export default function Nav() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [navVisible, setNavVisible] = useState(true);
+  // Default to Mac (⌘) so the SSR/first-paint hint matches this audience; correct on mount.
+  const [isMac, setIsMac] = useState(true);
+  useEffect(() => {
+    setIsMac(/Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent));
+  }, []);
 
   // ── Scroll-hide/show refs ─────────────────────────────────────
   const lastScrollY   = useRef(0);
@@ -299,7 +304,7 @@ export default function Nav() {
               <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
             </svg>
             <span className="text-fg-faint group-hover/search:text-fg-muted transition-colors">Search…</span>
-            <kbd className="ml-auto rounded-md border border-border bg-bg px-1.5 py-0.5 font-sans text-[10px] leading-none text-fg-faint">⌘K</kbd>
+            <kbd className="ml-auto rounded-md border border-border bg-bg px-1.5 py-0.5 font-sans text-[10px] leading-none text-fg-faint">{isMac ? "⌘K" : "Ctrl K"}</kbd>
           </button>
           <SoundToggle />
           <ThemeToggle />
@@ -340,7 +345,7 @@ export default function Nav() {
         <div className="md:hidden flex items-center gap-1">
           <button
             onClick={() => { playClick("ui"); window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })); }}
-            className={`inline-flex items-center gap-1.5 rounded px-2.5 py-1.5 text-xs transition-all duration-300 ${
+            className={`inline-flex items-center gap-1.5 rounded px-2.5 min-h-11 text-xs transition-all duration-300 ${
               scrolled
                 ? "border border-border bg-surface-raised text-fg-faint hover:text-fg hover:border-fg-muted"
                 : "border border-transparent text-fg-subtle hover:text-fg"
@@ -355,7 +360,7 @@ export default function Nav() {
           <SoundToggle />
           <ThemeToggle />
           <button
-            className="p-2 rounded text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
+            className="inline-flex items-center justify-center w-11 h-11 rounded text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
             onClick={() => { setOpen(!open); playClick("ui"); }}
             aria-label="Toggle menu"
           >

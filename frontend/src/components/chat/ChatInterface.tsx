@@ -14,6 +14,8 @@ import LeadCaptureCard from "./LeadCaptureCard";
 import AnswerTrace, { TraceStage } from "./AnswerTrace";
 import AgentSteps, { StepEvent } from "./AgentSteps";
 import BookingCard, { BookingCardData } from "./BookingCard";
+import ChatLanding from "./ChatLanding";
+import ChatToolbar from "./ChatToolbar";
 
 export interface Message {
   role: "user" | "assistant";
@@ -228,7 +230,6 @@ export default function ChatInterface() {
   const [streaming, setStreaming] = useState(false);
   const [streamingContent, setStreamingContent] = useState("");
   const [prefill, setPrefill] = useState("");
-  const [introVisible, setIntroVisible] = useState(true);
   const [rateLimitUntil, setRateLimitUntil] = useState<number | null>(null);
   const [rateLimitSecsLeft, setRateLimitSecsLeft] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -271,10 +272,11 @@ export default function ChatInterface() {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }
 
-  /* Collapse the intro banner as soon as the first real message is sent */
-  useEffect(() => {
-    if (messages.length > 1) setIntroVisible(false);
-  }, [messages.length]);
+  /* Book-a-call: reuse the existing chat path — a booking intent makes the
+     backend emit a booking_card, which renders in-stream via <BookingCard>. */
+  function handleBook() {
+    handleSend("I'd like to book a 30-minute call with Jaya — what times work?");
+  }
 
   async function handleSend(text: string, forceClassic = false) {
     const useAgent = agentModeRef.current && !forceClassic;
@@ -479,7 +481,7 @@ export default function ChatInterface() {
               aria-pressed={!agentMode}
               title="Normal — fast, grounded RAG answer"
               className={`rounded-full px-3 py-1 transition-colors ${
-                !agentMode ? "bg-accent text-white" : "text-fg-faint hover:text-fg-muted"
+                !agentMode ? "bg-accent text-accent-fg" : "text-fg-faint hover:text-fg-muted"
               }`}
             >
               Normal
@@ -492,7 +494,7 @@ export default function ChatInterface() {
               aria-pressed={agentMode}
               title="Agent — Avocado picks tools per question and shows its steps live"
               className={`inline-flex items-center gap-1 rounded-full px-3 py-1 transition-colors ${
-                agentMode ? "bg-accent text-white" : "text-fg-faint hover:text-fg-muted"
+                agentMode ? "bg-accent text-accent-fg" : "text-fg-faint hover:text-fg-muted"
               }`}
             >
               <svg aria-hidden width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="inline-block align-[-1px] mr-1"><path d="M13 2 4 14h6l-1 8 9-12h-6z" /></svg>Agent
@@ -501,82 +503,7 @@ export default function ChatInterface() {
         </div>
       </div>
 
-      {/* ── Intro — cinematic first impression, collapses on first send ── */}
-      <div
-        className="shrink-0 overflow-hidden transition-all duration-500 ease-in-out"
-        style={{
-          maxHeight: introVisible ? "720px" : "0px",
-          opacity: introVisible ? 1 : 0,
-        }}
-      >
-        {/* Avatar + greeting — minimal */}
-        <div className="flex flex-col items-center px-4 sm:px-6 pt-10 sm:pt-16 pb-4 text-center">
-          <div className="relative mb-3">
-            <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-2xl">
-              🥑
-            </div>
-            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-bg" />
-          </div>
-
-          <h1 className="text-lg sm:text-xl font-semibold tracking-tight text-fg leading-tight">
-            Ask me anything about Jaya
-          </h1>
-          <p className="mt-1.5 text-xs text-fg-faint">
-            {getTimeGreeting()}! I&apos;m Avocado, his AI assistant.
-          </p>
-
-
-          {/* Audience personas — tailor tone + what Avocado leads with */}
-          <div className="mt-5 flex flex-col items-center gap-2">
-            <span className="text-[10px] font-medium uppercase tracking-[0.18em] text-fg-faint/70">
-              {persona ? "Tailored for a" : "I'm a…"}
-            </span>
-            <div className="flex items-center gap-1.5">
-              {PERSONAS.map((p) => {
-                const selected = persona === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => choosePersona(p.id)}
-                    title={p.hint}
-                    aria-pressed={selected}
-                    className={`rounded-full border px-3.5 py-1.5 text-[12px] font-medium transition-all duration-150 ${
-                      selected
-                        ? "border-accent bg-accent text-white"
-                        : "border-border bg-surface/60 text-fg-muted hover:border-accent/50 hover:text-accent"
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                );
-              })}
-            </div>
-            {persona && (
-              <span className="text-[10px] text-fg-faint animate-fade-up">
-                {PERSONAS.find((p) => p.id === persona)?.hint} · tap again to clear
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Prompt suggestions — centered cards, swap with persona */}
-        <div className="px-4 sm:px-6 pb-6 sm:pb-8">
-          <div className="mx-auto max-w-lg hidden sm:grid grid-cols-2 gap-2">
-            {activePrompts.map((p) => (
-              <button
-                key={p.full}
-                onClick={() => setPrefill(p.full)}
-                className="group rounded-xl border border-border/60 bg-surface/50 px-4 py-3
-                           text-[13px] text-center text-fg-muted
-                           hover:border-accent/50 hover:text-accent hover:bg-surface
-                           active:scale-[0.98] transition-all duration-150"
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+      {/* Intro is now the bento <ChatLanding>, rendered inside the scroll area below. */}
 
       {/* Warm-up banner */}
       {backendStatus === "warming" && (
@@ -669,6 +596,19 @@ export default function ChatInterface() {
       {/* Messages */}
       <div className="relative flex-1 min-h-0">
       <div ref={scrollRef} className="h-full overflow-y-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-4">
+        {isInitial ? (
+          <ChatLanding
+            personas={PERSONAS}
+            persona={persona}
+            onChoosePersona={(id) => choosePersona(id as PersonaId)}
+            activePrompts={activePrompts}
+            onPrompt={setPrefill}
+            backendStatus={backendStatus}
+            activeModel={activeModel}
+            onBook={handleBook}
+            greeting={getTimeGreeting()}
+          />
+        ) : (
         <div className="mx-auto max-w-2xl lg:max-w-3xl space-y-4 sm:space-y-5">
           {messages.map((m, i) => (
             <div key={i}>
@@ -748,15 +688,6 @@ export default function ChatInterface() {
             </div>
           ))}
 
-          {/* Welcome back prompt — shown after intro has gone away but chat is fresh */}
-          {isInitial && messages.length === 1 && (
-            <div className="pt-2">
-              <p className="text-[10px] text-fg-faint text-center">
-                Pick a card above or type your question below ↓
-              </p>
-            </div>
-          )}
-
           {/* Retry button */}
           {pendingRetry && !streaming && (
             <div className="flex justify-center">
@@ -790,6 +721,7 @@ export default function ChatInterface() {
           )}
           <div ref={bottomRef} />
         </div>
+        )}
       </div>
 
         {/* Jump-to-latest — appears when scrolled up during/after a conversation */}
@@ -815,6 +747,17 @@ export default function ChatInterface() {
       {/* Bottom — input + footer */}
       <div className="shrink-0 px-3 sm:px-6 lg:px-10 pt-2 pb-3 sm:pb-5">
         <div className="mx-auto max-w-2xl lg:max-w-3xl space-y-2">
+
+          {/* Compact tray — keeps promoted tiles reachable mid-conversation */}
+          {!isInitial && (
+            <ChatToolbar
+              personas={PERSONAS}
+              persona={persona}
+              onChoosePersona={(id) => choosePersona(id as PersonaId)}
+              onBook={handleBook}
+              activeModel={activeModel}
+            />
+          )}
 
           <ChatInput
             onSend={handleSend}

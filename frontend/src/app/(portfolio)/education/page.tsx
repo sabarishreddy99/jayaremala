@@ -78,15 +78,15 @@ export default function EducationPage() {
       {/* Timeline */}
       <div className="relative">
         {/* Vertical line */}
-        <div className="absolute left-0 top-3 bottom-3 w-px bg-gradient-to-b from-amber-300 dark:from-amber-700 to-border hidden sm:block" />
+        <div className="absolute left-0 top-3 bottom-3 w-px bg-gradient-to-b from-amber-300 dark:from-amber-700 to-border" />
 
         <div className="space-y-10">
           {education.map((edu, i) => (
-            <div key={i} className="sm:pl-10 relative">
+            <div key={i} className="pl-8 sm:pl-10 relative">
               {/* Timeline dot */}
-              <div className="hidden sm:flex absolute left-0 top-3 -translate-x-1/2 w-3 h-3 rotate-45 bg-surface border-2 border-amber-400 dark:border-amber-500 ring-2 ring-amber-100 dark:ring-amber-900" />
+              <div className="flex absolute left-0 top-3 -translate-x-1/2 w-3 h-3 rotate-45 bg-surface border-2 border-amber-400 dark:border-amber-500 ring-2 ring-amber-100 dark:ring-amber-900" />
 
-              <div className="group relative rounded-2xl border border-border bg-surface p-6 sm:p-7 hover:border-border-strong transition-all overflow-hidden card-lift">
+              <div className="group relative rounded-card border border-border bg-surface p-6 sm:p-7 hover:border-border-strong transition-all overflow-hidden card-lift">
                 {/* Hover sweep */}
                 <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-amber-400 to-orange-500 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
                 {/* Corner bracket accents */}

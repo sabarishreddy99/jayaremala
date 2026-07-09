@@ -68,7 +68,7 @@ export default function BookingCard({ data }: { data: BookingCardData }) {
           target="_blank"
           rel="noopener noreferrer"
           className="flex items-center justify-center gap-1.5 rounded-lg bg-accent px-4 py-2
-                     text-[12px] font-semibold text-white hover:bg-accent/90 transition-colors"
+                     text-[12px] font-semibold text-accent-fg hover:bg-accent/90 transition-colors"
         >
           Book on Google Calendar
           <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

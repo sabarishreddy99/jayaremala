@@ -185,12 +185,24 @@ const EXPLORE_PAGES = [
   },
 ] as const;
 
-/** Find the most relevant experience entry for a company chip name */
-function findExp(chipName: string) {
-  const n = chipName.toLowerCase().trim();
-  return experience.find(
-    (e) => e.company.toLowerCase().includes(n.split(" ")[0]) || n.includes(e.company.toLowerCase().split(" ")[0])
-  );
+/** Concise chip label — drop the qualifier after a dash or parenthesis
+ *  ("NYU IT – High-Speed Research Network" → "NYU IT"). */
+function shortCompany(name: string) {
+  return name.split(/\s+[–-]\s+|\s+\(/)[0].trim();
+}
+
+/** Career path derived from the experience data — deduped by company,
+ *  most-recent first. Auto-updates whenever experience.json changes. */
+function careerPath() {
+  const seen = new Set<string>();
+  const path: { company: string; short: string; role: string; start: string; end: string }[] = [];
+  for (const e of experience) {
+    const company = e.company.trim();
+    if (seen.has(company)) continue; // first hit wins → most recent role per company
+    seen.add(company);
+    path.push({ company, short: shortCompany(company), role: e.role, start: e.start, end: e.end });
+  }
+  return path;
 }
 
 export default function PortfolioHome() {
@@ -429,33 +441,29 @@ export default function PortfolioHome() {
               <div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Career path</p>
                 <div className="flex flex-col">
-                  {profile.previous.split(",").map((co, i, arr) => {
-                    const exp = findExp(co.trim());
-                    return (
-                      <div key={co} className="flex items-start gap-2.5">
-                        <div className="flex flex-col items-center">
-                          <div className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${i === 0 ? "bg-accent" : "bg-border-strong"}`} />
-                          {i < arr.length - 1 && (
-                            <div className="w-px h-6 bg-gradient-to-b from-border-strong/60 to-transparent mt-0.5" />
-                          )}
-                        </div>
-                        <div className="relative group/co pb-4">
-                          <span
-                            tabIndex={exp ? 0 : undefined}
-                            aria-label={exp ? `${co.trim()}: ${exp.role}, ${exp.start} – ${exp.end}` : undefined}
-                            className={`text-xs rounded-chip outline-offset-2 ${exp ? "cursor-help" : "cursor-default"} ${i === 0 ? "text-fg font-medium" : "text-fg-subtle"}`}>
-                            {co.trim()}
-                          </span>
-                          {exp && (
-                            <div className="absolute left-0 top-full mt-1 z-10 hidden group-hover/co:block group-focus-within/co:block bg-surface border border-border rounded-chip px-3 py-2 shadow-md whitespace-nowrap pointer-events-none">
-                              <p className="text-[11px] font-semibold text-fg">{exp.role}</p>
-                              <p className="text-[10px] text-fg-faint font-mono tabular-nums">{exp.start} – {exp.end}</p>
-                            </div>
-                          )}
+                  {careerPath().map((c, i, arr) => (
+                    <div key={c.company} className="flex items-start gap-2.5">
+                      <div className="flex flex-col items-center">
+                        <div className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${i === 0 ? "bg-accent" : "bg-border-strong"}`} />
+                        {i < arr.length - 1 && (
+                          <div className="w-px h-6 bg-gradient-to-b from-border-strong/60 to-transparent mt-0.5" />
+                        )}
+                      </div>
+                      <div className="relative group/co pb-4">
+                        <span
+                          tabIndex={0}
+                          aria-label={`${c.short}: ${c.role}, ${c.start} – ${c.end}`}
+                          className={`text-xs rounded-chip outline-offset-2 cursor-help ${i === 0 ? "text-fg font-medium" : "text-fg-subtle"}`}>
+                          {c.short}
+                        </span>
+                        <div className="absolute left-0 top-full mt-1 z-10 hidden group-hover/co:block group-focus-within/co:block bg-surface border border-border rounded-chip px-3 py-2 shadow-md whitespace-nowrap pointer-events-none">
+                          <p className="text-[11px] font-semibold text-fg">{c.role}</p>
+                          <p className="text-[10px] text-fg-subtle">{c.company}</p>
+                          <p className="text-[10px] text-fg-faint font-mono tabular-nums">{c.start} – {c.end}</p>
                         </div>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

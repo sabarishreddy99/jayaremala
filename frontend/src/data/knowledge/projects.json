@@ -1,5 +1,28 @@
 [
   {
+    "title": "Tailorbird",
+    "description": "An AI agent that tailors resumes for every role, on autopilot which stitches leaves into a nest, this one stitches your experience to fit each job.\n\nAn end-to-end system that turns a job-posting URL into a tailored, one-page resume (PDF + DOCX) with factual integrity, and does it autonomously at scale. You paste URLs into a local web tracker, click Run agent, and come back to finished resumes, dropped roles (with reasons), and a short list of judgment calls for you to decide.\n\nWhat inspired it?\n1. The tailoring method comes from the open-source /resume-tailoring Claude Code skill (MIT, by Varun R). Tailorbird wraps that skill in automation rather than reinventing it, so quality equals a careful, hand-guided session.\n2. The agent-over-skill design (deterministic Python for the mechanical 80%, the model only for authoring) came from watching where tokens and time actually went, and from the skill's own \"token optimization\" guidance.\n3. The human-in-the-loop needs_review valve exists because some calls (an unusual level, a missing must-have, a borderline fit) genuinely need a person, so the agent parks those instead of guessing.\n\nWho benefits.\n1. High-volume job seekers - apply to many roles without the per-role grind; a batch that took an evening now runs in minutes while you do something else.\n2. Career switchers - the archetype/reframing engine surfaces transferable experience for roles adjacent to your background.\n3. Non-native resume writers - get clean, idiomatic, role-matched phrasing without fighting the blank page.\n4. Busy people - schedule it, results and a review list are waiting when you're back.\n5. Anyone who values honesty - truthfulness boundaries are enforced; it will flag a poor fit rather than pad it.",
+    "tags": [
+      "ClaudeCodeCLI",
+      "Python",
+      "FastAPI",
+      "Agents",
+      "Node JS",
+      "Claude Skills",
+      "JavaScript",
+      "AsyncIO"
+    ],
+    "featured": true,
+    "award": "",
+    "sourceLinks": [
+      {
+        "label": "Github",
+        "url": "https://github.com/sabarishreddy99/tailorbird"
+      }
+    ],
+    "note": ""
+  },
+  {
     "title": "jayaremala.com (Avocado AI)",
     "description": "Production portfolio with Avocado AI, a streaming RAG agentic chatbot backed by a 4-stage hybrid retrieval pipeline: query expansion (up to 4 variants), batched dense search via ChromaDB (all-MiniLM-L6-v2 ONNX), BM25 lexical search (rank_bm25), and Reciprocal Rank Fusion (k=60) — all before Gemini 2.5 Flash sees the question. Implement model fallback mechanism via Gemini, Grow and OpenRouter with the  knowledge base of ~80 atomic documents auto-syncs incrementally: new or edited documents are upserted, deleted documents are purged from ChromaDB, unchanged ones are skipped entirely. Runs as a FastAPI Docker container on AWS Lightsail with zero-downtime blue-green deployments, Nginx + Let's Encrypt HTTPS, daily S3 backup of SQLite analytics, and a Next.js 16 static frontend on GitHub Pages.",
     "tags": [
@@ -163,28 +186,5 @@
       }
     ],
     "note": "At its heart, this was a project of purpose: an online gateway built to help people navigate my father's new business within our town. Seeing a simple web application drive real-world sales and provide stability for my family during the COVID-era was a transformative experience. It taught me that engineering is most powerful when it serves a personal and communal need."
-  },
-  {
-    "title": "Tailorbird",
-    "description": "An AI agent that tailors resumes for every role, on autopilot which stitches leaves into a nest, this one stitches your experience to fit each job.\n\nAn end-to-end system that turns a job-posting URL into a tailored, one-page resume (PDF + DOCX) with factual integrity, and does it autonomously at scale. You paste URLs into a local web tracker, click Run agent, and come back to finished resumes, dropped roles (with reasons), and a short list of judgment calls for you to decide.\n\nWhat inspired it?\n1. The tailoring method comes from the open-source /resume-tailoring Claude Code skill (MIT, by Varun R). Tailorbird wraps that skill in automation rather than reinventing it, so quality equals a careful, hand-guided session.\n2. The agent-over-skill design (deterministic Python for the mechanical 80%, the model only for authoring) came from watching where tokens and time actually went, and from the skill's own \"token optimization\" guidance.\n3. The human-in-the-loop needs_review valve exists because some calls (an unusual level, a missing must-have, a borderline fit) genuinely need a person, so the agent parks those instead of guessing.\n\nWho benefits.\n1. High-volume job seekers - apply to many roles without the per-role grind; a batch that took an evening now runs in minutes while you do something else.\n2. Career switchers - the archetype/reframing engine surfaces transferable experience for roles adjacent to your background.\n3. Non-native resume writers - get clean, idiomatic, role-matched phrasing without fighting the blank page.\n4. Busy people - schedule it, results and a review list are waiting when you're back.\n5. Anyone who values honesty - truthfulness boundaries are enforced; it will flag a poor fit rather than pad it.",
-    "tags": [
-      "ClaudeCodeCLI",
-      "Python",
-      "FastAPI",
-      "Agents",
-      "Node JS",
-      "Claude Skills",
-      "JavaScript",
-      "AsyncIO"
-    ],
-    "featured": true,
-    "award": "",
-    "sourceLinks": [
-      {
-        "label": "Github",
-        "url": "https://github.com/sabarishreddy99/tailorbird"
-      }
-    ],
-    "note": ""
   }
 ]

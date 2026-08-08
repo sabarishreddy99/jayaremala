@@ -27,8 +27,7 @@
     "headline": "Hey, I'm Jaya. I build things, then I keep them running.",
     "lead": "The first thing I ever shipped was a one-page site for my dad's brick business, in a mid-sized town in India. It brought him real customers during COVID. Nothing I've built since has felt more like the point.",
     "sub": "These days that's AI infrastructure: retrieval pipelines, inference at the edge, telemetry that can't drop a byte. Same job, bigger machines.",
-    "signature": "Do hard things!",
-    "avocadoNote": "Avocado is the assistant I built. He's read everything on this site."
+    "signature": "Do hard things!"
   },
   "why": {
     "label": "Why I build",

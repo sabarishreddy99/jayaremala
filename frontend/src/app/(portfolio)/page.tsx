@@ -23,6 +23,7 @@ import StillRunning from "@/components/StillRunning";
 import OriginStory from "@/components/OriginStory";
 import Signature from "@/components/Signature";
 import HopeMolecules from "@/components/HopeMolecules";
+import AvocadoMark from "@/components/AvocadoMark";
 import { experience } from "@/data/experience";
 
 export const metadata = {
@@ -251,6 +252,7 @@ function Chapter({
             one whispered micro-label. */}
         <header className="mb-8 sm:mb-10 md:mb-12">
           <div className="flex items-baseline gap-3">
+            <AvocadoMark className="chapter-avo h-[15px] w-[15px] translate-y-[2px]" />
             <span className="font-mono text-[11px] font-bold tabular-nums text-accent shrink-0">{n}</span>
             <h2 className="text-[11px] sm:text-xs font-bold uppercase tracking-[0.2em] text-fg-faint shrink-0">
               {label}
@@ -518,24 +520,17 @@ export default function PortfolioHome() {
       )}
 
       {/* ── 03 · gradeVITian ── z-[4] ─────────────────────────────── */}
-      <StackSection z={4} id="gradevitian">
-        <Inner className="py-20 sm:py-28 relative">
-          <span
-            aria-hidden
-            className="chapter-ghost pointer-events-none absolute -top-4 right-0 select-none font-black text-fg/[0.03] dark:text-fg/[0.04] leading-none"
-            style={{ fontSize: "clamp(7rem,18vw,14rem)" }}
-          >
-            03
-          </span>
-          <SpotlightSection />
-          <div className="mt-10 pt-5 border-t border-border flex items-center justify-end">
-            <a href="#projects" className="inline-flex items-center gap-1.5 text-[11px] text-fg-faint hover:text-fg transition-colors">
-              The rest of the work
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 9l6 6 6-6"/></svg>
-            </a>
-          </div>
-        </Inner>
-      </StackSection>
+      <Chapter
+        n="03"
+        label="gradeVITian"
+        deck="Built as an undergrad, still on call. Six years live and five graduating classes later."
+        id="gradevitian"
+        z={4}
+        nextHref="#projects"
+        nextLabel="The rest of the work"
+      >
+        <SpotlightSection hideEyebrow />
+      </Chapter>
 
       {/* ── 04 · The work ── z-[5] ────────────────────────────────── */}
       {featured.length > 0 && (

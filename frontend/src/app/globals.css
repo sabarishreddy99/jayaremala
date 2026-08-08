@@ -1227,9 +1227,23 @@ figcaption[data-rehype-pretty-code-title] + pre {
   animation: hm-breathe 5.5s ease-in-out infinite;
 }
 
-/* Separator as a molecular chain: a column of dots in the same visual
-   language as the hero grid and the ledger's dot leaders, masked to
-   fade out at both ends so it never reads as a hard rule. */
+/* ── Hope molecules: the hero belief panel ─────────────────────
+   The molecule itself is driven by rAF in HopeMolecules.tsx (bonds
+   have to follow their nodes, which CSS alone cannot express). What
+   lives here is the core's breathing, the divider, and the avocado
+   riding on it. */
+
+@keyframes hm-breathe {
+  0%, 100% { opacity: 0.92; }
+  50%      { opacity: 0.58; }
+}
+.hm-core {
+  animation: hm-breathe 5.5s ease-in-out infinite;
+}
+
+/* Divider as a dotted chain: the same visual language as the hero dot
+   grid and the ledger's dot leaders, masked to fade out at both ends
+   so it never reads as a hard rule. */
 .hope-rule {
   position: absolute;
   pointer-events: none;
@@ -1257,42 +1271,67 @@ figcaption[data-rehype-pretty-code-title] + pre {
           mask-image: linear-gradient(to right, #000, #000 62%, transparent);
 }
 
-/* A signal running the length of the chain, echoing the pulses that
-   travel into the molecule's core. */
-.hope-rule-v::after,
-.hope-rule-h::after {
-  content: "";
+/* ── The avocado riding the chain ──────────────────────────────
+   Carries a bg-coloured pad so the dots read as passing behind it. */
+.hope-avo {
   position: absolute;
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: var(--accent);
+  z-index: 1;
+  padding: 5px;
+  border-radius: 9999px;
+  background: var(--bg);
+  pointer-events: none;
+  /* Travel is declared per-orientation below; nothing shared here, so the
+     base rule must not carry a dangling animation of its own. */
 }
-.hope-rule-v::after {
-  left: 50%;
-  margin-left: -1.5px;
-  animation: hope-travel-y 9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+.hope-avo-v {
+  width: 30px;
+  height: 30px;
+  left: 0;
+  margin-left: -13.5px; /* centre the 30px pad on the 3px chain */
+  top: 26%;             /* resting position when motion is reduced */
+  animation: hope-avo-slide-y 19s ease-in-out infinite alternate;
 }
-.hope-rule-h::after {
-  top: 50%;
-  margin-top: -1.5px;
-  animation: hope-travel-x 9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+.hope-avo-h {
+  width: 26px;
+  height: 26px;
+  top: 0;
+  margin-top: -11.5px;
+  left: 12%;
+  animation: hope-avo-slide-x 16s ease-in-out infinite alternate;
 }
-@keyframes hope-travel-y {
-  0%        { top: 8%;  opacity: 0; }
-  14%       { opacity: 0.85; }
-  86%       { opacity: 0.85; }
-  100%      { top: 92%; opacity: 0; }
+
+/* Travel stays inside the chain's masked ends, so the avocado never
+   glides out past where the dots have faded to nothing. Alternating
+   rather than looping avoids a jump back to the start, and the slight
+   counter-rotation keeps it from feeling like a rigid lift. */
+@keyframes hope-avo-slide-y {
+  from { top: 13%; transform: rotate(-6deg); }
+  to   { top: 81%; transform: rotate(5deg); }
 }
-@keyframes hope-travel-x {
-  0%        { left: 2%;  opacity: 0; }
-  14%       { opacity: 0.85; }
-  76%       { opacity: 0.85; }
-  100%      { left: 58%; opacity: 0; }
+@keyframes hope-avo-slide-x {
+  from { left: 3%;  transform: rotate(-6deg); }
+  to   { left: 52%; transform: rotate(6deg); }
+}
+
+/* A small nod back when you engage with the panel. The lean lives on the
+   inner svg because an animated transform on the wrapper would always win
+   over a declarative one, hover or not. */
+.hope-avo svg {
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hope-panel:hover .hope-avo svg {
+  transform: rotate(9deg) scale(1.1);
+}
+
+/* Chapter marker: the same avocado opening every numbered chapter,
+   static so seven of them never turn into noise. */
+.chapter-avo {
+  flex-shrink: 0;
 }
 
 @media (prefers-reduced-motion: reduce) {
   .hm-core { animation: none; }
-  .hope-rule-v::after,
-  .hope-rule-h::after { animation: none; opacity: 0; }
+  .hope-avo { animation: none; transform: none; }
+  .hope-avo svg,
+  .hope-panel:hover .hope-avo svg { transform: none; transition: none; }
 }

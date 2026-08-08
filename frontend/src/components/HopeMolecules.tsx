@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import AvocadoMark from "@/components/AvocadoMark";
 import type { HopeMolecules as HopeMoleculesData } from "@/data/profile";
 
 /**
@@ -34,6 +35,10 @@ const SIGNAL_PERIOD = 5.2; // seconds for one satellite-to-core trip
 /**
  * The hero's belief panel: the reason the rest of the page exists, sitting in
  * the column that would otherwise be dead space on wide screens.
+ *
+ * The divider is a dotted chain in the same visual language as the hero dot
+ * grid and the ledger's dot leaders, with an avocado riding on it and a signal
+ * running its length.
  *
  * The molecule is driven by a single rAF loop that recomputes node positions
  * from layered sine waves and then re-anchors every bond to them, so the
@@ -84,8 +89,7 @@ export default function HopeMolecules({ data }: { data: HopeMoleculesData }) {
         const { bond, offset } = SIGNALS[i];
         const [a, b] = BONDS[bond];
         const u = ((t / SIGNAL_PERIOD + offset) % 1 + 1) % 1;
-        // eased travel, so it accelerates away and settles as it arrives
-        const e = u * u * (3 - 2 * u);
+        const e = u * u * (3 - 2 * u); // eased travel
         const p = pulses[i];
         p.setAttribute("cx", (pos[b].x + (pos[a].x - pos[b].x) * (1 - e)).toFixed(2));
         p.setAttribute("cy", (pos[b].y + (pos[a].y - pos[b].y) * (1 - e)).toFixed(2));
@@ -121,10 +125,18 @@ export default function HopeMolecules({ data }: { data: HopeMoleculesData }) {
 
   return (
     <aside className="hope-panel relative pt-7 lg:pt-0 lg:pl-10">
-      {/* Separator drawn as a molecular chain rather than a plain rule:
-          horizontal above the panel on small screens, vertical beside it on large. */}
+      {/* Divider: a dotted chain with an avocado riding on it. The glyph
+          punches a bg-coloured hole in the dots, so the chain reads as passing
+          behind it rather than colliding with it. */}
       <span className="hope-rule hope-rule-h lg:hidden" aria-hidden />
+      <span className="hope-avo hope-avo-h lg:hidden" aria-hidden>
+        <AvocadoMark className="h-full w-full" />
+      </span>
+
       <span className="hope-rule hope-rule-v hidden lg:block" aria-hidden />
+      <span className="hope-avo hope-avo-v hidden lg:block" aria-hidden>
+        <AvocadoMark className="h-full w-full" />
+      </span>
 
       {/* Molecule sits inline with the title on small screens, above it on large. */}
       <div className="flex items-center gap-4 sm:gap-5 lg:block">
@@ -137,14 +149,7 @@ export default function HopeMolecules({ data }: { data: HopeMoleculesData }) {
         >
           <g stroke="currentColor" strokeWidth="1" strokeLinecap="round" opacity="0.3">
             {BONDS.map(([a, b], i) => (
-              <line
-                key={i}
-                data-bond
-                x1={NODES[a].x}
-                y1={NODES[a].y}
-                x2={NODES[b].x}
-                y2={NODES[b].y}
-              />
+              <line key={i} data-bond x1={NODES[a].x} y1={NODES[a].y} x2={NODES[b].x} y2={NODES[b].y} />
             ))}
           </g>
 

@@ -46,11 +46,13 @@ function SecondaryCta({ cta }: { cta: SpotlightCta }) {
  * builds and runs. Distinct from the numbered chapters: it reads as a "this
  * person ships and scales real products" proof point for recruiters.
  */
-function SpotlightCard({ s }: { s: Spotlight }) {
+function SpotlightCard({ s, hideEyebrow = false }: { s: Spotlight; hideEyebrow?: boolean }) {
   return (
     <section className="relative">
-      {/* Eyebrow — signals "this is different from a portfolio project" */}
-      <div className="flex items-center gap-3 mb-8">
+      {/* Eyebrow — signals "this is different from a portfolio project".
+          Suppressed on the home page, where the chapter header already
+          names the section and a second label would just be noise. */}
+      <div className={`flex items-center gap-3 mb-8 ${hideEyebrow ? "hidden" : ""}`}>
         <span className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-accent shrink-0">
           <span className="relative flex h-1.5 w-1.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-60" />
@@ -146,13 +148,13 @@ function SpotlightCard({ s }: { s: Spotlight }) {
  * Renders every enabled spotlight, stacked. Data-driven from spotlights.json
  * (managed in /admin → Spotlights). Returns null when none are enabled.
  */
-export default function SpotlightSection() {
+export default function SpotlightSection({ hideEyebrow = false }: { hideEyebrow?: boolean } = {}) {
   const active = spotlights.filter((s) => s.enabled);
   if (active.length === 0) return null;
   return (
     <div className="space-y-16">
       {active.map((s) => (
-        <SpotlightCard key={s.slug} s={s} />
+        <SpotlightCard key={s.slug} s={s} hideEyebrow={hideEyebrow} />
       ))}
     </div>
   );

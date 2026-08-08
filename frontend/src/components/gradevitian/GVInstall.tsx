@@ -19,7 +19,7 @@ const PLATFORMS: { id: PlatformId; label: string; steps: string[] }[] = [
       "Open gradeVITian in Safari.",
       "Tap the Share button (the square with an up arrow).",
       "Scroll down and choose “Add to Home Screen”.",
-      "Tap “Add” — the app icon lands on your home screen.",
+      "Tap “Add”, the app icon lands on your home screen.",
     ],
   },
   {
@@ -29,7 +29,7 @@ const PLATFORMS: { id: PlatformId; label: string; steps: string[] }[] = [
       "Open gradeVITian in Chrome.",
       "Tap “Install app” below, or the ⋮ menu (top-right).",
       "Choose “Install app” / “Add to Home screen”.",
-      "Confirm — it installs like a native app.",
+      "Confirm, it installs like a native app.",
     ],
   },
   {
@@ -212,7 +212,7 @@ export default function GVInstall({
                 <div className="min-w-0 flex-1">
                   <h2 className="text-base font-bold text-fg">Install gradeVITian</h2>
                   <p className="mt-0.5 text-xs leading-relaxed text-fg-muted">
-                    Add the app to your home screen or dock — free, fast, and works offline.
+                    Add the app to your home screen or dock, free, fast, and works offline.
                   </p>
                 </div>
                 <button

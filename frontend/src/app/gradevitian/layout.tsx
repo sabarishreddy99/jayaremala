@@ -11,15 +11,15 @@ import { gvSiteLd } from "@/lib/gradevitian/seo";
 import ScrollProgress from "@/components/ScrollProgress";
 
 const GV_URL = "https://gradevitian.jayaremala.com";
-const GV_TITLE = "gradeVITian — GPA, CGPA, Grade & Attendance calculators for VITians";
+const GV_TITLE = "gradeVITian, GPA, CGPA, Grade & Attendance calculators for VITians";
 const GV_DESC =
-  "Free online grading tools for VIT students: compute your GPA, CGPA, predict your grades, estimate the GPA you need, and track attendance — fast, mobile-first, and accurate.";
+  "Free online grading tools for VIT students: compute your GPA, CGPA, predict your grades, estimate the GPA you need, and track attendance, fast, mobile-first, and accurate.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(GV_URL),
   title: {
     default: GV_TITLE,
-    template: "%s — gradeVITian",
+    template: "%s, gradeVITian",
   },
   description: GV_DESC,
   applicationName: "gradeVITian",

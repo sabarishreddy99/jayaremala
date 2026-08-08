@@ -66,32 +66,32 @@ export default function SemesterPlanner() {
         <Card className="text-center">
           <p className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle">Live GPA</p>
           <p className="mt-1 font-mono text-2xl font-bold tabular-nums text-fg sm:text-3xl">
-            {gpa.value != null ? gpa.value.toFixed(2) : "—"}
+            {gpa.value != null ? gpa.value.toFixed(2) : "·"}
           </p>
         </Card>
         <Card className="text-center">
           <p className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle">Credits</p>
-          <p className="mt-1 font-mono text-2xl font-bold tabular-nums text-fg sm:text-3xl">{totalCredits || "—"}</p>
+          <p className="mt-1 font-mono text-2xl font-bold tabular-nums text-fg sm:text-3xl">{totalCredits || "·"}</p>
         </Card>
         <Card className="text-center">
           <p className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle">Attendance</p>
           <p className={`mt-1 font-mono text-2xl font-bold tabular-nums sm:text-3xl ${
             attPct == null ? "text-fg" : attPct >= ATT_MIN ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
           }`}>
-            {attPct != null ? `${attPct.toFixed(0)}%` : "—"}
+            {attPct != null ? `${attPct.toFixed(0)}%` : "·"}
           </p>
         </Card>
       </div>
       {attPct != null && attPct < ATT_MIN && (
         <p className="text-center text-xs font-medium text-rose-600 dark:text-rose-400">
-          Below the {ATT_MIN}% line — you risk being debarred. <GVLink href="/rules" className="font-semibold underline underline-offset-2 hover:text-rose-700 dark:hover:text-rose-300">See the rule →</GVLink>
+          Below the {ATT_MIN}% line, you risk being debarred. <GVLink href="/rules" className="font-semibold underline underline-offset-2 hover:text-rose-700 dark:hover:text-rose-300">See the rule →</GVLink>
         </p>
       )}
 
       {/* Course rows */}
       <Card>
         <p className="mb-5 text-sm leading-relaxed text-fg-muted">
-          List your courses once — credits, expected grade, and attendance. Your GPA, total credits,
+          List your courses once, credits, expected grade, and attendance. Your GPA, total credits,
           and overall attendance update live, and everything saves to your account.
         </p>
 
@@ -134,7 +134,7 @@ export default function SemesterPlanner() {
               <div>
                 <RowLabel>Credits</RowLabel>
                 <Select aria-label={`Course ${i + 1} credits`} value={c.credits} onChange={(e) => update(i, { credits: e.target.value === "" ? "" : Number(e.target.value) })} className="text-center">
-                  <option value="">—</option>
+                  <option value="">·</option>
                   {[1, 2, 3, 4, 5, 6].map((n) => <option key={n} value={n}>{n}</option>)}
                 </Select>
               </div>
@@ -143,7 +143,7 @@ export default function SemesterPlanner() {
               <div>
                 <RowLabel>Grade</RowLabel>
                 <Select aria-label={`Course ${i + 1} grade`} value={c.grade} onChange={(e) => update(i, { grade: e.target.value as GpaCourse["grade"] })} className="text-center">
-                  <option value="">—</option>
+                  <option value="">·</option>
                   {GRADE_OPTIONS.map((g) => <option key={g} value={g}>{g}</option>)}
                 </Select>
               </div>
@@ -177,7 +177,7 @@ export default function SemesterPlanner() {
             <SaveCalcButton
               calcType="semester-plan"
               payload={{ courses: filled }}
-              result={`${filled.length} courses · GPA ${gpa.value != null ? gpa.value.toFixed(2) : "—"}${attPct != null ? ` · ${attPct.toFixed(0)}% attendance` : ""}`}
+              result={`${filled.length} courses · GPA ${gpa.value != null ? gpa.value.toFixed(2) : "·"}${attPct != null ? ` · ${attPct.toFixed(0)}% attendance` : ""}`}
             />
           )}
         </div>

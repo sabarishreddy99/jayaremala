@@ -5,7 +5,7 @@ import { gvMetadata } from "@/lib/gradevitian/seo";
 export const metadata = gvMetadata({
   path: "/privacy",
   title: "Privacy Policy",
-  description: "How gradeVITian handles your data — what we store, what we don't, and how to reach us.",
+  description: "How gradeVITian handles your data, what we store, what we don't, and how to reach us.",
 });
 
 export default function PrivacyPage() {
@@ -19,14 +19,14 @@ export default function PrivacyPage() {
         </p>
         <h2 className="mt-4 text-lg font-semibold text-fg">What we store</h2>
         <ul className="list-disc space-y-1 pl-5">
-          <li><strong className="text-fg">Account details</strong> — your name, email and username, with your password stored only as a salted hash.</li>
-          <li><strong className="text-fg">Saved calculations</strong> — only the results you explicitly choose to save.</li>
-          <li><strong className="text-fg">Feedback comments</strong> — the name and message you submit on the feedback page.</li>
+          <li><strong className="text-fg">Account details</strong>, your name, email and username, with your password stored only as a salted hash.</li>
+          <li><strong className="text-fg">Saved calculations</strong>, only the results you explicitly choose to save.</li>
+          <li><strong className="text-fg">Feedback comments</strong>, the name and message you submit on the feedback page.</li>
         </ul>
         <h2 className="mt-4 text-lg font-semibold text-fg">What we don&apos;t do</h2>
         <p>
-          We never sell your data, and the calculators themselves run entirely in your browser —
-          your inputs aren&apos;t sent anywhere unless you save a result while logged in.
+          We never sell your data, and the calculators themselves run entirely in your browser.
+          Your inputs aren&apos;t sent anywhere unless you save a result while logged in.
         </p>
         <h2 className="mt-4 text-lg font-semibold text-fg">Email</h2>
         <p>

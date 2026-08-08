@@ -79,7 +79,7 @@ export default function GVRefer() {
           Invite sent!
         </p>
       )}
-      {status === "nogmail" && <p className="mt-2 text-center text-sm text-fg-muted">Couldn&apos;t send the email right now — share via the buttons below instead.</p>}
+      {status === "nogmail" && <p className="mt-2 text-center text-sm text-fg-muted">Couldn&apos;t send the email right now, share via the buttons below instead.</p>}
       {status === "error" && <p className="mt-2 text-center text-sm text-rose-600 dark:text-rose-400">Something went wrong. Please try again.</p>}
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">

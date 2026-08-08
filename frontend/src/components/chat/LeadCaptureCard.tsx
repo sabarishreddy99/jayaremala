@@ -64,7 +64,7 @@ export default function LeadCaptureCard({ messages, persona }: LeadCaptureCardPr
           setSubmitted(true);
         }
       } else if (res.status === 429) {
-        setError("Too many requests — please try again later.");
+        setError("Too many requests, please try again later.");
       } else {
         setError("Something went wrong. Please email Jaya directly.");
       }
@@ -84,7 +84,7 @@ export default function LeadCaptureCard({ messages, persona }: LeadCaptureCardPr
             {persona === "recruiter"
               ? "I'll send Jaya your intro with a summary of our conversation."
               : persona === "engineer"
-              ? "I'll let Jaya know you'd like to connect — engineers talking to engineers."
+              ? "I'll let Jaya know you'd like to connect, engineers talking to engineers."
               : persona === "founder"
               ? "I'll intro you to Jaya with context from our conversation."
               : "I'll send Jaya a note so he can follow up with you directly."}

@@ -33,7 +33,7 @@ interface PageSeo {
 /** Build a complete, canonical-correct Metadata object for a gradeVITian page. */
 export function gvMetadata({ path, title, description, keywords, noindex }: PageSeo): Metadata {
   const url = gvUrl(path);
-  const ogTitle = `${title} — gradeVITian`;
+  const ogTitle = `${title}, gradeVITian`;
   return {
     title,
     description,
@@ -107,7 +107,7 @@ export function gvSiteLd() {
       "@context": "https://schema.org",
       "@type": "WebSite",
       name: "gradeVITian",
-      alternateName: "gradeVITian — VIT GPA & CGPA calculators",
+      alternateName: "gradeVITian, VIT GPA & CGPA calculators",
       url: gvUrl("/"),
       inLanguage: "en",
       // Sitelinks search box — the /?q= target is handled by GVSearch on the home,
@@ -126,7 +126,7 @@ export function gvSiteLd() {
       logo: GV_OG_IMAGE,
       founder: GV_AUTHOR,
       description:
-        "Free GPA, CGPA, grade, attendance and academic-rules tools for VIT students — built by a VITian, used by 17K+ students a month.",
+        "Free GPA, CGPA, grade, attendance and academic-rules tools for VIT students, built by a VITian, used by 17K+ students a month.",
     },
   ];
 }

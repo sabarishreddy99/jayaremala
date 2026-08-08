@@ -53,7 +53,7 @@ export default function GalleryGrid({ items }: { items: GalleryItem[] }) {
   if (items.length === 0) {
     return (
       <div className="rounded-2xl border border-dashed border-border bg-surface p-12 text-center">
-        <p className="text-sm text-fg-faint">No photos yet — add them from the admin gallery panel.</p>
+        <p className="text-sm text-fg-faint">No photos yet. Add them from the admin gallery panel.</p>
       </div>
     );
   }

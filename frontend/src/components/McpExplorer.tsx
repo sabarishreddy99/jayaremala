@@ -91,7 +91,7 @@ export default function McpExplorer() {
       const data = await res.json();
       setResult(JSON.stringify(res.ok ? data.result : data, null, 2));
     } catch {
-      setResult("Request failed — the backend may be warming up. Try again in a moment.");
+      setResult("Request failed. The backend may be warming up. Try again in a moment.");
     } finally {
       setRunning(false);
     }
@@ -105,15 +105,15 @@ export default function McpExplorer() {
           Connect your AI client
         </h2>
         <p className="text-sm text-fg-muted mb-4">
-          Point Claude Desktop or Cursor at the server below, then ask your model about Jaya — it will
+          Point Claude Desktop or Cursor at the server below, then ask your model about Jaya. It will
           call these tools directly. Endpoint:{" "}
           <code className="rounded bg-surface-raised px-1.5 py-0.5 text-[12px] font-mono text-accent break-all">
             {mcpUrl}
           </code>
         </p>
         <div className="grid sm:grid-cols-2 gap-3">
-          <CopyBlock label="Claude Desktop — claude_desktop_config.json" code={claudeConfig} />
-          <CopyBlock label="Cursor — ~/.cursor/mcp.json" code={cursorConfig} />
+          <CopyBlock label="Claude Desktop, claude_desktop_config.json" code={claudeConfig} />
+          <CopyBlock label="Cursor, ~/.cursor/mcp.json" code={cursorConfig} />
         </div>
       </section>
 
@@ -123,12 +123,12 @@ export default function McpExplorer() {
           Live playground
         </h2>
         <p className="text-sm text-fg-muted mb-4">
-          The same read-only tools, callable right here. No login, no LLM cost — these return Jaya&apos;s
+          The same read-only tools, callable right here. No login, no LLM cost. These return Jaya&apos;s
           real data.
         </p>
 
         {error && (
-          <p className="text-sm text-fg-faint">The tools API is warming up — refresh in a moment.</p>
+          <p className="text-sm text-fg-faint">The tools API is warming up. Refresh in a moment.</p>
         )}
 
         {!error && tools.length === 0 && (
@@ -179,7 +179,7 @@ export default function McpExplorer() {
                       );
                     })}
                     {Object.keys(activeTool.parameters.properties ?? {}).length === 0 && (
-                      <p className="text-[11px] text-fg-faint italic">No parameters — just run it.</p>
+                      <p className="text-[11px] text-fg-faint italic">No parameters. Just run it.</p>
                     )}
                   </div>
                   <button

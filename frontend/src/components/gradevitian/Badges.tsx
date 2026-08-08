@@ -49,7 +49,7 @@ export default function Badges() {
         })}
       </div>
       <p className="mt-3 text-[11px] text-fg-subtle">
-        Use the tools and visit daily to unlock more — your streak counts.
+        Use the tools and visit daily to unlock more. Your streak counts.
       </p>
     </Card>
   );

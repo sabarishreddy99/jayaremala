@@ -41,7 +41,7 @@ export default function SystemDashboard() {
     return (
       <p className="text-sm text-fg-faint">
         The live system is warming up or unreachable. This dashboard reads real-time metrics from the
-        Railway backend — refresh in a moment.
+        Railway backend. Refresh in a moment.
       </p>
     );
   }

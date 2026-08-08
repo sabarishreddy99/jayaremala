@@ -5,11 +5,11 @@ import GVJsonLd from "@/components/gradevitian/GVJsonLd";
 import ScrollReveal from "@/components/ScrollReveal";
 import { gvMetadata, breadcrumbLd, toolLd } from "@/lib/gradevitian/seo";
 
-const DESC = "Ask any question about VIT's academic regulations and student code of conduct — attendance, grading, CGPA, Re-FAT, malpractice, ragging and more — answered in plain English, straight from the official rules.";
+const DESC = "Ask any question about VIT's academic regulations and student code of conduct, attendance, grading, CGPA, Re-FAT, malpractice, ragging and more, answered in plain English, straight from the official rules.";
 
 export const metadata = gvMetadata({
   path: "/ask",
-  title: "Ask the Rulebook — VIT Rules Q&A",
+  title: "Ask the Rulebook, VIT Rules Q&A",
   description: DESC,
   keywords: ["VIT rules", "ask VIT regulations", "VIT code of conduct", "VIT academic rules Q&A", "VIT ragging rules", "VIT malpractice rules"],
 });
@@ -19,7 +19,7 @@ const si = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeW
 const BENEFITS = [
   {
     title: "Plain-English answers",
-    desc: "Ask like you'd ask a senior — get a clear answer, not 40 pages of legalese.",
+    desc: "Ask like you'd ask a senior, get a clear answer, not 40 pages of legalese.",
     icon: <svg {...si}><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" /></svg>,
   },
   {
@@ -29,12 +29,12 @@ const BENEFITS = [
   },
   {
     title: "Seconds, not scrolling",
-    desc: "No hunting through a 43-page PDF the night before a FAT — just type and ask.",
+    desc: "No hunting through a 43-page PDF the night before a FAT, just type and ask.",
     icon: <svg {...si}><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>,
   },
   {
     title: "The doubts that matter",
-    desc: "Attendance, Re-FAT, CGPA rules, malpractice, ragging, exam & hostel conduct — all covered.",
+    desc: "Attendance, Re-FAT, CGPA rules, malpractice, ragging, exam & hostel conduct, all covered.",
     icon: <svg {...si}><circle cx="12" cy="12" r="9" /><path d="M9.1 9a2.5 2.5 0 0 1 4.8.9c0 1.7-2.5 2.5-2.5 2.5" /><path d="M12 17h.01" /></svg>,
   },
 ];
@@ -42,11 +42,11 @@ const BENEFITS = [
 export default function AskPage() {
   return (
     <section className="mx-auto max-w-3xl px-5 py-16 sm:py-24">
-      <GVJsonLd data={[breadcrumbLd("/ask", "Ask the Rulebook"), toolLd({ path: "/ask", name: "Ask the Rulebook — VIT Rules Q&A", description: DESC })]} />
+      <GVJsonLd data={[breadcrumbLd("/ask", "Ask the Rulebook"), toolLd({ path: "/ask", name: "Ask the Rulebook, VIT Rules Q&A", description: DESC })]} />
       <GVPageHeader
         eyebrow="Rulebook"
         title="Ask the Rulebook"
-        subtitle="Attendance, grading, CGPA, Re-FAT, malpractice, ragging — ask in plain English and get an answer grounded in VIT's official academic regulations and student code of conduct, with the clause to back it up."
+        subtitle="Attendance, grading, CGPA, Re-FAT, malpractice, ragging, ask in plain English and get an answer grounded in VIT's official academic regulations and student code of conduct, with the clause to back it up."
       />
 
       <ScrollReveal delay={80} className="mt-10">
@@ -68,7 +68,7 @@ export default function AskPage() {
           ))}
         </div>
         <p className="mt-5 text-center text-[11px] text-fg-subtle">
-          A free account unlocks it — up to 5 questions an hour, on any device.
+          A free account unlocks it, up to 5 questions an hour, on any device.
         </p>
       </ScrollReveal>
 

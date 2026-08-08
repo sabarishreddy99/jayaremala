@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: Props) {
   const { tag } = await params;
   const decoded = decodeURIComponent(tag);
   return {
-    title: `#${decoded} — Blog`,
+    title: `#${decoded} | Blog`,
     description: `All posts tagged with ${decoded} by Jaya Sabarish Reddy Remala.`,
     alternates: { canonical: `https://jayaremala.com/blog/tag/${tag}` },
   };

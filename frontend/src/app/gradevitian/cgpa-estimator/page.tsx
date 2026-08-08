@@ -6,7 +6,7 @@ import GVFaq, { type FaqItem } from "@/components/gradevitian/GVFaq";
 import ScrollReveal from "@/components/ScrollReveal";
 import { gvMetadata, breadcrumbLd, toolLd } from "@/lib/gradevitian/seo";
 
-const DESC = "Find the exact GPA you need next semester to hit your target CGPA at VIT. Set your goal and gradeVITian works out what it takes — free and instant.";
+const DESC = "Find the exact GPA you need next semester to hit your target CGPA at VIT. Set your goal and gradeVITian works out what it takes, free and instant.";
 
 export const metadata = gvMetadata({
   path: "/cgpa-estimator",
@@ -17,7 +17,7 @@ export const metadata = gvMetadata({
 
 const FAQ: FaqItem[] = [
   { q: "How much GPA do I need to reach my target CGPA?", a: "It depends on your current CGPA, credits completed and credits remaining. Enter those plus your target, and the estimator returns the minimum GPA you need next semester." },
-  { q: "Can I still reach a 9.0 CGPA at VIT?", a: "Often yes, but it gets harder as your completed credits grow. The estimator gives the exact required GPA — and flags when a target is no longer mathematically reachable." },
+  { q: "Can I still reach a 9.0 CGPA at VIT?", a: "Often yes, but it gets harder as your completed credits grow. The estimator gives the exact required GPA, and flags when a target is no longer mathematically reachable." },
   { q: "What's the difference between the estimator and the goal tracker?", a: "The estimator answers 'what do I need next semester?' for one term; the CGPA Goal Tracker maps the GPA you need across every remaining semester." },
 ];
 

@@ -19,7 +19,7 @@ const PLATFORMS: { id: PlatformId; label: string; steps: string[] }[] = [
       "Open this site in Safari.",
       "Tap the Share button (the square with an up arrow).",
       "Scroll down and choose “Add to Home Screen”.",
-      "Tap “Add” — the icon appears on your home screen.",
+      "Tap “Add” and the icon appears on your home screen.",
     ],
   },
   {
@@ -29,7 +29,7 @@ const PLATFORMS: { id: PlatformId; label: string; steps: string[] }[] = [
       "Open this site in Chrome.",
       "Tap “Install” below, or the ⋮ menu (top-right).",
       "Choose “Install app” / “Add to Home screen”.",
-      "Confirm — it installs like a native app.",
+      "Confirm and it installs like a native app.",
     ],
   },
   {
@@ -218,7 +218,7 @@ export default function InstallPWA({
                 <div className="min-w-0 flex-1">
                   <h2 className="text-base font-bold text-fg">Install this site as an app</h2>
                   <p className="mt-0.5 text-xs leading-relaxed text-fg-muted">
-                    Add it to your home screen or dock — works on every device, even offline.
+                    Add it to your home screen or dock. Works on every device, even offline.
                   </p>
                 </div>
                 <button

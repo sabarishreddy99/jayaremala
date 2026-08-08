@@ -4,12 +4,12 @@ import { profile } from "@/data/profile";
 
 export const metadata = {
   title: "Gallery",
-  description: "Moments, milestones, and achievements — a visual log from Jaya Sabarish Reddy Remala.",
+  description: "Moments, milestones, and achievements, a visual log from Jaya Sabarish Reddy Remala.",
   alternates: { canonical: "https://jayaremala.com/gallery" },
   openGraph: {
     type: "website" as const,
     url: "https://jayaremala.com/gallery",
-    title: "Gallery — Jaya Sabarish Reddy Remala",
+    title: "Gallery | Jaya Sabarish Reddy Remala",
     description: "Moments, milestones, and achievements in pictures.",
   },
 };

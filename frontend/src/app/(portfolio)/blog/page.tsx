@@ -11,7 +11,7 @@ export const metadata = {
   openGraph: {
     type: "website" as const,
     url: "https://jayaremala.com/blog",
-    title: "Blog — Jaya Sabarish Reddy Remala",
+    title: "Blog | Jaya Sabarish Reddy Remala",
     description: "Notes on AI systems, ML infrastructure, distributed computing, and software craft.",
   },
 };

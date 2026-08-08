@@ -7,7 +7,7 @@ import { Field } from "@/components/gradevitian/ui";
 const QUOTES = [
   "Small steps every day add up to big results.",
   "Your only competition is who you were last semester.",
-  "Discipline beats motivation — just show up.",
+  "Discipline beats motivation, just show up.",
   "Aim for progress, not perfection.",
   "The best time to start was yesterday. The next best is now.",
   "Dream big, study smart, stay consistent.",

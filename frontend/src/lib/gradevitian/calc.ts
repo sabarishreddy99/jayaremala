@@ -79,7 +79,7 @@ export function computeCGPA(sems: Semester[]): CalcResult {
   const rows = sems.map((s) => ({ c: Number(s.credits) || 0, g: Number(s.gpa) || 0 }));
 
   if (rows.some((r) => r.g < 0)) {
-    return { value: null, message: "Kindly check your GPA entries — they can't be negative.", tone: "danger" };
+    return { value: null, message: "Kindly check your GPA entries, they can't be negative.", tone: "danger" };
   }
   if (rows.some((r) => r.g > 10 || r.c > 50)) {
     return { value: null, message: "Check the limits: 0 < credits ≤ 50 and 0 < GPA ≤ 10.", tone: "danger" };
@@ -148,7 +148,7 @@ export function estimateCGPA(input: {
     return {
       value: null,
       message: `${nc} credit(s) aren't enough to reach a ${x} CGPA.`,
-      detail: "Just missed it — excel in the upcoming semesters. Best of luck!",
+      detail: "Just missed it, excel in the upcoming semesters. Best of luck!",
       tone: "warning",
     };
   }
@@ -195,7 +195,7 @@ export function projectTrajectory(input: {
       requiredGpa: null,
       result: {
         value: null,
-        message: `Reaching ${target} needs an average of ${requiredGpa.toFixed(2)} GPA — above the 10.0 ceiling.`,
+        message: `Reaching ${target} needs an average of ${requiredGpa.toFixed(2)} GPA, above the 10.0 ceiling.`,
         detail: "Add another semester or ease the goal slightly.",
         tone: "warning",
       },
@@ -209,7 +209,7 @@ export function projectTrajectory(input: {
     result: {
       value: round(requiredGpa, 2),
       message: `Average ${requiredGpa.toFixed(2)} GPA across your remaining ${sr} semester${sr > 1 ? "s" : ""} gets you to a ${target} CGPA.`,
-      detail: onTrack ? "You're on track — hold your current pace." : "A step up from your current pace, but reachable.",
+      detail: onTrack ? "You're on track, hold your current pace." : "A step up from your current pace, but reachable.",
       tone: onTrack ? "success" : "neutral",
     },
   };
@@ -242,7 +242,7 @@ export function attendanceFmt2(total: number, present: number | "", absent: numb
   if (!t || t < 1) return { value: null, message: "Enter a valid number of total classes.", tone: "danger" };
   if ((p ?? 0) < 0 || (a ?? 0) < 0) return { value: null, message: "Entries can't be negative.", tone: "danger" };
   if (p !== null && a !== null && p > 0 && a > 0) {
-    return { value: null, message: "Enter either classes present OR classes absent — not both.", tone: "danger" };
+    return { value: null, message: "Enter either classes present OR classes absent, not both.", tone: "danger" };
   }
   if ((p === null || p === 0) && (a === null || a === 0)) {
     return { value: 0, message: "Your attendance is 0%", tone: "danger" };
@@ -394,7 +394,7 @@ function gpaMessage(value: number, label: "GPA" | "CGPA"): CalcResult {
     detail = "You are awesome! Keep it up and Happy Learning!";
     tone = "success";
   } else if (value >= 8) {
-    detail = "You're getting there — excel next semester and aim for a 9 pointer!";
+    detail = "You're getting there, excel next semester and aim for a 9 pointer!";
     tone = "success";
   } else {
     detail = "Happy Learning!";

@@ -6,7 +6,7 @@ import { gvMetadata } from "@/lib/gradevitian/seo";
 export const metadata = gvMetadata({
   path: "/feedback",
   title: "Feedback",
-  description: "Share feedback, suggestions or bugs for gradeVITian — we read every message and build what VITians ask for.",
+  description: "Share feedback, suggestions or bugs for gradeVITian. We read every message and build what VITians ask for.",
 });
 
 export default function FeedbackPage() {
@@ -15,7 +15,7 @@ export default function FeedbackPage() {
       <GVPageHeader
         eyebrow="We're listening"
         title="Feedback"
-        subtitle="This is your product too — tell us what to build next. We read every single word."
+        subtitle="This is your product too, tell us what to build next. We read every single word."
       />
       <ScrollReveal delay={80} className="mt-10">
         <CommentsWall />

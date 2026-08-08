@@ -44,7 +44,7 @@ export default function CgpaGoalTracker() {
   return (
     <Card>
       <p className="mb-4 text-sm text-fg-muted">
-        Set your dream CGPA and see the GPA you&apos;ll need each remaining semester — and whether
+        Set your dream CGPA and see the GPA you&apos;ll need each remaining semester, and whether
         you&apos;re on track to get there.
       </p>
 

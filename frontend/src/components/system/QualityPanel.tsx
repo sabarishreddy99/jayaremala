@@ -19,7 +19,7 @@ export default function QualityPanel({ data }: { data: SystemData }) {
         />
         <Stat
           label="Experience"
-          value={exp.total > 0 ? `${exp.average.toFixed(1)}★` : "—"}
+          value={exp.total > 0 ? `${exp.average.toFixed(1)}★` : "·"}
           sub={`${exp.total} ratings`}
         />
         <Stat label="Retrieval score" value={q.avg_top_score.toFixed(3)} sub="avg top match" />

@@ -74,7 +74,7 @@ const LAB_TEMPLATES = [
   {
     id: "quick", icon: "zap", label: "Quick Note",
     desc: "Short status update or finding",
-    content: `<Status status="active" />\n\n<Update date="${todayISO()}">\nStart writing here — a quick lab note needs no strict structure.\n</Update>`,
+    content: `<Status status="active" />\n\n<Update date="${todayISO()}">\nStart writing here, a quick lab note needs no strict structure.\n</Update>`,
   },
 ];
 
@@ -121,7 +121,7 @@ function mdxToHTML(md: string): string {
       if (lang === "arch") {
         html += `<pre style="background:#09090b;color:#d4d4d8;padding:1em 1.2em;border-radius:0.75rem;overflow-x:auto;font-size:0.7rem;line-height:1.65;border:1px solid #27272a;margin:1em 0"><div style="font-size:9px;color:#52525b;margin-bottom:0.5em;font-family:monospace;text-transform:uppercase;letter-spacing:0.1em">architecture</div>${codeLines.join("\n")}</pre>`;
       } else {
-        html += `<pre style="background:#f6f8fa;color:#24292e;padding:1em 1.2em;border-radius:0.75rem;overflow-x:auto;font-size:0.82em;line-height:1.6;border:1px solid #e1e4e8;margin:1em 0"><div style="font-size:9px;color:#57606a;margin-bottom:0.5em;font-family:monospace">[Shiki highlights on publish — ${lang} block]</div>${codeLines.join("\n")}</pre>`;
+        html += `<pre style="background:#f6f8fa;color:#24292e;padding:1em 1.2em;border-radius:0.75rem;overflow-x:auto;font-size:0.82em;line-height:1.6;border:1px solid #e1e4e8;margin:1em 0"><div style="font-size:9px;color:#57606a;margin-bottom:0.5em;font-family:monospace">[Shiki highlights on publish, ${lang} block]</div>${codeLines.join("\n")}</pre>`;
       }
       i++; continue;
     }
@@ -195,7 +195,7 @@ const LAB_FORMAT_GUIDE: { heading: string; items: { label: string; syntax: strin
   {
     heading: "Architecture diagrams",
     items: [
-      { label: "Arch block", syntax: "```arch\n┌──────────┐     ┌──────────┐\n│ Frontend │────▶│ Backend  │\n└──────────┘     └──────────┘\n```", note: "Always use ```arch fenced blocks for ASCII diagrams — renders in a dark terminal-style frame." },
+      { label: "Arch block", syntax: "```arch\n┌──────────┐     ┌──────────┐\n│ Frontend │────▶│ Backend  │\n└──────────┘     └──────────┘\n```", note: "Always use ```arch fenced blocks for ASCII diagrams, renders in a dark terminal-style frame." },
     ],
   },
   {
@@ -223,7 +223,7 @@ const LAB_FORMAT_GUIDE: { heading: string; items: { label: string; syntax: strin
     ],
   },
   {
-    heading: "Code Blocks (Shiki — syntax highlighted)",
+    heading: "Code Blocks (Shiki, syntax highlighted)",
     items: [
       { label: "Python",      syntax: "```python\ndef hello():\n    return 'hi'\n```" },
       { label: "TypeScript",  syntax: "```typescript\nconst greet = (n: string) => `Hi ${n}`\n```" },
@@ -635,7 +635,7 @@ export default function LabEditor() {
   async function publish() {
     if (!allValid) return;
     const tk = adminToken();
-    if (!tk) { setResult({ ok: false, message: "Admin token missing — re-authenticate." }); return; }
+    if (!tk) { setResult({ ok: false, message: "Admin token missing, re-authenticate." }); return; }
     setPublishing(true);
     setResult(null);
     const techArr = tech.map((t) => t.trim()).filter(Boolean);
@@ -963,7 +963,7 @@ export default function LabEditor() {
           {editingExisting && (
             <div className="flex items-center gap-2 text-[11px] bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded px-3 py-2 text-amber-700 dark:text-amber-400">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-              <span>Editing existing entry — publishing will update <code className="font-mono bg-amber-100 dark:bg-amber-900/50 px-1 rounded">/lab/{slug}</code></span>
+              <span>Editing existing entry, publishing will update <code className="font-mono bg-amber-100 dark:bg-amber-900/50 px-1 rounded">/lab/{slug}</code></span>
               <button onClick={() => setEditingExisting(false)} className="ml-auto opacity-60 hover:opacity-100 transition-opacity text-sm leading-none">×</button>
             </div>
           )}
@@ -1064,7 +1064,7 @@ export default function LabEditor() {
       {/* ── Template picker ───────────────────────────────────────────────────── */}
       {showTemplates && !content && (
         <div className="rounded border border-dashed border-border bg-surface-raised/40 p-6">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-4 text-center">Start with a template — or just type below</p>
+          <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-4 text-center">Start with a template, or just type below</p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {LAB_TEMPLATES.map((t) => {
               const tmplIcons: Record<string, React.ReactNode> = {
@@ -1091,7 +1091,7 @@ export default function LabEditor() {
           <div className="mt-4 text-center">
             <button onClick={() => { setShowTemplates(false); requestAnimationFrame(() => textareaRef.current?.focus()); }}
               className="text-[10px] text-fg-faint hover:text-fg transition-colors">
-              Skip — start from blank →
+              Skip, start from blank →
             </button>
           </div>
         </div>
@@ -1222,7 +1222,7 @@ export default function LabEditor() {
                   )}
                 </div>
                 <span className="text-xs font-medium text-fg-muted">{uploadingImg ? "Uploading…" : "Click to upload images"}</span>
-                <span className="text-[10px] text-fg-faint mt-0.5">JPEG · PNG · WebP · GIF — multiple files supported</span>
+                <span className="text-[10px] text-fg-faint mt-0.5">JPEG · PNG · WebP · GIF, multiple files supported</span>
                 <input type="file" accept="image/*" multiple className="hidden" disabled={uploadingImg}
                   onChange={(e) => {
                     const files = Array.from(e.target.files ?? []);
@@ -1313,7 +1313,7 @@ export default function LabEditor() {
               style={{ minHeight: "420px" }}
             />
             <div className="px-5 py-2 border-t border-border flex items-center justify-between text-[10px] text-fg-faint bg-surface-raised">
-              <span>{wordCount > 0 ? `${wordCount} words · ~${readingTime} min read` : "Start writing — use the toolbar above or keyboard shortcuts"}</span>
+              <span>{wordCount > 0 ? `${wordCount} words · ~${readingTime} min read` : "Start writing, use the toolbar above or keyboard shortcuts"}</span>
               <span className="font-mono hidden sm:block">⌘B · ⌘I · ⌘K · ⌘S save</span>
             </div>
           </div>
@@ -1339,7 +1339,7 @@ export default function LabEditor() {
           className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-surface-raised transition-colors">
           <span className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle flex items-center gap-2">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
-            Format Reference — Lab MDX Syntax
+            Format Reference | Lab MDX Syntax
           </span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`text-fg-faint transition-transform shrink-0 ${showFormatRef ? "rotate-180" : ""}`}>
             <polyline points="6 9 12 15 18 9"/>
@@ -1426,7 +1426,7 @@ export default function LabEditor() {
 
             {/* GitHub token (optional) */}
             <div>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle mb-2">GitHub Token <span className="normal-case font-normal text-fg-faint">(optional — for git sync &amp; image upload)</span></p>
+              <p className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle mb-2">GitHub Token <span className="normal-case font-normal text-fg-faint">(optional, for git sync &amp; image upload)</span></p>
               <div className="flex gap-2">
                 <input type={patVisible ? "text" : "password"} value={githubPat}
                   onChange={(e) => { setGithubPat(e.target.value); setPatSaved(false); }}
@@ -1463,7 +1463,7 @@ export default function LabEditor() {
             {/* Publish button */}
             <div className="flex flex-wrap items-center justify-between gap-4 pt-1">
               <div className="text-[10px] text-fg-faint leading-relaxed">
-                <p>Saves to the live Content API — <code className="bg-surface-raised px-1 rounded font-mono">/lab/{slug || "entry-slug"}</code> updates immediately.</p>
+                <p>Saves to the live Content API, <code className="bg-surface-raised px-1 rounded font-mono">/lab/{slug || "entry-slug"}</code> updates immediately.</p>
                 <p>Avocado re-indexes automatically.</p>
               </div>
               <button onClick={publish} disabled={publishing || !allValid}

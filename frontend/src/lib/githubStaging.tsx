@@ -95,7 +95,7 @@ export function GitHubStagingProvider({ children }: { children: React.ReactNode 
         await fetch(`${API}/git/refs/heads/main`, { method: "PATCH", headers, body: JSON.stringify({ sha: commit.sha }) }),
       );
 
-      setResult({ ok: true, message: `Published ${entries.length} change${entries.length > 1 ? "s" : ""} in one commit — CI redeploys in ~2 min.` });
+      setResult({ ok: true, message: `Published ${entries.length} change${entries.length > 1 ? "s" : ""} in one commit, CI redeploys in ~2 min.` });
       setStaged({});
       return true;
     } catch (e) {

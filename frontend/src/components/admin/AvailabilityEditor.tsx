@@ -154,7 +154,7 @@ export default function AvailabilityEditor() {
             {loading ? "Loading…" : "Load"}
           </button>
         </div>
-        <p className="text-[10px] text-fg-faint">Same token as blog editor — needs repo write access.</p>
+        <p className="text-[10px] text-fg-faint">Same token as blog editor, needs repo write access.</p>
       </div>
 
       {/* Open / Not looking toggle */}

@@ -156,7 +156,7 @@ export default function AccountDashboard() {
       <div className="mt-4 flex flex-col gap-3">
         {ready && calcs.length === 0 && (
           <p className="text-sm text-fg-muted">
-            Nothing saved yet. Run a calculation and hit <em>Save this result</em> —
+            Nothing saved yet. Run a calculation and hit <em>Save this result</em>.
             try the <GVLink href="/cgpa" className="text-accent hover:underline">CGPA calculator</GVLink>.
           </p>
         )}

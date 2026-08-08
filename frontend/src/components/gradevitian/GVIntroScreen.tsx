@@ -210,7 +210,7 @@ export default function GVIntroScreen() {
 
         {/* Ownership subtitle */}
         <p className="mt-5 max-w-md text-balance text-base text-fg-muted opacity-0 animate-[fadeUp_0.7s_ease_0.5s_forwards] sm:text-lg">
-          Your GPA, CGPA, grades &amp; attendance — all in one place.
+          Your GPA, CGPA, grades &amp; attendance, all in one place.
           <span className="text-fg"> Built by a VITian, for every VITian.</span>
         </p>
 

@@ -4,7 +4,7 @@ import { getAllPosts } from "@/lib/blog";
 export const revalidate = 3600;
 
 const SITE_URL   = "https://jayaremala.com";
-const SITE_TITLE = "Jaya Sabarish Reddy Remala — Blog";
+const SITE_TITLE = "Jaya Sabarish Reddy Remala | Blog";
 const SITE_DESC  = "Notes on AI systems, distributed infrastructure, and software craft.";
 const AUTHOR     = "Jaya Sabarish Reddy Remala";
 const AUTHOR_EMAIL = "jr6421@nyu.edu";

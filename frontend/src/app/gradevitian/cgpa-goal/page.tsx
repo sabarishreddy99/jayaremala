@@ -6,7 +6,7 @@ import GVFaq, { type FaqItem } from "@/components/gradevitian/GVFaq";
 import ScrollReveal from "@/components/ScrollReveal";
 import { gvMetadata, breadcrumbLd, toolLd } from "@/lib/gradevitian/seo";
 
-const DESC = "Set a target CGPA at VIT and see the GPA you need each remaining semester to get there — with a clear on-track read on your trajectory. Free, saves to your account.";
+const DESC = "Set a target CGPA at VIT and see the GPA you need each remaining semester to get there, with a clear on-track read on your trajectory. Free, saves to your account.";
 
 export const metadata = gvMetadata({
   path: "/cgpa-goal",
@@ -17,7 +17,7 @@ export const metadata = gvMetadata({
 
 const FAQ: FaqItem[] = [
   { q: "How does the CGPA goal tracker work?", a: "Enter your current CGPA, credits completed, target CGPA and semesters left. It maps the GPA you need each remaining semester and shows whether you're on track." },
-  { q: "Is my dream CGPA still achievable?", a: "The tracker gives the required per-semester GPA — and if a target needs more than a 10.0, it flags that it's no longer reachable so you can reset realistically." },
+  { q: "Is my dream CGPA still achievable?", a: "The tracker gives the required per-semester GPA, and if a target needs more than a 10.0, it flags that it's no longer reachable so you can reset realistically." },
 ];
 
 export default function CgpaGoalPage() {
@@ -27,7 +27,7 @@ export default function CgpaGoalPage() {
       <GVPageHeader
         eyebrow="Goal"
         title="CGPA Goal Tracker"
-        subtitle="Name the CGPA you're chasing. We'll map the GPA you need every remaining semester to land it — and show you, semester by semester, whether you're on track."
+        subtitle="Name the CGPA you're chasing. We'll map the GPA you need every remaining semester to land it, and show you semester by semester whether you're on track."
       />
       <ScrollReveal delay={80} className="mt-10">
         <CgpaGoalTracker />

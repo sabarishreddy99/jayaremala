@@ -4,13 +4,13 @@ import { gvMetadata } from "@/lib/gradevitian/seo";
 export const metadata = gvMetadata({
   path: "/terms",
   title: "Terms & Conditions",
-  description: "The terms of using gradeVITian — free, as-is, and built to help VIT students.",
+  description: "The terms of using gradeVITian, free, as-is, and built to help VIT students.",
 });
 
 export default function TermsPage() {
   return (
     <section className="mx-auto max-w-2xl px-5 py-16 sm:py-24">
-      <GVPageHeader eyebrow="The fine print" title="Terms & Conditions" subtitle="Free, as-is, and built to help VITians — here's the deal." />
+      <GVPageHeader eyebrow="The fine print" title="Terms & Conditions" subtitle="Free, as-is, and built to help VITians, here's the deal." />
       <div className="mt-8 flex flex-col gap-4 text-fg-muted leading-relaxed">
         <p>
           By using gradeVITian you agree to these terms. The service is provided free of charge,

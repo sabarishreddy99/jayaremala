@@ -29,7 +29,7 @@ export default function TraceWaterfall({ refreshKey }: { refreshKey: number }) {
       <SectionTitle>Live request traces</SectionTitle>
       <p className="text-[11px] text-fg-faint mb-3">
         The last answers Avocado generated, broken down by pipeline stage. No question text or visitor
-        data — just timing.
+        data, just timing.
       </p>
       <div className="rounded-xl border border-border bg-surface divide-y divide-border">
         {!traces && (
@@ -40,7 +40,7 @@ export default function TraceWaterfall({ refreshKey }: { refreshKey: number }) {
           </div>
         )}
         {traces && traces.length === 0 && (
-          <p className="p-4 text-[12px] text-fg-faint">No traces yet — ask Avocado a question.</p>
+          <p className="p-4 text-[12px] text-fg-faint">No traces yet, ask Avocado a question.</p>
         )}
         {traces?.map((t, idx) => {
           const total = t.stages.reduce((s, st) => s + st.ms, 0) || t.latency_ms || 1;

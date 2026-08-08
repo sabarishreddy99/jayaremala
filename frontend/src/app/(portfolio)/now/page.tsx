@@ -5,13 +5,13 @@ import type { Metadata } from "next";
 const SITE_URL = "https://jayaremala.com";
 
 export const metadata: Metadata = {
-  title: "Now — Jaya Sabarish Reddy Remala",
+  title: "Now | Jaya Sabarish Reddy Remala",
   description: "What I'm building, learning, and reading right now.",
   alternates: { canonical: `${SITE_URL}/now` },
   openGraph: {
     type: "website",
     url: `${SITE_URL}/now`,
-    title: "Now — Jaya Sabarish Reddy Remala",
+    title: "Now | Jaya Sabarish Reddy Remala",
     description: "What I'm building, learning, and reading right now.",
     siteName: "Jaya Sabarish Reddy Remala",
   },
@@ -146,7 +146,7 @@ export default function NowPage() {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-fg-subtle">Nothing here yet — check back soon.</p>
+        <p className="text-sm text-fg-subtle">Nothing here yet. Check back soon.</p>
       )}
 
       {/* Footer links */}

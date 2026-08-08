@@ -92,7 +92,7 @@ function QuoteCard({ quote }: { quote: Quote }) {
 
       {/* Divider + attribution */}
       <div className="mt-4 pt-3 border-t border-border">
-        <p className="text-xs font-semibold text-fg-muted">— {quote.author}</p>
+        <p className="text-xs font-semibold text-fg-muted">{quote.author}</p>
         {quote.source && (
           <p className="text-[10px] text-fg-faint italic mt-0.5">{quote.source}</p>
         )}
@@ -153,7 +153,7 @@ function WeeklyQuote({ quote }: { quote: Quote }) {
       </blockquote>
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold text-fg-muted">
-          — {quote.author}
+          {quote.author}
           {quote.source && <span className="text-fg-faint font-normal">, <em>{quote.source}</em></span>}
         </p>
         <span className={`text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${cfg.badge}`}>

@@ -34,7 +34,7 @@ export default function RulesReference() {
                 <tr key={g.grade} className="border-t border-border-subtle">
                   <td className="px-3 py-2 font-bold text-accent">{g.grade}</td>
                   <td className="px-3 py-2 font-mono tabular-nums text-fg">{g.points}</td>
-                  <td className="px-3 py-2 font-mono tabular-nums text-fg-muted">{g.min_marks === null ? "—" : `≥ ${g.min_marks}`}</td>
+                  <td className="px-3 py-2 font-mono tabular-nums text-fg-muted">{g.min_marks === null ? "·" : `≥ ${g.min_marks}`}</td>
                   <td className="px-3 py-2 text-fg-muted">{g.remark}</td>
                 </tr>
               ))}

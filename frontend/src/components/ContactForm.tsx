@@ -112,7 +112,7 @@ export default function ContactForm() {
         process.env.NEXT_PUBLIC_EMAILJS_PUBLIC_KEY!
       );
       sessionStorage.setItem("contact_sent", "1");
-      pushToast("success", "Message sent!", "Thanks for reaching out — I'll get back to you soon.");
+      pushToast("success", "Message sent!", "Thanks for reaching out, I'll get back to you soon.");
       setName("");
       setEmail("");
       setMessage("");
@@ -149,7 +149,7 @@ export default function ContactForm() {
             </div>
             <h3 className="font-semibold text-fg">Message received!</h3>
             <p className="text-sm text-fg-subtle max-w-xs leading-relaxed">
-              Thanks for reaching out — I&apos;ll get back to you soon. In the meantime, feel free to explore.
+              Thanks for reaching out, I&apos;ll get back to you soon. In the meantime, feel free to explore.
             </p>
             <div className="flex gap-4 mt-1">
               <Link href="/blog" className="text-xs text-accent hover:text-accent-hover transition-colors">Read the blog →</Link>

@@ -106,7 +106,7 @@ export default function SpotlightsEditor() {
         <DirtyBadge dirty={dirty} />
       </div>
       <p className="text-[11px] text-fg-muted leading-relaxed max-w-2xl">
-        Product-spotlight cards shown on the portfolio home — the &quot;live product&quot; advertising break.
+        Product-spotlight cards shown on the portfolio home, the &quot;live product&quot; advertising break.
         Add as many as you like and toggle each on/off. Edits push to <code className="font-mono">spotlights.json</code> via
         GitHub and go live on the next deploy.
       </p>
@@ -185,8 +185,8 @@ export default function SpotlightsEditor() {
               <TextArea value={entry.headline} onChange={v => setS("headline", v)} rows={2} />
             </div>
             <div>
-              <FieldLabel>Headline emphasis (optional — appended, highlighted)</FieldLabel>
-              <TextInput value={entry.headlineEmphasis ?? ""} onChange={v => setS("headlineEmphasis", v)} placeholder="designed, shipped, and still run by me." />
+              <FieldLabel>Headline emphasis (optional, appended, highlighted)</FieldLabel>
+              <TextInput value={entry.headlineEmphasis ?? ""} onChange={v => setS("headlineEmphasis", v)} placeholder="Designed, shipped, and still run by me." />
             </div>
 
             <div>

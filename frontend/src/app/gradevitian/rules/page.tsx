@@ -6,7 +6,7 @@ import GVFaq, { type FaqItem } from "@/components/gradevitian/GVFaq";
 import ScrollReveal from "@/components/ScrollReveal";
 import { gvMetadata, breadcrumbLd } from "@/lib/gradevitian/seo";
 
-const DESC = "VIT's academic rules at a glance — grade scale, the 75% attendance rule, GPA/CGPA, academic standing, Re-FAT and FFCS — straight from the official regulations.";
+const DESC = "VIT's academic rules at a glance, grade scale, the 75% attendance rule, GPA/CGPA, academic standing, Re-FAT and FFCS, straight from the official regulations.";
 
 export const metadata = gvMetadata({
   path: "/rules",
@@ -30,7 +30,7 @@ export default function RulesPage() {
       <GVPageHeader
         eyebrow="Reference"
         title="VIT rules at a glance"
-        subtitle="The numbers that actually matter — grade scale, the 75% attendance line, how CGPA works, and what happens when things go sideways — pulled straight from VIT's official regulations."
+        subtitle="The numbers that actually matter, grade scale, the 75% attendance line, how CGPA works, and what happens when things go sideways, pulled straight from VIT's official regulations."
       />
       <ScrollReveal delay={80} className="mt-10">
         <RulesReference />

@@ -79,7 +79,7 @@ export default function BookingCard({ data }: { data: BookingCardData }) {
 
       {slots.length === 0 && (
         <p className="mt-2 text-[10px] text-fg-faint text-center">
-          Live times couldn&apos;t load — his calendar still has everything that&apos;s open.
+          Live times couldn&apos;t load, his calendar still has everything that&apos;s open.
         </p>
       )}
     </div>

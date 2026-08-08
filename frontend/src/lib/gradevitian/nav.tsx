@@ -39,7 +39,7 @@ export const GV_GROUPS: GVGroup[] = [
   },
   {
     label: "Planning",
-    blurb: "Plan ahead and chase your goals — saved to your account.",
+    blurb: "Plan ahead and chase your goals, saved to your account.",
     items: [
       { href: "/planner", label: "Semester Planner", desc: "Your whole semester on one screen", icon: <svg {...ic}><rect x="3" y="3" width="18" height="18" rx="2" /><path d="M3 9h18M9 9v12" /></svg>, isNew: true },
       { href: "/cgpa-goal", label: "CGPA Goal Tracker", desc: "Map the path to your dream CGPA", icon: <svg {...ic}><path d="M12 2l2.4 7.4H22l-6 4.4 2.3 7.2L12 16.6 5.7 21l2.3-7.2-6-4.4h7.6z" /></svg>, isNew: true },
@@ -47,7 +47,7 @@ export const GV_GROUPS: GVGroup[] = [
   },
   {
     label: "Rulebook",
-    blurb: "VIT's official rules — and a way to just ask.",
+    blurb: "VIT's official rules, and a way to just ask.",
     items: [
       { href: "/rules", label: "VIT Rules", desc: "The rules that actually matter", icon: <svg {...ic}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" /><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" /></svg>, isNew: true },
       { href: "/ask", label: "Ask the Rulebook", desc: "Any regulation, answered in plain English", icon: <svg {...ic}><path d="M12 3l1.6 4.6L18 9.2l-4.4 1.6L12 15l-1.6-4.2L6 9.2l4.4-1.6z" /><path d="M19 14.5l.8 2.2 2.2.8-2.2.8L19 20.5l-.8-2.2-2.2-.8 2.2-.8z" /></svg>, isNew: true },

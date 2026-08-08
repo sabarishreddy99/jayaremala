@@ -205,7 +205,7 @@ export default function BlogEngagement({ slug }: { slug: string }) {
           </button>
         </div>
         <span className="text-xs font-semibold text-fg-muted">
-          {stats ? formatCount(stats.claps) : "—"}
+          {stats ? formatCount(stats.claps) : "·"}
         </span>
         <span className="text-[10px] text-fg-faint">claps</span>
         {userClapsTotal > 0 && (
@@ -226,7 +226,7 @@ export default function BlogEngagement({ slug }: { slug: string }) {
             <circle cx="12" cy="12" r="3"/>
           </svg>
           <span className="text-sm font-semibold text-fg-muted">
-            {stats ? formatCount(stats.views) : "—"}
+            {stats ? formatCount(stats.views) : "·"}
           </span>
         </div>
         <span className="text-[10px] text-fg-faint pl-0.5">unique views</span>

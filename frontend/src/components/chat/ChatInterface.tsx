@@ -74,7 +74,7 @@ function getTimeGreeting() {
 const PROMPTS = [
   { category: "Availability",   label: "Open to new roles?",    full: "Is Jaya currently open to new job opportunities? Where is he based and what kind of roles interest him?" },
   { category: "Projects",       label: "Most impressive work",   full: "What is Jaya's most impressive project and what makes it technically stand out?" },
-  { category: "AI Expertise",   label: "AI & ML skills",         full: "Tell me about Jaya's AI and machine learning expertise — RAG pipelines, LLMs, and edge AI." },
+  { category: "AI Expertise",   label: "AI & ML skills",         full: "Tell me about Jaya's AI and machine learning expertise, RAG pipelines, LLMs, and edge AI." },
   { category: "Experience",     label: "Shell, Wipro & NYU",     full: "What did Jaya build at Shell PLC, Wipro, and NYU? Walk me through his career timeline." },
   { category: "Recognition",    label: "Hackathon winner?",      full: "Tell me about Jaya's Qualcomm Edge AI Hackathon win and other notable achievements." },
   { category: "About Avocado",  label: "How this AI works",      full: "How does this AI portfolio chatbot work? What powers Avocado behind the scenes?" },
@@ -275,7 +275,7 @@ export default function ChatInterface() {
   /* Book-a-call: reuse the existing chat path — a booking intent makes the
      backend emit a booking_card, which renders in-stream via <BookingCard>. */
   function handleBook() {
-    handleSend("I'd like to book a 30-minute call with Jaya — what times work?");
+    handleSend("I'd like to book a 30-minute call with Jaya, what times work?");
   }
 
   async function handleSend(text: string, forceClassic = false) {
@@ -318,7 +318,7 @@ export default function ChatInterface() {
         setRateLimitSecsLeft(retryAfter);
         setMessages((prev) => [
           ...prev,
-          { role: "assistant", content: `You've sent 10 messages this minute — that's the rate limit. The countdown below will show when you can ask again.` },
+          { role: "assistant", content: `You've sent 10 messages this minute, that's the rate limit. The countdown below will show when you can ask again.` },
         ]);
         return;
       }
@@ -372,7 +372,7 @@ export default function ChatInterface() {
           {
             role: "assistant",
             content: isQuota
-              ? "Avocado has exhausted all available Gemini AI models for today — the daily quota across the entire fallback chain has been reached.\n\n" +
+              ? "Avocado has exhausted all available Gemini AI models for today, the daily quota across the entire fallback chain has been reached.\n\n" +
                 `**Quota resets at ${time}** (in ~${countdown}). After that, everything will be back to normal automatically.\n\n` +
                 "In the meantime, feel free to reach Jaya directly at **jr6421@nyu.edu**."
               : "Sorry, I ran into an issue generating a response. Please try again or reach Jaya directly at **jr6421@nyu.edu**.",
@@ -479,7 +479,7 @@ export default function ChatInterface() {
                 try { localStorage.setItem(AGENT_MODE_KEY, "0"); } catch { /* storage blocked */ }
               }}
               aria-pressed={!agentMode}
-              title="Normal — fast, grounded RAG answer"
+              title="Normal, fast, grounded RAG answer"
               className={`rounded-full px-3 py-1 transition-colors ${
                 !agentMode ? "bg-accent text-accent-fg" : "text-fg-faint hover:text-fg-muted"
               }`}
@@ -492,7 +492,7 @@ export default function ChatInterface() {
                 try { localStorage.setItem(AGENT_MODE_KEY, "1"); } catch { /* storage blocked */ }
               }}
               aria-pressed={agentMode}
-              title="Agent — Avocado picks tools per question and shows its steps live"
+              title="Agent, Avocado picks tools per question and shows its steps live"
               className={`inline-flex items-center gap-1 rounded-full px-3 py-1 transition-colors ${
                 agentMode ? "bg-accent text-accent-fg" : "text-fg-faint hover:text-fg-muted"
               }`}
@@ -512,7 +512,7 @@ export default function ChatInterface() {
             <div className="flex items-center gap-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 px-3 py-2">
               <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0" />
               <p className="text-[11px] text-amber-700 dark:text-amber-400">
-                Avocado is waking up — first response may take ~30 seconds.
+                Avocado is waking up, first response may take ~30 seconds.
               </p>
             </div>
           </div>
@@ -530,7 +530,7 @@ export default function ChatInterface() {
               <path d="M3 3v5h5"/>
             </svg>
             <p className="text-[11px] text-fg-muted font-medium">
-              Conversation restored — pick up where you left off.
+              Conversation restored, pick up where you left off.
             </p>
           </div>
         </div>

@@ -105,7 +105,7 @@ export async function GET() {
     "/gallery":    "visual log of achievements and milestones",
     "/quotes":     "words that shaped how I think and build",
     "/mcp":        "connect your own LLM (Claude/Cursor) to read-only portfolio tools",
-    "/system":     "live observability — latency percentiles, RAG pipeline timing, model fallback",
+    "/system":     "live observability, latency percentiles, RAG pipeline timing, model fallback",
   };
   const keyPages = [
     `- [Portfolio](${BASE}/portfolio): hero, featured projects, skills, testimonials, contact`,

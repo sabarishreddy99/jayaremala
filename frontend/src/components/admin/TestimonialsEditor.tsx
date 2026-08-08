@@ -119,7 +119,7 @@ export default function TestimonialsEditor() {
               <div className="rounded-xl border border-border bg-surface-raised p-4 space-y-2">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint">Preview</p>
                 <p className="text-xs text-fg-muted italic leading-relaxed line-clamp-3">&ldquo;{entry.description}&rdquo;</p>
-                <p className="text-xs font-semibold text-fg-subtle">— {entry.name}, {entry.designation} @ {entry.company}</p>
+                <p className="text-xs font-semibold text-fg-subtle">{entry.name}, {entry.designation} @ {entry.company}</p>
               </div>
             )}
           </div>

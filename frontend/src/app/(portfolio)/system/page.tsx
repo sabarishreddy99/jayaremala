@@ -4,16 +4,16 @@ import SystemDashboard from "@/components/SystemDashboard";
 const SITE_URL = "https://jayaremala.com";
 
 export const metadata: Metadata = {
-  title: "System — Live observability | Jaya Sabarish Reddy Remala",
+  title: "System · Live observability | Jaya Sabarish Reddy Remala",
   description:
-    "Production observability for this site's AI backend: reliability and uptime, latency percentiles, token cost, answer quality, and per-request traces — live.",
+    "Production observability for this site's AI backend: reliability and uptime, latency percentiles, token cost, answer quality, and per-request traces, live.",
   alternates: { canonical: `${SITE_URL}/system` },
   openGraph: {
     type: "website",
     url: `${SITE_URL}/system`,
-    title: "System — Live observability",
+    title: "System | Live observability",
     description:
-      "Reliability, latency, cost, and per-request traces for Avocado's hybrid RAG pipeline — read live from production.",
+      "Reliability, latency, cost, and per-request traces for Avocado's hybrid RAG pipeline, read live from production.",
     siteName: "Jaya Sabarish Reddy Remala",
   },
 };
@@ -31,7 +31,7 @@ export default function SystemPage() {
         <p className="mt-3 text-sm text-fg-muted leading-relaxed max-w-2xl">
           The dashboard an engineer would actually open: reliability and uptime, latency percentiles
           down to each pipeline stage, token cost, answer quality, and a live trace of recent requests.
-          Avocado runs a hybrid retrieval pipeline — HyDE query expansion, dense (BAAI/bge-base) plus
+          Avocado runs a hybrid retrieval pipeline, HyDE query expansion, dense (BAAI/bge-base) plus
           BM25 merged with Reciprocal Rank Fusion, a 1-hop knowledge graph, and a model-fallback chain.
           Everything here is read live from the production backend.
         </p>

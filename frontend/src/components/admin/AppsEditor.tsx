@@ -98,7 +98,7 @@ export default function AppsEditor() {
         <DirtyBadge dirty={dirty} />
       </div>
       <p className="text-[11px] text-fg-muted leading-relaxed max-w-2xl">
-        Everything hosted under your domain — apps, products, and sub-domains (Gradevitian, and future ones).
+        Everything hosted under your domain, apps, products, and sub-domains (Gradevitian, and future ones).
         This single registry is what Avocado and the public MCP server read, so new entries surface there automatically
         after a re-index. Edits push to <code className="font-mono">apps.json</code> via GitHub and go live on the next deploy.
       </p>
@@ -120,7 +120,7 @@ export default function AppsEditor() {
                   {e.featured && <span className="text-amber-400 text-[10px]">★</span>}
                   <p className="text-xs font-semibold text-fg truncate">{e.name || "New App"}</p>
                 </div>
-                <p className="text-[10px] text-fg-faint truncate font-mono">{e.url || "—"}</p>
+                <p className="text-[10px] text-fg-faint truncate font-mono">{e.url || "·"}</p>
               </div>
               <div className="flex items-center gap-1 shrink-0">
                 <span className={`text-[9px] px-1.5 py-0.5 rounded-full font-medium ${STATUS_PILL[e.status] ?? ""}`}>{e.status}</span>

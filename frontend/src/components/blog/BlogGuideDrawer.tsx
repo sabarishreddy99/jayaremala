@@ -80,7 +80,7 @@ tags: [tag1, tag2]
 <Callout type="tip" title="Title">text</Callout>
 <Callout type="warning" title="Title">text</Callout>
 <Callout type="quote" title="Title">text</Callout>`,
-    note: "All MDX components (Callout, BlogImage, Divider, PullQuote) are auto-imported — no import statement needed.",
+    note: "All MDX components (Callout, BlogImage, Divider, PullQuote) are auto-imported, no import statement needed.",
   },
   {
     heading: "Pull quote",
@@ -94,7 +94,7 @@ tags: [tag1, tag2]
     code: `Here is a claim.[^1]
 
 [^1]: The supporting note, shown at the end.`,
-    note: "GFM footnotes — references link down to a styled notes section at the article end.",
+    note: "GFM footnotes, references link down to a styled notes section at the article end.",
   },
   {
     heading: "Code blocks",
@@ -187,7 +187,7 @@ export default function BlogGuideDrawer() {
             <div>
               <p className="text-[11px] font-bold uppercase tracking-wider text-fg-faint mb-0.5">Appendix</p>
               <h3 className="text-sm font-bold text-fg">Project Maintenance</h3>
-              <p className="text-[10px] text-fg-faint mt-1 leading-relaxed">Everything you need to keep the site up to date — data, blog posts, and deployments.</p>
+              <p className="text-[10px] text-fg-faint mt-1 leading-relaxed">Everything you need to keep the site up to date, data, blog posts, and deployments.</p>
             </div>
 
             {/* Live Stats Dashboard */}
@@ -288,9 +288,9 @@ export default function BlogGuideDrawer() {
                 <div className="flex-1 h-px bg-border-subtle" />
               </div>
               <p className="text-[10px] text-fg-faint leading-relaxed">
-                Edit only in <span className="font-mono bg-surface-raised px-1 rounded">backend/data/knowledge/</span> — these are the single source of truth for both the website UI and the Avocado chatbot knowledge base.
+                Edit only in <span className="font-mono bg-surface-raised px-1 rounded">backend/data/knowledge/</span>. These are the single source of truth for both the website UI and the Avocado chatbot knowledge base.
                 After any edit, run <span className="font-mono bg-surface-raised px-1 rounded">npm run sync</span> from <span className="font-mono bg-surface-raised px-1 rounded">frontend/</span> (or just restart <span className="font-mono bg-surface-raised px-1 rounded">npm run dev</span>).
-                Never edit <span className="font-mono bg-surface-raised px-1 rounded">frontend/src/data/knowledge/</span> directly — those files are auto-overwritten.
+                Never edit <span className="font-mono bg-surface-raised px-1 rounded">frontend/src/data/knowledge/</span> directly, those files are auto-overwritten.
               </p>
               {[
                 {
@@ -299,27 +299,27 @@ export default function BlogGuideDrawer() {
                   fields: "name, tagline, bio, summary, obsession, previous, prev_domain, interested_domain, location, email, phone, github, linkedin, resume",
                 },
                 {
-                  what: "Work experience — roles, companies, bullet points",
+                  what: "Work experience, roles, companies, bullet points",
                   file: "backend/data/knowledge/experience.json",
                   fields: "role, company, location, start, end, description, bullets[]",
                 },
                 {
-                  what: "Education — degrees, institutions, highlights",
+                  what: "Education, degrees, institutions, highlights",
                   file: "backend/data/knowledge/education.json",
                   fields: "institution, school, degree, field, location, start, end, gpa, highlights[]",
                 },
                 {
-                  what: "Projects — title, description, tags, links",
+                  what: "Projects, title, description, tags, links",
                   file: "backend/data/knowledge/projects.json",
                   fields: "title, description, tags[], featured, award, sourceLinks[{label,url}], note",
                 },
                 {
-                  what: "Skills & tools — categories and items",
+                  what: "Skills & tools, categories and items",
                   file: "backend/data/knowledge/skills.json",
                   fields: "category, items[]",
                 },
                 {
-                  what: "Testimonials — name, role, company, quote",
+                  what: "Testimonials, name, role, company, quote",
                   file: "backend/data/knowledge/testimonials.json",
                   fields: "name, designation, company, linkedin, description, givenAt, source",
                 },
@@ -345,7 +345,7 @@ export default function BlogGuideDrawer() {
                 <div className="flex-1 h-px bg-border-subtle" />
               </div>
               <p className="text-[10px] text-fg-faint leading-relaxed">
-                Create a new <span className="font-mono bg-surface-raised px-1 rounded">.mdx</span> file — the filename becomes the URL slug.
+                Create a new <span className="font-mono bg-surface-raised px-1 rounded">.mdx</span> file, the filename becomes the URL slug.
                 No sync needed; GitHub Actions auto-generates <span className="font-mono bg-surface-raised px-1 rounded">blog.json</span> on push so the chatbot indexes the new post automatically.
               </p>
               {[
@@ -362,7 +362,7 @@ export default function BlogGuideDrawer() {
                 {
                   what: "Auto-generated chatbot index",
                   file: "backend/data/knowledge/blog.json",
-                  fields: "Do not edit — auto-generated by scripts/sync-knowledge.mjs. GH Actions commits it on push; Railway re-ingests on deploy.",
+                  fields: "Do not edit, auto-generated by scripts/sync-knowledge.mjs. GH Actions commits it on push; Railway re-ingests on deploy.",
                 },
               ].map(({ what, file, fields }) => (
                 <div key={file} className="border border-border-subtle rounded-lg p-2.5 space-y-1">
@@ -374,8 +374,8 @@ export default function BlogGuideDrawer() {
               <div className="border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/50 rounded-lg p-2.5 space-y-1">
                 <p className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">publishedAt vs date</p>
                 <p className="text-[10px] text-amber-600 dark:text-amber-500 leading-relaxed">
-                  <span className="font-mono">publishedAt</span> is the sort key — set it once and never change it.
-                  <span className="font-mono"> date</span> is the display date — update freely (e.g. after a major revision).
+                  <span className="font-mono">publishedAt</span> is the sort key, set it once and never change it.
+                  <span className="font-mono"> date</span> is the display date, update freely (e.g. after a major revision).
                 </p>
               </div>
             </div>
@@ -383,11 +383,11 @@ export default function BlogGuideDrawer() {
             {/* Section 2b — Lab Maintenance */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-accent">2b · Lab — Living System Docs</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-accent">2b · Lab, Living System Docs</span>
                 <div className="flex-1 h-px bg-border-subtle" />
               </div>
               <p className="text-[10px] text-fg-faint leading-relaxed">
-                Lab is for living, in-progress project documentation — architecture, decisions, and progress logs updated as the project evolves. Files live at <span className="font-mono bg-surface-raised px-1 rounded">frontend/src/content/lab/[slug].mdx</span>. Filename = URL slug.
+                Lab is for living, in-progress project documentation, architecture, decisions, and progress logs updated as the project evolves. Files live at <span className="font-mono bg-surface-raised px-1 rounded">frontend/src/content/lab/[slug].mdx</span>. Filename = URL slug.
               </p>
 
               <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-2">Frontmatter (required)</p>
@@ -420,7 +420,7 @@ tech: [Next.js, FastAPI, PostgreSQL]
               {[
                 {
                   what: "<Status status=\"active\" />",
-                  detail: "Inline status badge — same colors as the index card. Put it near the top of the document so status is visible in the post.",
+                  detail: "Inline status badge, same colors as the index card. Put it near the top of the document so status is visible in the post.",
                 },
                 {
                   what: "<Stack items={[\"Next.js\", \"Python\"]} />",
@@ -428,7 +428,7 @@ tech: [Next.js, FastAPI, PostgreSQL]
                 },
                 {
                   what: "<Metric value=\"99%\" label=\"uptime\" />",
-                  detail: "Highlighted stat box. Use for key numbers — latency, users, accuracy, uptime. Group multiple Metrics in a flex row for a dashboard effect.",
+                  detail: "Highlighted stat box. Use for key numbers, latency, users, accuracy, uptime. Group multiple Metrics in a flex row for a dashboard effect.",
                 },
                 {
                   what: "<Decision date=\"2026-01-10\" title=\"Why X over Y\">...</Decision>",
@@ -452,13 +452,13 @@ tech: [Next.js, FastAPI, PostgreSQL]
 └─────────────┘     └─────────────┘
 \`\`\``}</pre>
               <p className="text-[10px] text-fg-faint italic leading-relaxed">
-                Always use fenced <span className="font-mono bg-surface-raised px-1 rounded">```arch</span> blocks for diagrams — never a JSX component. Characters like <span className="font-mono bg-surface-raised px-1 rounded">&lt;</span>, <span className="font-mono bg-surface-raised px-1 rounded">&gt;</span>, and <span className="font-mono bg-surface-raised px-1 rounded">{"{}"}</span> inside JSX children cause an MDX acorn parse error.
+                Always use fenced <span className="font-mono bg-surface-raised px-1 rounded">```arch</span> blocks for diagrams, never a JSX component. Characters like <span className="font-mono bg-surface-raised px-1 rounded">&lt;</span>, <span className="font-mono bg-surface-raised px-1 rounded">&gt;</span>, and <span className="font-mono bg-surface-raised px-1 rounded">{"{}"}</span> inside JSX children cause an MDX acorn parse error.
               </p>
 
               <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-2">Typical update workflow</p>
               {[
                 { what: "Create a new lab entry", detail: "Add frontend/src/content/lab/my-project.mdx with required frontmatter → commit + push → deploys automatically." },
-                { what: "Update an existing entry", detail: "Edit the MDX file, update updatedAt in frontmatter → commit + push. No sync script needed — lab files are read directly at build time." },
+                { what: "Update an existing entry", detail: "Edit the MDX file, update updatedAt in frontmatter → commit + push. No sync script needed, lab files are read directly at build time." },
                 { what: "Mark a project shipped", detail: "Change status to \"shipped\" in frontmatter, update updatedAt, add a final <Update> timeline note → commit + push." },
                 { what: "Chatbot indexing", detail: "Lab entries are indexed into ChromaDB via lab.json (auto-generated by sync-knowledge.mjs on every push). Avocado can answer questions about active lab projects, tech stack, and decisions." },
               ].map(({ what, detail }) => (
@@ -475,7 +475,7 @@ tech: [Next.js, FastAPI, PostgreSQL]
                 <span className="text-[10px] font-bold uppercase tracking-widest text-accent">3 · Deploy Pipeline (auto)</span>
                 <div className="flex-1 h-px bg-border-subtle" />
               </div>
-              <p className="text-[10px] text-fg-faint leading-relaxed">Everything is automated — just commit and push.</p>
+              <p className="text-[10px] text-fg-faint leading-relaxed">Everything is automated, just commit and push.</p>
               {[
                 {
                   what: "Update portfolio data",
@@ -515,19 +515,19 @@ tech: [Next.js, FastAPI, PostgreSQL]
                 <span className="text-[10px] font-bold uppercase tracking-widest text-accent">4 · Blog Engagement</span>
                 <div className="flex-1 h-px bg-border-subtle" />
               </div>
-              <p className="text-[10px] text-fg-faint leading-relaxed">Tracked automatically. No config needed for new posts — engagement starts recording as soon as a reader opens the post.</p>
+              <p className="text-[10px] text-fg-faint leading-relaxed">Tracked automatically. No config needed for new posts, engagement starts recording as soon as a reader opens the post.</p>
               {[
                 {
-                  what: "Views — unique per visitor per post",
+                  what: "Views, unique per visitor per post",
                   detail: "Auto-recorded when a reader opens a post. One view per IP address. Shown on the post page and blog index.",
                 },
                 {
-                  what: "Claps — up to 50 per visitor per post",
+                  what: "Claps, up to 50 per visitor per post",
                   detail: "Reader clicks the clap icon button. Clicks batch with a 1.5s debounce before saving. Total shown on index card and post page.",
                 },
                 {
-                  what: "Storage — SQLite analytics.db",
-                  detail: "Stored in chroma_db/analytics.db. IPs are SHA-256 hashed — never stored raw. On Railway: set ANALYTICS_DB_PATH=/data/analytics.db with a persistent volume so counts survive redeploys.",
+                  what: "Storage, SQLite analytics.db",
+                  detail: "Stored in chroma_db/analytics.db. IPs are SHA-256 hashed, never stored raw. On Railway: set ANALYTICS_DB_PATH=/data/analytics.db with a persistent volume so counts survive redeploys.",
                 },
                 {
                   what: "Persistence on Railway",
@@ -554,7 +554,7 @@ tech: [Next.js, FastAPI, PostgreSQL]
               {[
                 {
                   what: "Response count & unique visitors",
-                  detail: "Tracked on every chat response. Shown in chatbot footer. Stored in the same analytics.db — subject to same Railway persistence note above.",
+                  detail: "Tracked on every chat response. Shown in chatbot footer. Stored in the same analytics.db, subject to same Railway persistence note above.",
                 },
                 {
                   what: "Model indicator badge",
@@ -569,7 +569,7 @@ tech: [Next.js, FastAPI, PostgreSQL]
                   detail: "Primary: GEMINI_MODEL. Fallbacks: GEMINI_FALLBACK_MODELS (comma-separated). Auto-retries on 503/429 capacity errors in order.",
                 },
                 {
-                  what: "Knowledge base — ChromaDB",
+                  what: "Knowledge base, ChromaDB",
                   detail: "ChromaDB persists to backend/chroma_db/ (git-ignored). On Railway: mount a persistent volume at /data and symlink or set the chroma path. Without a volume, the DB rebuilds on every deploy (works, just slower startup ~30–60s).",
                 },
                 {
@@ -611,7 +611,7 @@ tech: [Next.js, FastAPI, PostgreSQL]
               ))}
               <p className="text-[9px] font-bold uppercase tracking-widest text-fg-faint mt-3 mb-1">Frontend (GitHub Actions secrets / .env.local)</p>
               {[
-                { key: "NEXT_PUBLIC_API_BASE_URL", detail: "Backend URL the browser calls. Set to your Railway backend URL in production (e.g. https://your-backend.up.railway.app). Required — chat and blog stats break without it." },
+                { key: "NEXT_PUBLIC_API_BASE_URL", detail: "Backend URL the browser calls. Set to your Railway backend URL in production (e.g. https://your-backend.up.railway.app). Required, chat and blog stats break without it." },
                 { key: "NEXT_PUBLIC_BLOG_FONT", detail: "Blog reading font. Default: Source_Serif_4. Must match the font statically imported in frontend/src/app/layout.tsx." },
               ].map(({ key, detail }) => (
                 <div key={key} className="border border-border-subtle rounded-lg p-2.5 space-y-0.5">

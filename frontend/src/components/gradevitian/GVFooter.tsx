@@ -63,7 +63,7 @@ export default function GVFooter() {
               <span>grade<span className="text-accent">VIT</span>ian</span>
             </GVLink>
             <p className="mt-3 max-w-xs text-sm leading-relaxed text-fg-muted">
-              Free GPA, CGPA, grade &amp; attendance calculators — built by a VITian, for every VITian.
+              Free GPA, CGPA, grade &amp; attendance calculators, built by a VITian, for every VITian.
             </p>
             <div className="mt-5">
               <GVInstall variant="hero" />

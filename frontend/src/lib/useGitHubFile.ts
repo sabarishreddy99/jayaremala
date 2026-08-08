@@ -54,7 +54,7 @@ export function useGitHubFile(filePath: string) {
     }
     setSaving(true);
     staging.stage(filePath, data, message);
-    setResult({ ok: true, message: "Staged — hit “Publish all” at the bottom to deploy." });
+    setResult({ ok: true, message: "Staged, hit “Publish all” at the bottom to deploy." });
     setSaving(false);
     return true;
   }

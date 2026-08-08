@@ -59,7 +59,7 @@ export default function AskRulebook() {
         </p>
         <h2 className="mt-3 text-lg font-bold text-fg">Ask the Rulebook is for account holders.</h2>
         <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-fg-muted">
-          It runs a real AI over VIT&apos;s official regulations to answer your question in seconds —
+          It runs a real AI over VIT&apos;s official regulations to answer your question in seconds,
           so it&apos;s reserved for signed-in students (5 questions an hour). Creating an account is
           free and takes a moment.
         </p>

@@ -331,7 +331,7 @@ export default function ContentLabEditor() {
       });
       if (res.ok) {
         setSavedContent(form.content);
-        setResult({ ok: true, message: editingSlug ? "Updated!" : "Entry created — live immediately." });
+        setResult({ ok: true, message: editingSlug ? "Updated!" : "Entry created, live immediately." });
         const wasEditing = !!editingSlug;
         if (!wasEditing) resetForm();
         const updated = await loadEntries();
@@ -561,14 +561,14 @@ export default function ContentLabEditor() {
     <div className="space-y-8">
       <div className="rounded-2xl border border-border bg-surface p-6">
         <div className="flex items-start justify-between mb-1">
-          <h2 className="text-base font-bold text-fg">{editingSlug ? "Edit lab entry" : "Lab — Content API"}</h2>
+          <h2 className="text-base font-bold text-fg">{editingSlug ? "Edit lab entry" : "Lab, Content API"}</h2>
           {editingSlug && (
             <button onClick={resetForm} className="text-xs text-fg-faint hover:text-fg transition-colors">
               + New entry
             </button>
           )}
         </div>
-        <p className="text-xs text-fg-faint mb-6">Changes are live immediately — no git push, no rebuild.</p>
+        <p className="text-xs text-fg-faint mb-6">Changes are live immediately, no git push, no rebuild.</p>
 
         {/* Form */}
         <div className="space-y-4 mb-8">

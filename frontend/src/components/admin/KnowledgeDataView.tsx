@@ -18,7 +18,7 @@ const FILES = [
     label: "Experience",
     icon: <svg {...si}><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></svg>,
     filePath: "backend/data/knowledge/experience.json",
-    description: "Work history — roles, companies, locations, dates, bullet points",
+    description: "Work history, roles, companies, locations, dates, bullet points",
   },
   {
     key: "education",
@@ -63,7 +63,7 @@ export default function KnowledgeDataView() {
       <div>
         <h2 className="text-sm font-bold text-fg">Portfolio Data</h2>
         <p className="text-xs text-fg-faint mt-0.5">
-          All changes commit to <code className="text-accent">backend/data/knowledge/</code> — GH Actions syncs to the frontend and Railway re-ingests the chatbot knowledge base automatically.
+          All changes commit to <code className="text-accent">backend/data/knowledge/</code>, GH Actions syncs to the frontend and Railway re-ingests the chatbot knowledge base automatically.
         </p>
       </div>
 
@@ -117,14 +117,14 @@ function FieldReference({ fileKey }: { fileKey: FileKey }) {
     profile: [
       { field: "name",               type: "string",    note: "Full display name" },
       { field: "tagline",            type: "string",    note: "Subtitle under the name in hero" },
-      { field: "bio",                type: "string",    note: "About paragraph — numbers get auto-highlighted in bold" },
+      { field: "bio",                type: "string",    note: "About paragraph, numbers get auto-highlighted in bold" },
       { field: "obsession",          type: "string",    note: "Italic pull-quote in At a Glance section" },
       { field: "currently",          type: "string",    note: "\"Currently deep in\" card in hero right column" },
       { field: "previous",           type: "string",    note: "Comma-separated company names shown as Prev@ chips" },
       { field: "prev_domain",        type: "string",    note: "Comma-separated previous domain chips in At a Glance" },
       { field: "interested_domain",  type: "string",    note: "Comma-separated interested domain chips (accent color)" },
       { field: "heroStats[]",        type: "array",     note: "4 animated count-up stat cards in hero. Each: {value, suffix, label, sub}" },
-      { field: "availability",       type: "object",    note: "{open, label, types[], locations[]} — hero status badge" },
+      { field: "availability",       type: "object",    note: "{open, label, types[], locations[]}, hero status badge" },
       { field: "resume",             type: "string",    note: "URL shown in hero CTA and chatbot responses" },
       { field: "email / phone",      type: "string",    note: "Contact info used by chatbot and contact form" },
       { field: "github / linkedin",  type: "string",    note: "Social profile URLs" },
@@ -150,15 +150,15 @@ function FieldReference({ fileKey }: { fileKey: FileKey }) {
     projects: [
       { field: "title",          type: "string",   note: "Project name" },
       { field: "description",    type: "string",   note: "One-paragraph summary" },
-      { field: "tags[]",         type: "string[]", note: "Tech stack — used for skill filter cross-linking" },
+      { field: "tags[]",         type: "string[]", note: "Tech stack, used for skill filter cross-linking" },
       { field: "featured",       type: "boolean",  note: "true → shows on homepage Featured Projects grid" },
       { field: "award",          type: "string",   note: "Optional award badge text e.g. \"Hackathon Winner\"" },
-      { field: "sourceLinks[]",  type: "array",    note: "Each: {label, url} — rendered as indigo pill buttons" },
+      { field: "sourceLinks[]",  type: "array",    note: "Each: {label, url}, rendered as indigo pill buttons" },
       { field: "note",           type: "string",   note: "Optional amber callout note shown on the card" },
     ],
     skills: [
-      { field: "category", type: "string",   note: "Group heading — controls Lego brick color" },
-      { field: "items[]",  type: "string[]", note: "Individual skill names — each rendered as a Lego brick" },
+      { field: "category", type: "string",   note: "Group heading, controls Lego brick color" },
+      { field: "items[]",  type: "string[]", note: "Individual skill names, each rendered as a Lego brick" },
     ],
     testimonials: [
       { field: "name",        type: "string", note: "Person's full name" },

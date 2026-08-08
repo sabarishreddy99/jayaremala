@@ -26,7 +26,7 @@ const SERIF = "var(--font-cormorant), Georgia, serif";
 // Warm, personal identity line — calm and a little inviting, rendered thin (the
 // same font-light treatment as the portfolio home hero). Kept stat-free on purpose
 // so the hero feels like a quiet home, not a pitch (the numbers live in Act 02).
-const TAGLINE = "A calm little home for your GPA, CGPA and attendance — free forever, works offline, and quietly becomes yours.";
+const TAGLINE = "A calm little home for your GPA, CGPA and attendance, free forever, works offline, and quietly becomes yours.";
 
 const METRICS: GVStat[] = [
   { value: "17K+", label: "Monthly Active Users", sub: "Peak student traffic" },
@@ -176,7 +176,7 @@ function HeroShare() {
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
         <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" /><path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4" />
       </svg>
-      {copied ? "Link copied — pass it on" : "Share it with a friend"}
+      {copied ? "Link copied, pass it on" : "Share it with a friend"}
     </button>
   );
 }
@@ -226,7 +226,7 @@ export default function GVHome() {
             {/* Tagline — portfolio-style identity line, thin font */}
             <Lead className="mx-auto mt-7 max-w-2xl">
               {user
-                ? "Your calculators and saved results are right where you left them — pick a tool and keep going."
+                ? "Your calculators and saved results are right where you left them, pick a tool and keep going."
                 : TAGLINE}
             </Lead>
 
@@ -286,8 +286,8 @@ export default function GVHome() {
             <Headline className="mt-6">{user ? "Your tools" : "Everything you need, in one place."}</Headline>
             <Lead className="mx-auto mt-5 max-w-xl">
               {user
-                ? "Saved results sync to your account — pick up wherever you left off."
-                : "Calculators for exam season, planners for the long game, and the rulebook for when you're not sure — all free."}
+                ? "Saved results sync to your account, pick up wherever you left off."
+                : "Calculators for exam season, planners for the long game, and the rulebook for when you're not sure, all free."}
             </Lead>
           </ScrollReveal>
 
@@ -336,7 +336,7 @@ export default function GVHome() {
             </Headline>
             <Lead className="mx-auto mt-6 max-w-2xl">
               It began as one student&apos;s shortcut through exam-season math. Six years later it&apos;s
-              a quiet campus ritual — around 17,000 students every month, #2 on Google, and sub-second
+              a quiet campus ritual, around 17,000 students every month, #2 on Google, and sub-second
               loads on the cheapest phone in the room.
             </Lead>
           </ScrollReveal>
@@ -354,7 +354,7 @@ export default function GVHome() {
             <Chapter index="03" label="Anywhere you study" />
             <Headline className="mt-6">Yours on every device.</Headline>
             <Lead className="mx-auto mt-5 max-w-md">
-              Install it once and it lives on your phone, laptop, or browser like a native app —
+              Install it once and it lives on your phone, laptop, or browser like a native app,
               and it still works when the campus Wi-Fi doesn&apos;t.
             </Lead>
             <div className="mt-10">
@@ -373,7 +373,7 @@ export default function GVHome() {
               <Chapter index="04" label="A reason to stay" />
               <Headline className="mx-auto mt-6 max-w-2xl">More than a calculator once you sign in.</Headline>
               <Lead className="mx-auto mt-5 max-w-xl">
-                A free account turns gradeVITian into your own academic command centre — and it&apos;s the
+                A free account turns gradeVITian into your own academic command centre, and it&apos;s the
                 same login on every device.
               </Lead>
               <div className="mx-auto mt-12 grid max-w-3xl grid-cols-2 gap-4 sm:grid-cols-4">
@@ -411,7 +411,7 @@ export default function GVHome() {
                       </div>
                       <div>
                         <h2 style={{ fontFamily: SERIF, fontWeight: 600 }} className="text-2xl text-fg sm:text-[1.7rem]">This is your space, {firstName}.</h2>
-                        <p className="mt-1.5 font-light text-fg-muted">Saved calculations, notifications and more — all in one place.</p>
+                        <p className="mt-1.5 font-light text-fg-muted">Saved calculations, notifications and more, all in one place.</p>
                       </div>
                     </div>
                     <GVLink href="/account" className="rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
@@ -422,7 +422,7 @@ export default function GVHome() {
                   <>
                     <div className="max-w-md">
                       <h2 style={{ fontFamily: SERIF, fontWeight: 600 }} className="text-2xl text-fg sm:text-[1.8rem]">Make gradeVITian yours.</h2>
-                      <p className="mt-2 font-light text-fg-muted">Create a free account to save your calculations, set goals, and pick up right where you left off — on any device.</p>
+                      <p className="mt-2 font-light text-fg-muted">Create a free account to save your calculations, set goals, and pick up right where you left off, on any device.</p>
                     </div>
                     <GVLink href="/signup" className="rounded-full bg-accent px-7 py-3.5 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]">
                       Create free account
@@ -447,10 +447,10 @@ export default function GVHome() {
                 </div>
                 <div>
                   <h2 className="text-[1.05rem] font-semibold text-fg">Got a suggestion or found a bug?</h2>
-                  <p className="mt-1 text-body font-light text-fg-muted">We read every message — tell us what would make gradeVITian better.</p>
+                  <p className="mt-1 text-body font-light text-fg-muted">We read every message, tell us what would make gradeVITian better.</p>
                   <p className="mt-2 flex items-center gap-1.5 text-sm font-medium text-accent">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" aria-hidden className="shrink-0"><path d="M12 2l2.2 6.6L21 11l-6.8 2.4L12 20l-2.2-6.6L3 11l6.8-2.4z" /></svg>
-                    Share yours — you could be featured in our testimonials soon!
+                    Share yours, you could be featured in our testimonials soon!
                   </p>
                 </div>
               </div>

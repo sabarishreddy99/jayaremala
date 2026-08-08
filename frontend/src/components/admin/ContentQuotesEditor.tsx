@@ -134,7 +134,7 @@ export default function ContentQuotesEditor() {
         body: JSON.stringify(body),
       });
       if (res.ok) {
-        setResult({ ok: true, message: editingId ? "Updated!" : "Quote added — live immediately." });
+        setResult({ ok: true, message: editingId ? "Updated!" : "Quote added, live immediately." });
         resetForm();
         const updated = await loadQuotes();
         triggerReingest();
@@ -198,8 +198,8 @@ export default function ContentQuotesEditor() {
   return (
     <div className="space-y-8">
       <div className="rounded-2xl border border-border bg-surface p-6">
-        <h2 className="text-base font-bold text-fg mb-1">Quotes — Content API</h2>
-        <p className="text-xs text-fg-faint mb-6">Changes are live immediately — no git push, no rebuild.</p>
+        <h2 className="text-base font-bold text-fg mb-1">Quotes, Content API</h2>
+        <p className="text-xs text-fg-faint mb-6">Changes are live immediately, no git push, no rebuild.</p>
 
         {/* Form */}
         <div className="space-y-4 mb-8">
@@ -345,7 +345,7 @@ export default function ContentQuotesEditor() {
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-fg leading-snug line-clamp-2">&ldquo;{q.text}&rdquo;</p>
-                <p className="text-[11px] text-fg-faint mt-0.5">— {q.author}{q.source ? `, ${q.source}` : ""}</p>
+                <p className="text-[11px] text-fg-faint mt-0.5">{q.author}{q.source ? `, ${q.source}` : ""}</p>
                 <div className="flex gap-2 mt-1">
                   <span className="text-[10px] bg-surface-raised px-2 py-0.5 rounded-full text-fg-muted">{q.category}</span>
                   {q.favorite && <span className="text-[10px] text-amber-500">★ favorite</span>}

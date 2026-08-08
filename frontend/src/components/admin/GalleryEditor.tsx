@@ -258,7 +258,7 @@ export default function GalleryEditor() {
         method: "POST",
         headers: { ...headers(), "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: `gallery: bulk add ${newEntries.length} photo${newEntries.length !== 1 ? "s" : ""} — ${titles}`,
+          message: `gallery: bulk add ${newEntries.length} photo${newEntries.length !== 1 ? "s" : ""}, ${titles}`,
           tree: newTreeSha,
           parents: [latestCommitSha],
         }),
@@ -309,7 +309,7 @@ export default function GalleryEditor() {
     <div className="space-y-5">
       <div className="flex items-center gap-2.5">
         <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-violet-500 to-indigo-500 shrink-0" />
-        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Gallery — Upload Photos</h2>
+        <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Gallery, Upload Photos</h2>
       </div>
 
       {/* PAT + load */}

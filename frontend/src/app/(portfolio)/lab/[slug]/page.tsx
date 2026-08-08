@@ -210,14 +210,14 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props) {
   const { slug } = await params;
   const entry = getLabEntryBySlug(slug);
-  if (entry) return { title: `${entry.title} — Lab — Jaya Sabarish Reddy Remala` };
+  if (entry) return { title: `${entry.title} · Lab | Jaya Sabarish Reddy Remala` };
 
   try {
     const apiUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
     const res = await fetch(`${apiUrl}/content/lab/${slug}`, { signal: AbortSignal.timeout(5000) });
     if (res.ok) {
       const apiEntry: ApiLabEntry = await res.json();
-      return { title: `${apiEntry.title} — Lab — Jaya Sabarish Reddy Remala` };
+      return { title: `${apiEntry.title} · Lab | Jaya Sabarish Reddy Remala` };
     }
   } catch { /* silent */ }
   return {};

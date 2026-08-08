@@ -58,7 +58,7 @@ function Fmt2() {
   return (
     <>
       <p className="mb-4 text-sm text-fg-muted">
-        Enter the total classes held, then fill in <em>either</em> classes present <em>or</em> classes absent — not both.
+        Enter the total classes held, then fill in <em>either</em> classes present <em>or</em> classes absent, not both.
       </p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Field label="Total classes"><Input type="number" min={1} value={v.total} onChange={(e) => setV({ ...v, total: e.target.value })} /></Field>

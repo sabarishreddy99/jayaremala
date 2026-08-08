@@ -9,8 +9,8 @@ export const metadata = {
   openGraph: {
     type: "website" as const,
     url: "https://jayaremala.com/education",
-    title: "Education — Jaya Sabarish Reddy Remala",
-    description: "NYU Tandon School of Engineering — Computer Science. Academic foundation in AI and distributed systems.",
+    title: "Education | Jaya Sabarish Reddy Remala",
+    description: "NYU Tandon School of Engineering, Computer Science. Academic foundation in AI and distributed systems.",
   },
 };
 
@@ -120,7 +120,7 @@ export default function EducationPage() {
                 {/* Degree + location row */}
                 <div className="flex flex-wrap items-center gap-3 mt-3 mb-1">
                   <p className="text-sm font-semibold text-accent">
-                    {edu.degree} — {edu.field}
+                    {edu.degree}, {edu.field}
                   </p>
                   <span className="flex items-center gap-1 text-[11px] text-fg-faint">
                     <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

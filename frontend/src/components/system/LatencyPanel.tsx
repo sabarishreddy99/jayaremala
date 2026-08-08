@@ -25,7 +25,7 @@ export default function LatencyPanel({ data }: { data: SystemData }) {
 
       {stages.length > 0 && (
         <section>
-          <SectionTitle>RAG pipeline — per-stage p50 / p95</SectionTitle>
+          <SectionTitle>RAG pipeline, per-stage p50 / p95</SectionTitle>
           <p className="text-[11px] text-fg-faint mb-3">{data.retrieval.method}</p>
           <div className="rounded-xl border border-border bg-surface p-4 space-y-3">
             {stages.map((s) => (

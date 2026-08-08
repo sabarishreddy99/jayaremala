@@ -20,17 +20,17 @@ const FIELDS: { key: keyof Omit<NowBlock, "updated">; label: string; placeholder
   {
     key: "building",
     label: "Building",
-    placeholder: "e.g. itsjaya.com — AI-powered portfolio with RAG chatbot",
+    placeholder: "e.g. itsjaya.com, AI-powered portfolio with RAG chatbot",
   },
   {
     key: "learning",
     label: "Learning",
-    placeholder: "e.g. Recommendation systems at scale — collaborative filtering, two-tower models",
+    placeholder: "e.g. Recommendation systems at scale, collaborative filtering, two-tower models",
   },
   {
     key: "reading",
     label: "Reading",
-    placeholder: "e.g. Designing Data-Intensive Applications — Martin Kleppmann",
+    placeholder: "e.g. Designing Data-Intensive Applications, Martin Kleppmann",
   },
   {
     key: "location",
@@ -180,7 +180,7 @@ export default function NowEditor() {
             {loading ? "Loading…" : "Load"}
           </button>
         </div>
-        <p className="text-[10px] text-fg-faint">Same token as other editors — needs repo write access.</p>
+        <p className="text-[10px] text-fg-faint">Same token as other editors, needs repo write access.</p>
       </div>
 
       {/* Fields */}

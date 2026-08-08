@@ -14,14 +14,14 @@ const ROUTE_CONFIG: Record<string, { title: string; description: string }> = {
   "/":           { title: "Home",         description: "Portfolio homepage, featured projects, skills" },
   "/experience": { title: "Experience",   description: "Work history, roles, companies, timelines" },
   "/education":  { title: "Education",    description: "Degrees, institutions, coursework" },
-  "/projects":   { title: "Projects",     description: "Things I've built — source links, awards" },
+  "/projects":   { title: "Projects",     description: "Things I've built, source links, awards" },
   "/apps":       { title: "Apps",         description: "Live apps & products I host and run" },
   "/blog":       { title: "Blog",         description: "Technical writing and essays" },
   "/lab":        { title: "Lab",          description: "Living system docs, active builds" },
   "/quotes":     { title: "Quotes",       description: "Collected wisdom, favourite quotes" },
   "/now":        { title: "Now",          description: "What I'm currently working on" },
   "/gallery":    { title: "Gallery",      description: "Photos and moments" },
-  "/chat":       { title: "Ask Avocado",  description: "AI assistant — ask anything about Jaya" },
+  "/chat":       { title: "Ask Avocado",  description: "AI assistant, ask anything about Jaya" },
 };
 
 // Directories under src/app/ to never surface in the command palette

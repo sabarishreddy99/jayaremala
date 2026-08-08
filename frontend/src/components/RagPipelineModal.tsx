@@ -22,7 +22,7 @@ const NODES: NodeDef[] = [
     label: "User Query",
     brief: "Natural language input",
     detail:
-      "Any natural language question — no templates or keyword syntax required. The pipeline understands intent, not just matching words.",
+      "Any natural language question, no templates or keyword syntax required. The pipeline understands intent, not just matching words.",
     dot: "bg-indigo-500",
     tag: "Input",
     tagColor: "text-indigo-400",
@@ -45,7 +45,7 @@ const SPLIT_LEFT: NodeDef = {
   label: "Vector Search",
   brief: "BGE-base · ONNX",
   detail:
-    "Dense semantic search via BAAI/bge-base-en-v1.5 running on ONNX (no PyTorch runtime). Finds conceptually related chunks even without keyword overlap — captures meaning, not just words.",
+    "Dense semantic search via BAAI/bge-base-en-v1.5 running on ONNX (no PyTorch runtime). Finds conceptually related chunks even without keyword overlap, captures meaning, not just words.",
   dot: "bg-blue-500",
 };
 
@@ -54,7 +54,7 @@ const SPLIT_RIGHT: NodeDef = {
   label: "BM25 Lexical",
   brief: "Sparse keyword retrieval",
   detail:
-    "Classic BM25 inverted-index retrieval. Catches exact-match terms — names, acronyms, rare words — that dense embeddings can under-weight. The two methods are complementary.",
+    "Classic BM25 inverted-index retrieval. Catches exact-match terms, names, acronyms, rare words, that dense embeddings can under-weight. The two methods are complementary.",
   dot: "bg-blue-400",
 };
 
@@ -94,7 +94,7 @@ const LOWER_NODES: NodeDef[] = [
     label: "Streamed Response",
     brief: "Token-by-token via SSE",
     detail:
-      "Server-Sent Events stream tokens to the browser the moment they are generated — no waiting for the full response. The UI renders characters as they arrive, giving instant feedback.",
+      "Server-Sent Events stream tokens to the browser the moment they are generated, no waiting for the full response. The UI renders characters as they arrive, giving instant feedback.",
     dot: "bg-green-500",
     tag: "Output",
     tagColor: "text-green-400",

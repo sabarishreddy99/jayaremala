@@ -118,7 +118,7 @@ export default function EducationEditor() {
             <div>
               <FieldLabel>Highlights (one per line, optional)</FieldLabel>
               <TextArea value={(entry.highlights ?? []).join("\n")} onChange={setHighlights} rows={5}
-                placeholder="Coursework: Algorithms, ML…&#10;TA — Data Structures…" />
+                placeholder="Coursework: Algorithms, ML…&#10;TA, Data Structures…" />
             </div>
           </div>
         ) : (

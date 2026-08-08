@@ -155,7 +155,7 @@ export default function AvocadoChatButton() {
 
               {/* Message */}
               <p className="text-[12px] leading-[1.7] text-fg-muted mb-4">
-                Ask me anything about Jaya — his projects, experience, or what makes him unique.
+                Ask me anything about Jaya, his projects, experience, or what makes him unique.
               </p>
 
               {/* CTA */}

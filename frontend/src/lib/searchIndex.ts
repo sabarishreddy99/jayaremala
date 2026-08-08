@@ -119,7 +119,7 @@ const FILE_STRATEGIES: Record<string, FileStrategy> = {
       const text = String(item.text);
       return {
         title:       `"${text.slice(0, 90)}${text.length > 90 ? "…" : ""}"`,
-        description: item.author ? `— ${item.author}` : undefined,
+        description: item.author ? `${item.author}` : undefined,
         tags:        item.category ? [String(item.category)] : [],
       };
     },

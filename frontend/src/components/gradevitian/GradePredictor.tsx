@@ -107,10 +107,10 @@ function Grade() {
       <div className="mt-5 flex flex-wrap gap-3">
         <Button onClick={() => setResult(predictGrade(v))}>Predict grade</Button>
         <Button variant="ghost" onClick={() => { setV(blank); setResult(null); }}>Reset</Button>
-        {result?.value != null && <SaveCalcButton calcType="grade_predictor" payload={{ ...v }} result={`${result.message} — ${result.detail ?? ""}`} />}
+        {result?.value != null && <SaveCalcButton calcType="grade_predictor" payload={{ ...v }} result={`${result.message}, ${result.detail ?? ""}`} />}
       </div>
       <GVResultModal result={result} onClose={() => setResult(null)}>
-        {result?.value != null && <SaveCalcButton calcType="grade_predictor" payload={{ ...v }} result={`${result.message} — ${result.detail ?? ""}`} />}
+        {result?.value != null && <SaveCalcButton calcType="grade_predictor" payload={{ ...v }} result={`${result.message}, ${result.detail ?? ""}`} />}
       </GVResultModal>
     </>
   );

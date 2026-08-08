@@ -98,7 +98,7 @@ export default function GVWallOfLove() {
       ) : base.length === 0 ? (
         <ScrollReveal className="mt-10">
           <div className="rounded-3xl border border-dashed border-border-subtle bg-surface/40 p-10 text-center">
-            <p className="text-fg-muted">No feedback yet — be the very first VITian to leave one.</p>
+            <p className="text-fg-muted">No feedback yet, be the very first VITian to leave one.</p>
             <GVLink
               href="/feedback"
               className="mt-5 inline-flex items-center gap-2 rounded-full bg-accent px-6 py-3 text-sm font-semibold text-accent-fg shadow-sm shadow-accent/25 transition-all duration-200 hover:bg-accent-hover active:scale-[0.97]"
@@ -127,7 +127,7 @@ export default function GVWallOfLove() {
             </svg>
           </GVLink>
           <p className="text-micro text-fg-subtle">
-            Takes 20 seconds, no account needed — you could be featured right here.
+            Takes 20 seconds, no account needed, you could be featured right here.
           </p>
         </div>
       </ScrollReveal>

@@ -3,13 +3,13 @@ import { apps, type AppStatus } from "@/data/apps";
 export const metadata = {
   title: "Apps",
   description:
-    "Everything Jaya hosts and runs under his domain — live apps, products, and sub-domains like gradeVITian.",
+    "Everything Jaya hosts and runs under his domain, live apps, products, and sub-domains like gradeVITian.",
   alternates: { canonical: "https://jayaremala.com/apps" },
   openGraph: {
     type: "website" as const,
     url: "https://jayaremala.com/apps",
-    title: "Apps — Jaya Sabarish Reddy Remala",
-    description: "Live apps and products hosted under jayaremala.com — built, shipped, and operated end-to-end.",
+    title: "Apps | Jaya Sabarish Reddy Remala",
+    description: "Live apps and products hosted under jayaremala.com, built, shipped, and operated end-to-end.",
   },
 };
 
@@ -40,7 +40,7 @@ export default function AppsPage() {
         </div>
 
         <p className="text-sm text-fg-subtle max-w-xl leading-relaxed mb-4">
-          Standalone apps and products I&apos;ve built, shipped, and host under my domain — each one designed,
+          Standalone apps and products I&apos;ve built, shipped, and host under my domain, each one designed,
           deployed, and operated end-to-end.
         </p>
 

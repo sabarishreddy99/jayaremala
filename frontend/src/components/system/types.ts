@@ -81,9 +81,9 @@ export function fmtUptime(seconds: number): string {
 }
 
 export function fmtRelative(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "·";
   const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return "—";
+  if (Number.isNaN(then)) return "·";
   const diff = Math.max(0, Date.now() - then);
   const mins = Math.floor(diff / 60000);
   if (mins < 1) return "just now";

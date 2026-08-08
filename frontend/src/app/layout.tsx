@@ -48,7 +48,7 @@ const inter = Inter({
 });
 
 const SITE_URL = "https://jayaremala.com";
-const SITE_TITLE = "Jaya Sabarish Reddy Remala — Software Engineer";
+const SITE_TITLE = "Jaya Sabarish Reddy Remala | Software Engineer";
 const SITE_DESC =
   "Software Engineer specializing in Agentic AI, distributed systems, and production ML infrastructure. Qualcomm Edge AI Hackathon Winner. NYU Tandon CS.";
 const OG_IMAGE = `${SITE_URL}/og-image.png`;
@@ -57,7 +57,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
     default: SITE_TITLE,
-    template: "%s — Jaya Sabarish Reddy Remala",
+    template: "%s | Jaya Sabarish Reddy Remala",
   },
   description: SITE_DESC,
   authors: [{ name: "Jaya Sabarish Reddy Remala", url: SITE_URL }],

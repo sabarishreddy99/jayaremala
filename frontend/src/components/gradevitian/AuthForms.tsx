@@ -70,7 +70,7 @@ export function LoginForm() {
   }
 
   return (
-    <FormShell title="Log in" subtitle="Welcome back, VITian — your saved work is right where you left it.">
+    <FormShell title="Log in" subtitle="Welcome back, VITian. Your saved work is right where you left it.">
       <form onSubmit={submit} className="flex flex-col gap-4">
         <ErrorNote msg={error} />
         <Field label="Email or username"><Input value={identifier} onChange={(e) => setIdentifier(e.target.value)} autoComplete="username" required /></Field>

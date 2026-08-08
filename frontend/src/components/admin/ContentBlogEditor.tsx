@@ -597,7 +597,7 @@ export default function ContentBlogEditor() {
             <h2 className="text-base font-bold text-fg">
               {editingSlug ? "Edit post" : "New blog post"}
             </h2>
-            <p className="text-[11px] text-fg-faint mt-0.5">Posts publish immediately via the Content API — no git push needed.</p>
+            <p className="text-[11px] text-fg-faint mt-0.5">Posts publish immediately via the Content API, no git push needed.</p>
           </div>
           {editingSlug && (
             <button onClick={resetForm} className="text-xs text-fg-faint hover:text-fg transition-colors">

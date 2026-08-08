@@ -4,7 +4,7 @@ import AvocadoBg from "@/components/chat/AvocadoBg";
 import ChatCloseButton from "@/components/chat/ChatCloseButton";
 
 export const metadata = {
-  title: "Ask Avocado — Jaya's AI",
+  title: "Ask Avocado | Jaya's AI",
   description: "Ask Avocado anything about Jaya's work, projects, and experience. Powered by RAG + Gemini.",
   robots: { index: false, follow: false },
 };

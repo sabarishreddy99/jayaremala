@@ -6,7 +6,7 @@ import GVFaq, { type FaqItem } from "@/components/gradevitian/GVFaq";
 import ScrollReveal from "@/components/ScrollReveal";
 import { gvMetadata, breadcrumbLd, toolLd } from "@/lib/gradevitian/seo";
 
-const DESC = "Plan your whole VIT semester in one place — courses, credits, expected grades and attendance with a live GPA. Saves to your free account and syncs across devices.";
+const DESC = "Plan your whole VIT semester in one place, courses, credits, expected grades and attendance with a live GPA. Saves to your free account and syncs across devices.";
 
 export const metadata = gvMetadata({
   path: "/planner",
@@ -16,8 +16,8 @@ export const metadata = gvMetadata({
 });
 
 const FAQ: FaqItem[] = [
-  { q: "What is the gradeVITian semester planner?", a: "It's one screen to lay out a whole semester — each course's credits, expected grade and attendance — with your GPA, total credits and overall attendance updating live." },
-  { q: "Does the planner save my courses?", a: "Yes — with a free account your plan saves automatically and syncs across devices, so you can pick up where you left off." },
+  { q: "What is the gradeVITian semester planner?", a: "It's one screen to lay out a whole semester, each course's credits, expected grade and attendance, with your GPA, total credits and overall attendance updating live." },
+  { q: "Does the planner save my courses?", a: "Yes, with a free account your plan saves automatically and syncs across devices, so you can pick up where you left off." },
 ];
 
 export default function PlannerPage() {
@@ -27,7 +27,7 @@ export default function PlannerPage() {
       <GVPageHeader
         eyebrow="Plan"
         title="Semester Planner"
-        subtitle="Your whole semester on one screen. Enter each course once — credits, grade and attendance — and your GPA, credits and attendance stay live. Sign in and it follows you to every device."
+        subtitle="Your whole semester on one screen. Enter each course once (credits, grade and attendance) and your GPA, credits and attendance stay live. Sign in and it follows you to every device."
       />
       <ScrollReveal delay={80} className="mt-10">
         <SemesterPlanner />

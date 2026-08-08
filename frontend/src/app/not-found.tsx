@@ -40,7 +40,7 @@ function IconMessageAI() {
 // Derived from the shared nav config so every page on the site shows up here
 // automatically — add a page to site-nav and it appears on the 404 too.
 const LINKS: { href: string; label: string; desc: string; icon: ReactNode }[] = [
-  { href: "/", label: "Portfolio", desc: "Home — hero, projects & contact", icon: <IconHome /> },
+  { href: "/", label: "Portfolio", desc: "Home, hero, projects & contact", icon: <IconHome /> },
   ...siteGroups.flatMap((g) => g.items),
 ];
 
@@ -224,7 +224,7 @@ export default function NotFound() {
                 Ask Avocado ✦
               </p>
               <p className="text-[11px] text-indigo-200">
-                Ask Jaya&apos;s AI anything — experience, projects, or just say hello
+                Ask Jaya&apos;s AI anything, experience, projects, or just say hello
               </p>
             </div>
 

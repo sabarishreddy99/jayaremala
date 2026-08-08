@@ -3,7 +3,7 @@ import LabSectionDynamic from "@/components/lab/LabSectionDynamic";
 import BlogSwitcher from "@/components/blog/BlogSwitcher";
 import { profile } from "@/data/profile";
 
-export const metadata = { title: "Lab — Jaya Sabarish Reddy Remala" };
+export const metadata = { title: "Lab | Jaya Sabarish Reddy Remala" };
 
 export default function LabPage() {
   // Build-time MDX entries — used as fallback if the API is unreachable

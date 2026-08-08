@@ -285,7 +285,7 @@ export function GithubPATRow({
       </div>
       <p className="text-[10px] text-fg-faint leading-relaxed">
         Needs repo <code className="font-mono bg-bg px-1 rounded">contents:write</code> permission.
-        Stored in localStorage — never sent to a third party.
+        Stored in localStorage, never sent to a third party.
       </p>
     </div>
   );

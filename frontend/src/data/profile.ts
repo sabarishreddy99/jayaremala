@@ -22,6 +22,57 @@ export interface NowBlock {
   updated: string;
 }
 
+/** Hero copy — the voice of the page, kept in data so it can be edited without a deploy. */
+export interface HeroCopy {
+  headline: string;
+  lead: string;
+  sub?: string;
+  signature?: string;
+  avocadoNote?: string;
+}
+
+export interface WhyArtifact {
+  /** Matches a `Project.title` — the card pulls tags and links from that entry. */
+  projectTitle: string;
+  year: string;
+  caption: string;
+}
+
+/** Chapter 01 — the origin story. */
+export interface WhyBlock {
+  label: string;
+  paragraphs: string[];
+  pullQuote?: string;
+  artifact?: WhyArtifact;
+}
+
+/** The hero's belief panel. Fills the right column on wide screens and says
+ *  why any of the work matters. */
+export interface HopeMolecules {
+  eyebrow?: string;
+  term: string;
+  definition: string;
+  belief: string;
+  closing?: string;
+  footnote?: string;
+}
+
+/** One row of the "Still running" ledger. */
+export interface ShippedThing {
+  name: string;
+  /** What it does, in plain words. */
+  what: string;
+  /** Who it serves — the human column. */
+  who: string;
+  /** ISO date, month granularity (YYYY-MM-01). Drives the live uptime counter. */
+  shippedAt: string;
+  /** Human-readable fallback, e.g. "since Aug 2020". Shown for archived rows. */
+  sinceLabel?: string;
+  url: string;
+  /** `live` rows tick; `archived` rows show `sinceLabel` and make no uptime claim. */
+  status: "live" | "archived";
+}
+
 export interface Profile {
   name: string;
   tagline: string;
@@ -50,6 +101,14 @@ export interface Profile {
   now?: NowBlock;
   availability?: Availability;
   heroStats?: HeroStat[];
+  /** Label above the hero-stats band in the projects chapter. */
+  heroStatsLabel?: string;
+  hero?: HeroCopy;
+  hopeMolecules?: HopeMolecules;
+  why?: WhyBlock;
+  shipped?: ShippedThing[];
+  shippedLabel?: string;
+  shippedNote?: string;
 }
 
 export const profile = profileJson as Profile;

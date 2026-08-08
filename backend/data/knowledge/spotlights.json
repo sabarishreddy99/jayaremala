@@ -2,13 +2,17 @@
   {
     "slug": "gradevitian",
     "enabled": true,
-    "eyebrow": "Live Product · Spotlight",
+    "eyebrow": "Still running · Since 2020",
     "name": "gradeVITian",
     "logo": "/gradevitian/LOGO-512px.png",
-    "subtitle": "A product, not just a project",
-    "headline": "The grade & attendance calculators tens of thousands of VIT students reach for every exam season —",
-    "headlineEmphasis": "designed, shipped, and still run by me.",
-    "description": "A high-traffic progressive web app for academic grade forecasting — GPA, CGPA, grade prediction, and attendance, with sub-second mobile loads and #2 Google ranking from programmatic SEO. Six years live, rebuilt on Next.js + FastAPI.",
+    "subtitle": "Built as an undergrad. Still on call.",
+    "preamble": [
+      "I built gradeVITian while I was still an undergrad, because my friends and I kept doing the same grade math on paper the night before results came out.",
+      "I graduated. They graduated. It's still up. Five classes have used it now, 2020 through 2025. That's the part I'm actually proud of. The traffic followed on its own."
+    ],
+    "headline": "The grade & attendance calculators tens of thousands of VIT students reach for every exam season.",
+    "headlineEmphasis": "Designed, shipped, and still run by me.",
+    "description": "A high-traffic progressive web app for academic grade forecasting: GPA, CGPA, grade prediction, and attendance, with sub-second mobile loads and #2 Google ranking from programmatic SEO. Six years live, rebuilt on Next.js + FastAPI.",
     "primaryCta": { "label": "See it live", "url": "https://gradevitian.jayaremala.com" },
     "secondaryCta": { "label": "Explore the journey", "url": "/gallery?focus=gradeVITian" },
     "footnote": "Milestones & achievements in the gallery · free, no sign-up at gradevitian.jayaremala.com",

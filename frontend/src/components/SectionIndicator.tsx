@@ -3,14 +3,17 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
+// Must stay in lockstep with the chapter ids in app/(portfolio)/page.tsx —
+// a mismatch renders a rail that never activates, with no error.
 const SECTIONS = [
-  { id: "hero",         label: "Intro"      },
-  { id: "about",        label: "About"      },
-  { id: "projects",     label: "Projects"   },
-  { id: "gradevitian",  label: "Spotlight"  },
-  { id: "skills",       label: "Skills"     },
-  { id: "testimonials", label: "Kind Words" },
-  { id: "contact",      label: "Connect"    },
+  { id: "hero",          label: "Intro"         },
+  { id: "why",           label: "Why"           },
+  { id: "still-running", label: "Still Running" },
+  { id: "gradevitian",   label: "gradeVITian"   },
+  { id: "projects",      label: "Work"          },
+  { id: "skills",        label: "Craft"         },
+  { id: "testimonials",  label: "Kind Words"    },
+  { id: "contact",       label: "Connect"       },
 ];
 
 export default function SectionIndicator() {

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { HeroStat } from "@/data/profile";
 
 const FALLBACK_STATS: HeroStat[] = [
@@ -10,14 +10,26 @@ const FALLBACK_STATS: HeroStat[] = [
   { value: 115, suffix: "GB", label: "Daily Throughput", sub: "Zero data loss" },
 ];
 
-export default function HeroStats({ stats, cols = 4 }: { stats?: HeroStat[]; cols?: 2 | 4 }) {
+export default function HeroStats({
+  stats,
+  cols = 4,
+  startOnView = false,
+}: {
+  stats?: HeroStat[];
+  cols?: 2 | 4;
+  /** Count up when the band scrolls into view rather than on a blind timer.
+   *  Use wherever the stats are no longer above the fold. */
+  startOnView?: boolean;
+}) {
   const STATS = (stats && stats.length > 0) ? stats : FALLBACK_STATS;
   const [counts, setCounts] = useState(STATS.map(() => 0));
   const [hovered, setHovered] = useState<number | null>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // Hero is always above the fold — delay slightly so the page paint settles
-    const delay = setTimeout(() => {
+    let raf = 0;
+
+    const run = () => {
       const duration = 1100;
       const start = performance.now();
 
@@ -25,18 +37,44 @@ export default function HeroStats({ stats, cols = 4 }: { stats?: HeroStat[]; col
         const t = Math.min((now - start) / duration, 1);
         const eased = 1 - (1 - t) ** 3; // ease-out cubic
         setCounts(STATS.map((s) => Math.round(s.value * eased)));
-        if (t < 1) requestAnimationFrame(tick);
+        if (t < 1) raf = requestAnimationFrame(tick);
         else setCounts(STATS.map((s) => s.value));
       }
 
-      requestAnimationFrame(tick);
-    }, 380);
+      raf = requestAnimationFrame(tick);
+    };
 
-    return () => clearTimeout(delay);
-  }, []);
+    if (!startOnView) {
+      // Above the fold — delay slightly so the page paint settles
+      const delay = setTimeout(run, 380);
+      return () => {
+        clearTimeout(delay);
+        cancelAnimationFrame(raf);
+      };
+    }
+
+    const el = rootRef.current;
+    if (!el) return;
+
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return;
+        obs.unobserve(el);
+        run();
+      },
+      { threshold: 0.25 }
+    );
+    obs.observe(el);
+
+    return () => {
+      obs.disconnect();
+      cancelAnimationFrame(raf);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startOnView]);
 
   return (
-    <div className={`grid gap-2 sm:gap-3 ${cols === 2 ? "grid-cols-2" : "grid-cols-4"}`}>
+    <div ref={rootRef} className={`grid gap-2 sm:gap-3 ${cols === 2 ? "grid-cols-2" : "grid-cols-4"}`}>
       {STATS.map((stat, i) => (
         <div
           key={stat.label}

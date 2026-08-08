@@ -13,6 +13,8 @@ export interface Project {
   award?: string;
   sourceLinks: SourceLink[];
   note?: string;
+  /** Year first shipped — surfaced on the origin-story artifact card. */
+  year?: string;
 }
 
 export const projects = projectsJson as Project[];

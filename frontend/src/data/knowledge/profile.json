@@ -17,12 +17,73 @@
   "booking_url": "https://calendar.app.google/3sScGpHpeSpvPjpSA",
   "page_experience": "3+ years building production AI & distributed systems.",
   "page_education": "Academic foundations that underpin the systems I build.",
-  "page_projects": "Things I've built — production systems, hackathon winners, and side projects.",
+  "page_projects": "Things I've built: production systems, hackathon winners, and side projects.",
   "contact_description": "Open to software engineering roles in AI/ML infrastructure, distributed systems, and full-stack. Healthcare, frontier research, and energy tech are my focus but excited by any hard problem.",
   "page_blog": "Notes on building AI systems, Machine Learning, distributed infrastructure, software craft, navigating life, chaos and more.",
-  "page_lab": "Live system designs, technical decisions, and progress logs for projects I'm actively working on. Updated as things evolve — not a polished writeup, a working document.",
+  "page_lab": "Live system designs, technical decisions, and progress logs for projects I'm actively working on. Updated as things evolve. Not a polished writeup, a working document.",
   "page_gallery": "A visual log of achievements, events, and milestones along the way.",
   "page_quotes": "Words that shaped how I think, build, and live. Collected across books, talks, and late-night reading sessions.",
+  "hero": {
+    "headline": "Hey, I'm Jaya. I build things, then I keep them running.",
+    "lead": "The first thing I ever shipped was a one-page site for my dad's brick business, in a mid-sized town in India. It brought him real customers during COVID. Nothing I've built since has felt more like the point.",
+    "sub": "These days that's AI infrastructure: retrieval pipelines, inference at the edge, telemetry that can't drop a byte. Same job, bigger machines.",
+    "signature": "Do hard things!",
+    "avocadoNote": "Avocado is the assistant I built. He's read everything on this site."
+  },
+  "why": {
+    "label": "Why I build",
+    "paragraphs": [
+      "In 2020 my father started a brick business in our town. I built him a one-page website. HTML, some JavaScript, and a stubborn amount of SEO. No framework, no analytics, no plan.",
+      "People started finding him through it. During COVID, that little page was doing real work.",
+      "I've since built systems that carry 115GB a day and answer 3,000 requests a second. None of them taught me more than that one did: software is at its best when it's the shortest path between someone's need and someone's help. Everything on this page is downstream of that."
+    ],
+    "pullQuote": "\"Do hard things\" isn't about difficulty for its own sake. It's about not abandoning something the moment it stops being fun.",
+    "artifact": {
+      "projectTitle": "VRF Bricks",
+      "year": "2020",
+      "caption": "Still the site that mattered most."
+    }
+  },
+  "hopeMolecules": {
+    "eyebrow": "What I optimize for",
+    "term": "Hope molecules",
+    "definition": "Your body makes them when you move. Small proteins that reach the brain and come back feeling like hope.",
+    "belief": "Building does the same thing. Someone needed something, now it exists, and you both walk away feeling more possible than you did yesterday.",
+    "closing": "Make them. Share them. Thrive on them.",
+    "footnote": "Six years of gradeVITian, one brick site, and this page are all the same reaction."
+  },
+  "heroStatsLabel": "When it has to hold.",
+  "shippedLabel": "Still running",
+  "shippedNote": "Two of these are still up. The third did its job.",
+  "shipped": [
+    {
+      "name": "gradeVITian",
+      "what": "grade & attendance for VIT students",
+      "who": "~17,000 people a month",
+      "shippedAt": "2020-08-01",
+      "sinceLabel": "since Aug 2020",
+      "url": "https://gradevitian.jayaremala.com",
+      "status": "live"
+    },
+    {
+      "name": "VRF Bricks",
+      "what": "my father's brick business, one page",
+      "who": "customers in our town",
+      "shippedAt": "2020-06-01",
+      "sinceLabel": "2020 · archived",
+      "url": "https://github.com/sabarishreddy99/vrfbricks.github.io",
+      "status": "archived"
+    },
+    {
+      "name": "jayaremala.com",
+      "what": "this site, and the assistant that answers for it",
+      "who": "you, right now",
+      "shippedAt": "2026-04-01",
+      "sinceLabel": "since Apr 2026",
+      "url": "https://jayaremala.com",
+      "status": "live"
+    }
+  ],
   "availability": {
     "open": true,
     "label": "Open to work",

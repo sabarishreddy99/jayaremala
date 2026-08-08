@@ -61,6 +61,22 @@ function SpotlightCard({ s }: { s: Spotlight }) {
         <div className="flex-1 h-px bg-gradient-to-r from-border to-transparent" aria-hidden />
       </div>
 
+      {/* Story preamble — the longevity, in his own voice, before the metrics */}
+      {s.preamble && s.preamble.length > 0 && (
+        <div className="mb-10 max-w-[56ch] space-y-4">
+          {s.preamble.map((p, i) => (
+            <ScrollReveal key={i} delay={i * 90}>
+              <p
+                className="voice-serif text-fg-muted"
+                style={{ fontSize: "clamp(1.0625rem, 1.5vw, 1.2rem)", lineHeight: 1.72 }}
+              >
+                {p}
+              </p>
+            </ScrollReveal>
+          ))}
+        </div>
+      )}
+
       <ScrollReveal>
         <div className="group relative overflow-hidden rounded-3xl border border-border bg-surface">
           {/* Ambient brand glow */}

@@ -1172,3 +1172,127 @@ figcaption[data-rehype-pretty-code-title] + pre {
 /* Hide scrollbar on the mobile embed carousel */
 .gv-scroll-x { scrollbar-width: none; -ms-overflow-style: none; }
 .gv-scroll-x::-webkit-scrollbar { display: none; }
+
+/* ── Home page — voice register & signature mark ────────────
+   Roboto is the system talking, Garamond is Jaya talking, mono is the
+   machine reporting. `--font-garamond` and `--font-cormorant` are
+   deliberately NOT overridden by [data-theme="midnight"], so the serif
+   survives every theme. */
+
+.voice-serif {
+  font-family: var(--font-garamond), Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  text-wrap: pretty;
+}
+
+/* The signature — a fine-nib italic standing in for a handwritten mark. */
+.signature-mark {
+  font-family: var(--font-cormorant), var(--font-garamond), Georgia, serif;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  line-height: 1.1;
+}
+
+/* A rule that draws itself left-to-right — the gesture of a pen
+   finishing a stroke. */
+@keyframes ink-rule {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+.ink-rule {
+  transform-origin: left center;
+  animation: ink-rule 900ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* Ghost chapter numerals — tabular so 01–07 never drift in width at 14rem. */
+.chapter-ghost {
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ink-rule { animation: none; transform: scaleX(1); }
+}
+
+/* ── Hope molecules: the hero belief panel ─────────────────────
+   The molecule itself is driven by rAF in HopeMolecules.tsx (bonds
+   have to follow their nodes, which CSS alone cannot express). What
+   lives here is the core's breathing and the separator. */
+
+@keyframes hm-breathe {
+  0%, 100% { opacity: 0.92; }
+  50%      { opacity: 0.58; }
+}
+.hm-core {
+  animation: hm-breathe 5.5s ease-in-out infinite;
+}
+
+/* Separator as a molecular chain: a column of dots in the same visual
+   language as the hero grid and the ledger's dot leaders, masked to
+   fade out at both ends so it never reads as a hard rule. */
+.hope-rule {
+  position: absolute;
+  pointer-events: none;
+}
+.hope-rule-v {
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-image: radial-gradient(circle at center, var(--border-strong) 1.25px, transparent 1.35px);
+  background-size: 3px 11px;
+  background-repeat: repeat-y;
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 11%, #000 89%, transparent);
+          mask-image: linear-gradient(to bottom, transparent, #000 11%, #000 89%, transparent);
+}
+.hope-rule-h {
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 3px;
+  background-image: radial-gradient(circle at center, var(--border-strong) 1.25px, transparent 1.35px);
+  background-size: 11px 3px;
+  background-repeat: repeat-x;
+  -webkit-mask-image: linear-gradient(to right, #000, #000 62%, transparent);
+          mask-image: linear-gradient(to right, #000, #000 62%, transparent);
+}
+
+/* A signal running the length of the chain, echoing the pulses that
+   travel into the molecule's core. */
+.hope-rule-v::after,
+.hope-rule-h::after {
+  content: "";
+  position: absolute;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.hope-rule-v::after {
+  left: 50%;
+  margin-left: -1.5px;
+  animation: hope-travel-y 9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+.hope-rule-h::after {
+  top: 50%;
+  margin-top: -1.5px;
+  animation: hope-travel-x 9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
+}
+@keyframes hope-travel-y {
+  0%        { top: 8%;  opacity: 0; }
+  14%       { opacity: 0.85; }
+  86%       { opacity: 0.85; }
+  100%      { top: 92%; opacity: 0; }
+}
+@keyframes hope-travel-x {
+  0%        { left: 2%;  opacity: 0; }
+  14%       { opacity: 0.85; }
+  76%       { opacity: 0.85; }
+  100%      { left: 58%; opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hm-core { animation: none; }
+  .hope-rule-v::after,
+  .hope-rule-h::after { animation: none; opacity: 0; }
+}

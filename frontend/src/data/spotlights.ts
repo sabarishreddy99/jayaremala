@@ -24,6 +24,8 @@ export interface Spotlight {
   logo?: string;
   /** Small line under the name. */
   subtitle?: string;
+  /** Story paragraphs rendered above the card, in the Garamond voice register. */
+  preamble?: string[];
   /** Large pitch line. */
   headline: string;
   /** Optional emphasized tail appended to the headline. */

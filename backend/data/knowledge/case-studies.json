@@ -1,0 +1,44 @@
+[
+  {
+    "slug": "clearway",
+    "title": "Clearway",
+    "headline": "Catch payment problems at the door, not in the queue.",
+    "summary": "How a UAE digital bank can find, rank and resolve held international payments earlier — and keep every customer informed while it happens. Prevent, Prioritise and Inform on one shared timeline, using rules where the answer is exact, ML where we rank, and an AI copilot where we read and write. People keep every decision.",
+    "context": "Wio Bank · Associate home task, Option 2",
+    "brief": "Reducing manual payment investigations",
+    "role": "Associate, CEO Office",
+    "date": "October 2026",
+    "publishedAt": "2026-10-01",
+    "readingTime": "12 min",
+    "sections": [
+      "Challenge understanding",
+      "Data and research",
+      "Root causes",
+      "Solution and impact",
+      "Execution"
+    ],
+    "tags": [
+      "Fintech",
+      "Payments",
+      "Product Strategy",
+      "Applied AI",
+      "Operations",
+      "Prototype"
+    ],
+    "cover": "/case-studies/clearway/img/console.jpg",
+    "coverAlt": "The Clearway control tower — one queue of held payments, ranked by real risk",
+    "links": [
+      {
+        "label": "Read the case study",
+        "href": "/case-studies/clearway/index.html",
+        "kind": "deck"
+      },
+      {
+        "label": "Open the prototype",
+        "href": "/case-studies/clearway/prototype.html",
+        "kind": "prototype"
+      }
+    ],
+    "featured": true
+  }
+]

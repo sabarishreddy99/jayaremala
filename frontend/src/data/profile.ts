@@ -128,6 +128,7 @@ export interface Profile {
   page_projects?: string;
   contact_description?: string;
   page_blog?: string;
+  page_case_studies?: string;
   page_lab?: string;
   page_gallery?: string;
   page_quotes?: string;

@@ -45,6 +45,10 @@ export const siteGroups: NavGroup[] = [
     label: "Writing",
     items: [
       {
+        href: "/case-studies", label: "Case Studies", desc: "Briefs worked end to end",
+        icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h10l6 6v10a0 0 0 0 1 0 0H4z"/><path d="M14 4v6h6"/><path d="M8 14h8M8 18h5"/></svg>,
+      },
+      {
         href: "/blog", label: "Blog", desc: "Notes on building",
         icon: <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>,
       },

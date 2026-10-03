@@ -16,6 +16,7 @@ const ROUTE_CONFIG: Record<string, { title: string; description: string }> = {
   "/education":  { title: "Education",    description: "Degrees, institutions, coursework" },
   "/projects":   { title: "Projects",     description: "Things I've built, source links, awards" },
   "/apps":       { title: "Apps",         description: "Live apps & products I host and run" },
+  "/case-studies": { title: "Case Studies", description: "Long-form product & systems case studies, with prototypes" },
   "/blog":       { title: "Blog",         description: "Technical writing and essays" },
   "/lab":        { title: "Lab",          description: "Living system docs, active builds" },
   "/quotes":     { title: "Quotes",       description: "Collected wisdom, favourite quotes" },

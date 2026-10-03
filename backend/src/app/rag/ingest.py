@@ -664,6 +664,61 @@ def _build_drive_resume_documents() -> list[tuple[str, str, str]]:
         return []
 
 
+def _build_case_study_documents() -> list[tuple[str, str, str]]:
+    """Build one chunk per case study from case-studies.json.
+
+    Case study bodies are self-contained HTML decks under
+    frontend/public/case-studies/, not MDX, so only the metadata is indexed —
+    enough for Avocado to say what each one argues, who it was for, and where
+    to read it. New entries appear automatically with no code change.
+    """
+    path = DATA_DIR / "case-studies.json"
+    if not path.exists():
+        return []
+    docs = []
+    entries = json.loads(path.read_text())
+    for cs in entries:
+        slug     = cs.get("slug", "unknown")
+        title    = cs.get("title", "")
+        headline = cs.get("headline", "")
+        context  = cs.get("context", "")
+        brief    = cs.get("brief", "")
+        role     = cs.get("role", "")
+        date     = cs.get("date", "")
+        summary  = cs.get("summary", "")
+        sections = ", ".join(cs.get("sections", []))
+        tags     = ", ".join(cs.get("tags", []))
+        links    = "; ".join(
+            f"{link.get('label','')}: https://jayaremala.com{link.get('href','')}"
+            for link in cs.get("links", [])
+        )
+        docs.append((
+            f"case_study_{slug}",
+            (
+                f"Case study by Jaya: '{title}' — {headline} Context: {context}"
+                f"{', brief: ' + brief if brief else ''}"
+                f"{', role: ' + role if role else ''}, {date}. {summary} "
+                f"It is structured as: {sections}. Topics: {tags}. "
+                f"Read it at https://jayaremala.com/case-studies. {links}"
+            ),
+            "case_study",
+        ))
+    if entries:
+        names = ", ".join(f"{c.get('title','')} ({c.get('context','')})" for c in entries)
+        docs.append((
+            "case_studies_summary",
+            (
+                f"Jaya has written {len(entries)} long-form case "
+                f"{'study' if len(entries) == 1 else 'studies'}: {names}. "
+                "Each one works a brief end to end — challenge, research, root causes, "
+                "solution and impact, execution — and ships with a working prototype. "
+                "They are listed at https://jayaremala.com/case-studies."
+            ),
+            "case_study",
+        ))
+    return docs
+
+
 def _build_documents() -> list[tuple[str, str, str]]:
     """Return list of (id, text, type) tuples — atomic chunks for precise retrieval."""
     docs: list[tuple[str, str, str]] = []
@@ -807,6 +862,8 @@ def _build_documents() -> list[tuple[str, str, str]]:
 
     # ── LAB ENTRIES ───────────────────────────────────────────────────────────
     docs.extend(_build_lab_documents())
+
+    docs.extend(_build_case_study_documents())
 
     # ── HOSTED APPS (everything Jaya hosts under his domain) ──────────────────
     docs.extend(_build_apps_documents())

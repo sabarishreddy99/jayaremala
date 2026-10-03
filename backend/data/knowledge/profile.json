@@ -20,6 +20,7 @@
   "page_projects": "Things I've built: production systems, hackathon winners, and side projects.",
   "contact_description": "Open to software engineering roles in AI/ML infrastructure, distributed systems, and full-stack. Healthcare, finance, and consumer products are where I'm most curious right now, but any hard problem will do.",
   "page_blog": "Notes on building AI systems, Machine Learning, distributed infrastructure, software craft, navigating life, chaos and more.",
+  "page_case_studies": "Briefs worked end to end: the problem, the research, the root causes, the solution, and how I would ship it. Each one comes with a working prototype.",
   "page_lab": "Live system designs, technical decisions, and progress logs for projects I'm actively working on. Updated as things evolve. Not a polished writeup, a working document.",
   "page_gallery": "A visual log of achievements, events, and milestones along the way.",
   "page_quotes": "Words that shaped how I think, build, and live. Collected across books, talks, and late-night reading sessions.",

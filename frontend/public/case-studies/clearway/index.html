@@ -1,0 +1,590 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Clearway Case Deck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: 1280x720 slides scaled to fit. A five-step section tracker in the top right mirrors the brief's structure, so the panel always knows where we are. Single light theme so screen and PDF match. */
+:root{
+  --paper:#F6F6F9; --card:#FFFFFF; --ink:#141726; --muted:#5B6077; --line:#DFE1E9; --sunk:#EEEFF4;
+  --accent:#4A35D4; --accent-soft:#EEEBFF; --red:#C2352B; --amber:#A96300; --green:#0B8A60; --blue:#1D6CB0;
+  --fd:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --fb:"IBM Plex Sans","Segoe UI",system-ui,sans-serif;
+  --fm:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:#1A1D2E;color:var(--ink);font-family:var(--fb);overflow:hidden}
+.stage{position:fixed;inset:0;display:grid;place-items:center}
+.deck{width:1280px;height:720px;position:relative;transform-origin:center center}
+.slide{position:absolute;inset:0;background:var(--paper);padding:52px 72px 60px;display:none;flex-direction:column;gap:22px;overflow:hidden}
+.slide.on{display:flex}
+h1,h2,h3{font-family:var(--fd);margin:0;text-wrap:balance;letter-spacing:-.015em}
+h2{font-size:38px;line-height:1.1;font-weight:700;max-width:1000px}
+h3{font-size:19px;font-weight:700}
+p{margin:0}
+.kick{font-family:var(--fm);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);font-weight:500}
+.lede{font-size:18.5px;line-height:1.5;color:var(--muted);max-width:980px}
+.sec{position:absolute;top:24px;right:72px;display:flex;gap:16px;font-family:var(--fm);font-size:11px;color:#A3A7B9;letter-spacing:.03em}
+.sec span.on{color:var(--accent);font-weight:500}
+.foot{position:absolute;left:72px;right:72px;bottom:22px;display:flex;justify-content:space-between;font-family:var(--fm);font-size:11px;color:var(--muted)}
+.rail{position:absolute;left:0;bottom:0;height:4px;background:var(--accent)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px 22px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.card p,.card li{font-size:15px;line-height:1.48}
+.card ul{margin:0;padding-left:18px;display:grid;gap:7px}
+.card h3 .n{font-family:var(--fm);font-weight:500;font-size:13px;color:var(--accent);margin-right:8px}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;line-height:1.42}
+th{font-family:var(--fm);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.mono{font-family:var(--fm)}
+.muted{color:var(--muted)}
+/* dark slides */
+.dark{background:var(--ink);color:#F2F3FA;justify-content:space-between}
+.dark .kick{color:#A99DFF}
+.dark h1{font-size:72px;line-height:1;font-weight:800;max-width:1060px}
+.dark h1 em{font-style:normal;color:#A99DFF}
+.dark .lede{color:#B8BCD3}
+.dark .foot,.dark .sec{display:none}
+.who{display:flex;gap:44px;font-size:15px;color:#D9DBEA}
+.who b{display:block;font-family:var(--fm);font-size:11px;letter-spacing:.08em;color:#8E93AE;font-weight:500;text-transform:uppercase;margin-bottom:4px}
+/* summary rows */
+.sum{display:grid;gap:0;border-top:1px solid var(--line)}
+.sum div{display:grid;grid-template-columns:44px 210px 1fr;gap:16px;padding:14px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.sum .n{font-family:var(--fm);color:var(--accent);font-size:14px}
+.sum b{font-family:var(--fd);font-size:18px}
+.sum p{font-size:16px;line-height:1.45}
+/* lifecycle */
+.life{display:grid;grid-template-columns:repeat(7,1fr);position:relative}
+.life::before{content:"";position:absolute;left:4%;right:4%;top:22px;height:3px;background:var(--line)}
+.st{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:0 6px;position:relative}
+.st .c{width:46px;height:46px;border-radius:50%;background:var(--card);border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--fm);font-size:15px}
+.st.in .c{background:var(--ink);color:#fff}
+.st b{font-family:var(--fd);font-size:15px}
+.st span{font-size:12px;color:var(--muted);line-height:1.3}
+.st i{font-style:normal;font-size:12.5px;font-weight:600;line-height:1.3;margin-top:2px}
+.split{display:grid;grid-template-columns:4fr 3fr;gap:12px;margin-top:14px}
+.split div{border-top:2px solid var(--ink);padding-top:7px;font-size:13px;color:var(--muted);text-align:center}
+.split div:last-child{border-top-style:dashed;border-color:var(--muted)}
+.analogy{font-size:20px;line-height:1.55;max-width:1080px}
+.analogy b{color:var(--accent);font-weight:600}
+/* root causes */
+.why{background:var(--sunk);border-radius:10px;padding:11px 13px;font-size:14px;line-height:1.45;margin-top:auto}
+.why b{display:block;font-family:var(--fm);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:500;margin-bottom:3px}
+/* architecture */
+.layer h3{font-size:21px}
+.layer .fx{font-size:13px;color:var(--muted)}
+.spine{background:var(--ink);color:#EDEEF7;border-radius:12px;padding:15px 20px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px}
+.spine b{font-family:var(--fd);font-size:16px;margin-right:8px}
+.spine span{font-family:var(--fm);font-size:12px;background:#2A2F4A;padding:4px 9px;border-radius:6px;color:#C9CCE0}
+.principle{font-family:var(--fd);font-size:23px;font-weight:700}
+.principle em{font-style:normal;color:var(--accent)}
+/* images */
+.shot{border-radius:12px;border:1px solid var(--line);overflow:hidden;background:var(--card);box-shadow:0 10px 30px rgba(20,23,38,.10)}
+.shot img{display:block;width:100%;height:auto}
+/* metrics */
+.ns{background:var(--ink);color:#F1F2F8;border-radius:14px;padding:18px 24px;display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.ns .kick{color:#A99DFF}
+.ns h3{font-size:23px;margin-top:2px}
+.ns p{color:#B8BCD3;font-size:14px}
+.nums{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.num{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.num b{display:block;font-family:var(--fd);font-weight:800;font-size:30px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.num span{font-size:13px;color:var(--muted)}
+/* roadmap */
+.road{display:grid;grid-template-columns:repeat(4,1fr);border-top:3px solid var(--ink);margin-top:6px}
+.ph{padding:16px 18px 0 0;display:flex;flex-direction:column;gap:6px;position:relative}
+.ph::before{content:"";position:absolute;top:-9px;left:0;width:15px;height:15px;border-radius:50%;background:var(--accent);border:3px solid var(--paper)}
+.ph .w{font-family:var(--fm);font-size:12px;color:var(--muted)}
+.ph h3{font-size:22px}
+.ph ul{margin:0;padding-left:16px;font-size:14px;line-height:1.42;display:grid;gap:4px}
+.ph .gate{font-size:13px;background:var(--sunk);border-radius:8px;padding:8px 10px;margin-top:6px}
+.band{background:var(--accent-soft);border-radius:12px;padding:16px 20px;font-size:15.5px;line-height:1.5}
+.band b{color:var(--accent)}
+/* benchmark */
+.bm td:first-child{font-weight:600;width:20%}
+.bm td:last-child{background:var(--accent-soft);font-weight:500}
+/* stack */
+.stack{display:grid;gap:8px}
+.lyr{display:grid;grid-template-columns:150px 1fr;gap:12px;align-items:stretch}
+.lyr>b{font-family:var(--fd);font-size:15px;display:flex;align-items:center;padding-left:2px}
+.lyr .boxes{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:8px}
+.bx{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:13px;line-height:1.35}
+.bx strong{display:block;font-size:14px;margin-bottom:1px}
+.lyr.ai .bx{background:var(--accent-soft);border-color:transparent}
+.lyr.data .bx{background:var(--ink);color:#E8E9F4;border-color:var(--ink)}
+.side{font-size:13px;color:var(--muted)}
+.xp{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.xp .card{gap:8px}
+.xp .in{font-family:var(--fm);font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--accent)}
+.xp .from{font-size:13px;color:var(--muted);border-top:1px solid var(--line);padding-top:8px;margin-top:auto}
+.ai td:nth-child(2){font-weight:500}
+.ai td{font-size:13px;padding:6px 10px}
+.hud{position:fixed;right:14px;bottom:calc(env(safe-area-inset-bottom,0px) + 12px);display:flex;gap:6px;z-index:6;align-items:center}
+.hud button{font:12px var(--fm);background:#2A2F4A;color:#E6E7F2;border:0;border-radius:7px;padding:7px 10px;cursor:pointer}
+.hud span{font:12px var(--fm);color:#C9CCE0;padding:0 4px}
+.hud button:focus-visible{outline:2px solid #A99DFF;outline-offset:2px}
+.nz{position:fixed;top:0;bottom:0;width:16%;z-index:4;cursor:pointer;background:transparent;border:0}
+.nz.l{left:0}.nz.r{right:0}
+@media print{
+  @page{size:1280px 720px;margin:0}
+  html,body{height:auto;overflow:visible;background:var(--paper)}
+  .stage{position:static;display:block}
+  .deck{transform:none!important;width:1280px;height:auto}
+  .slide{position:relative;display:flex!important;width:1280px;height:720px;break-after:page;page-break-after:always}
+  .hud,.nz{display:none!important}
+}
+</style>
+</head><body>
+<!-- ── Added when this deck was embedded in jayaremala.com ──────────────────
+     The deck is otherwise untouched. z-index 7 clears the deck's own fixed
+     chrome (.hud is 6, the .nz click zones are 4) so this stays tappable, and
+     the translucent pill reads against both the dark title slide and the
+     light body slides. -->
+<style>
+  .cs-home{position:fixed;top:14px;left:14px;z-index:7;display:inline-flex;align-items:center;gap:7px;
+    padding:7px 13px 7px 11px;border-radius:999px;text-decoration:none;
+    font:500 12px/1 "IBM Plex Sans","Segoe UI",system-ui,sans-serif;letter-spacing:.01em;
+    color:#141726;background:rgba(255,255,255,.86);border:1px solid rgba(20,23,38,.14);
+    box-shadow:0 1px 2px rgba(20,23,38,.08),0 6px 18px rgba(20,23,38,.10);
+    backdrop-filter:saturate(1.6) blur(8px);-webkit-backdrop-filter:saturate(1.6) blur(8px);
+    transition:background .18s ease,border-color .18s ease,transform .18s ease}
+  .cs-home:hover{background:#fff;border-color:rgba(74,53,212,.38);transform:translateY(-1px)}
+  .cs-home:focus-visible{outline:2px solid #4A35D4;outline-offset:2px}
+  .cs-home svg{flex:none}
+  @media print{.cs-home{display:none}}
+</style>
+<a class="cs-home" href="/case-studies" aria-label="Back to all case studies">
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"
+       stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+  Case studies
+</a>
+
+
+<div class="hud"><button id="bp" aria-label="Previous slide">←</button><span id="ct"></span><button id="bn" aria-label="Next slide">→</button></div>
+<button class="nz l" id="zl" aria-label="Previous slide"></button><button class="nz r" id="zr" aria-label="Next slide"></button>
+<div class="stage"><div class="deck" id="deck">
+
+<!-- 1 -->
+<section class="slide dark on">
+  <div class="kick">Wio Associate home task · Option 2 · Reducing manual payment investigations</div>
+  <div style="display:flex;flex-direction:column;gap:22px">
+    <h1>Catch payment problems <em>at the door</em>, not in the queue.</h1>
+    <p class="lede" style="font-size:21px;max-width:900px">Clearway: how Wio can find, rank and resolve payment issues earlier, and keep every customer at ease while it happens.</p>
+  </div>
+  <div class="who"><div><b>Prepared by</b>Jaya Sabarish Reddy Remala</div><div><b>Role</b>Associate, CEO Office</div><div><b>Date</b>October 2026</div><div><b>Includes</b>A working prototype</div></div>
+</section>
+
+<!-- 2 -->
+<section class="slide" data-sec="0">
+  <div class="kick">My answer on one page</div>
+  <h2>Stop adding people to the end of the pipe. Fix the three places where manual work starts.</h2>
+  <div class="sum">
+    <div><span class="n">01</span><b>The challenge</b><p>Payments that need a human sit in silence. Operations and Compliance work across many systems, and the customer finds out last.</p></div>
+    <div><span class="n">02</span><b>Data and research</b><p>Trace every held payment end to end by its tracking reference (UETR), and size the causes before designing anything.</p></div>
+    <div><span class="n">03</span><b>Root causes</b><p>Bad data is caught too late. Screening has no memory. Nobody owns the payment journey end to end.</p></div>
+    <div><span class="n">04</span><b>Solution and impact</b><p>Clearway: Prevent, Prioritise and Inform on one shared timeline, using rules, machine learning and an AI copilot where each fits best. People keep every decision. About half of manual hours freed at my assumed volumes.</p></div>
+    <div><span class="n">05</span><b>Execution</b><p>Discover, Design, Pilot, Scale. First 30 days: a baseline, checks at entry, one-question requests, and proactive updates.</p></div>
+  </div>
+</section>
+
+<!-- 3 -->
+<section class="slide" data-sec="1">
+  <div class="kick">1 · Challenge understanding</div>
+  <h2>In plain words, an international payment is a parcel crossing several borders.</h2>
+  <p class="analogy">We pack it, label it and send it. It then passes checkpoints we do not run. If the <b>address is wrong</b>, the <b>label is vague</b>, or the <b>sender's name looks like someone on a watch list</b>, the parcel goes on a shelf. Someone then writes to the sender to ask what is inside. Meanwhile the sender sees "processing" and wonders where their money went.</p>
+  <div>
+    <div class="life">
+      <div class="st in"><div class="c">1</div><b>Initiate</b><span>App or API</span><i style="color:var(--amber)">Missing details</i></div>
+      <div class="st in"><div class="c">2</div><b>Validate</b><span>Format, limits, purpose</span><i style="color:var(--amber)">Wrong purpose</i></div>
+      <div class="st in"><div class="c">3</div><b>Screen</b><span>Sanctions, AML, fraud</span><i style="color:var(--red)">Sanctions alert</i></div>
+      <div class="st in"><div class="c">4</div><b>Release</b><span>SWIFT, UAEFTS, Aani</span><i style="color:var(--amber)">Routing error</i></div>
+      <div class="st"><div class="c">5</div><b>In transit</b><span>Partner banks</span><i style="color:var(--blue)">No confirmation</i></div>
+      <div class="st"><div class="c">6</div><b>Credit</b><span>Receiving bank</span><i style="color:var(--amber)">Returned</i></div>
+      <div class="st"><div class="c">7</div><b>Reconcile</b><span>Statements vs ledger</span><i style="color:var(--muted)">Amount gap</i></div>
+    </div>
+    <div class="split"><div>Steps 1 to 4 happen inside Wio, so we can see them</div><div>Steps 5 to 7 happen outside, so we only see status messages</div></div>
+  </div>
+</section>
+
+<!-- 4 -->
+<section class="slide" data-sec="1">
+  <div class="kick">1 · Pain points</div>
+  <h2>Everyone pays for a held payment. Only the customer pays in anxiety.</h2>
+  <div class="g3">
+    <div class="card"><h3>Customers</h3><p class="muted" style="font-size:13px">Experience, trust, clarity, effort</p><ul>
+      <li>Money in limbo, with no reason and no time</li>
+      <li>Vague requests for "documents", sometimes twice</li>
+      <li>Has to contact support to learn anything</li>
+      <li>SMEs risk late fees and supplier trust</li></ul></div>
+    <div class="card"><h3>Operations and Compliance</h3><p class="muted" style="font-size:13px">Effort, complexity, rework, risk</p><ul>
+      <li>Most sanctions alerts turn out to be false positives</li>
+      <li>One case means checking five or six systems</li>
+      <li>Free-text questions lead to partial answers and second rounds</li>
+      <li>Alert fatigue raises the chance of missing a true hit</li></ul></div>
+    <div class="card"><h3>The business</h3><p class="muted" style="font-size:13px">Cost, growth, revenue, risk, brand</p><ul>
+      <li>Cost grows with every new customer if the fix is headcount</li>
+      <li>Slower settlement and more support tickets</li>
+      <li>A brand built on word of mouth and high NPS is at stake</li>
+      <li>Regulatory exposure if a true hit slips through</li></ul></div>
+  </div>
+  <p class="band">The constraint that shapes everything: <b>we cannot loosen controls</b>. The answer has to be smarter controls, not fewer controls.</p>
+</section>
+
+<!-- 5 -->
+<section class="slide" data-sec="1">
+  <div class="kick">1 · Assumptions</div>
+  <h2>What I know, and where I am filling gaps</h2>
+  <div class="g2" style="grid-template-columns:1fr 1.15fr">
+    <div class="card"><h3>What is public</h3><table><tbody>
+      <tr><td>Customers</td><td>270k+ personal, 120k businesses, 10k+ families</td></tr>
+      <tr><td>Scale</td><td>About AED 61bn in assets, AED 1.24bn revenue (2025)</td></tr>
+      <tr><td>Cross-border</td><td>A global clearing partner for USD, EUR and GBP</td></tr>
+      <tr><td>Rules</td><td>New UAE AML law in force since October 2025, including a ban on tipping off</td></tr>
+      <tr><td>Industry</td><td>About 72% of Swift payment exceptions come from data and format errors</td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>What I assumed</h3><table><thead><tr><th>Assumption</th><th>Value</th></tr></thead><tbody>
+      <tr><td>International payments sent per month</td><td class="mono">350,000</td></tr>
+      <tr><td>Share needing a person</td><td class="mono">6% → 21,000 cases</td></tr>
+      <tr><td>Mix: sanctions, data, status, recon, other</td><td class="mono">45 / 25 / 15 / 10 / 5 %</td></tr>
+      <tr><td>Handling time per case, including questions</td><td class="mono">25 min → 8,750 h</td></tr>
+      <tr><td>Held payments that trigger a support contact</td><td class="mono">40%</td></tr>
+    </tbody></table>
+    <p class="muted" style="font-size:13.5px">I would replace every one of these in the first two weeks. The conclusion holds across a wide range, and the prototype lets us test that live.</p></div>
+  </div>
+</section>
+
+<!-- 6 -->
+<section class="slide" data-sec="2">
+  <div class="kick">2 · Data, insights and research</div>
+  <h2>Before designing anything, I would trace every held payment end to end.</h2>
+  <table>
+    <thead><tr><th style="width:25%">What I would look at</th><th style="width:38%">The question it answers</th><th>Where it likely lives</th></tr></thead>
+    <tbody>
+      <tr><td><b>Payment events, joined by UETR</b></td><td>Where do payments stop, for how long, and who touched them?</td><td>Payment hub, core banking, gpi tracking, status and return messages</td></tr>
+      <tr><td><b>Exception reasons and repairs</b></td><td>Which causes dominate, by corridor, segment and channel?</td><td>Payment operations case tool, reject and return codes</td></tr>
+      <tr><td><b>Screening alerts and outcomes</b></td><td>False-positive rate by rule and name pattern, and repeat alerts on the same pair</td><td>Screening system audit log, analyst case notes</td></tr>
+      <tr><td><b>Requests for information</b></td><td>Which questions get partial answers, and how many rounds per case</td><td>Case notes, in-app messages, email</td></tr>
+      <tr><td><b>Support contacts</b></td><td>How many customers ask before we tell them?</td><td>CRM and chat tags, app reviews</td></tr>
+      <tr><td><b>Transfer form behaviour</b></td><td>Which fields get edited, fail checks or cause drop-off?</td><td>Product analytics</td></tr>
+      <tr><td><b>Reconciliation breaks</b></td><td>What share is just fees, and how long do breaks stay open?</td><td>Reconciliation tool, partner bank statements</td></tr>
+      <tr><td><b>People</b></td><td>The workarounds and judgement calls that data misses</td><td>Shadow 10 analysts for a shift. Interview 8 to 10 SME and freelancer customers.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 7 -->
+<section class="slide" data-sec="2">
+  <div class="kick">2 · Questions and patterns</div>
+  <h2>Six questions I would ask in week one</h2>
+  <div class="g2" style="grid-template-columns:1.25fr 1fr">
+    <div class="card" style="gap:12px">
+      <p><b>Compliance.</b> Of last month's false positives, how many could we have closed with data we already held? What stops us remembering a cleared beneficiary?</p>
+      <p><b>Operations.</b> Walk me through the last 10 cases you closed. Where did you wait, and on whom?</p>
+      <p><b>Engineering.</b> Do we store the UETR and every status update for every payment in one place we can query?</p>
+      <p><b>Product.</b> Which transfer-form fields get edited or fail most, and what is checked before submit?</p>
+      <p><b>Customer support.</b> What is the first thing a customer asks about a held payment, and what can't you answer?</p>
+      <p><b>Treasury and partners.</b> Which corridors and partner banks cause the most delays, returns and fee gaps?</p>
+    </div>
+    <div class="card"><h3>Patterns I would look for</h3><ul>
+      <li>The few causes that make up most of the volume</li>
+      <li>The same customer and beneficiary flagged again after being cleared</li>
+      <li>False positives clustered on Arabic and South Asian name spellings</li>
+      <li>First-time beneficiaries and customers in their first 90 days</li>
+      <li>Weekend and cut-off-time effects</li>
+      <li>Cases needing more than one round of questions</li>
+      <li>Customers contacting us before we contact them</li>
+      <li>Analysts taking very different times on the same alert type</li></ul></div>
+  </div>
+</section>
+
+<!-- 8 -->
+<section class="slide" data-sec="3">
+  <div class="kick">3 · Root cause hypotheses</div>
+  <h2>Three root causes. Each one survives because it is rational for someone.</h2>
+  <div class="g3">
+    <div class="card"><h3><span class="n">01</span>Problems are caught downstream</h3><p>Wrong IBANs, vague purposes and missing documents enter at the form. They are caught later, by screening, a partner bank or the receiving bank, when fixing them costs the most.</p>
+      <div class="why"><b>Why it persists · process and technology</b>The form was built for a fast first send, which suited growth. Checks live in separate systems.</div></div>
+    <div class="card"><h3><span class="n">02</span>Screening has no memory</h3><p>Every payment is screened from scratch. Name spellings collide. Analysts lack the identifiers they need in one view, so they ask the customer.</p>
+      <div class="why"><b>Why it persists · technology and policy</b>Missing a true hit is existential, while a false positive "only" costs time. So thresholds only tighten, and nobody owns the cost of noise.</div></div>
+    <div class="card"><h3><span class="n">03</span>Nobody owns the whole journey</h3><p>A payment's status is split across the app, payment hub, screening, tracking, reconciliation and CRM. Each team clears its own queue. The customer learns last.</p>
+      <div class="why"><b>Why it persists · people and data</b>Team boundaries follow system boundaries. Success is measured per team ("alerts closed"), not per payment ("money arrived").</div></div>
+  </div>
+  <p class="band"><b>If these hold, the fix is not more people.</b> It is checks at entry, memory in screening, and one owner of the payment from submit to arrival.</p>
+</section>
+
+<!-- 9 -->
+<section class="slide" data-sec="4">
+  <div class="kick">4 · What leading banks already do</div>
+  <h2>Every piece exists somewhere. Nobody has joined them into one journey.</h2>
+  <table class="bm">
+    <thead><tr><th>Capability</th><th>Global leaders</th><th>In the UAE</th><th>The lesson for Wio</th></tr></thead>
+    <tbody>
+      <tr><td>Check the name before sending</td><td>UK Confirmation of Payee runs about 1.9 million checks a day. Verification of Payee is now required for euro transfers.</td><td>Aani pays by mobile number, so fewer IBANs are typed. Name checks on IBANs are still emerging.</td><td>Validate account and name at submit, not after release</td></tr>
+      <tr><td>Track every payment</td><td>Wise shows every step. 77% of its transfers arrive in under 20 seconds.</td><td>Mashreq was the region's first bank on Swift gpi, with tracking in its app.</td><td>Make status visible by default, so customers don't have to ask</td></tr>
+      <tr><td>AI on screening alerts</td><td>HSBC reports 60% fewer false positives and 2 to 4 times more financial crime found.</td><td>Emirates NBD automated its screening-alert investigations.</td><td>Measure fewer false positives and more true hits together</td></tr>
+      <tr><td>Trust known patterns</td><td>Wise skips extra steps for trusted recipients.</td><td>Mostly handled case by case.</td><td>Remember cleared beneficiaries and answers already given</td></tr>
+    </tbody>
+  </table>
+  <p class="band"><b>Where Wio can lead:</b> incumbents bolt these on one by one. A cloud-native bank can join prevention, triage and customer messaging on one platform.</p>
+</section>
+
+<!-- 10 -->
+<section class="slide" data-sec="4">
+  <div class="kick">4 · Proposed solution</div>
+  <h2>Clearway: three layers on one shared timeline</h2>
+  <div class="g3">
+    <div class="card layer"><h3>Prevent</h3><p class="fx">Fixes root cause 01</p><ul>
+      <li>Checks while the customer types: IBAN, bank code, account and name</li>
+      <li>Purpose suggested from history and the invoice</li>
+      <li>Invoice asked for up front, only when a payment is risk-flagged</li></ul></div>
+    <div class="card layer"><h3>Prioritise and resolve</h3><p class="fx">Fixes root cause 02</p><ul>
+      <li>One queue, ranked by risk, value, deadline and customer impact</li>
+      <li>Memory of cleared beneficiaries, with expiry</li>
+      <li>A copilot that gathers evidence and drafts. A person decides</li>
+      <li>Automatic chasing of partner banks</li></ul></div>
+    <div class="card layer"><h3>Inform</h3><p class="fx">Fixes root cause 03</p><ul>
+      <li>A parcel-style tracker for every payment</li>
+      <li>Every hold says what, next step and by when</li>
+      <li>One request, as a checklist, answered once</li>
+      <li>Updates sent before the customer has to ask</li></ul></div>
+  </div>
+  <div class="spine"><b>One timeline per payment, joined by its UETR</b><span>app</span><span>payment hub</span><span>screening</span><span>tracking</span><span>reconciliation</span><span>CRM</span></div>
+  <p class="principle">Machines gather, rank and draft. <em>People decide.</em> Customers always know.</p>
+</section>
+
+<!-- 11 -->
+<section class="slide" data-sec="4">
+  <div class="kick">4 · Prevent</div>
+  <h2>The cheapest investigation is the one that never opens.</h2>
+  <div class="shot"><img src="img/preflight.jpg" alt="Clearway pre-flight checks catching an IBAN typo, with one-tap fixes for the IBAN, purpose and invoice"></div>
+  <div class="g3" style="gap:16px">
+    <p style="font-size:15px"><b>Real checks.</b> The IBAN checksum and bank-code rules catch typos instantly, before the payment leaves.</p>
+    <p style="font-size:15px"><b>One-tap fixes.</b> We suggest the saved IBAN, the likely purpose and the invoice, rather than just showing an error.</p>
+    <p style="font-size:15px"><b>Friction only where it pays.</b> We ask for more only when risk is high, and A/B test the impact on first-send conversion.</p>
+  </div>
+</section>
+
+<!-- 12 -->
+<section class="slide" data-sec="4">
+  <div class="kick">4 · Prioritise and resolve</div>
+  <h2>Rank by real risk, remember what we know, and let a copilot do the gathering.</h2>
+  <div class="g3">
+    <div class="card"><h3>Ranking</h3><p class="mono" style="font-size:13px">priority = 0.40 risk + 0.25 value + 0.20 deadline + 0.15 customer impact</p><p>Operations and Compliance set the weights together and review them monthly. A likely true match always goes to the top.</p></div>
+    <div class="card"><h3>Smarter screening</h3><ul>
+      <li>A cleared customer and beneficiary pair is not flagged again until the list or the details change</li>
+      <li>Matching that understands name spellings and checks date of birth, nationality and registration</li>
+      <li>A model that ranks alerts first, and closes only the safest ones after it has proven itself</li></ul></div>
+    <div class="card"><h3>Investigator copilot</h3><ul>
+      <li>Builds the case file: KYC, history, past decisions, tracking</li>
+      <li>Drafts the decision rationale with its evidence</li>
+      <li>Drafts the customer question in plain language</li>
+      <li>Read-only. It cannot release, reject or message anyone</li></ul></div>
+  </div>
+  <p class="band"><b>Guardrails that do not move:</b> a person signs off every decision, everything is logged, messages on likely true matches are locked to neutral wording, models are validated by Compliance, data stays in the UAE, and true-hit detection is tested continuously.</p>
+</section>
+
+<!-- 13 -->
+<section class="slide" data-sec="4">
+  <div class="kick">4 · Inform</div>
+  <h2>Uncertainty hurts more than waiting. Show the journey and ask once.</h2>
+  <div class="shot" style="align-self:center;max-width:100%"><img style="height:390px;width:auto;max-width:100%" src="img/inform.jpg" alt="Four customer app screens: routine check, one quick question, delayed at a partner bank, and returned"></div>
+  <p style="font-size:15px;max-width:1080px">People tolerate a wait far better when they know why and for how long. Each screen gives a status, a time, and at most one question. Wording is written with UX writing and Compliance in English and Arabic, and sensitive reviews only ever use approved neutral text.</p>
+</section>
+
+<!-- AI/ML -->
+<section class="slide" data-sec="4">
+  <div class="kick">4 · Where machine learning and AI fit</div>
+  <h2>Rules where the answer is exact, ML where we rank, AI where we read and write</h2>
+  <table class="ai">
+    <thead><tr><th style="width:19%">Problem</th><th style="width:29%">Approach</th><th style="width:31%">What it does</th><th>Who decides</th></tr></thead>
+    <tbody>
+      <tr><td>Typos and format errors</td><td>Rules: IBAN checksum, bank code and country checks</td><td>Exact and explainable, needs no training data</td><td>Customer fixes with one tap</td></tr>
+      <tr><td>Purpose and documents</td><td>Classifier on payment history, plus document AI that reads invoices</td><td>Suggests the purpose and checks invoice amount and reference</td><td>Customer confirms</td></tr>
+      <tr><td>Name matching</td><td>Spelling-aware fuzzy and phonetic matching, plus secondary identifiers</td><td>Handles Arabic and South Asian name variants without missing true hits</td><td>Analyst reviews hits</td></tr>
+      <tr><td>Which alert first</td><td>Gradient-boosted model trained on past analyst decisions, with a reason shown for every score</td><td>Ranks alerts by false-positive likelihood. Never closes one by itself in phase 1</td><td>Analyst</td></tr>
+      <tr><td>Which payment will stall</td><td>Time-to-credit model by corridor and partner bank</td><td>Flags a delay before the customer notices, and drafts the chase</td><td>Operations</td></tr>
+      <tr><td>Case file and messages</td><td>LLM copilot with read-only tools and search over case history and policies</td><td>Gathers evidence, drafts the rationale and the customer question in English and Arabic</td><td>Analyst edits and approves</td></tr>
+      <tr><td>Reconciliation breaks</td><td>Rules plus anomaly detection on fee patterns</td><td>Clears known fee gaps and surfaces the odd ones</td><td>Operations reviews outliers</td></tr>
+    </tbody>
+  </table>
+  <p class="band"><b>The line I would not cross:</b> no model or LLM makes a sanctions decision. Every model is tested on past cases before it touches the queue, then monitored for drift and for any drop in true-hit detection.</p>
+</section>
+
+<!-- STACK -->
+<section class="slide" data-sec="4">
+  <div class="kick">4 · Technology stack</div>
+  <h2>How it is built: an event backbone, a case layer, and intelligence on top</h2>
+  <div class="stack">
+    <div class="lyr"><b>Channels</b><div class="boxes"><div class="bx"><strong>Wio app</strong>Tracker, one-tap answers, push updates</div><div class="bx"><strong>Ops console</strong>Ranked queue, case file, decisions</div><div class="bx"><strong>Leadership dashboard</strong>STP, time-to-money, guardrails</div></div></div>
+    <div class="lyr ai"><b>Intelligence</b><div class="boxes"><div class="bx"><strong>Rules engine</strong>Validation, routing, auto-resolution</div><div class="bx"><strong>ML models</strong>Ranking, stall prediction, anomalies, with a model registry and monitoring</div><div class="bx"><strong>AI copilot</strong>LLM with agent orchestration, read-only tools and retrieval, hosted in the UAE</div></div></div>
+    <div class="lyr"><b>Workflow</b><div class="boxes"><div class="bx"><strong>Case service</strong>One case per UETR, deadline timers, full audit log</div><div class="bx"><strong>Messaging service</strong>Approved templates only, English and Arabic</div><div class="bx"><strong>Feedback loop</strong>Analyst outcomes become training labels</div></div></div>
+    <div class="lyr data"><b>Data</b><div class="boxes"><div class="bx"><strong>Event streaming</strong>Every payment event, keyed by UETR, replayable</div><div class="bx"><strong>Operational database</strong>Cases, decisions, memory of cleared pairs</div><div class="bx"><strong>Analytics and features</strong>Lakehouse for baselines, features and experiments</div></div></div>
+    <div class="lyr"><b>Integrations</b><div class="boxes"><div class="bx">Payment hub and core banking</div><div class="bx">Screening system</div><div class="bx">Swift gpi, Case Management and Pre-validation</div><div class="bx">Clearing partner and CRM</div></div></div>
+  </div>
+  <p class="side">Across every layer: tracing and alerting, access control, model evaluation, and data kept in the UAE. This is illustrative. In practice I would fit it to Wio's existing cloud platform rather than add new tools.</p>
+</section>
+
+<!-- 14 -->
+<section class="slide" data-sec="4">
+  <div class="kick">4 · The prototype</div>
+  <h2>I built it, so we can discuss decisions rather than slides.</h2>
+  <div class="g2" style="grid-template-columns:1.6fr 1fr;align-items:start">
+    <div class="shot"><img src="img/console.jpg" alt="Clearway control tower with a ranked queue, a case file with copilot summary, and the customer's live phone view"></div>
+    <div class="card"><h3>What it shows</h3><ul>
+      <li><b>Prevent:</b> a real IBAN checksum catching a typo, with one-tap fixes</li>
+      <li><b>Prioritise:</b> a ranked queue, a copilot case file, and clearance that stays locked until the analyst confirms</li>
+      <li><b>Guardrail:</b> on a likely true match, the copilot cannot message the customer</li>
+      <li><b>Inform:</b> the customer's screen updates the moment the analyst acts</li>
+      <li><b>Impact:</b> every assumption is a slider</li>
+      <li><b>How it is built:</b> the stack, the AI uses and the guardrails</li></ul>
+      <p class="muted" style="font-size:13px">Sample data. A guided tour walks through it in ten steps.</p></div>
+  </div>
+</section>
+
+<!-- 15 -->
+<section class="slide" data-sec="4">
+  <div class="kick">4 · Teams and trade-offs</div>
+  <h2>A cross-functional build, with every trade-off made on purpose</h2>
+  <div class="g2" style="grid-template-columns:.9fr 1.3fr">
+    <div class="card"><h3>Who contributes</h3><table><tbody>
+      <tr><td><b>Engineering</b></td><td>Shared timeline, validation services, case tools</td></tr>
+      <tr><td><b>Data science</b></td><td>Ranking, matching, experiments</td></tr>
+      <tr><td><b>Design and UX writing</b></td><td>Tracker and messages, English and Arabic</td></tr>
+      <tr><td><b>Behavioural science</b></td><td>Defaults, waiting psychology, nudges</td></tr>
+      <tr><td><b>Compliance</b></td><td>Memory policy, model validation, approved wording</td></tr>
+      <tr><td><b>Operations and support</b></td><td>Playbooks, outcome labels, quality checks</td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>Trade-offs</h3><table><thead><tr><th>Tension</th><th>My call</th></tr></thead><tbody>
+      <tr><td>Speed vs safety</td><td>Rank before auto-close. True-hit detection is a guardrail, never traded.</td></tr>
+      <tr><td>Friction now vs holds later</td><td>Ask more only when risk is high, and test it</td></tr>
+      <tr><td>Build vs buy</td><td>Buy the rails (validation, partner messaging). Build the timeline and ranking, which are Wio's edge.</td></tr>
+      <tr><td>Transparency vs tipping off</td><td>Always share status. Share reasons only through approved wording.</td></tr>
+      <tr><td>AI power vs explainability</td><td>The copilot drafts with evidence. Rules and people decide.</td></tr>
+    </tbody></table></div>
+  </div>
+</section>
+
+<!-- 16 -->
+<section class="slide" data-sec="4">
+  <div class="kick">4 · Success metrics and impact</div>
+  <h2>Measure the payment, not the team</h2>
+  <div class="ns">
+    <div><div class="kick">North star 1</div><h3>Straight-through rate</h3><p>Share of international payments completed with no manual touch</p></div>
+    <div><div class="kick">North star 2</div><h3>Time-to-money when held</h3><p>Median and slowest-10% time from submit to arrival, for payments a person touched</p></div>
+  </div>
+  <div class="g2">
+    <div class="card"><h3>Drivers</h3><ul style="grid-template-columns:1fr 1fr;column-gap:20px">
+      <li>Exceptions per 1,000 payments</li><li>Alerts per 1,000 and false-positive rate</li><li>Handling time</li><li>Question rounds per case</li><li>Share where we notified first</li><li>Support contacts per 1,000</li></ul></div>
+    <div class="card"><h3>Guardrails that must not move</h3><ul style="grid-template-columns:1fr 1fr;column-gap:20px">
+      <li>True-hit detection</li><li>Quality-check disagreement</li><li>Regulatory deadlines met</li><li>Fraud and return rate</li><li>Form completion rate</li></ul></div>
+  </div>
+  <div class="nums">
+    <div class="num"><b>8,750 h</b><span>manual hours a month today (assumed)</span></div>
+    <div class="num"><b>~4,600 h</b><span>freed each month</span></div>
+    <div class="num"><b>~29</b><span>people's capacity moved to real risk</span></div>
+    <div class="num"><b>52%</b><span>of manual work removed, no new headcount</span></div>
+  </div>
+</section>
+
+<!-- 17 -->
+<section class="slide" data-sec="5">
+  <div class="kick">5 · Execution roadmap</div>
+  <h2>Discover → Design → Pilot → Scale, with a gate at each step</h2>
+  <div class="road">
+    <div class="ph"><span class="w">Weeks 0 to 3</span><h3>Discover</h3><ul><li>Pull 90 days of held payments</li><li>Size the causes and build a baseline</li><li>Shadow analysts, interview customers</li></ul><div class="gate">Gate: root causes confirmed or replaced</div></div>
+    <div class="ph"><span class="w">Weeks 3 to 6</span><h3>Design</h3><ul><li>Entry checks and message templates</li><li>Ranking weights agreed with Compliance</li><li>Memory policy drafted</li><li>Copilot tested on past cases</li></ul><div class="gate">Gate: Compliance signs off the pilot</div></div>
+    <div class="ph"><span class="w">Weeks 6 to 14</span><h3>Pilot</h3><ul><li>One corridor and one segment</li><li>A/B test the entry checks</li><li>Copilot shadows, then assists</li><li>Proactive updates switched on</li></ul><div class="gate">Gate: drivers improve, guardrails hold</div></div>
+    <div class="ph"><span class="w">Months 4 to 9</span><h3>Scale</h3><ul><li>All corridors and incoming payments</li><li>Auto-close only the safest, proven lane</li><li>Arabic messaging, domestic rails</li><li>Hand over to the owning teams</li></ul><div class="gate">Gate: run as business as usual</div></div>
+  </div>
+  <p class="band"><b>What I would do first, and why:</b> the baseline, the entry checks and proactive updates. They touch the most payments, need no change to screening policy, carry the least regulatory risk, and give us the measurement everything else depends on.</p>
+</section>
+
+<!-- 18 -->
+<section class="slide" data-sec="5">
+  <div class="kick">5 · Collaboration plan</div>
+  <h2>One dashboard, one rhythm, clear owners</h2>
+  <div class="g3">
+    <div class="card"><h3>Rhythm</h3><ul>
+      <li><b>Weekly, 30 minutes:</b> held-payments review with Operations, Compliance, Engineering, Product and Support, on one dashboard</li>
+      <li><b>Every two weeks:</b> experiment review covering what shipped, what moved and what we stop</li>
+      <li><b>Monthly:</b> ranking and model review with Compliance</li></ul></div>
+    <div class="card"><h3>Ownership</h3><ul>
+      <li>One named owner for time-to-money, not just for queues</li>
+      <li>A decision log for every policy change</li>
+      <li>Analysts record outcomes when they close a case, so the models improve without extra work</li></ul></div>
+    <div class="card"><h3>What I would own</h3><ul>
+      <li>The baseline and cause sizing</li>
+      <li>Shadowing and customer interviews</li>
+      <li>The entry-checks spec and pilot success criteria</li>
+      <li>The test set that proves the copilot and ranking model before go-live</li>
+      <li>A weekly impact update to the CEO Office</li></ul></div>
+  </div>
+  <p class="band"><b>Stronger controls without more bureaucracy:</b> every guardrail lives inside the workflow. The confirmation step, the locked wording and the quality sample all happen in the case, never as an extra form.</p>
+</section>
+
+<!-- 19 -->
+<section class="slide" data-sec="5">
+  <div class="kick">5 · Risks and alternatives</div>
+  <h2>What would change my mind, and what I considered instead</h2>
+  <div class="g2">
+    <div class="card"><h3>If the data says otherwise</h3><table><tbody>
+      <tr><td>Sanctions is not the biggest cause</td><td>Re-order around whatever is</td></tr>
+      <tr><td>Compliance cannot approve the memory</td><td>Lean on better identifiers and copilot speed</td></tr>
+      <tr><td>Entry checks hurt conversion</td><td>Apply them only to risk-flagged payments</td></tr>
+      <tr><td>The copilot is wrong or vague</td><td>Keep it in shadow mode and grow the test set</td></tr>
+      <tr><td>No UETR history exists today</td><td>Start capturing it now, and baseline from case tools meanwhile</td></tr>
+    </tbody></table></div>
+    <div class="card"><h3>Alternatives I considered</h3><ul>
+      <li><b>Outsource first-level review.</b> Adds capacity but keeps cost rising with volume, and fixes no cause.</li>
+      <li><b>Only re-tune the screening system.</b> Fewer false positives, but customers still can't see anything.</li>
+      <li><b>Full automation now.</b> Too much regulatory risk before we have evidence.</li>
+      <li><b>Replace the case management system.</b> Slow. A shared timeline plus a thin console delivers value in weeks.</li></ul></div>
+  </div>
+  <p class="band"><b>The single biggest risk</b> is that the real causes look different from my assumptions. That is why Discover comes first and has a gate.</p>
+</section>
+
+<!-- WHY -->
+<section class="slide" data-sec="5">
+  <div class="kick">5 · Why I can help deliver this</div>
+  <h2>I have built each part of Clearway before, in other high-stakes systems.</h2>
+  <div class="xp">
+    <div class="card"><span class="in">Event backbone and exception handling</span><h3>Shell, through Wipro</h3><p>A Kafka pipeline carrying 115 GB a day from 200+ offshore stations with zero data loss. Bad records were quarantined with context for replay, which cut production incidents by 25%.</p><p class="from">The same pattern as one timeline per payment, with held items that can be fixed and released</p></div>
+    <div class="card"><span class="in">AI with a human in charge</span><h3>GeneCart, NYU</h3><p>An AI agent limited to a fixed set of least-privilege tools, with a person holding final authority over every change to research data.</p><p class="from">The same guardrails as the investigator copilot</p></div>
+    <div class="card"><span class="in">Ranking, retrieval and evaluation</span><h3>NYU research platform</h3><p>Raised answer quality 40%, graded on held-out test sets and re-tested on every change. Cut response time from 450 ms to under 100 ms at 3,000+ requests a second, with 99.9% uptime.</p><p class="from">How I would build and prove the ranking model and copilot</p></div>
+    <div class="card"><span class="in">Self-service that removes work</span><h3>Shell vendor portal</h3><p>Replaced a manual request queue with self-service for 500+ vendors. Support tickets fell 35% and service requests fell 45%.</p><p class="from">The thinking behind the customer tracker and one-tap answers</p></div>
+  </div>
+  <p class="band"><b>And I built this prototype end to end within the task window.</b> I enjoy finding the root cause with the people who run the process, then shipping something that measurably removes the work.</p>
+</section>
+
+<!-- 20 -->
+<section class="slide dark">
+  <div class="kick">Thank you</div>
+  <div style="display:flex;flex-direction:column;gap:18px">
+    <h1 style="font-size:62px">Fewer investigations. <em>Faster answers.</em> No customer left wondering.</h1>
+    <p class="lede" style="font-size:20px">Which of my assumptions would you challenge first?</p>
+  </div>
+  <div class="who"><div><b>Jaya Sabarish Reddy Remala</b>Associate, CEO Office · Home task, Option 2</div></div>
+</section>
+
+</div></div>
+<script>
+(function(){
+  const deck=document.getElementById('deck'),S=[...deck.querySelectorAll('.slide')],N=S.length;let i=0;
+  const names=["Challenge","Data","Root causes","Solution","Execution"];
+  S.forEach((s,k)=>{const sec=s.dataset.sec;
+    if(sec!==undefined){const d=document.createElement('div');d.className='sec';d.innerHTML=names.map((n,j)=>`<span class="${+sec===j+1?'on':''}">${j+1} ${n}</span>`).join('');s.appendChild(d)}
+    const f=document.createElement('div');f.className='foot';f.innerHTML='<span>Clearway · Jaya Sabarish Reddy Remala</span><span>'+String(k+1).padStart(2,'0')+' / '+N+'</span>';s.appendChild(f);
+    const r=document.createElement('div');r.className='rail';r.style.width=((k+1)/N*100)+'%';s.appendChild(r)});
+  function fit(){deck.style.transform='scale('+Math.min(innerWidth/1280,innerHeight/720)*0.96+')'}
+  function show(n){i=Math.max(0,Math.min(N-1,n));S.forEach((s,k)=>s.classList.toggle('on',k===i));document.getElementById('ct').textContent=(i+1)+' / '+N}
+  addEventListener('keydown',e=>{if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();show(i+1)}else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();show(i-1)}else if(e.key==='Home')show(0);else if(e.key==='End')show(N-1)});
+  document.getElementById('bn').onclick=()=>show(i+1);document.getElementById('bp').onclick=()=>show(i-1);
+  document.getElementById('zr').onclick=()=>show(i+1);document.getElementById('zl').onclick=()=>show(i-1);
+  let tx=null;addEventListener('touchstart',e=>tx=e.touches[0].clientX,{passive:true});addEventListener('touchend',e=>{if(tx===null)return;const d=e.changedTouches[0].clientX-tx;if(Math.abs(d)>40)show(i+(d<0?1:-1));tx=null});
+  addEventListener('resize',fit);fit();show(0);
+})();
+</script>
+</body></html>

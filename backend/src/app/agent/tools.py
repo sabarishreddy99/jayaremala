@@ -132,6 +132,72 @@ def _get_lab(slug: str = "") -> Any:
     ]
 
 
+SITE_URL = "https://jayaremala.com"
+
+
+def _absolutize_links(entry: dict) -> dict:
+    """Make a case study's site-relative hrefs absolute.
+
+    case-studies.json stores hrefs like "/case-studies/clearway/index.html"
+    because the Next page renders them from the site's own origin. An MCP
+    client is not on that origin — Claude Desktop or Cursor receiving "/case-
+    studies/..." has nothing to resolve it against — so the tool hands back
+    fully-qualified URLs instead.
+    """
+    links = entry.get("links")
+    if not links:
+        return entry
+    out = dict(entry)
+    out["links"] = [
+        {**link, "href": f"{SITE_URL}{link['href']}"}
+        if str(link.get("href", "")).startswith("/") else link
+        for link in links
+    ]
+    return out
+
+
+def _get_case_studies(slug: str = "") -> Any:
+    """List case studies, or one by `slug`.
+
+    Case study bodies are self-contained HTML decks under
+    frontend/public/case-studies/, not JSON, so even the detail view returns
+    metadata plus the links to read the deck and open its prototype. Reads
+    case-studies.json fresh on every call, so a new brief appears with no
+    restart.
+    """
+    entries = [_absolutize_links(c) for c in (_load("case-studies") or [])]
+    if slug:
+        q = slug.lower().strip()
+        for c in entries:
+            if q in str(c.get("slug", "")).lower() or q in str(c.get("title", "")).lower():
+                return c
+        return None
+    return [
+        {k: c.get(k) for k in
+         ("slug", "title", "headline", "context", "brief", "role", "date",
+          "readingTime", "sections", "tags", "links")}
+        for c in entries
+    ]
+
+
+def _get_testimonials() -> list:
+    """Recommendations colleagues and managers have written, newest first.
+
+    Sorted on `givenAt` so the list leads with the most recent; entries without
+    a date sort last rather than crashing the comparison.
+    """
+    items = _load("testimonials") or []
+    return sorted(
+        (
+            {k: t.get(k) for k in
+             ("name", "designation", "company", "description", "givenAt", "source", "linkedin")}
+            for t in items
+        ),
+        key=lambda t: t.get("givenAt") or "",
+        reverse=True,
+    )
+
+
 def _get_apps() -> list:
     """List every app/product Jaya hosts under his domain (Gradevitian, future ones).
 
@@ -158,11 +224,48 @@ def _get_app(name: str) -> dict | None:
 
 
 def _check_availability() -> str:
+    """Whether Jaya is open to work, in natural language.
+
+    profile.availability is the authority here — it is the same block the site
+    hero renders, so it is always published and always current. The live
+    calendar only ever *adds* detail about when he is free.
+
+    This used to return the calendar summary alone, which meant the tool
+    answered "Availability is not currently published" whenever Google Calendar
+    was unconnected or the 6s Freebusy lookup timed out — directly contradicting
+    the "Open to work" badge on the front page. _get_booking_link already
+    degrades to profile.json this way; this now matches it.
+    """
+    p = _load("profile") or {}
+    avail = p.get("availability") or {}
+
+    if avail:
+        label = avail.get("label") or ("Open to opportunities" if avail.get("open", True) else "Not currently looking")
+        bits = []
+        if avail.get("types"):
+            bits.append(", ".join(avail["types"]))
+        if avail.get("locations"):
+            bits.append(" or ".join(avail["locations"]))
+        parts = [f"{label} — {'; '.join(bits)}." if bits else f"{label}."]
+        if p.get("location"):
+            parts.append(f"Based in {p['location']}.")
+    elif p.get("location"):
+        parts = [f"Based in {p['location']}."]
+    else:
+        parts = []
+
+    # Live slots are a bonus, never a prerequisite. Any failure is swallowed so
+    # the published answer still goes out.
     try:
         from app.integrations.calendar import get_availability_summary
-        return get_availability_summary() or "Availability is not currently published."
+        live = get_availability_summary()
+        if live:
+            parts.append(live)
     except Exception:
-        return "Availability is not currently published."
+        pass
+
+    parts.append("Use get_booking_link to schedule a call.")
+    return " ".join(parts) if parts else "Availability is not currently published."
 
 
 def _get_booking_link() -> dict:
@@ -201,7 +304,8 @@ TOOLS: list[Tool] = [
         name="search_knowledge",
         description=(
             "Semantic + keyword search over Jaya's full portfolio knowledge base "
-            "(experience, projects, skills, education, blog, lab notes, hosted apps). "
+            "(experience, projects, skills, education, blog, lab notes, hosted apps, "
+            "case studies, testimonials, quotes, and gallery milestones). "
             "Returns the most relevant grounded snippets. Use this for open-ended questions."
         ),
         handler=_search_knowledge,
@@ -251,6 +355,29 @@ TOOLS: list[Tool] = [
         name="get_now",
         description="What Jaya is currently building, learning, and focused on right now.",
         handler=_get_now,
+    ),
+    Tool(
+        name="get_case_studies",
+        description=(
+            "Jaya's long-form case studies — a brief worked end to end, each shipping with a "
+            "working prototype. Returns slug, title, headline, the client/context, his role, "
+            "date, the deck's section outline, tags, and links to read the deck and open the "
+            "prototype. Pass `slug` (a slug or title fragment) for one. Use this when asked "
+            "about case studies, product/design thinking, or how he approaches an open brief."
+        ),
+        handler=_get_case_studies,
+        parameters=_obj(
+            {"slug": {"type": "string", "description": "Optional — slug or title fragment to fetch one case study."}},
+        ),
+    ),
+    Tool(
+        name="get_testimonials",
+        description=(
+            "Recommendations written by Jaya's colleagues and managers — name, role, company, "
+            "the quote itself, when it was given, and a LinkedIn link. Newest first. Use this "
+            "for 'what do people say about him' or references/social-proof questions."
+        ),
+        handler=_get_testimonials,
     ),
     Tool(
         name="get_blog",

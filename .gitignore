@@ -33,3 +33,17 @@ build/
 backend/data/gradevitian/_*.pdf
 backend/data/gradevitian/_*_raw.txt
 .gstack/
+
+# Agent skills installed via `npx skills add` (e.g. design-taste-frontend).
+# Local tooling, not part of the site: .agents/ holds the payload (~1.7MB each)
+# and .claude/skills/ is just symlinks into it. Reinstall with
+#   npx skills add <repo> --skill <name>
+# Deliberately NOT ignoring .claude/ wholesale, so a shared
+# .claude/settings.json can still be committed if one is ever added.
+.agents/
+.claude/skills/
+.claude/settings.local.json
+skills-lock.json
+
+# tasteskill working files (screenshots, inspect output, downloaded assets)
+.taste-skill/

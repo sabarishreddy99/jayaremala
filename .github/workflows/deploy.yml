@@ -72,9 +72,33 @@ jobs:
         working-directory: frontend
         run: npm install
 
+      # Retried because next/font/google fetches each family's CSS from Google
+      # at build time, and Google intermittently answers with extensionless
+      # `/l/font?kit=...&skey=...` URLs instead of `/s/.../<hash>.woff2`. The
+      # `&` in that URL breaks Turbopack's query parser and the build dies with
+      # "next/font/google queries have exactly one entry" — nothing to do with
+      # this repo's code. Upstream: vercel/next.js#99114 (open; affects webpack
+      # and Turbopack alike, so there is no version to upgrade to yet).
+      #
+      # Roughly 1 in 60 responses comes back malformed and this app declares 9
+      # families, so ~14% of cold builds failed. Three attempts takes that to
+      # ~0.3%. Delete this loop once the upstream fix ships, or if the fonts
+      # ever move to next/font/local — either removes the network dependency.
       - name: Build
         working-directory: frontend
-        run: npm run build
+        run: |
+          for attempt in 1 2 3; do
+            echo "::group::Build attempt $attempt of 3"
+            if npm run build; then
+              echo "::endgroup::"
+              exit 0
+            fi
+            echo "::endgroup::"
+            echo "::warning::Build attempt $attempt failed — retrying (see vercel/next.js#99114)"
+            rm -rf .next
+          done
+          echo "::error::Build failed after 3 attempts — this is unlikely to be the font flake; check the log above."
+          exit 1
         env:
           NEXT_PUBLIC_API_BASE_URL: ${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
           NEXT_PUBLIC_EMAILJS_SERVICE_ID: ${{ secrets.NEXT_PUBLIC_EMAILJS_SERVICE_ID }}

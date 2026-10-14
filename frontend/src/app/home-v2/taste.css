@@ -1,0 +1,230 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   Direction: "The page is the object" · seed 1975244060
+   The object is a course of fly-ash bricks curing in the yard at Kavali.
+
+   Palette: dealt as "Bone, green, chocolate" and KEPT, not redrawn — it was
+   validated against the one authentic photograph of the yard
+   (public/vrfbricks/photos/yard-kavali.jpg): the cement is bone, the shadow
+   between the courses is chocolate, and the green is really there, in the
+   maize field behind the drying beds. The accent is spent exactly as the
+   sheet says: one large flat field, and the button.
+
+   Scoped to .taste so it cannot leak into the rest of the site while this
+   lives at a preview route.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.taste {
+  /* colour — one ground, one ink, one accent */
+  --bg: #e5e1d8;
+  --surface: #dad5ca;
+  --ink: #2a1d17;
+  --muted: #5e4f46;   /* 5.35:1 on surface, 6.0:1 on ground */
+  --accent: #456f3a;
+  --accent-ink: #ffffff;
+
+  /* type — five steps, no sixth */
+  --step-small: clamp(0.8125rem, 0.79rem + 0.1vw, 0.875rem);
+  --step-body: clamp(1.0625rem, 1rem + 0.25vw, 1.1875rem);
+  --step-lead: clamp(1.25rem, 1.1rem + 0.7vw, 1.625rem);
+  --step-head: clamp(2rem, 1.3rem + 3.2vw, 4rem);
+  --step-display: clamp(3rem, 1.2rem + 7.6vw, 8.5rem);
+
+  /* one pair of margins, one radius, used everywhere */
+  --gutter: clamp(1rem, 0.6rem + 2vw, 2rem);
+  --measure: 62ch;
+  --radius: 0;
+
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-jost), system-ui, sans-serif;
+  font-size: var(--step-body);
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Display face: Bodoni Moda, as dealt. Set blunt and very large so the
+   didone reads as a nameplate on a document, not as fashion. */
+.taste h1, .taste h2, .taste h3, .taste .display {
+  font-family: var(--font-bodoni), Georgia, serif;
+  font-weight: 500;
+  font-optical-sizing: auto;
+  letter-spacing: -0.02em;
+  line-height: 0.95;
+  margin: 0;
+  text-wrap: balance;
+}
+
+.taste h1, .taste .t-display { font-size: var(--step-display); }
+.taste h2 { font-size: var(--step-head); }
+.taste h3 { font-size: var(--step-lead); line-height: 1.1; }
+.taste p  { margin: 0; max-width: var(--measure); }
+
+.taste .t-lead  { font-size: var(--step-lead); line-height: 1.35; }
+.taste .t-small { font-size: var(--step-small); color: var(--muted); }
+
+/* ── the page width ─────────────────────────────────────────────────────── */
+.taste .wrap {
+  width: 100%;
+  max-width: 1280px;
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+/* section rhythm: the gap between sections is clearly larger than any gap
+   inside one (house law: 120–220px on desktop) */
+.taste section { padding-block: clamp(3.5rem, 2.5rem + 4.5vw, 7rem); }
+.taste section:first-of-type { padding-block-start: 0; }
+
+/* ── the course: the page's one structural motif ────────────────────────────
+   A stack of filled panels with a projecting tab, offset course by course
+   like a stretcher bond. This is the dealt "tabbed folder stack" geometry
+   rendered in the subject's own material. Filled shapes with real edges —
+   no outlines, no shadows, no rules. */
+.taste .course {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;                      /* the mortar line: a gap, never a rule */
+}
+.taste .brick {
+  background: var(--surface);
+  color: var(--ink);
+  padding: clamp(1.25rem, 0.8rem + 1.6vw, 2.25rem);
+  border: 0;
+  border-radius: var(--radius);
+  width: 100%;
+  text-align: left;
+}
+/* the offset that makes it a bond rather than a column of boxes */
+.taste .course > *:nth-child(even) { margin-inline-start: clamp(0px, 4vw, 56px); }
+
+/* the one large flat field of accent the sheet allows */
+.taste .field {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+.taste .field h2, .taste .field h3, .taste .field p { color: var(--accent-ink); }
+.taste .field .t-small { color: color-mix(in srgb, var(--accent-ink) 88%, var(--accent)); } /* 4.97:1 */
+
+/* ── media: square corners, same treatment, no frames ───────────────────── */
+.taste figure { margin: 0; }
+.taste img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.taste .bleed { width: 100%; }
+
+/* ── the one button shape, decided once: square, flat, one fill ─────────── */
+.taste .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 0.95rem 1.6rem;
+  font-size: var(--step-body);
+  font-weight: 500;
+  text-decoration: none;
+  border: 0;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: transform 160ms ease, background-color 160ms ease;
+}
+.taste .btn:hover { background: color-mix(in srgb, var(--accent) 86%, #000); }
+.taste .btn:active { transform: translateY(1px); }
+.taste .btn-quiet {
+  background: var(--ink);
+  color: var(--bg);
+}
+.taste .btn-quiet:hover { background: color-mix(in srgb, var(--ink) 86%, #000); }
+
+.taste a { color: inherit; }
+.taste :focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.taste ::selection { background: var(--accent); color: var(--accent-ink); }
+
+/* ── nav: wordmark, a few plain links, one action. No bar chrome. ───────── */
+.taste .nav {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-block: 1.5rem 0;
+  flex-wrap: wrap;
+}
+.taste .nav-links { display: flex; gap: clamp(0.9rem, 2vw, 1.75rem); flex-wrap: wrap; }
+.taste .nav a { text-decoration: none; }
+.taste .nav a:hover { color: var(--accent); }
+
+/* ── motion: transform/opacity only, with a reduced-motion fallback ─────── */
+.taste [data-rise] {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 620ms cubic-bezier(.2,.6,.2,1), transform 620ms cubic-bezier(.2,.6,.2,1);
+  transition-delay: var(--rise-delay, 0ms);
+}
+.taste [data-rise].is-in { opacity: 1; transform: none; }
+
+/* No script, no observer, no problem: the content is visible either way. */
+.taste.no-js [data-rise] { opacity: 1; transform: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .taste [data-rise] { opacity: 1; transform: none; transition: none; }
+  .taste .btn { transition: none; }
+}
+
+/* ── the facts row ────────────────────────────────────────────────────────
+   Two layouts, one rule behind both: a small line must never sit directly
+   above a big figure, or it reads as a kicker (house rules ban eyebrows).
+
+   Narrow: figure and its label side by side on one line, stacked as a list.
+   Wide:   a true row — figure on the first line, label under it, four across,
+           so no label is ever above another column's figure. */
+.taste .facts {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: clamp(1rem, .8rem + 1.2vw, 1.75rem) clamp(1.5rem, 1rem + 2vw, 3rem);
+  align-items: baseline;
+  margin-block: clamp(2.5rem, 2rem + 3vw, 4.5rem) 0;
+}
+.taste .facts dt {
+  font-family: var(--font-bodoni), Georgia, serif;
+  font-weight: 500;
+  font-size: var(--step-head);
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.taste .facts dd { margin: 0; }
+
+@media (min-width: 720px) {
+  .taste .facts {
+    grid-auto-flow: column;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: auto auto;
+    align-items: start;
+    row-gap: 0.65rem;
+  }
+}
+
+/* ── hero rhythm ──────────────────────────────────────────────────────────
+   Found by looking, not by the meter: at 0.95 leading a 129px Bodoni hangs
+   its descenders and its full stop well below the last baseline, so a 40px
+   margin on the following paragraph read as almost no gap and "up." touched
+   "Software engineer." Space measured from the descender, not the baseline. */
+.taste .hero-lead { margin-top: clamp(2.25rem, 1.5rem + 3.5vw, 4rem) !important; }
+.taste .hero h1 { padding-bottom: 0.08em; }
+.taste .hero { padding-block-start: clamp(2.5rem, 1.5rem + 4vw, 5rem); }
+
+/* The nav action duplicates the hero's primary button two inches below it, and
+   at phone width it wrapped onto its own line and crowded the headline. One
+   call to action on the first screen is the house preference anyway. */
+@media (max-width: 719px) {
+  .taste .nav { gap: 0.75rem 1.25rem; }
+  .taste .nav > .btn { display: none; }
+}
+
+/* The bricks sitting inside the green field keep their own bone surface, so
+   they must keep the page's own ink. Without this the field's light text
+   leaked into them and measured 1.2:1 — caught by the inspector, not by me. */
+.taste .field .brick,
+.taste .field .brick h2,
+.taste .field .brick h3,
+.taste .field .brick p { color: var(--ink); }
+.taste .field .brick .t-small { color: var(--muted); }

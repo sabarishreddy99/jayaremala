@@ -1,7 +1,7 @@
 "use client";
 
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
+import { useMounted } from "@/lib/hooks";
 
 type Mode = "light" | "dark" | "system";
 const CYCLE: Mode[] = ["light", "dark", "system"];
@@ -54,9 +54,7 @@ const ICONS: Record<Mode, React.ReactNode> = {
 
 export default function ThemeToggle() {
   const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
+  const mounted = useMounted();
 
   if (!mounted) {
     return <button aria-label="Toggle theme" className="w-11 h-11 md:w-8 md:h-8 rounded-lg flex items-center justify-center text-fg-faint" />;

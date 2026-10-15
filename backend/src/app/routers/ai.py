@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import logging
 import threading
 import time
@@ -25,45 +26,14 @@ from app.rag import store as rag_store
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/ai", tags=["ai"])
 
+from app.rag import persona  # noqa: E402  (after router so import order matches the rest of the module)
+
 _genai_client: genai.Client | None = None
 
-SYSTEM_PROMPT = """You are Avocado, an AI assistant representing Jaya Sabarish Reddy Remala.
-Your job is to help recruiters and visitors learn about Jaya's professional background.
+# Avocado's system prompt is built from the knowledge files (rag/persona.py):
+# core facts, contact, page links and the intro proof points all follow what
+# the admin publishes, so nothing here can go stale.
 
-ABOUT JAYA (core facts — always use these even if context is empty):
-Jaya Sabarish Reddy Remala is a Software Engineer based in Dallas, TX with 5+ years of experience
-building production AI infrastructure, RAG pipelines, and distributed systems.
-Key highlights:
-- Won the Qualcomm Edge AI Hackathon with SnapLog (15ms LLM inference on-device Snapdragon NPUs)
-- Cut RAG P99 latency by 78% on a system handling 3,000+ RPS at NYU
-- Built zero-data-loss maritime telemetry pipeline for Shell PLC (115 GB/day, 200+ offshore stations)
-- MS Computer Science, NYU Tandon School of Engineering (GPA 3.8/4.0)
-- Contact: sabarishreddyrj@gmail.com | +1 (516) 907-8727 | linkedin.com/in/jayasabarishreddyr | github.com/sabarishreddy99
-- Avocado uses BAAI/bge-base-en-v1.5 (768-dim ONNX) for dense retrieval + BM25 + RRF + knowledge graph expansion
-
-RESPONSE RULES:
-- ALWAYS answer questions about Jaya's background, experience, projects, education, and skills
-- Use the retrieved context below for precise details; fall back to the ABOUT section above if context is sparse
-- Refer to Jaya in third person ("He", "Jaya") — you represent him, you are not him
-- Cite exact numbers and metrics whenever available
-- For greetings ("hi", "hello", "hey", "howdy", "good morning", etc.) respond warmly, introduce yourself as Avocado and offer 2–3 things the visitor can ask about Jaya (experience, projects, skills)
-- For broad intro questions ("who is Jaya", "tell me about him"), lead with the Qualcomm win + NYU RAG work + Shell infrastructure
-- Keep responses concise: 2–3 sentences for simple questions, structured paragraphs for detailed ones
-- For questions completely unrelated to Jaya's professional life, say: "That's outside what I know about Jaya — feel free to reach him directly at sabarishreddyrj@gmail.com"
-- Do not fabricate specific facts (numbers, dates, company names) not present in context or the ABOUT section
-- Never return an empty response — always say something helpful
-
-PORTFOLIO SECTION LINKS (use these when relevant — the UI will render them as clickable pills):
-- Full work history → /experience
-- All projects → /projects
-- Education details → /education
-- Skills overview → /portfolio
-- Blog posts → /blog  (individual post → /blog/[slug])
-- Lab / system design docs → /lab  (individual entry → /lab/[slug])
-- Curated quotes collection → /quotes
-- Photo gallery (milestones, events, achievements) → /gallery
-- What Jaya is currently doing, building, reading → /now
-- Resume → available via the Resume link in navigation"""
 
 
 def _get_client() -> genai.Client:
@@ -187,6 +157,11 @@ async def _hyde_query(user_message: str) -> str | None:
     return result
 
 
+def _mentions(text: str, names: list[str]) -> bool:
+    """Whole-word match, so a short name like "cas" does not fire on "case"."""
+    return any(re.search(rf"(?<![a-z0-9]){re.escape(n)}(?![a-z0-9])", text) for n in names if n)
+
+
 def _build_rag_queries(req: ChatRequest) -> list[str]:
     """Generate up to 4 targeted query angles: verbatim, name-anchored, topic keyword, follow-up context."""
     queries = [req.message]
@@ -194,26 +169,40 @@ def _build_rag_queries(req: ChatRequest) -> list[str]:
     # Name-anchored variant improves person-specific retrieval
     queries.append(f"{req.message} Jaya Sabarish Reddy Remala")
 
-    # Single topic-specific keyword variant (mutually exclusive, first match wins)
+    # Single topic-specific keyword variant (mutually exclusive, first match wins).
+    # Company, project and school names come from the knowledge files.
     stripped = req.message.lower().strip()
+    topic_q = persona.topic_queries()
+    topic_kw = persona.topic_keywords()
     if stripped in {"hi", "hello", "hey", "howdy", "sup", "yo", "hiya", "greetings", "good morning",
                     "good afternoon", "good evening", "morning", "afternoon", "evening"} or \
             (len(stripped) < 20 and any(kw in stripped for kw in ["hi ", "hello ", "hey ", "howdy"])):
         queries.append("who is Jaya Sabarish Reddy Remala background profile achievements summary")
+    # Specific topics first, so "how does he work" or "tell me about the case
+    # study" are not swallowed by the broad work / intro branches below.
+    elif any(kw in stripped for kw in ["case stud", "case-stud"]):
+        queries.append("case study brief challenge research solution impact prototype")
+    elif any(kw in stripped for kw in ["principle", "how he work", "how does he work", "how do you work",
+                                       "approach", "philosophy of work", "don't", "dont", "work style"]):
+        queries.append("how Jaya works principles don'ts execution approach")
     elif any(kw in stripped for kw in ["who is", "who are", "background", "about jaya", "tell me about",
                                        "introduce", "overview", "summary", "yourself", "what does he do",
                                        "what is he", "what kind"]):
         queries.append("who is Jaya Sabarish Reddy Remala background profile achievements summary")
-    elif any(kw in stripped for kw in ["experience", "work", "job", "role", "company", "wipro", "shell"]):
-        queries.append("work experience roles companies Wipro Shell NYU")
-    elif any(kw in stripped for kw in ["project", "built", "created", "developed", "snaplog", "codecollab"]):
-        queries.append("projects built SnapLog CodeCollab Multi-Agent GeneCart")
+    elif (any(kw in stripped for kw in ["experience", "work", "job", "role", "company"]) or _mentions(stripped, topic_kw["experience"])):
+        queries.append(topic_q["experience"])
+    elif (any(kw in stripped for kw in ["project", "built", "created", "developed"]) or _mentions(stripped, topic_kw["projects"])):
+        queries.append(topic_q["projects"])
     elif any(kw in stripped for kw in ["skill", "tech", "stack", "language", "know"]):
         queries.append("technical skills programming languages frameworks")
-    elif any(kw in stripped for kw in ["educat", "degree", "study", "university", "nyu", "school", "master"]):
-        queries.append("education degree NYU Tandon VIT")
-    elif any(kw in stripped for kw in ["award", "win", "hackathon", "qualcomm", "achiev", "special", "stand out", "impress"]):
-        queries.append("Qualcomm hackathon award SnapLog achievement strengths")
+    elif (any(kw in stripped for kw in ["educat", "degree", "study", "university", "school", "master"]) or _mentions(stripped, topic_kw["education"])):
+        queries.append(topic_q["education"])
+    elif any(kw in stripped for kw in ["award", "win", "hackathon", "achiev", "special", "stand out", "impress"]):
+        queries.append(topic_q["award"])
+    elif any(kw in stripped for kw in ["why", "origin", "start", "story", "motivat", "brick", "father"]):
+        queries.append("why Jaya builds origin story first project values still running")
+    elif any(kw in stripped for kw in ["page", "where can i", "where do i", "find on", "site", "website", "navigate"]):
+        queries.append("site map pages on jayaremala.com where to find")
     elif any(kw in stripped for kw in ["contact", "email", "reach", "hire", "linkedin", "resume", "cv"]):
         queries.append("contact email LinkedIn GitHub resume CV download")
     elif any(kw in stripped for kw in ["quote", "saying", "wisdom", "words", "philosophy", "live by"]):
@@ -309,7 +298,8 @@ def _build_chat_prompt(req: ChatRequest, context: str, extra_blocks: dict[str, s
 
     persona_block = ""
     if req.persona and req.persona in _PERSONA_GUIDANCE:
-        persona_block = f"AUDIENCE TAILORING: {_PERSONA_GUIDANCE[req.persona]}\n\n"
+        guidance = _PERSONA_GUIDANCE[req.persona].replace("{standouts}", "; ".join(persona.highlights()))
+        persona_block = f"AUDIENCE TAILORING: {guidance}\n\n"
 
     extra_text = ""
     if extra_blocks:
@@ -318,7 +308,7 @@ def _build_chat_prompt(req: ChatRequest, context: str, extra_blocks: dict[str, s
                 extra_text += f"[{label}]\n{content}\n\n"
 
     return (
-        f"{SYSTEM_PROMPT}\n\n"
+        f"{persona.system_prompt()}\n\n"
         f"{persona_block}"
         f"{context_block}"
         f"{extra_text}"
@@ -446,8 +436,8 @@ class ChatRequest(BaseModel):
 _PERSONA_GUIDANCE = {
     "recruiter": (
         "The visitor is a RECRUITER or hiring manager. Lead with impact, outcomes, and fit: "
-        "availability, target roles, standout achievements (Qualcomm Edge AI win, 78% P99 latency cut, "
-        "Shell maritime scale), and how Jaya works with teams. Keep it crisp and results-focused, "
+        "availability, target roles, standout achievements ({standouts}), "
+        "and how Jaya works with teams. Keep it crisp and results-focused, "
         "quantify wherever possible, and proactively surface availability and how to reach him."
     ),
     "engineer": (
@@ -702,21 +692,24 @@ async def ai_chat_stream(req: ChatRequest, request: Request) -> StreamingRespons
 
 # ── /ai/chat/agentic (visible tool-calling agent) ────────────────────────────
 
-AGENT_SYSTEM_PROMPT = SYSTEM_PROMPT + (
-    "\n\nYOU HAVE TOOLS. You are an agent — decide which tools to call to answer.\n"
-    "- Use `search_knowledge` for any open-ended question about Jaya's background.\n"
-    "- Use the `get_*` tools (get_experience, get_projects, get_project, get_skills, "
-    "get_education, get_now, get_resume, get_profile, get_blog, get_lab) for specific "
-    "structured facts. For blog/lab: call get_blog/get_lab with no args to list, then "
-    "pass a `slug` to read one in full.\n"
-    "- Use `check_availability` for 'is he available / open to work' questions.\n"
-    "- Use `get_booking_link` when the visitor wants to book / schedule / set up a call, "
-    "meeting, or interview. A booking card with open times + a booking button is shown "
-    "below your reply automatically — so warmly invite them to pick a time instead of "
-    "listing slots or pasting the link yourself.\n"
-    "Call tools before answering; ground every claim in their results. Once you have "
-    "enough, give a concise final answer. Do not mention the tools by name to the user."
-)
+def _agent_system_prompt() -> str:
+    """System prompt for the tool-calling agent. The tool list is generated from
+    the registry, so a tool added in agent/tools.py is announced here too."""
+    from app.agent.tools import TOOLS
+    catalog = "\n".join(f"- `{t.name}`: {t.description}" for t in TOOLS)
+    return persona.system_prompt() + (
+        "\n\nYOU HAVE TOOLS. You are an agent — decide which tools to call to answer.\n"
+        f"{catalog}\n"
+        "Prefer `search_knowledge` for open-ended questions and the `get_*` tools for specific "
+        "structured facts. For blog/lab: call get_blog/get_lab with no args to list, then pass a "
+        "`slug` to read one in full.\n"
+        "When the visitor wants to book / schedule / set up a call, meeting, or interview, call "
+        "`get_booking_link`. A booking card with open times + a booking button is shown below "
+        "your reply automatically — so warmly invite them to pick a time instead of listing "
+        "slots or pasting the link yourself.\n"
+        "Call tools before answering; ground every claim in their results. Once you have "
+        "enough, give a concise final answer. Do not mention the tools by name to the user."
+    )
 
 _GEMINI_TYPE = {
     "string": "STRING", "integer": "INTEGER", "number": "NUMBER",
@@ -785,7 +778,7 @@ def _is_thinking_model(model: str) -> bool:
 
 
 def _agent_config(model: str, with_tools: bool):
-    kwargs: dict = {"system_instruction": AGENT_SYSTEM_PROMPT}
+    kwargs: dict = {"system_instruction": _agent_system_prompt()}
     if with_tools:
         kwargs["tools"] = _gemini_tools()
         kwargs["automatic_function_calling"] = types.AutomaticFunctionCallingConfig(disable=True)
@@ -944,7 +937,7 @@ async def ai_chat_agentic(req: ChatRequest, request: Request) -> StreamingRespon
     # ── OpenAI-compatible agent (Groq / OpenRouter) ─────────────────────────
     def _openai_agent(provider: str, model: str):
         oclient = _openai_client(provider)
-        messages: list = [{"role": "system", "content": AGENT_SYSTEM_PROMPT}]
+        messages: list = [{"role": "system", "content": _agent_system_prompt()}]
         for m in req.messages[-8:]:
             messages.append({"role": "user" if m.role == "user" else "assistant", "content": m.content})
         messages.append({"role": "user", "content": req.message})

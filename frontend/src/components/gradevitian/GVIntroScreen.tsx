@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
+import { useClientValue, useMounted } from "@/lib/hooks";
 import GVLink from "@/components/gradevitian/GVLink";
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -15,6 +15,19 @@ const STORAGE_KEY = "gradevitian_intro_seen";
 // interstitial pattern search engines discount on mobile.
 // Path is compared after stripping the /gradevitian mount-point prefix.
 const INTRO_PATH = "/";
+
+// Shown once per page load, on the intro path, for first visits (or ?intro).
+// Cached because the intro marks itself as seen as soon as it opens.
+let gvIntroDecision: boolean | null = null;
+function decideGvIntro(): boolean {
+  if (gvIntroDecision === null) {
+    const path = window.location.pathname.replace(/^\/gradevitian/, "").replace(/\/+$/, "") || "/";
+    let seen = false;
+    try { seen = !!localStorage.getItem(STORAGE_KEY); } catch { /* storage blocked */ }
+    gvIntroDecision = path === INTRO_PATH && (new URLSearchParams(window.location.search).has("intro") || !seen);
+  }
+  return gvIntroDecision;
+}
 
 const TOOLS = [
   { label: "GPA", href: "/gpa" },
@@ -35,9 +48,11 @@ function getGreeting() {
 // ─── component ────────────────────────────────────────────────────────────────
 
 export default function GVIntroScreen() {
-  const pathname = usePathname();
-  const [mounted, setMounted] = useState(false);
-  const [show, setShow] = useState(false);
+  const mounted = useMounted();
+  // Decided once per page load (see decideGvIntro), then hidden after dismiss.
+  const shouldShow = useClientValue(decideGvIntro, false);
+  const [closed, setClosed] = useState(false);
+  const show = shouldShow && !closed;
   const [leaving, setLeaving] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -50,19 +65,14 @@ export default function GVIntroScreen() {
   // ── mount & localStorage ───────────────────────────────────────────────────
 
   useEffect(() => {
-    setMounted(true);
-    const path = (pathname || "/").replace(/^\/gradevitian/, "").replace(/\/+$/, "") || "/";
-    if (path !== INTRO_PATH) return;
-
+    if (!shouldShow) return;
     const preview = new URLSearchParams(window.location.search).has("intro");
-    if (preview || !localStorage.getItem(STORAGE_KEY)) {
-      setShow(true);
-      document.body.style.overflow = "hidden";
-      // Mark seen immediately so a reload before dismissing doesn't re-show it.
-      if (!preview) localStorage.setItem(STORAGE_KEY, "1");
-      setTimeout(() => dialogRef.current?.focus(), 60);
-    }
-  }, []);
+    document.body.style.overflow = "hidden";
+    // Mark seen immediately so a reload before dismissing doesn't re-show it.
+    if (!preview) localStorage.setItem(STORAGE_KEY, "1");
+    const t = setTimeout(() => dialogRef.current?.focus(), 60);
+    return () => clearTimeout(t);
+  }, [shouldShow]);
 
   // ── dismiss ────────────────────────────────────────────────────────────────
 
@@ -74,7 +84,7 @@ export default function GVIntroScreen() {
     setLeaving(true);
     setTimeout(() => {
       document.body.style.overflow = "";
-      setShow(false);
+      setClosed(true);
     }, 950);
   }, []);
 

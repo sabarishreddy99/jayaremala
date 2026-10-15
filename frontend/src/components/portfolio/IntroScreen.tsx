@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useClientValue, useMounted } from "@/lib/hooks";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { profile } from "@/data/profile";
 import { API_BASE_URL } from "@/lib/api/client";
 import SparkleIcon from "@/components/ui/SparkleIcon";
@@ -10,6 +10,21 @@ import SparkleIcon from "@/components/ui/SparkleIcon";
 // ─── constants ────────────────────────────────────────────────────────────────
 
 const STORAGE_KEY = "itsjaya_intro_seen";
+
+// Whether the curtain shows is decided once per page load: on first visit, or
+// with ?intro to preview it. Cached because the intro marks itself as seen the
+// moment it opens, and must not then disappear on the next render.
+let introDecision: boolean | null = null;
+function decideIntro(): boolean {
+  if (introDecision === null) {
+    let seen = false;
+    try { seen = !!localStorage.getItem(STORAGE_KEY); } catch { /* storage blocked */ }
+    introDecision =
+      !window.location.pathname.startsWith("/blog") &&
+      (new URLSearchParams(window.location.search).has("intro") || !seen);
+  }
+  return introDecision;
+}
 
 const QUICK_LINKS = [
   { label: "Experience", href: "/experience" },
@@ -29,9 +44,11 @@ function getGreeting() {
 // ─── component ────────────────────────────────────────────────────────────────
 
 export default function IntroScreen() {
-  const pathname = usePathname();
-  const [mounted,      setMounted]      = useState(false);
-  const [show,         setShow]         = useState(false);
+  const mounted = useMounted();
+  // Decided once per page load (see decideIntro), then hidden after dismiss.
+  const shouldShow = useClientValue(decideIntro, false);
+  const [closed,       setClosed]       = useState(false);
+  const show = shouldShow && !closed;
   const [leaving,      setLeaving]      = useState(false);
   const [dragY,        setDragY]        = useState(0);
   const [isDragging,   setIsDragging]   = useState(false);
@@ -46,26 +63,23 @@ export default function IntroScreen() {
   // ── mount & localStorage ───────────────────────────────────────────────────
 
   useEffect(() => {
-    setMounted(true);
-    if (pathname.startsWith("/blog")) return;
-    const preview = new URLSearchParams(window.location.search).has("intro");
-    isPreview.current = preview;
-
-    if (preview || !localStorage.getItem(STORAGE_KEY)) {
-      setShow(true);
-      document.body.style.overflow = "hidden";
-      // Mark seen immediately — if the user reloads before dismissing
-      // the curtain would re-appear without this
-      if (!preview) localStorage.setItem(STORAGE_KEY, "1");
-      setTimeout(() => dialogRef.current?.focus(), 60);
-    }
-
     // Social proof — Visibility of System Status (Nielsen #1)
     fetch(`${API_BASE_URL}/stats`)
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => { if (d?.total_responses > 50) setVisitCount(d.total_responses); })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (!shouldShow) return;
+    isPreview.current = new URLSearchParams(window.location.search).has("intro");
+    document.body.style.overflow = "hidden";
+    // Mark seen immediately — if the user reloads before dismissing
+    // the curtain would re-appear without this
+    if (!isPreview.current) localStorage.setItem(STORAGE_KEY, "1");
+    const t = setTimeout(() => dialogRef.current?.focus(), 60);
+    return () => clearTimeout(t);
+  }, [shouldShow]);
 
   // ── dismiss ────────────────────────────────────────────────────────────────
 
@@ -77,7 +91,7 @@ export default function IntroScreen() {
     setLeaving(true);
     setTimeout(() => {
       document.body.style.overflow = "";
-      setShow(false);
+      setClosed(true);
     }, 950);
   }, []);
 

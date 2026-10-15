@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useLoadOnMount } from "@/lib/hooks";
 import { useGitHubFile } from "@/lib/admin/useGitHubFile";
-import { FieldLabel, TextInput, TextArea, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, triggerReingest } from "./AdminShared";
+import { FieldLabel, TextInput, TextArea, GithubPATRow, SaveRow, ResultBanner, DirtyBadge } from "./AdminShared";
 
 const FILE = "backend/data/knowledge/profile.json";
 
@@ -120,20 +121,12 @@ export default function ProfileEditor() {
   }
 
   async function handleSave() {
-    // Load full profile first, then merge only these fields
-    const res = await fetch(`https://api.github.com/repos/sabarishreddy99/jayaremala/contents/${FILE}`, {
-      headers: { Authorization: `Bearer ${gh.pat}`, Accept: "application/vnd.github+json" },
-    });
-    if (!res.ok) return;
-    const data  = await res.json();
-    const bytes = Uint8Array.from(atob(data.content.replace(/\n/g, "")), c => c.charCodeAt(0));
-    const full  = JSON.parse(new TextDecoder("utf-8").decode(bytes));
-    const merged = { ...full, ...fields };
-    const ok = await gh.save(merged, "chore: update profile info");
-    if (ok) { setDirty(false); triggerReingest(); }
+    // Stage only these fields; they are applied to the latest profile.json at publish.
+    const ok = await gh.savePatch({ ...fields }, "chore: update profile info");
+    if (ok) setDirty(false);
   }
 
-  useEffect(() => { if (gh.pat.trim()) handleLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useLoadOnMount(handleLoad, !!gh.pat.trim());
 
   return (
     <div className="space-y-6 max-w-2xl">

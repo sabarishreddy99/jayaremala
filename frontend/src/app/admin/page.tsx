@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { API_BASE_URL } from "@/lib/api/client";
 import { GOOGLE_CLIENT_ID } from "@/lib/google";
 import GoogleIdentityButton from "@/components/ui/GoogleIdentityButton";
@@ -27,6 +26,20 @@ import { StatCard, fmt } from "@/components/admin/StatCard";
 import GradevitianPanel from "@/components/admin/GradevitianPanel";
 import AdminThemeControl from "@/components/admin/AdminThemeControl";
 import AdminFooter from "@/components/admin/AdminFooter";
+import DeskHome from "@/components/admin/DeskHome";
+import { useClientValue, useLoadOnMount, useNow } from "@/lib/hooks";
+import { useReingest } from "@/lib/admin/useReingest";
+import { takePendingWrite } from "@/lib/admin/openInWriter";
+import StructuredEditor from "@/components/admin/StructuredEditor";
+import SeedAvatar from "@/components/chat/SeedAvatar";
+
+/** Editor toolbars are data: each button says what to insert, and the click
+ *  handler supplies the insert functions (which read the textarea ref) — so no
+ *  ref-reading closure is created during render. */
+type EditorTools = {
+  inline: (before: string, after: string, placeholder: string) => void;
+  block: (template: string, caretOffset?: number) => void;
+};
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -93,7 +106,7 @@ function SatisfactionBar({ positive, negative }: { positive: number; negative: n
 
 // ── Trends sparklines ───────────────────────────────────────────────────────────
 
-function Sparkline({ data, color }: { data: { date: string; count: number }[]; color: string }) {
+function Sparkline({ data, color, id: key }: { data: { date: string; count: number }[]; color: string; id: string }) {
   if (!data.length) return null;
   const W = 100, H = 28;
   const max = Math.max(1, ...data.map((d) => d.count));
@@ -101,7 +114,7 @@ function Sparkline({ data, color }: { data: { date: string; count: number }[]; c
   const pts = data.map((d, i) => [i * step, H - (d.count / max) * (H - 3) - 1.5]);
   const line = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ");
   const area = `${line} L ${W} ${H} L 0 ${H} Z`;
-  const id = `spark-${color.replace(/[^a-z]/gi, "")}`;
+  const id = `spark-${key}`;
   return (
     <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="w-full h-8">
       <defs>
@@ -119,8 +132,8 @@ function Sparkline({ data, color }: { data: { date: string; count: number }[]; c
 function TrendsPanel({ trends }: { trends?: { visitors: DailyCount[]; conversations: DailyCount[] } }) {
   if (!trends) return null;
   const series = [
-    { label: "Site visitors", data: trends.visitors,      color: "rgb(99 102 241)" },
-    { label: "Conversations", data: trends.conversations, color: "rgb(139 92 246)" },
+    { label: "Site visitors", data: trends.visitors,      color: "var(--accent)", id: "visitors" },
+    { label: "Conversations", data: trends.conversations, color: "var(--pit)",    id: "conversations" },
   ];
   return (
     <div className="grid sm:grid-cols-2 gap-4">
@@ -133,7 +146,7 @@ function TrendsPanel({ trends }: { trends?: { visitors: DailyCount[]; conversati
               <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">{s.label} · 30 days</h2>
               <span className="text-[11px] text-fg-faint tabular-nums">{fmt(total)} total · peak {peak}/day</span>
             </div>
-            <Sparkline data={s.data} color={s.color} />
+            <Sparkline data={s.data} color={s.color} id={s.id} />
           </div>
         );
       })}
@@ -152,7 +165,7 @@ function ModelHealthPanel({ models }: { models: { model: string; count: number; 
     ? Math.round(lats.reduce((s, m) => s + m.avg_ms * m.count, 0) / lats.reduce((s, m) => s + m.count, 0))
     : 0;
   const healthy = primaryShare >= 85;
-  const COLORS = ["bg-indigo-500", "bg-violet-500", "bg-amber-500", "bg-rose-500", "bg-sky-500", "bg-zinc-400"];
+  const COLORS = ["bg-[var(--skin)]", "bg-[var(--flesh)]", "bg-[var(--pit)]", "bg-amber-500", "bg-sky-500", "bg-zinc-400"];
 
   return (
     <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
@@ -319,126 +332,76 @@ function PruneAnalyticsPanel() {
 
 // ── Reingest panel ─────────────────────────────────────────────────────────────
 
-const REINGEST_SOURCES = [
-  "Profile", "Experience", "Education", "Projects", "Apps",
-  "Skills", "Testimonials", "Gallery", "Blog", "Lab", "Quotes", "FAQ",
-];
-
-type ReingestResult = { added: number; updated: number; unchanged: number; deleted: number; total: number };
+const TYPE_LABEL: Record<string, string> = {
+  lab: "Lab", case_study: "Case studies", experience: "Experience", profile: "Profile & stories",
+  faq: "FAQ", gallery: "Gallery", project: "Projects", site: "Site pages", quote: "Quotes",
+  education: "Education", blog: "Blog", skills: "Skills", testimonial: "Testimonials",
+  app: "Apps", spotlights: "Spotlights",
+};
 
 function ReingestPanel() {
-  const [running, setRunning] = useState(false);
-  const [result, setResult] = useState<ReingestResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [lastRun, setLastRun] = useState<string | null>(null);
-
-  async function handleReingest() {
-    setRunning(true);
-    setResult(null);
-    setError(null);
-    const token = localStorage.getItem("avocado_admin_token") ?? "";
-    try {
-      const res = await fetch(`${API_BASE_URL}/admin/reingest?force=true`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const kick = await res.json();
-      if (kick.status === "already_running") {
-        setError("Already running. Check back in a moment.");
-        setRunning(false);
-        return;
-      }
-      await new Promise<void>((resolve, reject) => {
-        const iv = setInterval(async () => {
-          try {
-            const sr = await fetch(`${API_BASE_URL}/admin/reingest/status`, {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-            if (!sr.ok) { clearInterval(iv); reject(new Error(`HTTP ${sr.status}`)); return; }
-            const s = await sr.json();
-            if (!s.running) {
-              clearInterval(iv);
-              if (s.error) { reject(new Error(s.error)); return; }
-              setResult(s.result ?? {});
-              setLastRun(new Date().toLocaleTimeString());
-              resolve();
-            }
-          } catch (err) { clearInterval(iv); reject(err); }
-        }, 2000);
-      });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error. Check ADMIN_TOKEN & backend logs");
-    } finally {
-      setRunning(false);
-    }
-  }
+  const { running, result, error, finishedAt, run } = useReingest();
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
-      {/* Header row */}
-      <div className="flex items-start justify-between gap-4 mb-4">
+    <div className="rounded-card border border-border bg-surface p-5 sm:p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle mb-1">Avocado Knowledge Base</h2>
-          <p className="text-[11px] text-fg-muted leading-relaxed">
-            Re-reads every content source and rebuilds the RAG vector index from scratch. Run this after any content change to make Avocado aware of it immediately.
+          <h2 className="display-serif text-[1.375rem] leading-tight text-fg">Avocado&apos;s knowledge base</h2>
+          <p className="mt-1.5 max-w-[62ch] text-[0.8125rem] leading-relaxed text-fg-muted">
+            Avocado keeps itself current: <strong className="font-semibold text-fg">Live</strong> edits are indexed the moment
+            you save, and <strong className="font-semibold text-fg">GitHub</strong> edits once their deploy finishes (a few
+            minutes after &ldquo;Publish all&rdquo;). Sync now if something still looks out of date.
           </p>
         </div>
-        <button
-          onClick={handleReingest}
-          disabled={running}
-          className="shrink-0 inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-hover transition-colors disabled:opacity-50 shadow-sm shadow-accent/20"
-        >
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-            className={running ? "animate-spin" : ""}>
-            <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
-          </svg>
-          {running ? "Indexing…" : "Rebuild Index"}
-        </button>
-      </div>
-
-      {/* Content source chips */}
-      <div className="flex flex-wrap gap-1.5 mb-4">
-        {REINGEST_SOURCES.map((src) => (
-          <span key={src} className={`inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[10px] font-medium transition-colors ${
-            running
-              ? "animate-pulse bg-accent/5 border-accent/20 text-accent"
-              : result
-              ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-400"
-              : "bg-surface-raised border-border text-fg-muted"
-          }`}>
-            {result && (
-              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 6L9 17l-5-5"/>
-              </svg>
-            )}
-            {src}
-          </span>
-        ))}
-      </div>
-
-      {/* Result */}
-      {result && (
-        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 px-3 py-2.5 flex flex-wrap items-center gap-x-4 gap-y-1">
-          <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 6L9 17l-5-5"/>
+        <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:items-end">
+          <button
+            onClick={() => run()}
+            disabled={running}
+            className="btn-avo inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+              className={running ? "animate-spin" : ""}>
+              <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
             </svg>
-            Sync complete
-            {lastRun && <span className="font-normal text-emerald-600/70 dark:text-emerald-500/70">· {lastRun}</span>}
-          </span>
-          <div className="ml-auto flex items-center gap-3 text-[11px] tabular-nums text-fg-muted">
-            <span><span className="font-semibold text-fg">{result.added}</span> added</span>
-            <span><span className="font-semibold text-fg">{result.updated}</span> updated</span>
-            {result.deleted > 0 && <span><span className="font-semibold text-rose-600 dark:text-rose-400">{result.deleted}</span> removed</span>}
-            <span><span className="font-semibold text-fg">{result.unchanged}</span> unchanged</span>
-            <span className="border-l border-border pl-3"><span className="font-semibold text-fg">{result.total}</span> total in ChromaDB</span>
-          </div>
+            {running ? "Syncing…" : "Sync now"}
+          </button>
+          <button
+            onClick={() => run({ full: true })}
+            disabled={running}
+            title="Re-embed every document. About a minute; Avocado keeps answering meanwhile."
+            className="text-center text-xs font-medium text-fg-subtle underline decoration-border-strong underline-offset-4 transition-colors hover:text-fg disabled:opacity-40 sm:text-right"
+          >
+            Full re-embed
+          </button>
+        </div>
+      </div>
+
+      {result && (
+        <div className="mt-5 rounded-xl border border-accent/40 bg-accent-light px-4 py-3">
+          <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem] text-fg">
+            <span className="font-semibold">
+              {result.added + result.updated + result.deleted === 0 ? "Already up to date" : "Synced"}
+              {finishedAt && <span className="font-normal text-fg-subtle"> · {finishedAt.toLocaleTimeString()}</span>}
+            </span>
+            <span className="font-mono text-[0.75rem] tabular-nums text-fg-muted">
+              {result.added} new · {result.updated} updated · {result.deleted} removed · {result.total} documents
+            </span>
+          </p>
+          {result.by_type && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {Object.entries(result.by_type).map(([type, n]) => (
+                <span key={type} className="inline-flex items-center gap-1.5 rounded-full bg-surface px-2.5 py-0.5 text-[0.6875rem] text-fg-muted">
+                  {TYPE_LABEL[type] ?? type}
+                  <span className="font-mono tabular-nums text-fg">{n}</span>
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       {error && (
-        <p className="rounded-lg bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800 px-3 py-2 text-[11px] text-rose-700 dark:text-rose-400">{error}</p>
+        <p role="alert" className="mt-4 rounded-xl border border-rose-200 bg-rose-50 px-3.5 py-2.5 text-[0.8125rem] text-rose-700 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-400">{error}</p>
       )}
     </div>
   );
@@ -491,7 +454,7 @@ function GoogleIntegrationsPanel() {
     } catch { /* non-fatal */ }
   }
 
-  useEffect(() => { void loadStatus(); }, []);
+  useLoadOnMount(loadStatus);
 
   async function handleConnect() {
     setAuthLoading(true);
@@ -596,7 +559,7 @@ function GoogleIntegrationsPanel() {
               Disconnect account
             </button>
           ) : (
-            <button onClick={handleConnect} disabled={authLoading} className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 disabled:opacity-50 transition-colors">
+            <button onClick={handleConnect} disabled={authLoading} className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-fg hover:bg-accent/90 disabled:opacity-50 transition-colors">
               {authLoading ? "Opening…" : "Connect Google Account"}
             </button>
           )}
@@ -665,7 +628,7 @@ function GoogleIntegrationsPanel() {
         )}
         <div className="flex items-center gap-3 flex-wrap">
           <button onClick={handleResumeSync} disabled={!connected || actionLoading === "resume"}
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 disabled:opacity-40 transition-colors">
+            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-fg hover:bg-accent/90 disabled:opacity-40 transition-colors">
             {actionLoading === "resume" ? "Syncing…" : "Sync resume from Drive"}
           </button>
           {draftDocs.length > 0 && (
@@ -687,7 +650,7 @@ function GoogleIntegrationsPanel() {
         <p className="text-xs text-fg-faint mb-4">Send yourself a portfolio analytics summary. Automated via GitHub Actions every Monday 9 AM ET.</p>
         <div className="flex items-center gap-3">
           <button onClick={handleSendDigest} disabled={!connected || actionLoading === "digest"}
-            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 disabled:opacity-40 transition-colors">
+            className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-fg hover:bg-accent/90 disabled:opacity-40 transition-colors">
             {actionLoading === "digest" ? "Sending…" : "Send digest now"}
           </button>
           <button onClick={handlePreviewDigest} disabled={actionLoading === "preview"}
@@ -713,10 +676,6 @@ function SyncStatusPanel() {
   const [status, setStatus] = useState<SyncStatus | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ added: number; updated: number; unchanged: number; deleted: number; total: number } | null>(null);
-  const [syncError, setSyncError] = useState<string | null>(null);
-  const [lastSyncTime, setLastSyncTime] = useState<string | null>(null);
   const fetchStatus = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/admin/sync-status`, {
@@ -730,49 +689,11 @@ function SyncStatusPanel() {
     }
   }, []);
 
-  async function handleSync() {
-    setSyncing(true);
-    setSyncResult(null);
-    setSyncError(null);
-    try {
-      const res = await fetch(`${API_BASE_URL}/admin/reingest?force=true`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${localStorage.getItem("avocado_admin_token") ?? ""}` },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const kick = await res.json();
-      if (kick.status === "already_running") {
-        setSyncError("Already running. Check back in a moment.");
-        setSyncing(false);
-        return;
-      }
-      await new Promise<void>((resolve, reject) => {
-        const iv = setInterval(async () => {
-          try {
-            const sr = await fetch(`${API_BASE_URL}/admin/reingest/status`, {
-              headers: { Authorization: `Bearer ${localStorage.getItem("avocado_admin_token") ?? ""}` },
-            });
-            if (!sr.ok) { clearInterval(iv); reject(new Error(`HTTP ${sr.status}`)); return; }
-            const s = await sr.json();
-            if (!s.running) {
-              clearInterval(iv);
-              if (s.error) { reject(new Error(s.error)); return; }
-              setSyncResult(s.result ?? {});
-              setLastSyncTime(new Date().toLocaleTimeString());
-              resolve();
-            }
-          } catch (err) { clearInterval(iv); reject(err); }
-        }, 2000);
-      });
-      await fetchStatus();
-    } catch (e) {
-      setSyncError(e instanceof Error ? e.message : "Sync failed. Check backend logs");
-    } finally {
-      setSyncing(false);
-    }
-  }
+  // Same sync as the knowledge-base panel; the table refreshes when it ends.
+  const { running: syncing, result: syncResult, error: syncError, finishedAt, run: runSync } = useReingest(() => { void fetchStatus(); });
+  const lastSyncTime = finishedAt?.toLocaleTimeString() ?? null;
 
-  useEffect(() => { void fetchStatus(); }, [fetchStatus]); // eslint-disable-line react-hooks/set-state-in-effect
+  useLoadOnMount(fetchStatus);
 
   const CONTENT_ROWS: { key: string; label: string; source: "db+json" | "json" }[] = [
     { key: "blog",         label: "Blog posts",    source: "db+json" },
@@ -785,6 +706,10 @@ function SyncStatusPanel() {
     { key: "skills",       label: "Skills",        source: "json"    },
     { key: "testimonials", label: "Testimonials",  source: "json"    },
     { key: "gallery",      label: "Gallery",       source: "json"    },
+    { key: "case-studies", label: "Case studies",  source: "json"    },
+    { key: "profile",      label: "Profile & stories", source: "json" },
+    { key: "site",         label: "Site pages",    source: "json"    },
+    { key: "spotlights",   label: "Spotlights",    source: "json"    },
   ];
 
   const chromaByType = status?.chromadb.by_type ?? {};
@@ -799,10 +724,12 @@ function SyncStatusPanel() {
   }
 
   function chromaCount(key: string): number {
+    // Content row → the document `type` ingest writes (see /admin/sync-status).
     const map: Record<string, string> = {
       blog: "blog", lab: "lab", quotes: "quote",
-      experience: "exp", education: "edu", projects: "proj", apps: "app",
+      experience: "experience", education: "education", projects: "project", apps: "app",
       skills: "skills", testimonials: "testimonial", gallery: "gallery",
+      "case-studies": "case_study", profile: "profile", site: "site", spotlights: "spotlights",
     };
     return chromaByType[map[key] ?? key] ?? 0;
   }
@@ -827,8 +754,8 @@ function SyncStatusPanel() {
           <div>
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle mb-1">Content Sync Status</h2>
             <p className="text-[11px] text-fg-muted leading-relaxed max-w-xl">
-              Shows what&apos;s in content.db, the knowledge JSON files, and Avocado&apos;s vector index. Use{" "}
-              <span className="font-semibold">Full Sync</span> to propagate all admin changes to Avocado immediately.
+              What is in content.db, the knowledge files, and Avocado&apos;s index. Live edits are indexed when you save;
+              GitHub edits once their deploy finishes. <span className="font-semibold">Sync now</span> catches anything in between.
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -845,14 +772,14 @@ function SyncStatusPanel() {
               Refresh
             </button>
             <button
-              onClick={handleSync}
+              onClick={() => runSync()}
               disabled={syncing || refreshing}
-              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent-hover transition-colors disabled:opacity-50 shadow-sm shadow-accent/20"
+              className="inline-flex items-center gap-2 rounded-lg bg-accent px-4 py-2 text-sm font-semibold text-accent-fg hover:bg-accent-hover transition-colors disabled:opacity-50 shadow-sm shadow-accent/20"
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={syncing ? "animate-spin" : ""}>
                 <path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
               </svg>
-              {syncing ? "Syncing…" : "Full Sync"}
+              {syncing ? "Syncing…" : "Sync now"}
             </button>
           </div>
         </div>
@@ -965,7 +892,7 @@ function SyncStatusPanel() {
         <div className="rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/30 px-4 py-3 flex flex-wrap items-center gap-x-4 gap-y-1">
           <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-            Full sync complete
+            Sync complete
             {lastSyncTime && <span className="font-normal text-emerald-600/70 dark:text-emerald-500/70">· {lastSyncTime}</span>}
           </span>
           <div className="ml-auto flex items-center gap-3 text-[11px] tabular-nums text-fg-muted">
@@ -989,7 +916,7 @@ function SyncStatusPanel() {
           {[
             { label: "DB (content.db)", color: "text-fg", desc: "Live SQLite database on the server. Blog, Lab, and Quotes entries you create/edit via admin live here first." },
             { label: "JSON (knowledge files)", color: "text-fg", desc: "Files baked into the backend. DB-managed content is regenerated here after each change. Profile, Experience, Education, etc. live only here and update on GitHub push." },
-            { label: "Avocado (ChromaDB)", color: "text-accent", desc: "Vector index used by the AI chatbot. Full Sync re-reads all JSON files and re-embeds any changed document so Avocado answers with the latest content." },
+            { label: "Avocado (ChromaDB)", color: "text-accent", desc: "Vector index used by the AI chatbot. Sync now re-reads every knowledge file and re-embeds only what changed, usually in under a second." },
           ].map((item) => (
             <div key={item.label} className="border border-border-subtle rounded p-3 space-y-1">
               <p className={`text-[11px] font-semibold ${item.color}`}>{item.label}</p>
@@ -998,7 +925,7 @@ function SyncStatusPanel() {
           ))}
         </div>
         <p className="text-[10px] text-fg-faint leading-relaxed">
-          <span className="font-semibold text-amber-600 dark:text-amber-400">Out of sync</span> means the DB row count differs from the JSON file count, usually because a content change is still in flight. Full Sync resolves it instantly.
+          <span className="font-semibold text-amber-600 dark:text-amber-400">Out of sync</span> means the DB row count differs from the JSON file count, usually because a content change is still in flight. Sync now resolves it.
           Changes to Profile, Experience, Education, Projects, Skills, Testimonials, and Gallery made via admin go to GitHub first, rebuild the Docker image, and are visible here after the next deployment (~2–3 min).
         </p>
       </div>
@@ -1017,6 +944,12 @@ function getAttemptState(): { count: number; until: number } {
   } catch { return { count: 0, until: 0 }; }
 }
 
+/** The lockout end time if earlier failures locked the form, else 0. */
+function readStoredLock(): number {
+  const { count, until } = getAttemptState();
+  return count >= MAX_ATTEMPTS && until > Date.now() ? until : 0;
+}
+
 function recordFailedAttempt() {
   const s = getAttemptState();
   const count = (s.count ?? 0) + 1;
@@ -1033,8 +966,14 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [visible, setVisible] = useState(false);
-  const [lockedUntil, setLockedUntil] = useState<number>(0);
-  const [remaining, setRemaining] = useState(0);
+  // A lockout from earlier failed attempts is read from storage; new failures
+  // set it locally. The countdown runs off a shared clock, not an interval
+  // that sets state.
+  const storedLock = useClientValue(readStoredLock, 0);
+  const [newLock, setLockedUntil] = useState<number | null>(null);
+  const lockedUntil = newLock ?? storedLock;
+  const now = useNow(1000) ?? 0;
+  const remaining = Math.max(0, Math.ceil((lockedUntil - now) / 1000));
   // Google is the way in; the static token stays one click away as break-glass for
   // when Google is unreachable, and is the only option if it isn't configured.
   const [useToken, setUseToken] = useState(false);
@@ -1067,25 +1006,12 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
     [onAuth],
   );
 
-  useEffect(() => {
-    const { count, until } = getAttemptState();
-    if (count >= MAX_ATTEMPTS && until > Date.now()) {
-      setLockedUntil(until);
-    }
-  }, []);
+  const isLocked = lockedUntil > now && now > 0;
 
+  // Once a lockout has run out, forget the failed attempts.
   useEffect(() => {
-    if (!lockedUntil) return;
-    const tick = setInterval(() => {
-      const left = Math.ceil((lockedUntil - Date.now()) / 1000);
-      if (left <= 0) { setLockedUntil(0); clearAttempts(); clearInterval(tick); }
-      else setRemaining(left);
-    }, 1000);
-    setRemaining(Math.ceil((lockedUntil - Date.now()) / 1000));
-    return () => clearInterval(tick);
-  }, [lockedUntil]);
-
-  const isLocked = lockedUntil > Date.now();
+    if (lockedUntil && now && lockedUntil <= now) clearAttempts();
+  }, [lockedUntil, now]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -1116,29 +1042,26 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-bg px-4 overflow-hidden">
-      <div className="absolute inset-x-0 top-0 h-px bg-border-strong" />
 
       <div className="relative w-full max-w-sm space-y-7">
         {/* Brand mark */}
         <div className="flex flex-col items-center gap-3">
-          <Image
-            src="/icon-192.png"
-            alt="Jaya Sabarish Reddy Remala"
-            width={44}
-            height={44}
-            priority
-            className="size-11 rounded-lg border border-border-strong bg-white object-cover"
-          />
+          <SeedAvatar size={52} />
           <div className="text-center">
-            <h1 className="display-serif text-2xl font-semibold text-fg tracking-tight">Avocado Admin</h1>
-            <p className="text-xs text-fg-subtle mt-1">Private publishing desk for jayaremala.com</p>
+            <h1 className="display-serif display-md text-fg">The desk</h1>
+            <p className="mt-1 font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-fg-subtle">Private · jayaremala.com</p>
           </div>
         </div>
 
         {/* Card */}
+        {/* The sign-in card sits on the same Skin + Flesh sheets as the hero's
+            Avocado preview, so the private door matches the public one. */}
+        <div className="avo-stack relative">
+        <div aria-hidden className="avo-stack-sheet is-skin absolute inset-0 rounded-card" />
+        <div aria-hidden className="avo-stack-sheet is-flesh absolute inset-0 rounded-card" />
         <form
           onSubmit={handleSubmit}
-          className="rounded-2xl border border-border bg-surface p-6 sm:p-7 space-y-5 shadow-[0_18px_50px_-28px_rgb(0_0_0/0.35)]"
+          className="avo-stack-front relative rounded-card border border-border bg-surface p-6 sm:p-7 space-y-5"
         >
           {GOOGLE_CLIENT_ID && (
             <div className="space-y-3">
@@ -1184,7 +1107,7 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
                     value={token}
                     onChange={(e) => setToken(e.target.value)}
                     placeholder="Enter ADMIN_TOKEN…"
-                    className="w-full rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/10 transition-all font-mono pr-16"
+                    className="w-full rounded-xl border border-border bg-bg px-3.5 py-3 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 transition-all font-mono pr-16"
                     autoFocus
                   />
                   <button
@@ -1201,7 +1124,7 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
               <button
                 type="submit"
                 disabled={!token || loading || isLocked}
-                className="w-full rounded-lg bg-fg text-bg py-3 text-sm font-semibold hover:bg-fg-muted transition-colors disabled:opacity-40 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 focus-visible:ring-offset-2 focus-visible:ring-offset-surface"
+                className="btn-avo w-full rounded-full py-3 text-sm font-semibold inline-flex items-center justify-center gap-2"
               >
                 {isLocked ? (
                   `Locked, ${remaining}s`
@@ -1224,8 +1147,9 @@ function LoginForm({ onAuth }: { onAuth: (token: string) => void }) {
             </>
           )}
         </form>
+        </div>
 
-        <div className="text-center">
+        <div className="pt-4 text-center">
           <Link
             href="/"
             className="inline-flex items-center gap-1.5 text-xs text-fg-faint hover:text-fg-muted transition-colors"
@@ -1286,7 +1210,7 @@ function SiteGuide() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-xl border border-border bg-surface overflow-hidden">
+    <div className="rounded-card border border-border bg-surface overflow-hidden">
       <button
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-surface-raised transition-colors"
@@ -1615,7 +1539,7 @@ function mdxToHTML(md: string): string {
     if (line.startsWith("### "))  { html += `<h3 style="font-size:1.05rem;font-weight:700;margin:1.5em 0 0.4em">${inlineFmt(line.slice(4))}</h3>`; i++; continue; }
     if (line.startsWith("## "))   { html += `<h2 style="font-size:1.3rem;font-weight:700;margin:2em 0 0.5em;padding-bottom:0.3em;border-bottom:1px solid #3f3f46">${inlineFmt(line.slice(3))}</h2>`; i++; continue; }
     if (line.startsWith("# "))    { html += `<h1 style="font-size:1.75rem;font-weight:800;margin:0 0 0.5em">${inlineFmt(line.slice(2))}</h1>`; i++; continue; }
-    if (line.startsWith("> "))    { html += `<blockquote style="border-left:3px solid #4f46e5;padding:0.5em 1em;margin:1em 0;background:#eef2ff;border-radius:0 0.5rem 0.5rem 0;font-style:italic"><p style="margin:0">${inlineFmt(line.slice(2))}</p></blockquote>`; i++; continue; }
+    if (line.startsWith("> "))    { html += `<blockquote style="border-left:3px solid var(--accent);padding:0.5em 1em;margin:1em 0;background:var(--accent-light);border-radius:0 0.5rem 0.5rem 0;font-style:italic"><p style="margin:0">${inlineFmt(line.slice(2))}</p></blockquote>`; i++; continue; }
     if (line === "---" || line.trim() === "<Divider />") { html += `<hr style="border:none;border-top:1px solid #3f3f46;margin:2em 0" />`; i++; continue; }
     if (/^[-*] /.test(line)) {
       let items = "";
@@ -1863,7 +1787,10 @@ function BlogEditor() {
   // Draft management
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [lastSaved, setLastSaved]           = useState<Date | null>(null);
-  const [drafts, setDrafts]                 = useState<DraftEntry[]>([]);
+  const clock = useNow(10_000); // refreshes the "saved Xs ago" label
+  // The editor only renders after sign-in, in the browser, so drafts can be
+  // read straight from localStorage when it mounts.
+  const [drafts, setDrafts] = useState<DraftEntry[]>(() => (typeof window === "undefined" ? [] : readDrafts()));
   const [showDraftMenu, setShowDraftMenu]   = useState(false);
 
   // Editor UI
@@ -1924,7 +1851,7 @@ function BlogEditor() {
 
   const savedAgoText = lastSaved
     ? (() => {
-        const s = Math.round((Date.now() - lastSaved.getTime()) / 1000);
+        const s = Math.round(((clock ?? lastSaved.getTime()) - lastSaved.getTime()) / 1000);
         if (s < 10) return "just saved";
         if (s < 60) return `saved ${s}s ago`;
         return `saved ${Math.round(s / 60)}m ago`;
@@ -1988,11 +1915,7 @@ function BlogEditor() {
   }
 
   // === EFFECTS ===
-  useEffect(() => { setDrafts(readDrafts()); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (!slugEdited) setSlug(slugify(title));
-  }, [title, slugEdited]);
 
   // Auto-resize textarea
   useEffect(() => {
@@ -2011,7 +1934,7 @@ function BlogEditor() {
   useEffect(() => {
     const id = setInterval(() => saveCallbackRef.current(), 15_000);
     return () => clearInterval(id);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);  
 
   // === INSERTION HELPERS ===
   function insertInline(before: string, after: string, placeholder: string) {
@@ -2241,6 +2164,18 @@ function BlogEditor() {
     }
   }
 
+  // Opened from "Edit in GitHub writer" in Live blog posts.
+  useLoadOnMount(() => {
+    const slug = takePendingWrite("blog");
+    if (!slug) return;
+    if (!githubPat.trim()) {
+      setPostsResult({ ok: false, message: `Connect GitHub to open ${slug}.mdx for editing.` });
+      setShowPublishedPosts(true);
+      return;
+    }
+    void loadPostForEdit(slug);
+  });
+
   async function deletePost(slug: string, sha: string) {
     if (!githubPat.trim()) return;
     setDeletingSlug(slug);
@@ -2278,7 +2213,7 @@ function BlogEditor() {
   }
 
   function togglePostSelect(slug: string) {
-    setSelectedPostSlugs(prev => { const next = new Set(prev); next.has(slug) ? next.delete(slug) : next.add(slug); return next; });
+    setSelectedPostSlugs(prev => { const next = new Set(prev); if (next.has(slug)) next.delete(slug); else next.add(slug); return next; });
   }
   function toggleSelectAllPosts() {
     setSelectedPostSlugs(prev => prev.size === publishedPosts.length ? new Set<string>() : new Set(publishedPosts.map(p => p.slug)));
@@ -2326,14 +2261,14 @@ function BlogEditor() {
           </div>
           <div className="flex items-center gap-4">
             {[
-              { label: "B",  title: "Bold (⌘B)",   action: () => insertInline("**","**","bold text"), mono: true },
-              { label: "I",  title: "Italic (⌘I)", action: () => insertInline("*","*","italic text"), mono: true },
-              { label: "`",  title: "Code (⌘`)",   action: () => insertInline("`","`","code"), mono: true },
-              { label: "H2", title: "Heading 2",   action: () => insertBlock("## "), mono: true },
-              { label: "•",  title: "Bullet list", action: () => insertBlock("- "), mono: true },
-              { label: "·",  title: "Divider",     action: () => insertBlock("<Divider />"), mono: true },
+              { label: "B",  title: "Bold (⌘B)",   run: (t: EditorTools) => t.inline("**","**","bold text"), mono: true },
+              { label: "I",  title: "Italic (⌘I)", run: (t: EditorTools) => t.inline("*","*","italic text"), mono: true },
+              { label: "`",  title: "Code (⌘`)",   run: (t: EditorTools) => t.inline("`","`","code"), mono: true },
+              { label: "H2", title: "Heading 2",   run: (t: EditorTools) => t.block("## "), mono: true },
+              { label: "•",  title: "Bullet list", run: (t: EditorTools) => t.block("- "), mono: true },
+              { label: "·",  title: "Divider",     run: (t: EditorTools) => t.block("<Divider />"), mono: true },
             ].map((btn) => (
-              <button key={btn.label} onClick={btn.action} title={btn.title}
+              <button key={btn.label} onClick={() => btn.run({ inline: insertInline, block: insertBlock })} title={btn.title}
                 className={`px-2 py-0.5 rounded text-[11px] text-fg-muted hover:text-fg transition-colors ${btn.mono ? "font-mono" : ""}`}>
                 {btn.label}
               </button>
@@ -2411,7 +2346,7 @@ function BlogEditor() {
       </div>
 
       {/* ── Published Posts ─────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="rounded-card border border-border bg-surface overflow-hidden">
         <button
           onClick={() => setShowPublishedPosts(!showPublishedPosts)}
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-raised transition-colors"
@@ -2438,7 +2373,7 @@ function BlogEditor() {
               <button
                 onClick={loadPublishedPosts}
                 disabled={loadingPosts || !githubPat.trim()}
-                className="inline-flex items-center gap-1.5 text-xs font-medium border border-border rounded px-3 py-1.5 text-fg-muted hover:text-fg hover:border-indigo-400 transition-colors disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 text-xs font-medium border border-border rounded px-3 py-1.5 text-fg-muted hover:text-fg hover:border-accent transition-colors disabled:opacity-40"
               >
                 {loadingPosts ? (
                   <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Loading…</>
@@ -2508,7 +2443,7 @@ function BlogEditor() {
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         onClick={() => loadPostForEdit(post.slug)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-border text-[11px] font-medium text-fg-muted hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-border text-[11px] font-medium text-fg-muted hover:border-accent hover:text-accent  transition-colors"
                       >
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -2559,7 +2494,7 @@ function BlogEditor() {
       </div>
 
       {/* ── Post header card (title + description + tags + slug) ─────────────── */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="rounded-card border border-border bg-surface overflow-hidden">
         <div className="p-5 sm:p-7 space-y-4">
 
           {/* Editing existing post indicator */}
@@ -2578,9 +2513,14 @@ function BlogEditor() {
           <input
             type="text"
             value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            onChange={(e) => {
+              setTitle(e.target.value);
+              // The URL follows the title until it is edited by hand.
+              if (!slugEdited) setSlug(slugify(e.target.value));
+            }}
             placeholder="Post title…"
-            className="w-full bg-transparent text-2xl sm:text-3xl font-bold text-fg placeholder:text-fg-subtle focus:outline-none leading-tight"
+            aria-label="Title"
+            className="display-serif display-md w-full bg-transparent text-fg placeholder:text-fg-faint focus:outline-none"
           />
 
           {/* Description with char counter */}
@@ -2590,7 +2530,8 @@ function BlogEditor() {
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="One-line description shown on the blog index and search results…"
-              className="w-full bg-transparent text-sm text-fg-subtle placeholder:text-fg-faint focus:outline-none pr-14"
+              aria-label="Description"
+              className="voice-serif w-full bg-transparent text-[1.0625rem] text-fg-muted placeholder:text-fg-faint focus:outline-none pr-14"
             />
             <span className={`absolute right-0 top-0 text-[10px] tabular-nums font-mono ${description.length > 160 ? "text-rose-500" : description.length > 130 ? "text-amber-500" : "text-fg-faint"}`}>
               {description.length}/160
@@ -2601,9 +2542,9 @@ function BlogEditor() {
           <div>
             <div className="flex flex-wrap items-center gap-1.5 min-h-[28px]">
               {tags.map((tag) => (
-                <span key={tag} className="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[11px] font-medium rounded-sm px-2.5 py-0.5">
+                <span key={tag} className="inline-flex items-center gap-1 bg-accent-light  text-accent  text-[11px] font-medium rounded-full px-2.5 py-0.5">
                   #{tag}
-                  <button onClick={() => removeTag(tag)} className="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-200 leading-none ml-0.5">×</button>
+                  <button onClick={() => removeTag(tag)} className="text-accent hover:text-accent  leading-none ml-0.5">×</button>
                 </span>
               ))}
               <input
@@ -2620,7 +2561,7 @@ function BlogEditor() {
               <div className="flex flex-wrap gap-1 mt-2">
                 {suggestedTags.slice(0, 8).map((t) => (
                   <button key={t} onClick={() => addTag(t)}
-                    className="text-[10px] text-fg-faint hover:text-indigo-600 dark:hover:text-indigo-400 border border-border rounded-sm px-2 py-0.5 transition-colors hover:border-indigo-300 dark:hover:border-indigo-700">
+                    className="text-[11px] text-fg-subtle hover:text-fg border border-border rounded-full px-2.5 py-0.5 transition-colors hover:border-accent hover:bg-accent-light">
                     + {t}
                   </button>
                 ))}
@@ -2628,32 +2569,35 @@ function BlogEditor() {
             )}
           </div>
 
-          {/* Slug + date row */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-2 border-t border-border-subtle text-[11px]">
-            <div className="flex items-center gap-1 font-mono text-fg-faint">
-              <span>/blog/</span>
-              <input
-                type="text"
-                value={slug}
-                onChange={(e) => { setSlug(e.target.value); setSlugEdited(true); }}
-                placeholder="post-slug"
-                className="bg-transparent text-accent focus:outline-none w-40"
-              />
-            </div>
-            <span className="text-fg-faint">·</span>
-            <span className="text-fg-faint text-[10px] uppercase tracking-wider">Last Edited:</span>
-            <input type="date" value={date} onChange={(e) => setDate(e.target.value)}
-              className="bg-transparent text-fg-faint focus:outline-none focus:text-fg cursor-pointer" />
-            <span className="text-fg-faint">·</span>
-            <span className="text-fg-faint text-[10px] uppercase tracking-wider">Originally Published:</span>
-            <input type="date" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)}
-              className="bg-transparent text-accent focus:outline-none focus:text-fg cursor-pointer font-mono text-xs" />
-            <button onClick={() => setShowAdvancedMeta(!showAdvancedMeta)}
-              className="ml-auto text-fg-faint hover:text-fg transition-colors flex items-center gap-1">
-              OG image
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${showAdvancedMeta ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
-            </button>
+          {/* URL + dates: labelled fields that stack on phones. */}
+          <div className="grid gap-3 border-t border-border-subtle pt-4 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+            <label className="block min-w-0">
+              <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-fg-subtle">URL</span>
+              <span className="mt-1.5 flex items-center rounded-xl border border-border bg-bg pl-3 font-mono text-[0.8125rem] focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/15">
+                <span className="shrink-0 text-fg-faint">/blog/</span>
+                <input
+                  type="text"
+                  value={slug}
+                  onChange={(e) => { setSlug(e.target.value); setSlugEdited(true); }}
+                  placeholder="post-slug"
+                  className="min-w-0 flex-1 bg-transparent py-2 pr-3 text-fg focus:outline-none"
+                />
+              </span>
+            </label>
+            <label className="block">
+              <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-fg-subtle">First published</span>
+              <input type="date" value={publishedAt} onChange={(e) => setPublishedAt(e.target.value)} className="mt-1.5 w-full rounded-xl border border-border bg-bg px-3 py-2 text-[0.8125rem] text-fg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 transition-colors" />
+            </label>
+            <label className="block">
+              <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-fg-subtle">Last edited</span>
+              <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5 w-full rounded-xl border border-border bg-bg px-3 py-2 text-[0.8125rem] text-fg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 transition-colors" />
+            </label>
           </div>
+          <button onClick={() => setShowAdvancedMeta(!showAdvancedMeta)}
+            className="inline-flex items-center gap-1 text-xs font-medium text-fg-muted transition-colors hover:text-fg">
+            Social card image
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className={`transition-transform ${showAdvancedMeta ? "rotate-180" : ""}`}><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
 
           {showAdvancedMeta && (
             <div className="pt-3 border-t border-border-subtle space-y-1.5">
@@ -2678,10 +2622,10 @@ function BlogEditor() {
 
       {/* ── Template picker ───────────────────────────────────────────────────── */}
       {showTemplates && !content && (
-        <div className="rounded border border-dashed border-border bg-surface-raised/40 p-6">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-4 text-center">Start with a template, or just type below</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {POST_TEMPLATES.map((t) => {
+        <div className="py-2">
+          <p className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-fg-subtle mb-5">Start from a template, or just type below</p>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {POST_TEMPLATES.map((t, ti) => {
               const tmplIcons: Record<string, React.ReactNode> = {
                 layers:  <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
                 book:    <><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></>,
@@ -2691,21 +2635,23 @@ function BlogEditor() {
               return (
                 <button key={t.id}
                   onClick={() => { setContent(t.content); setShowTemplates(false); setActivePanel("write"); requestAnimationFrame(() => textareaRef.current?.focus()); }}
-                  className="rounded-xl border border-border bg-surface p-4 text-left hover:border-accent/50 hover:shadow-sm transition-all group">
-                  <div className="w-7 h-7 rounded bg-surface-raised flex items-center justify-center mb-2.5 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/40 transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-fg-faint group-hover:text-indigo-500 transition-colors">
-                      {tmplIcons[t.icon]}
-                    </svg>
-                  </div>
-                  <p className="text-xs font-semibold text-fg group-hover:text-accent transition-colors leading-snug">{t.label}</p>
-                  <p className="text-[10px] text-fg-faint mt-1 leading-relaxed">{t.desc}</p>
+                  data-face={(["skin", "paper", "flesh", "paper"] as const)[ti % 4]}
+                  style={{ "--tilt": `${[-1.4, 1, -0.7, 1.3][ti % 4]}deg` } as React.CSSProperties}
+                  className="prompt-card group flex h-full min-h-[8.5rem] w-full flex-col justify-between rounded-card p-5 text-left">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="opacity-70">
+                    {tmplIcons[t.icon]}
+                  </svg>
+                  <span className="mt-4 block">
+                    <span className="display-serif block text-[1.25rem] leading-tight">{t.label}</span>
+                    <span className="mt-1 block text-[0.75rem] leading-relaxed opacity-75">{t.desc}</span>
+                  </span>
                 </button>
               );
             })}
           </div>
-          <div className="mt-4 text-center">
+          <div className="mt-5">
             <button onClick={() => { setShowTemplates(false); requestAnimationFrame(() => textareaRef.current?.focus()); }}
-              className="text-[10px] text-fg-faint hover:text-fg transition-colors">
+              className="text-xs font-medium text-fg-muted underline decoration-border-strong underline-offset-4 hover:text-fg transition-colors">
               Skip, start from blank →
             </button>
           </div>
@@ -2713,18 +2659,19 @@ function BlogEditor() {
       )}
 
       {/* ── Editor ───────────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      {/* overflow stays visible so the toolbar can stick while you write. */}
+      <div className="rounded-card border border-border bg-surface">
 
         {/* Toolbar */}
-        <div className="border-b border-border bg-surface-raised px-3 py-2 flex items-center gap-1 flex-wrap">
+        <div className="sticky top-0 z-10 border-b border-border bg-surface/95 backdrop-blur-md px-3 py-2 flex items-center gap-1 flex-wrap">
           {/* Format */}
           {[
-            { label: "B",  title: "Bold (⌘B)",          action: () => insertInline("**", "**", "bold text"),   mono: true },
-            { label: "I",  title: "Italic (⌘I)",         action: () => insertInline("*", "*", "italic text"),  mono: true },
-            { label: "`",  title: "Inline code (⌘`)",    action: () => insertInline("`", "`", "code"),         mono: true },
-            { label: "~~", title: "Strikethrough",        action: () => insertInline("~~", "~~", "text"),      mono: true },
+            { label: "B",  title: "Bold (⌘B)",          run: (t: EditorTools) => t.inline("**", "**", "bold text"),   mono: true },
+            { label: "I",  title: "Italic (⌘I)",         run: (t: EditorTools) => t.inline("*", "*", "italic text"),  mono: true },
+            { label: "`",  title: "Inline code (⌘`)",    run: (t: EditorTools) => t.inline("`", "`", "code"),         mono: true },
+            { label: "~~", title: "Strikethrough",        run: (t: EditorTools) => t.inline("~~", "~~", "text"),      mono: true },
           ].map((b) => (
-            <button key={b.label} onClick={b.action} title={b.title}
+            <button key={b.label} onClick={() => b.run({ inline: insertInline, block: insertBlock })} title={b.title}
               className={`px-2 py-0.5 rounded-md text-[11px] text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors ${b.mono ? "font-mono" : ""}`}>
               {b.label}
             </button>
@@ -2732,11 +2679,11 @@ function BlogEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
           {/* Headings */}
           {[
-            { label: "H2", title: "Large section heading",       action: () => insertBlock("## "),   mono: true },
-            { label: "H3", title: "Sub-section heading",         action: () => insertBlock("### "),  mono: true },
-            { label: "H4", title: "Small label heading",         action: () => insertBlock("#### "), mono: true },
+            { label: "H2", title: "Large section heading",       run: (t: EditorTools) => t.block("## "),   mono: true },
+            { label: "H3", title: "Sub-section heading",         run: (t: EditorTools) => t.block("### "),  mono: true },
+            { label: "H4", title: "Small label heading",         run: (t: EditorTools) => t.block("#### "), mono: true },
           ].map((b) => (
-            <button key={b.label} onClick={b.action} title={b.title}
+            <button key={b.label} onClick={() => b.run({ inline: insertInline, block: insertBlock })} title={b.title}
               className="px-2 py-0.5 rounded-md text-[11px] font-mono text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
               {b.label}
             </button>
@@ -2744,14 +2691,14 @@ function BlogEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
           {/* Block elements */}
           {[
-            { label: "lnk", title: "Link (⌘K)",              action: () => insertInline("[", "](url)", "link text"), mono: true },
-            { label: ">",   title: "Blockquote / pull quote", action: () => insertBlock("> "),                        mono: true },
-            { label: "•",   title: "Bullet list",             action: () => insertBlock("- Item 1\n- Item 2\n- Item 3"), mono: true },
-            { label: "1.",  title: "Numbered list",           action: () => insertBlock("1. First\n2. Second\n3. Third"), mono: true },
-            { label: "·",   title: "Section divider",         action: () => insertBlock("<Divider />"),                mono: true },
-            { label: "▦",   title: "Insert table",            action: () => insertBlock("| Column A | Column B |\n|----------|----------|\n| Cell     | Cell     |") },
+            { label: "lnk", title: "Link (⌘K)",              run: (t: EditorTools) => t.inline("[", "](url)", "link text"), mono: true },
+            { label: ">",   title: "Blockquote / pull quote", run: (t: EditorTools) => t.block("> "),                        mono: true },
+            { label: "•",   title: "Bullet list",             run: (t: EditorTools) => t.block("- Item 1\n- Item 2\n- Item 3"), mono: true },
+            { label: "1.",  title: "Numbered list",           run: (t: EditorTools) => t.block("1. First\n2. Second\n3. Third"), mono: true },
+            { label: "·",   title: "Section divider",         run: (t: EditorTools) => t.block("<Divider />"),                mono: true },
+            { label: "▦",   title: "Insert table",            run: (t: EditorTools) => t.block("| Column A | Column B |\n|----------|----------|\n| Cell     | Cell     |") },
           ].map((b) => (
-            <button key={b.label} onClick={b.action} title={b.title}
+            <button key={b.label} onClick={() => b.run({ inline: insertInline, block: insertBlock })} title={b.title}
               className={`px-2 py-0.5 rounded-md text-[11px] text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors ${b.mono ? "font-mono" : ""}`}>
               {b.label}
             </button>
@@ -2759,12 +2706,12 @@ function BlogEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
           {/* Code blocks */}
           {[
-            { label: "</>py",  title: "Python code block",     action: () => insertBlock("```python\n# code here\n```", 10) },
-            { label: "</>ts",  title: "TypeScript code block", action: () => insertBlock("```typescript\n// code here\n```", 14) },
-            { label: "</>sh",  title: "Shell / bash block",    action: () => insertBlock("```bash\n# command\n```", 7) },
-            { label: "</>",    title: "Generic code block",    action: () => insertBlock("```\n\n```", 4) },
+            { label: "</>py",  title: "Python code block",     run: (t: EditorTools) => t.block("```python\n# code here\n```", 10) },
+            { label: "</>ts",  title: "TypeScript code block", run: (t: EditorTools) => t.block("```typescript\n// code here\n```", 14) },
+            { label: "</>sh",  title: "Shell / bash block",    run: (t: EditorTools) => t.block("```bash\n# command\n```", 7) },
+            { label: "</>",    title: "Generic code block",    run: (t: EditorTools) => t.block("```\n\n```", 4) },
           ].map((b) => (
-            <button key={b.label} onClick={b.action} title={b.title}
+            <button key={b.label} onClick={() => b.run({ inline: insertInline, block: insertBlock })} title={b.title}
               className="px-2 py-0.5 rounded-md text-[11px] font-mono text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
               {b.label}
             </button>
@@ -2772,12 +2719,12 @@ function BlogEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
           {/* Callouts */}
           {[
-            { label: "info", title: "Info callout",    action: () => insertBlock('<Callout type="info" title="Info">\nYour note here.\n</Callout>'), mono: true },
-            { label: "tip",  title: "Tip callout",     action: () => insertBlock('<Callout type="tip" title="Tip">\nYour tip here.\n</Callout>'), mono: true },
-            { label: "warn", title: "Warning callout", action: () => insertBlock('<Callout type="warning" title="Warning">\nYour warning here.\n</Callout>'), mono: true },
-            { label: "quot", title: "Quote callout",   action: () => insertBlock('<Callout type="quote" title="Quote">\nYour quote here.\n</Callout>'), mono: true },
+            { label: "info", title: "Info callout",    run: (t: EditorTools) => t.block('<Callout type="info" title="Info">\nYour note here.\n</Callout>'), mono: true },
+            { label: "tip",  title: "Tip callout",     run: (t: EditorTools) => t.block('<Callout type="tip" title="Tip">\nYour tip here.\n</Callout>'), mono: true },
+            { label: "warn", title: "Warning callout", run: (t: EditorTools) => t.block('<Callout type="warning" title="Warning">\nYour warning here.\n</Callout>'), mono: true },
+            { label: "quot", title: "Quote callout",   run: (t: EditorTools) => t.block('<Callout type="quote" title="Quote">\nYour quote here.\n</Callout>'), mono: true },
           ].map((b) => (
-            <button key={b.label} onClick={b.action} title={b.title}
+            <button key={b.label} onClick={() => b.run({ inline: insertInline, block: insertBlock })} title={b.title}
               className="px-2 py-0.5 rounded-md text-[11px] font-mono text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
               {b.label}
             </button>
@@ -2787,7 +2734,7 @@ function BlogEditor() {
           <button
             onClick={() => setShowImageManager(!showImageManager)}
             title="Image Library, upload multiple images and choose placement"
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition-colors whitespace-nowrap ${showImageManager ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition-colors whitespace-nowrap ${showImageManager ? "border-accent bg-accent-light  text-accent " : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}
           >
             {uploadingImg ? (
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin shrink-0"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -2804,7 +2751,7 @@ function BlogEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0 hidden sm:block" />
           <button onClick={() => setActivePanel(activePanel === "preview" ? "write" : "preview")}
             title="Toggle preview"
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition-colors shrink-0 ${activePanel === "preview" ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}>
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition-colors shrink-0 ${activePanel === "preview" ? "border-accent bg-accent-light  text-accent " : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}>
             {activePanel === "preview" ? (
               <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"/></svg>Write</>
             ) : (
@@ -2833,7 +2780,7 @@ function BlogEditor() {
             <div className="p-4 space-y-3">
               {/* Upload drop zone */}
               <label className={`flex flex-col items-center justify-center rounded border-2 border-dashed py-6 px-4 cursor-pointer transition-all ${
-                uploadingImg ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 cursor-wait" : "border-border hover:border-indigo-400 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/20"
+                uploadingImg ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 cursor-wait" : "border-border hover:border-accent hover:bg-accent-light "
               }`}>
                 <div className="w-9 h-9 rounded bg-surface-raised border border-border flex items-center justify-center mb-2">
                   {uploadingImg ? (
@@ -2889,7 +2836,7 @@ function BlogEditor() {
                                   onChange={(e) => setCaptionInput(e.target.value)}
                                   placeholder="Caption (optional), press Enter to insert"
                                   autoFocus
-                                  className="w-full bg-bg border border-border rounded px-2 py-1 text-xs text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 transition-colors"
+                                  className="w-full bg-bg border border-border rounded px-2 py-1 text-xs text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") {
                                       insertBlock(captionInput.trim() ? `![${img.name}](${img.url} "${captionInput.trim()}")` : `![${img.name}](${img.url})`);
@@ -2904,7 +2851,7 @@ function BlogEditor() {
                                       insertBlock(captionInput.trim() ? `![${img.name}](${img.url} "${captionInput.trim()}")` : `![${img.name}](${img.url})`);
                                       setInsertingFor(null); setCaptionInput("");
                                     }}
-                                    className="flex-1 px-2 py-1 rounded bg-indigo-600 text-white text-[10px] font-semibold hover:bg-indigo-700 transition-colors"
+                                    className="flex-1 px-2 py-1 rounded bg-accent text-accent-fg text-[10px] font-semibold hover:bg-accent-hover transition-colors"
                                   >
                                     Insert ✓
                                   </button>
@@ -2921,21 +2868,21 @@ function BlogEditor() {
                                 <button
                                   onClick={() => insertBlock(`![${img.name}](${img.url})`)}
                                   title="Insert at cursor"
-                                  className="px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[10px] font-medium hover:bg-indigo-700 transition-colors"
+                                  className="px-2 py-0.5 rounded-md bg-accent text-accent-fg text-[10px] font-medium hover:bg-accent-hover transition-colors"
                                 >
                                   Insert
                                 </button>
                                 <button
                                   onClick={() => setInsertingFor(img.url)}
                                   title="Insert with a caption below the image"
-                                  className="px-2 py-0.5 rounded-md border border-border bg-surface-raised text-[10px] font-medium text-fg-muted hover:border-indigo-400 hover:text-fg transition-colors"
+                                  className="px-2 py-0.5 rounded-md border border-border bg-surface-raised text-[10px] font-medium text-fg-muted hover:border-accent hover:text-fg transition-colors"
                                 >
                                   + Caption
                                 </button>
                                 <button
                                   onClick={() => insertBlock(`<BlogImage\n  src="${img.url}"\n  alt="${img.name}"\n/>`)}
                                   title="Insert as full-width BlogImage with lightbox"
-                                  className="px-2 py-0.5 rounded-md border border-border bg-surface-raised text-[10px] font-medium text-fg-muted hover:border-indigo-400 hover:text-fg transition-colors"
+                                  className="px-2 py-0.5 rounded-md border border-border bg-surface-raised text-[10px] font-medium text-fg-muted hover:border-accent hover:text-fg transition-colors"
                                 >
                                   Full-width
                                 </button>
@@ -2974,11 +2921,12 @@ function BlogEditor() {
               onChange={(e) => { setContent(e.target.value); if (showTemplates && e.target.value) setShowTemplates(false); }}
               onKeyDown={handleKeyDown}
               spellCheck
-              className="w-full bg-bg px-5 sm:px-8 py-6 text-sm text-fg font-mono leading-relaxed focus:outline-none resize-none"
+              aria-label="Content"
+              className="w-full bg-bg px-5 sm:px-8 py-7 text-[0.9375rem] text-fg font-mono leading-[1.85] focus:outline-none resize-y"
               placeholder={`Write your post here…${"\n"}Keyboard shortcuts: ⌘B bold · ⌘I italic · ⌘K link · ⌘\` code · ⌘S save draft`}
               style={{ minHeight: "420px" }}
             />
-            <div className="px-5 py-2 border-t border-border flex items-center justify-between text-[10px] text-fg-faint bg-surface-raised">
+            <div className="px-5 py-2.5 border-t border-border flex items-center justify-between rounded-b-card font-mono text-[0.6875rem] text-fg-subtle bg-surface">
               <span>{wordCount > 0 ? `${wordCount} words · ~${readingTime} min read` : "Start writing, use the toolbar above or keyboard shortcuts"}</span>
               <span className="font-mono hidden sm:block">⌘B · ⌘I · ⌘K · ⌘S save</span>
             </div>
@@ -2991,8 +2939,8 @@ function BlogEditor() {
             <pre className="px-5 sm:px-8 pt-5 pb-4 text-[10px] font-mono leading-relaxed text-fg-faint bg-surface border-b border-border whitespace-pre-wrap overflow-x-auto">
               {buildFrontmatterPreview()}
             </pre>
-            <div className="px-5 sm:px-8 py-8"
-              style={{ fontFamily: "var(--font-blog, Georgia, serif)", lineHeight: 1.8 }}
+            {/* `prose` = the same article styles the published page uses. */}
+            <div className="prose mx-auto px-5 sm:px-8 py-10 font-[family-name:var(--font-blog)] leading-[1.85]"
               dangerouslySetInnerHTML={{ __html: mdxToHTML(content) }}
             />
           </div>
@@ -3000,7 +2948,7 @@ function BlogEditor() {
       </div>
 
       {/* ── Format Reference (collapsible) ───────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="rounded-card border border-border bg-surface overflow-hidden">
         <button onClick={() => setShowFormatRef(!showFormatRef)}
           className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-surface-raised transition-colors">
           <span className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle flex items-center gap-2">
@@ -3044,7 +2992,7 @@ function BlogEditor() {
       </div>
 
       {/* ── Publish section (collapsible with checklist) ──────────────────────── */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="rounded-card border border-border bg-surface overflow-hidden">
         <button onClick={() => setShowPublish(!showPublish)}
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-raised transition-colors">
           <div className="flex items-center gap-2">
@@ -3142,7 +3090,7 @@ function BlogEditor() {
               <button
                 onClick={publish}
                 disabled={publishing || !allValid}
-                className="inline-flex items-center gap-2 rounded bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/50 hover:-translate-y-px transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0"
+                className="inline-flex items-center gap-2 rounded bg-gradient-to-r from-accent to-accent px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-accent/20 hover:shadow-xl hover:shadow-accent/20 hover:-translate-y-px transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0"
               >
                 {publishing ? (
                   <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Publishing…</>
@@ -3316,7 +3264,7 @@ function QuotesEditor() {
     saveToGitHub(updated);
   }
 
-  const inputCls = "w-full rounded border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 transition-colors";
+  const inputCls = "w-full rounded border border-border bg-bg px-3 py-2 text-sm text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors";
   const labelCls = "block text-[11px] font-semibold text-fg-muted mb-1";
 
   return (
@@ -3398,7 +3346,7 @@ function QuotesEditor() {
         <button
           onClick={addQuote}
           disabled={!newText.trim() || !newAuthor.trim() || saving || !githubPat.trim()}
-          className="w-full rounded bg-indigo-600 text-white py-2 text-sm font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors"
+          className="w-full rounded bg-accent text-accent-fg py-2 text-sm font-semibold hover:bg-accent-hover disabled:opacity-40 transition-colors"
         >
           {saving ? "Saving…" : "Add Quote → GitHub"}
         </button>
@@ -3411,7 +3359,7 @@ function QuotesEditor() {
 
       {/* Existing quotes list */}
       {quotes.length > 0 && (
-        <div className="rounded-xl border border-border bg-surface overflow-hidden">
+        <div className="rounded-card border border-border bg-surface overflow-hidden">
           <div className="px-5 py-4 border-b border-border flex items-center justify-between">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">{quotes.length} Quotes</h2>
           </div>
@@ -3464,9 +3412,9 @@ function QuotesEditor() {
                           onChange={(e) => setEditFields((p) => ({ ...p, featured: e.target.checked }))}
                           className="rounded"
                         />
-                        <span className="text-xs font-medium text-indigo-500">Featured on home</span>
+                        <span className="text-xs font-medium text-accent">Featured on home</span>
                       </label>
-                      <button onClick={() => saveEdit(q.id)} disabled={saving} className="px-3 py-1.5 rounded bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors">
+                      <button onClick={() => saveEdit(q.id)} disabled={saving} className="px-3 py-1.5 rounded bg-accent text-accent-fg text-xs font-semibold hover:bg-accent-hover disabled:opacity-40 transition-colors">
                         {saving ? "…" : "Save"}
                       </button>
                       <button onClick={() => setEditingId(null)} className="px-3 py-1.5 rounded border border-border text-xs text-fg-faint hover:text-fg transition-colors">
@@ -3478,10 +3426,10 @@ function QuotesEditor() {
                   <div className="flex gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
-                        <span className="text-[10px] font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wider">{q.category}</span>
+                        <span className="text-[10px] font-semibold text-accent  uppercase tracking-wider">{q.category}</span>
                         {q.favorite && <svg width="10" height="10" viewBox="0 0 24 24" fill="#fbbf24" stroke="#fbbf24" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>}
                         {q.featured && (
-                          <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800">
+                          <span className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded-sm bg-accent-light  text-accent  border border-accent/40 ">
                             Featured
                           </span>
                         )}
@@ -3498,13 +3446,13 @@ function QuotesEditor() {
                         title={q.featured ? "Remove from home" : "Feature on home"}
                         className={`text-[10px] px-2 py-1 rounded transition-colors disabled:opacity-40 ${
                           q.featured
-                            ? "text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100 dark:hover:bg-indigo-950/60"
-                            : "text-fg-faint hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-950/30"
+                            ? "text-accent  bg-accent-light  hover:bg-accent-light "
+                            : "text-fg-faint hover:text-accent hover:bg-accent-light "
                         }`}
                       >
                         <span className="inline-flex items-center gap-1">
                           <svg width="10" height="10" viewBox="0 0 24 24" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round"
-                            className={q.featured ? "fill-indigo-500 stroke-indigo-500" : "fill-none stroke-current"}>
+                            className={q.featured ? "fill-accent stroke-accent" : "fill-none stroke-current"}>
                             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                           </svg>
                           {q.featured ? "Featured" : "Feature"}
@@ -3541,21 +3489,22 @@ function QuotesEditor() {
 type Period = "week" | "month" | "all";
 const PERIOD_LABELS: Record<Period, string> = { week: "This week", month: "This month", all: "All time" };
 type AdminView =
-  | "analytics" | "gradevitian" | "write-blog" | "write-lab" | "quotes"
+  | "desk" | "analytics" | "gradevitian" | "write-blog" | "write-lab" | "quotes"
   | "blog-api" | "lab" | "quotes-api" | "availability" | "now" | "data"
   | "sync" | "integrations" | "profile" | "hero-stats" | "spotlights"
   | "experience" | "education" | "projects" | "apps" | "skills"
-  | "testimonials" | "gallery";
+  | "testimonials" | "gallery" | "stories" | "site-copy" | "case-studies";
 
 const VIEW_META: Record<AdminView, { title: string; description: string }> = {
+  desk: { title: "The desk", description: "Start something new, or pick up where you left off." },
   analytics: { title: "Analytics", description: "See how people find, read, and use the portfolio." },
   gradevitian: { title: "gradeVITian", description: "Review student-tool activity, content, and moderation." },
-  "write-blog": { title: "Write a blog post", description: "Draft and publish a long-form MDX article." },
-  "blog-api": { title: "Manage blog posts", description: "Edit live database-backed blog entries." },
-  "write-lab": { title: "Write a lab update", description: "Document an active build or technical decision." },
-  lab: { title: "Manage lab entries", description: "Edit live database-backed lab content." },
-  quotes: { title: "Curate quotes", description: "Edit the file-backed quote collection." },
-  "quotes-api": { title: "Manage live quotes", description: "Edit quotes stored in the content API." },
+  "write-blog": { title: "Write a blog post", description: "Long-form MDX. Staged to GitHub, then live after the next publish and rebuild." },
+  "blog-api": { title: "Live blog posts", description: "Edit posts stored in the content API. Saves go live immediately, no rebuild." },
+  "write-lab": { title: "Write a lab update", description: "Document a build or a decision. Staged to GitHub, live after the next publish." },
+  lab: { title: "Live lab entries", description: "Edit lab entries stored in the content API. Saves go live immediately." },
+  quotes: { title: "Quotes file", description: "Edit the quote collection in the repo. Staged to GitHub." },
+  "quotes-api": { title: "Live quotes", description: "Edit quotes stored in the content API. Saves go live immediately." },
   profile: { title: "Profile", description: "Update the biography, contact links, and positioning." },
   "hero-stats": { title: "Hero metrics", description: "Maintain the proof points shown near the homepage hero." },
   spotlights: { title: "Spotlights", description: "Choose the work featured most prominently on the homepage." },
@@ -3566,6 +3515,9 @@ const VIEW_META: Record<AdminView, { title: string; description: string }> = {
   skills: { title: "Skills", description: "Organize the tools and capabilities shown across the site." },
   testimonials: { title: "Testimonials", description: "Maintain sourced recommendations and attribution." },
   gallery: { title: "Gallery", description: "Upload, caption, order, and publish portfolio imagery." },
+  stories: { title: "Profile stories", description: "The hero, what a team gets, how you work, your origin story and what is still running. Avocado and MCP answer from all of it." },
+  "site-copy": { title: "Site copy", description: "Page names, what each page holds, and the home page's section headings. Avocado uses the page map to send people to the right place." },
+  "case-studies": { title: "Case studies", description: "The case-study cards and their links. The deck text itself is read from the published deck at build time." },
   sync: { title: "Content sync", description: "Check whether the website and Avocado share current content." },
   data: { title: "Raw JSON", description: "Inspect the generated knowledge data without editorial formatting." },
   availability: { title: "Availability", description: "Control the availability status shown to visitors." },
@@ -3584,7 +3536,10 @@ function Dashboard({
   lastUpdated: Date | null;
 }) {
   const [period, setPeriod] = useState<Period>("all");
-  const [activeView, setActiveView] = useState<AdminView>("analytics");
+  const [activeView, setActiveView] = useState<AdminView>("desk");
+  // The URL hash is written only after the requested view has been restored;
+  // writing it on the first render clobbered deep links like #write-blog.
+  const restored = useRef(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [navQuery, setNavQuery] = useState("");
   const navSearchRef = useRef<HTMLInputElement>(null);
@@ -3629,10 +3584,22 @@ function Dashboard({
     const frame = requestAnimationFrame(() => {
       const requested = window.location.hash.slice(1) || localStorage.getItem("avocado_admin_last_view") || "";
       if (Object.hasOwn(VIEW_META, requested)) setActiveView(requested as AdminView);
+      restored.current = true;
     });
     return () => cancelAnimationFrame(frame);
   }, []);
+  // Follow in-app links that change the hash (e.g. "Edit in GitHub writer").
   useEffect(() => {
+    const onHash = () => {
+      const v = window.location.hash.slice(1);
+      if (Object.hasOwn(VIEW_META, v)) activateView(v as AdminView);
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, [activateView]);
+
+  useEffect(() => {
+    if (!restored.current) return;
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${activeView}`);
   }, [activeView]);
   const conv        = stats.conversations[period];
@@ -3647,36 +3614,44 @@ function Dashboard({
   const models      = stats.models?.[period] ?? [];
   const topPosts    = [...stats.blog.posts].sort((a, b) => b.views - a.views).slice(0, 8);
 
-  type NavItem = { key: AdminView; label: string; group: string };
+  type NavItem = { key: AdminView; label: string; group: string; route?: "GitHub" | "Live" };
   const NAV: NavItem[] = [
-    { key: "analytics",    label: "Analytics",    group: "Insights" },
-    { key: "gradevitian",  label: "gradeVITian",  group: "Insights" },
-    { key: "write-blog",   label: "Write blog post", group: "Publishing" },
-    { key: "blog-api",     label: "Manage blog posts", group: "Publishing" },
-    { key: "write-lab",    label: "Write lab update", group: "Publishing" },
-    { key: "lab",          label: "Manage lab entries", group: "Publishing" },
-    { key: "quotes",       label: "Curate quotes", group: "Publishing" },
-    { key: "quotes-api",   label: "Manage live quotes", group: "Publishing" },
-    { key: "profile",      label: "Profile",      group: "Site content" },
-    { key: "hero-stats",   label: "Hero Metrics", group: "Site content" },
-    { key: "spotlights",   label: "Spotlights",   group: "Site content" },
-    { key: "experience",   label: "Experience",   group: "Site content" },
-    { key: "education",    label: "Education",    group: "Site content" },
-    { key: "projects",     label: "Projects",     group: "Site content" },
-    { key: "apps",         label: "Hosted Apps",  group: "Site content" },
-    { key: "skills",       label: "Skills",       group: "Site content" },
-    { key: "testimonials", label: "Testimonials", group: "Site content" },
-    { key: "gallery",      label: "Gallery",      group: "Site content" },
-    { key: "sync",         label: "Content Sync", group: "System" },
-    { key: "data",         label: "Raw JSON",     group: "System" },
-    { key: "availability", label: "Availability", group: "System" },
-    { key: "now",          label: "Now Page",     group: "System" },
-    { key: "integrations", label: "Integrations", group: "System" },
+    { key: "desk",         label: "The desk",        group: "Start" },
+    { key: "write-blog",   label: "Write a blog post", group: "Write", route: "GitHub" },
+    { key: "write-lab",    label: "Write a lab update", group: "Write", route: "GitHub" },
+    { key: "blog-api",     label: "Live blog posts", group: "Write", route: "Live" },
+    { key: "lab",          label: "Live lab entries", group: "Write", route: "Live" },
+    { key: "quotes",       label: "Quotes file",     group: "Write", route: "GitHub" },
+    { key: "quotes-api",   label: "Live quotes",     group: "Write", route: "Live" },
+    { key: "profile",      label: "Profile",         group: "Site content" },
+    { key: "stories",      label: "Profile stories", group: "Site content" },
+    { key: "site-copy",    label: "Site copy",       group: "Site content" },
+    { key: "now",          label: "Now page",        group: "Site content" },
+    { key: "hero-stats",   label: "Hero metrics",    group: "Site content" },
+    { key: "spotlights",   label: "Spotlights",      group: "Site content" },
+    { key: "experience",   label: "Experience",      group: "Site content" },
+    { key: "education",    label: "Education",       group: "Site content" },
+    { key: "projects",     label: "Projects",        group: "Site content" },
+    { key: "apps",         label: "Hosted apps",     group: "Site content" },
+    { key: "skills",       label: "Skills",          group: "Site content" },
+    { key: "testimonials", label: "Testimonials",    group: "Site content" },
+    { key: "gallery",      label: "Gallery",         group: "Site content" },
+    { key: "case-studies", label: "Case studies",    group: "Site content" },
+    { key: "analytics",    label: "Analytics",       group: "Insights" },
+    { key: "gradevitian",  label: "gradeVITian",     group: "Insights" },
+    { key: "sync",         label: "Content sync",    group: "System" },
+    { key: "availability", label: "Availability",    group: "System" },
+    { key: "integrations", label: "Integrations",    group: "System" },
+    { key: "data",         label: "Raw JSON",        group: "System" },
   ];
-  const groups = ["Insights", "Publishing", "Site content", "System"] as const;
+  const groups = ["Start", "Write", "Site content", "Insights", "System"] as const;
 
   function NavIcon({ navKey }: { navKey: string }) {
     const paths: Record<string, React.ReactNode> = {
+      stories:       <><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></>,
+      "site-copy":   <><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18M8 13h8M8 16h5"/></>,
+      "case-studies": <><path d="M4 4h10l6 6v10H4z"/><path d="M14 4v6h6M8 14h8M8 18h5"/></>,
+      desk:          <><path d="M3 10.5 12 4l9 6.5"/><path d="M5 9.5V20h14V9.5"/><circle cx="12" cy="14" r="2.2"/></>,
       analytics:     <><rect x="18" y="3" width="4" height="18"/><rect x="10" y="8" width="4" height="13"/><rect x="2" y="13" width="4" height="8"/></>,
       gradevitian:   <><path d="M22 10L12 5 2 10l10 5 10-5z"/><path d="M6 12v5c0 1 2.5 3 6 3s6-2 6-3v-5"/></>,
       "write-blog":  <><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"/></>,
@@ -3714,7 +3689,7 @@ function Dashboard({
     const q = navQuery.trim().toLowerCase();
     const matched = NAV.filter(n => !q || n.label.toLowerCase().includes(q));
     return (
-      <nav aria-label="Admin sections" className="admin-scrollbar flex-1 overflow-y-auto px-3 py-4 space-y-1">
+      <nav aria-label="Admin sections" className="admin-scrollbar min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 py-4 space-y-1">
         {/* Quick filter */}
         <div className="px-1 pb-2">
           <div className="relative">
@@ -3727,7 +3702,7 @@ function Dashboard({
               value={navQuery}
               onChange={(e) => setNavQuery(e.target.value)}
               placeholder="Find a section…"
-              className="w-full rounded-lg border border-border bg-bg pl-8 pr-7 py-2 text-xs text-fg placeholder:text-fg-faint hover:border-border-strong focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 transition-colors"
+              className="w-full rounded-full border border-border bg-bg pl-8 pr-7 py-2 text-xs text-fg placeholder:text-fg-faint hover:border-border-strong focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 transition-colors"
             />
             {!navQuery && <span className="absolute right-2 top-1/2 -translate-y-1/2 hidden lg:inline text-[9px] text-fg-faint">⌘K</span>}
             {navQuery && (
@@ -3744,22 +3719,23 @@ function Dashboard({
           if (items.length === 0) return null;
           const collapsed = !q && collapsedGroups.has(g);
           const groupActive = items.some(n => n.key === activeView);
+          const headed = g !== "Start";
           return (
-            <div key={g}>
-              <button
+            <div key={g} className={headed ? "pt-2" : ""}>
+              {headed && <button
                 onClick={() => toggleGroup(g)}
                 aria-expanded={!collapsed}
-                className="w-full flex items-center gap-1.5 px-2 py-2 rounded-md text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
+                className="w-full flex items-center gap-1.5 px-3 py-2 rounded-md text-fg-subtle hover:text-fg transition-colors"
               >
                 <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"
                   className={`shrink-0 transition-transform duration-200 ${collapsed ? "-rotate-90" : ""}`}>
                   <path d="M6 9l6 6 6-6"/>
                 </svg>
-                <span className="text-[10px] font-bold uppercase tracking-wider">{g}</span>
+                <span className="font-mono text-[0.625rem] uppercase tracking-[0.16em]">{g}</span>
                 {groupActive && <span className="w-1 h-1 rounded-full bg-accent shrink-0" />}
-                <span className="ml-auto text-[9px] font-semibold tabular-nums text-fg-faint bg-surface-raised rounded px-1.5 py-0.5">{items.length}</span>
-              </button>
-              {!collapsed && (
+                <span className="ml-auto font-mono text-[0.625rem] tabular-nums text-fg-faint">{items.length}</span>
+              </button>}
+              {(!collapsed || !headed) && (
                 <div className="mt-0.5 mb-1.5 space-y-px">
                   {items.map(n => {
                     const isActive = activeView === n.key;
@@ -3768,17 +3744,21 @@ function Dashboard({
                         key={n.key}
                         onClick={() => { activateView(n.key); setNavQuery(""); onSelect?.(); }}
                         aria-current={isActive ? "page" : undefined}
-                        className={`group/i relative w-full flex items-center gap-2.5 pl-3 pr-2 py-2.5 rounded-lg text-xs font-medium transition-colors text-left ${
+                        className={`group/i relative w-full flex items-center gap-2.5 pl-3 pr-2 py-2.5 rounded-full text-[0.8125rem] font-medium transition-colors text-left ${
                           isActive
-                            ? "bg-accent-light text-accent before:absolute before:inset-y-2 before:left-0 before:w-px before:bg-accent"
+                            ? "bg-accent text-accent-fg"
                             : "text-fg-muted hover:text-fg hover:bg-surface-raised"
                         }`}
                       >
-                        <span className={`shrink-0 transition-colors ${isActive ? "text-accent" : "text-fg-faint group-hover/i:text-fg-muted"}`}>
+                        <span className={`shrink-0 transition-colors ${isActive ? "" : "text-fg-faint group-hover/i:text-fg-muted"}`}>
                           <NavIcon navKey={n.key} />
                         </span>
                         <span className="truncate">{n.label}</span>
-                        {isActive && <span className="ml-auto text-[9px] font-semibold uppercase tracking-wide">Open</span>}
+                        {n.route && (
+                          <span className={`ml-auto shrink-0 rounded-full px-1.5 py-px font-mono text-[0.5625rem] uppercase tracking-[0.1em] ${
+                            isActive ? "bg-accent-fg/15" : n.route === "Live" ? "border border-border text-fg-subtle" : "bg-surface-raised text-fg-subtle"
+                          }`}>{n.route}</span>
+                        )}
                       </button>
                     );
                   })}
@@ -3796,7 +3776,9 @@ function Dashboard({
   }
 
   return (
-    <div className="min-h-screen bg-bg flex selection:bg-accent selection:text-white">
+    // A fixed-height frame: the sidebar stays put and only the right-hand
+    // working area scrolls (sticky toolbars and save rows stick inside it).
+    <div className="h-dvh overflow-hidden bg-bg flex selection:bg-accent selection:text-accent-fg">
 
       {/* ── Mobile overlay ── */}
       {sidebarOpen && (
@@ -3811,20 +3793,14 @@ function Dashboard({
         fixed inset-y-0 left-0 z-50 w-64 max-w-[88vw] flex flex-col bg-surface border-r border-border
         transition-transform duration-200 ease-in-out
         ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-        lg:translate-x-0 lg:static lg:z-auto
+        lg:translate-x-0 lg:static lg:z-auto lg:h-full
       `}>
         {/* Sidebar header */}
         <div className="flex items-center gap-3 px-4 py-4 border-b border-border shrink-0">
-          <Image
-            src="/icon-192.png"
-            alt="Jaya Sabarish Reddy Remala"
-            width={36}
-            height={36}
-            className="size-9 shrink-0 rounded-lg border border-border-strong bg-white object-cover"
-          />
+          <SeedAvatar size={36} />
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-fg leading-tight tracking-tight">Avocado Admin</p>
-            <p className="text-[11px] text-fg-subtle leading-none mt-1">Publishing desk</p>
+            <p className="display-serif text-[1.375rem] leading-none text-fg">Avocado</p>
+            <p className="mt-1 font-mono text-[0.625rem] uppercase tracking-[0.16em] text-fg-subtle">Publishing desk</p>
           </div>
           <button
             onClick={() => setSidebarOpen(false)}
@@ -3847,13 +3823,13 @@ function Dashboard({
               <p className="text-[11px] font-medium text-fg">Publishing access</p>
               <p className="mt-0.5 truncate text-[10px] text-fg-subtle">{hasPat ? "GitHub connected" : "GitHub token required"}</p>
             </div>
-            <span className={`inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[9px] font-semibold ${hasPat ? "border-emerald-200 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400" : "border-amber-200 text-amber-700 dark:border-amber-800 dark:text-amber-400"}`}>
-              <span className={`size-1.5 rounded-full ${hasPat ? "bg-emerald-500" : "bg-amber-400"}`} />
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-1 font-mono text-[0.625rem] uppercase tracking-[0.1em] ${hasPat ? "bg-accent-light text-fg" : "border border-[var(--pit)]/40 text-[var(--pit)]"}`}>
+              <span className={`size-1.5 rounded-full ${hasPat ? "bg-accent" : "bg-[var(--pit)]"}`} />
               {hasPat ? "Ready" : "Setup"}
             </span>
           </div>
           <AdminThemeControl />
-          <Link href="/" className="flex items-center justify-between rounded-lg border border-border bg-surface px-3 py-2.5 text-[11px] font-medium text-fg-muted transition-colors hover:border-border-strong hover:text-fg">
+          <Link href="/" className="flex items-center justify-between rounded-full border border-border bg-surface px-4 py-2.5 text-[11px] font-medium text-fg-muted transition-colors hover:border-border-strong hover:text-fg">
             View jayaremala.com
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden><path d="M7 17L17 7M7 7h10v10"/></svg>
           </Link>
@@ -3861,7 +3837,7 @@ function Dashboard({
       </aside>
 
       {/* ── Main area ── */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 h-full">
 
         {/* Mobile top bar */}
         <header className="lg:hidden flex items-center gap-3 px-4 border-b border-border bg-surface/80 backdrop-blur-md shrink-0 sticky top-0 z-30" style={{ paddingTop: 'max(0.625rem, env(safe-area-inset-top))', paddingBottom: '0.625rem' }}>
@@ -3899,7 +3875,7 @@ function Dashboard({
           <span className="w-px h-4 bg-border shrink-0" />
           {/* GitHub status dot */}
           <span
-            className={`w-2 h-2 rounded-full shrink-0 ${hasPat ? "bg-emerald-500" : "bg-amber-400 animate-pulse"}`}
+            className={`w-2 h-2 rounded-full shrink-0 ${hasPat ? "bg-accent" : "bg-[var(--pit)] animate-pulse"}`}
             title={hasPat ? "GitHub PAT connected" : "No GitHub PAT set"}
           />
           {/* View site */}
@@ -3916,7 +3892,7 @@ function Dashboard({
           {/* Sign out */}
           <button
             onClick={onLogout}
-            className="p-1.5 rounded-md text-rose-500 hover:bg-rose-500/10 transition-colors"
+            className="p-1.5 rounded-md text-fg-faint hover:text-[var(--pit)] hover:bg-surface-raised transition-colors"
             title="Sign out"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -3928,9 +3904,9 @@ function Dashboard({
         </header>
 
         {/* Desktop top bar */}
-        <header className="hidden lg:flex items-center justify-between gap-4 px-7 py-3.5 border-b border-border bg-surface shrink-0 sticky top-0 z-10">
+        <header className="hidden lg:flex items-center justify-between gap-4 px-8 py-3.5 border-b border-border bg-bg/85 backdrop-blur-md shrink-0 sticky top-0 z-10">
           <div className="flex items-center gap-1.5 text-sm min-w-0">
-            <span className="text-fg-faint font-medium">Avocado Admin</span>
+            <button type="button" onClick={() => activateView("desk")} className="text-fg-faint font-medium transition-colors hover:text-fg">Desk</button>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint shrink-0">
               <polyline points="9 18 15 12 9 6"/>
             </svg>
@@ -3945,7 +3921,7 @@ function Dashboard({
             <button
               onClick={onRefresh}
               disabled={refreshing}
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-faint hover:text-fg border border-border hover:border-fg-faint rounded-lg px-2.5 py-1.5 transition-all disabled:opacity-40"
+              className="btn-avo-ghost inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium disabled:opacity-40"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
                 className={refreshing ? "animate-spin" : ""}>
@@ -3956,15 +3932,15 @@ function Dashboard({
             <span className="w-px h-4 bg-border shrink-0" />
             {/* GitHub PAT status */}
             <span
-              className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2 py-1.5 rounded ${hasPat ? "text-fg-faint" : "text-amber-600 dark:text-amber-400"}`}
+              className={`inline-flex items-center gap-1.5 font-mono text-[0.625rem] uppercase tracking-[0.12em] px-2 py-1.5 ${hasPat ? "text-fg-subtle" : "text-[var(--pit)]"}`}
               title={hasPat ? "GitHub PAT connected, editors ready" : "No GitHub PAT set, editors will not load"}
             >
-              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasPat ? "bg-emerald-500" : "bg-amber-400 animate-pulse"}`} />
-              {hasPat ? "GitHub" : "No PAT"}
+              <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasPat ? "bg-accent" : "bg-[var(--pit)] animate-pulse"}`} />
+              {hasPat ? "GitHub ready" : "No GitHub token"}
             </span>
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg-faint hover:text-fg border border-border hover:border-fg-faint rounded-lg px-2.5 py-1.5 transition-all"
+              className="btn-avo-ghost inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -3974,7 +3950,7 @@ function Dashboard({
             </Link>
             <button
               onClick={onLogout}
-              className="inline-flex items-center gap-1.5 text-[11px] font-medium text-rose-500 hover:text-rose-400 border border-rose-200 dark:border-rose-800 hover:border-rose-300 dark:hover:border-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-lg px-2.5 py-1.5 transition-all"
+              className="inline-flex items-center gap-1.5 rounded-full border border-border px-3 py-1.5 text-[11px] font-medium text-fg-muted transition-colors hover:border-[var(--pit)] hover:text-[var(--pit)]"
             >
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
@@ -3987,13 +3963,13 @@ function Dashboard({
         </header>
 
         {/* Content */}
-        <main className="admin-scrollbar flex flex-1 flex-col overflow-y-auto">
+        <main className="admin-main admin-scrollbar flex min-h-0 flex-1 flex-col overflow-y-auto">
           <div className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-7 px-4 py-6 sm:px-7 sm:py-8" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
 
-        <div className="flex items-end justify-between gap-4 border-b border-border pb-5">
+        <div className="flex items-end justify-between gap-4 border-b border-border-strong pb-6">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-fg">{VIEW_META[activeView].title}</h1>
-            <p className="mt-1.5 text-sm text-fg-subtle">{VIEW_META[activeView].description}</p>
+            <h1 className="display-serif display-md text-fg">{VIEW_META[activeView].title}</h1>
+            <p className="mt-2 max-w-[60ch] text-[0.9375rem] leading-relaxed text-fg-subtle">{VIEW_META[activeView].description}</p>
           </div>
           {activeView === "analytics" && lastUpdated && (
             <p className="hidden sm:block text-[11px] text-fg-faint tabular-nums">Auto-refreshes every minute</p>
@@ -4003,14 +3979,14 @@ function Dashboard({
         {/* Period tabs — analytics only */}
         {activeView === "analytics" && (
           <div className="w-full sm:w-fit">
-            <div className="grid grid-cols-3 sm:flex gap-1 bg-surface rounded-lg p-1 border border-border">
+            <div className="grid grid-cols-3 sm:flex gap-1 bg-surface rounded-full p-1 border border-border">
             {(["week", "month", "all"] as Period[]).map((p) => (
               <button
                 key={p}
                 onClick={() => setPeriod(p)}
-                className={`px-3 sm:px-4 py-1.5 rounded-lg text-xs font-medium transition-all text-center ${
+                className={`px-3 sm:px-4 py-1.5 rounded-full text-xs font-medium transition-all text-center ${
                   period === p
-                    ? "bg-fg text-bg"
+                    ? "bg-accent text-accent-fg"
                     : "text-fg-muted hover:text-fg hover:bg-surface"
                 }`}
               >
@@ -4021,23 +3997,16 @@ function Dashboard({
           </div>
         )}
 
-        {activeView === "analytics" && (
-          <section aria-label="Quick actions" className="grid gap-px overflow-hidden rounded-xl border border-border bg-border sm:grid-cols-2 lg:grid-cols-4">
-            {([
-              ["write-blog", "Write a post", "Start a new blog draft"],
-              ["write-lab", "Update the lab", "Document current work"],
-              ["profile", "Edit profile", "Refresh public details"],
-              ["sync", "Check content sync", "Verify Avocado is current"],
-            ] as [AdminView, string, string][]).map(([view, title, description]) => (
-              <button key={view} onClick={() => activateView(view)} className="group bg-surface p-4 text-left transition-colors hover:bg-surface-raised focus-visible:z-10">
-                <span className="flex items-center justify-between text-sm font-semibold text-fg">
-                  {title}
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-fg-faint transition-transform group-hover:translate-x-0.5"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-                </span>
-                <span className="mt-1 block text-[11px] text-fg-subtle">{description}</span>
-              </button>
-            ))}
-          </section>
+        {activeView === "desk" && (
+          <DeskHome
+            onOpen={activateView}
+            hasPat={hasPat}
+            numbers={[
+              { label: "Visitors this week", value: stats.site_visitors.week.unique_visitors },
+              { label: "Chats this week", value: stats.conversations.week.total_responses },
+              { label: "Blog views", value: stats.blog.total_views },
+            ]}
+          />
         )}
 
         {activeView === "write-blog" && <BlogEditor />}
@@ -4058,6 +4027,32 @@ function Dashboard({
         {activeView === "skills"       && <SkillsEditor />}
         {activeView === "testimonials" && <TestimonialsEditor />}
         {activeView === "gallery" && <GalleryEditor />}
+        {activeView === "stories" && (
+          <StructuredEditor
+            file="backend/data/knowledge/profile.json"
+            keys={["hero", "hire", "opinions", "why", "hopeMolecules", "shipped", "shippedLabel", "shippedNote", "avocadoPreview", "award", "heroStatsLabel"]}
+            sections={{
+              hero: { title: "Hero", hint: "The first thing visitors read on the home page." },
+              hire: { title: "What your team gets", hint: "Each need, the number that proves it, and how it was done." },
+              opinions: { title: "How I work", hint: "Principles and don'ts." },
+              why: { title: "Why I build", hint: "The origin story and its artifact." },
+              hopeMolecules: { title: "What I optimize for" },
+              shipped: { title: "Still running", hint: "Products that are still live, oldest first." },
+              avocadoPreview: { title: "Avocado preview", hint: "The questions and answers that cycle in the hero card." },
+            }}
+          />
+        )}
+        {activeView === "site-copy" && (
+          <StructuredEditor
+            file="backend/data/knowledge/site.json"
+            keys={["pages", "home"]}
+            sections={{
+              pages: { title: "Pages", hint: "Name, one-line description and what each page holds. Used by the menu, the page map and Avocado." },
+              home: { title: "Home page sections", hint: "Section names, blurbs and the 'next' link labels." },
+            }}
+          />
+        )}
+        {activeView === "case-studies" && <StructuredEditor file="backend/data/knowledge/case-studies.json" />}
         {activeView === "sync" && <SyncStatusPanel />}
         {activeView === "data" && <KnowledgeDataView />}
         {activeView === "integrations" && <GoogleIntegrationsPanel />}
@@ -4259,7 +4254,7 @@ function Dashboard({
                 <div key={p} className="flex items-center gap-3">
                   <span className="text-[10px] text-fg-faint w-20 shrink-0">{PERIOD_LABELS[p]}</span>
                   <div className="flex-1 h-1.5 bg-surface-raised rounded-full overflow-hidden">
-                    <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${Math.round((sv.unique_visitors / maxVal) * 100)}%` }} />
+                    <div className="h-full bg-accent rounded-full" style={{ width: `${Math.round((sv.unique_visitors / maxVal) * 100)}%` }} />
                   </div>
                   <span className="text-[10px] font-semibold tabular-nums text-fg-muted w-8 text-right shrink-0">{fmt(sv.unique_visitors)}</span>
                 </div>
@@ -4269,7 +4264,7 @@ function Dashboard({
         </div>
 
         {/* Blog table */}
-        <div className="rounded-xl border border-border bg-surface overflow-hidden">
+        <div className="rounded-card border border-border bg-surface overflow-hidden">
           <div className="px-4 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Blog Performance</h2>
             <div className="flex items-center gap-3 text-[11px] text-fg-faint">
@@ -4330,7 +4325,7 @@ function Dashboard({
                         <div key={l.country} className="flex items-center gap-2">
                           <span className="text-[11px] text-fg-muted w-20 sm:w-28 shrink-0 truncate">{l.country}</span>
                           <div className="flex-1 h-1.5 bg-surface-raised rounded-full overflow-hidden">
-                            <div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} />
+                            <div className="h-full bg-accent rounded-full" style={{ width: `${pct}%` }} />
                           </div>
                           <span className="text-[10px] tabular-nums text-fg-faint w-6 text-right shrink-0">{fmt(l.unique_visitors)}</span>
                         </div>
@@ -4369,7 +4364,7 @@ function Dashboard({
         </div>
 
         {/* Blog engagement — session-based opens + revisits */}
-        <div className="rounded-xl border border-border bg-surface overflow-hidden">
+        <div className="rounded-card border border-border bg-surface overflow-hidden">
           <div className="px-4 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
             <h2 className="text-xs font-bold uppercase tracking-widest text-fg-subtle">Blog Engagement</h2>
             <div className="flex items-center gap-3 text-[11px] text-fg-faint">
@@ -4419,9 +4414,10 @@ function Dashboard({
 
         {activeView === "gradevitian" && <GradevitianPanel />}
 
-        <AdminFooter githubReady={hasPat} />
-
           </div>
+
+          {/* Full-bleed: spans the whole working area, not just the content column. */}
+          <AdminFooter githubReady={hasPat} />
         </main>
       </div>
     </div>
@@ -4447,6 +4443,13 @@ function clearSession() {
   localStorage.removeItem("avocado_admin_exp");
 }
 
+/** The saved token if it has not expired. Read-only, safe to call while rendering. */
+function peekSession(): string | null {
+  const t = localStorage.getItem("avocado_admin_token");
+  const exp = Number(localStorage.getItem("avocado_admin_exp") ?? 0);
+  return t && Date.now() <= exp ? t : null;
+}
+
 function loadSession(): string | null {
   const t   = localStorage.getItem("avocado_admin_token");
   const exp = Number(localStorage.getItem("avocado_admin_exp") ?? 0);
@@ -4455,18 +4458,17 @@ function loadSession(): string | null {
 }
 
 export default function AdminPage() {
-  const [token, setToken] = useState<string | null>(null);
+  // A saved session is read from storage on first render in the browser;
+  // sign-in and sign-out then set it explicitly.
+  const savedSession = useClientValue(peekSession, null);
+  const [tokenState, setToken] = useState<string | null | undefined>(undefined);
+  const token = tokenState === undefined ? savedSession : tokenState;
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [error, setError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [secondsAgo, setSecondsAgo] = useState(0);
 
-  // Restore token from sessionStorage after hydration (checks expiry)
-  useEffect(() => {
-    const saved = loadSession();
-    if (saved) setToken(saved);
-  }, []);
 
   // Auto-expire: check every minute
   useEffect(() => {
@@ -4494,10 +4496,10 @@ export default function AdminPage() {
   // Initial fetch + auto-refresh every 60s
   useEffect(() => {
     if (!token) return;
-    fetchStats(token);
+    const first = requestAnimationFrame(() => fetchStats(token));
     const interval = setInterval(() => fetchStats(token, true), AUTO_REFRESH_MS);
-    return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { cancelAnimationFrame(first); clearInterval(interval); };
+   
   }, [token]);
 
   // "X seconds ago" ticker

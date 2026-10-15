@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useLoadOnMount } from "@/lib/hooks";
 import { useGitHubFile } from "@/lib/admin/useGitHubFile";
-import { FieldLabel, TextInput, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, MoveButtons, triggerReingest } from "./AdminShared";
+import { FieldLabel, TextInput, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, MoveButtons } from "./AdminShared";
 
 const FILE = "backend/data/knowledge/profile.json";
 
@@ -39,18 +40,11 @@ export default function HeroStatsEditor() {
   }
 
   async function handleSave() {
-    const res = await fetch(`https://api.github.com/repos/sabarishreddy99/jayaremala/contents/${FILE}`, {
-      headers: { Authorization: `Bearer ${gh.pat}`, Accept: "application/vnd.github+json" },
-    });
-    if (!res.ok) return;
-    const data  = await res.json();
-    const bytes = Uint8Array.from(atob(data.content.replace(/\n/g, "")), c => c.charCodeAt(0));
-    const full  = JSON.parse(new TextDecoder("utf-8").decode(bytes));
-    const ok = await gh.save({ ...full, heroStats: stats }, "chore: update hero stats");
-    if (ok) { setDirty(false); triggerReingest(); }
+    const ok = await gh.savePatch({ heroStats: stats }, "chore: update hero stats");
+    if (ok) setDirty(false);
   }
 
-  useEffect(() => { if (gh.pat.trim()) handleLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useLoadOnMount(handleLoad, !!gh.pat.trim());
 
   return (
     <div className="space-y-6 max-w-xl">

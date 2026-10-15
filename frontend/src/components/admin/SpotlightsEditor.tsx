@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useLoadOnMount } from "@/lib/hooks";
 import { useGitHubFile } from "@/lib/admin/useGitHubFile";
-import { FieldLabel, TextInput, TextArea, Toggle, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, MoveButtons, triggerReingest } from "./AdminShared";
+import { FieldLabel, TextInput, TextArea, Toggle, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, MoveButtons } from "./AdminShared";
 
 const FILE = "backend/data/knowledge/spotlights.json";
 
@@ -94,10 +95,10 @@ export default function SpotlightsEditor() {
   }
   async function handleSave() {
     const ok = await gh.save(entries, "chore: update spotlights");
-    if (ok) { setDirty(false); triggerReingest(); }
+    if (ok) setDirty(false);
   }
 
-  useEffect(() => { if (gh.pat.trim()) handleLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useLoadOnMount(handleLoad, !!gh.pat.trim());
 
   return (
     <div className="space-y-5 max-w-4xl">

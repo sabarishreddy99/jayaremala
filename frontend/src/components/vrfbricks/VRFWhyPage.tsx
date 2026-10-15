@@ -100,6 +100,8 @@ export default function VRFWhyPage() {
               className="overflow-hidden rounded-2xl bg-surface-sunken ring-1 ring-border"
               style={{ aspectRatio: `${PHOTOS.clay.w} / ${PHOTOS.clay.h}` }}
             >
+              {/* Static export: plain img with an explicit aspect ratio. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={PHOTOS.clay.src}
                 alt="A mason bedding a red clay brick into fresh mortar with a trowel, working to a string line."

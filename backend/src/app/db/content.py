@@ -511,6 +511,17 @@ def delete_quote(quote_id: str) -> bool:
 
 # ── JSON regeneration helpers (used by content router after CRUD) ──────────────
 
+def _mdx_slugs(kind: str, fallback: list[dict]) -> set[str]:
+    """Slugs that have an MDX file in the repo, from mdx-index.json (written by
+    scripts/sync-knowledge.mjs, never by the backend). Falls back to the given
+    rows on an older image without the index."""
+    path = _DATA_DIR / "mdx-index.json"
+    try:
+        return set(json.loads(path.read_text()).get(kind, []))
+    except (FileNotFoundError, json.JSONDecodeError, AttributeError):
+        return {r["slug"] for r in fallback if r.get("slug")}
+
+
 def sync_blog_json_to_db() -> None:
     """Sync blog.json (MDX source) → content.db, tracking the 'mdx' source so
     that posts deleted from the repo are also removed from content.db.
@@ -525,7 +536,7 @@ def sync_blog_json_to_db() -> None:
     if not path.exists():
         return
     posts = json.loads(path.read_text())
-    mdx_slugs = {p["slug"] for p in posts if p.get("slug")}
+    mdx_slugs = _mdx_slugs("blog", posts)
 
     added = deleted = 0
     with _connect() as conn:
@@ -533,7 +544,9 @@ def sync_blog_json_to_db() -> None:
 
         for post in posts:
             slug = post.get("slug", "")
-            if not slug:
+            # Only repo-backed posts are synced from the file. blog.json also
+            # lists live-created posts once the backend has regenerated it.
+            if not slug or slug not in mdx_slugs:
                 continue
             if slug not in existing:
                 conn.execute(
@@ -547,25 +560,25 @@ def sync_blog_json_to_db() -> None:
                         post.get("publishedAt", post.get("date", "")),
                         post.get("description", ""),
                         json.dumps(post.get("tags", [])),
-                        post.get("content", "")[:2000],
+                        post.get("content", ""),
                     ),
                 )
                 added += 1
             else:
-                # Update content and metadata from blog.json for MDX posts.
-                # Admin-created posts (source='api') are fully protected by the guard.
+                # The MDX file owns this post (its page renders the file), so it
+                # wins — including over a row first created live under this slug.
                 conn.execute(
                     """UPDATE blog_posts SET
                        title=?, date=?, published_at=?, description=?, tags=?,
                        content=?, source='mdx'
-                       WHERE slug=? AND source != 'api'""",
+                       WHERE slug=?""",
                     (
                         post.get("title", ""),
                         post.get("date", ""),
                         post.get("publishedAt", post.get("date", "")),
                         post.get("description", ""),
                         json.dumps(post.get("tags", [])),
-                        post.get("content", "")[:2000],
+                        post.get("content", ""),
                         slug,
                     ),
                 )
@@ -591,8 +604,9 @@ def regenerate_blog_json() -> None:
     posts = list_blog_posts(include_drafts=False)
     output = []
     for p in posts:
-        # Truncate body to 2000 chars for RAG (keeps ChromaDB doc size bounded)
-        body = p.get("content", "")[:2000]
+        # Full body: ingest chunks it (rag/ingest.py), so nothing past an
+        # arbitrary cut-off is lost to Avocado or the MCP get_blog tool.
+        body = p.get("content", "")
         output.append({
             "slug": p["slug"],
             "title": p["title"],
@@ -657,7 +671,7 @@ def sync_lab_json_to_db() -> None:
     if not path.exists():
         return
     entries = json.loads(path.read_text())
-    mdx_slugs = {e["slug"] for e in entries if e.get("slug")}
+    mdx_slugs = _mdx_slugs("lab", entries)
 
     added = deleted = 0
     with _connect() as conn:
@@ -665,7 +679,7 @@ def sync_lab_json_to_db() -> None:
 
         for entry in entries:
             slug = entry.get("slug", "")
-            if not slug:
+            if not slug or slug not in mdx_slugs:
                 continue
             if slug not in existing:
                 conn.execute(
@@ -681,18 +695,17 @@ def sync_lab_json_to_db() -> None:
                         entry.get("updatedAt", ""),
                         json.dumps(entry.get("tech", [])),
                         json.dumps(entry.get("links", [])),
-                        entry.get("content", "")[:3000],
+                        entry.get("content", ""),
                     ),
                 )
                 added += 1
             else:
-                # Update content and metadata from lab.json for MDX entries.
-                # Admin-created entries (source='api') are fully protected by the guard.
+                # The MDX file owns this entry (its page renders the file).
                 conn.execute(
                     """UPDATE lab_entries SET
                        title=?, status=?, description=?, started_at=?, updated_at=?,
                        tech=?, links=?, content=?, source='mdx'
-                       WHERE slug=? AND source != 'api'""",
+                       WHERE slug=?""",
                     (
                         entry.get("title", ""),
                         entry.get("status", "active"),
@@ -701,7 +714,7 @@ def sync_lab_json_to_db() -> None:
                         entry.get("updatedAt", ""),
                         json.dumps(entry.get("tech", [])),
                         json.dumps(entry.get("links", [])),
-                        entry.get("content", "")[:3000],
+                        entry.get("content", ""),
                         slug,
                     ),
                 )
@@ -726,7 +739,7 @@ def regenerate_lab_json() -> None:
     entries = list_lab_entries()
     output = []
     for e in entries:
-        body = e.get("content", "")[:3000]
+        body = e.get("content", "")  # full body; ingest chunks it
         output.append({
             "slug": e["slug"],
             "title": e["title"],

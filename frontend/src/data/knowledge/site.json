@@ -1,0 +1,58 @@
+{
+  "url": "https://jayaremala.com",
+  "pages": [
+    { "href": "/", "label": "Home", "group": "Home", "desc": "Who Jaya is, in one scroll", "about": "The home page: who Jaya is, what a hiring team gets, selected roles and builds, recommendations, the origin story, how he works, recent writing, and a map of every other page." },
+    { "href": "/experience", "label": "Experience", "group": "Work", "desc": "Roles, companies & impact", "about": "Every role Jaya has held, with dates, locations, the tech used and the measured impact of each." },
+    { "href": "/education", "label": "Education", "group": "Work", "desc": "Degrees & foundations", "about": "Jaya's degrees, institutions, GPA and academic highlights." },
+    { "href": "/projects", "label": "Projects", "group": "Work", "desc": "What I've shipped", "about": "Projects Jaya has built, with descriptions, tech stacks, awards and source links." },
+    { "href": "/lab", "label": "Lab", "group": "Work", "desc": "Live system designs", "about": "Living build logs: system designs and technical decisions written up while the work is in progress." },
+    { "href": "/apps", "label": "Apps", "group": "Work", "desc": "Products I host & run", "about": "The live products Jaya hosts and operates under his domain, with status and links." },
+    { "href": "/now", "label": "Now", "group": "Work", "desc": "What I'm doing right now", "about": "A short, dated update on what Jaya is building, learning and reading at the moment." },
+    { "href": "/case-studies", "label": "Case Studies", "group": "Writing", "desc": "Briefs worked end to end", "about": "Long-form case studies that walk through a brief from problem to shipped result." },
+    { "href": "/blog", "label": "Blog", "group": "Writing", "desc": "Notes on building", "about": "Jaya's blog posts on building AI systems, software craft and the life around it." },
+    { "href": "/quotes", "label": "Quotes", "group": "Writing", "desc": "Words I live by", "about": "A curated collection of quotes Jaya returns to, grouped by theme." },
+    { "href": "/gallery", "label": "Gallery", "group": "Writing", "desc": "Milestones & moments", "about": "Photos of milestones, events and achievements with captions." },
+    { "href": "/atlas", "label": "Atlas", "group": "Developers", "desc": "Every folder, file & why", "about": "A guided map of this site's codebase: every folder and file, and why it exists." },
+    { "href": "/mcp", "label": "MCP", "group": "Developers", "desc": "Connect your LLM to my work", "about": "How to connect Claude, Cursor or any MCP client to Jaya's public, read-only MCP server and query his work directly." },
+    { "href": "/system", "label": "System", "group": "Developers", "desc": "Live observability", "about": "Live observability for this site: request traces, model health and the retrieval pipeline behind Avocado." },
+    { "href": "/chat", "label": "Ask Avocado", "group": "Developers", "desc": "Ask anything about Jaya", "about": "Avocado, the AI assistant that answers questions about Jaya from everything published on this site." }
+  ],
+  "home": {
+    "chapters": {
+      "impact": { "next": "Where it was proven" },
+      "projects": {
+        "label": "The work",
+        "place": "Shell PLC · NYU",
+        "year": "2021—present",
+        "deck": "Three roles, three builds. Everything else is one click away.",
+        "next": "What colleagues say"
+      },
+      "testimonials": {
+        "label": "Kind words",
+        "deck": "From people I shipped with at Shell, Wipro and Amazon. Unedited, from LinkedIn.",
+        "next": "Who I am"
+      },
+      "why": {
+        "place": "Kavali, Nellore",
+        "year": "2020",
+        "deck": "Where this started, and what is still running because of it.",
+        "next": "How I work"
+      },
+      "how": { "next": "What I write" },
+      "writing": {
+        "label": "Writing",
+        "deck": "Notes on building AI systems, and on the life around them. Flip through the pile.",
+        "next": "Let's talk"
+      },
+      "explore": {
+        "label": "Explore the rest",
+        "deck": "Every other page, coloured by kind. Not sure where to go? The seed in the middle answers questions.",
+        "next": "Let's talk"
+      },
+      "contact": {
+        "label": "Let's talk",
+        "deck": "Open to full-time roles, remote or hybrid. A call is the fastest way to reach me."
+      }
+    }
+  }
+}

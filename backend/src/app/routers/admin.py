@@ -55,7 +55,7 @@ def admin_whoami(creds: HTTPAuthorizationCredentials | None = Depends(_bearer)) 
 async def _run_ingest_background(force: bool) -> None:
     """Run blocking ingest in a thread so the event loop stays free."""
     try:
-        result = await asyncio.to_thread(run_ingest, force)
+        result = await asyncio.to_thread(run_ingest, force, "admin")
         _reingest_state["result"] = result
         _reingest_state["error"] = None
     except Exception as exc:
@@ -67,10 +67,11 @@ async def _run_ingest_background(force: bool) -> None:
 
 @router.post("/reingest", dependencies=[Depends(_require_token)])
 async def reingest(background_tasks: BackgroundTasks, force: bool = False) -> dict:
-    """Start a knowledge-base rebuild in the background and return immediately.
+    """Sync the knowledge base in the background and return immediately.
 
-    Poll GET /admin/reingest/status to check progress.
-    Pass ?force=true to re-embed every document regardless of hash.
+    Incremental by default (only changed documents are re-embedded — usually
+    under a second). ?force=true re-embeds everything in place; the live index
+    keeps answering meanwhile. Poll GET /admin/reingest/status for the result.
     """
     if _reingest_state["running"]:
         return {"status": "already_running"}
@@ -84,10 +85,13 @@ async def reingest(background_tasks: BackgroundTasks, force: bool = False) -> di
 @router.get("/reingest/status", dependencies=[Depends(_require_token)])
 def reingest_status() -> dict:
     """Poll this endpoint to check if a background reingest has finished."""
+    from app.rag.ingest import LAST_INGEST  # noqa: PLC0415
     return {
         "running": _reingest_state["running"],
         "result": _reingest_state["result"],
         "error": _reingest_state["error"],
+        # The latest ingest from any source (startup, content saves, this button).
+        "last": LAST_INGEST,
     }
 
 
@@ -112,21 +116,25 @@ def sync_status() -> dict:
     db_labs   = len(content_db.list_lab_entries())
     db_quotes = len(content_db.list_quotes())
 
-    # Knowledge JSON file counts
-    json_counts = {
-        "blog":         count_json("blog.json"),
-        "lab":          count_json("lab.json"),
-        "quotes":       count_json("quotes.json"),
-        "experience":   count_json("experience.json"),
-        "education":    count_json("education.json"),
-        "projects":     count_json("projects.json"),
-        "apps":         count_json("apps.json"),
-        "skills":       count_json("skills.json"),
-        "testimonials": count_json("testimonials.json"),
-        "gallery":      count_json("gallery.json"),
-    }
+    # Knowledge JSON file counts — every file in data/knowledge/, so a new one
+    # shows up here without code changes. Lists count entries; site.json counts
+    # its pages; other objects count their non-empty top-level blocks.
+    json_counts: dict[str, int] = {}
+    for path in sorted(DATA_DIR.glob("*.json")):
+        try:
+            data = json.loads(path.read_text())
+        except Exception:
+            json_counts[path.stem] = 0
+            continue
+        if isinstance(data, list):
+            json_counts[path.stem] = len(data)
+        elif isinstance(data, dict) and isinstance(data.get("pages"), list):
+            json_counts[path.stem] = len(data["pages"])
+        elif isinstance(data, dict):
+            json_counts[path.stem] = sum(1 for v in data.values() if v)
 
-    # ChromaDB — total count + per-type by ID prefix (single get() call)
+    # ChromaDB — total + per document type, read from each document's metadata
+    # (the same `type` ingest writes), so new types are counted automatically.
     chroma_total = 0
     chroma_by_type: dict[str, int] = {}
     try:
@@ -134,11 +142,9 @@ def sync_status() -> dict:
         collection = get_collection()
         chroma_total = collection.count()
         if chroma_total > 0:
-            all_ids: list[str] = collection.get(include=[])["ids"]
-            prefixes = ["blog", "lab", "quote", "exp", "edu", "proj", "app", "skills",
-                        "testimonial", "gallery", "faq", "profile"]
-            for prefix in prefixes:
-                chroma_by_type[prefix] = sum(1 for id_ in all_ids if id_.startswith(f"{prefix}_"))
+            for meta in collection.get(include=["metadatas"])["metadatas"]:
+                typ = (meta or {}).get("type", "other")
+                chroma_by_type[typ] = chroma_by_type.get(typ, 0) + 1
     except Exception:
         pass
 
@@ -151,12 +157,14 @@ def sync_status() -> dict:
     except Exception:
         pass
 
+    from app.rag.ingest import LAST_INGEST  # noqa: PLC0415
     return {
         "content_db": {"blogs": db_blogs, "labs": db_labs, "quotes": db_quotes},
         "json_files": json_counts,
         "chromadb": {"total": chroma_total, "by_type": chroma_by_type},
         "last_ingest_ts": last_ingest_ts,
         "ingest_running": _reingest_state["running"],
+        "last_ingest": LAST_INGEST,
     }
 
 

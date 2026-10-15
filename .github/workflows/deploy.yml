@@ -54,6 +54,12 @@ jobs:
               - 'infra/**'
               - 'backend/data/knowledge/*.json'
               - 'backend/data/gradevitian/*.json'
+              # Avocado and MCP read blog/lab/case-study text that
+              # scripts/sync-knowledge.mjs generates from these, so a new post
+              # or deck must rebuild the backend image too.
+              - 'frontend/src/content/**'
+              - 'frontend/public/case-studies/**'
+              - 'scripts/sync-knowledge.mjs'
 
   build:
     needs: detect-changes
@@ -161,7 +167,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           node scripts/sync-knowledge.mjs
-          git add backend/data/knowledge/blog.json backend/data/knowledge/lab.json frontend/src/data/knowledge/
+          git add backend/data/knowledge/blog.json backend/data/knowledge/lab.json backend/data/knowledge/case-study-text.json backend/data/knowledge/mdx-index.json frontend/src/data/knowledge/
           git diff --staged --quiet || (git commit -m "chore: sync knowledge base [skip ci]" && git pull --rebase --autostash && git push)
 
   build-backend:
@@ -173,6 +179,15 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v4
+
+      # The image bakes in data/knowledge/. Regenerate the derived files (full
+      # blog/lab bodies, case-study deck text) first, so the image never ships
+      # a stale copy from before this push's content changes.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Regenerate knowledge files
+        run: node scripts/sync-knowledge.mjs
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3

@@ -81,6 +81,9 @@ export default function VRFPhoto({
             // photo being squeezed into a box.
             style={{ aspectRatio: `${photo.w} / ${photo.h}` }}
           >
+            {/* Static export: next/image optimisation is off, so a plain img with
+                explicit aspect ratio is the right element here. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={photo.src}
               alt={alt}

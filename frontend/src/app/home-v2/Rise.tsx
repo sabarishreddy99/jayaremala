@@ -28,8 +28,8 @@ export default function Rise({
 
     // No IntersectionObserver (or reduced motion) → show immediately.
     if (typeof IntersectionObserver === "undefined") {
-      setShown(true);
-      return;
+      const raf = requestAnimationFrame(() => setShown(true));
+      return () => cancelAnimationFrame(raf);
     }
 
     const io = new IntersectionObserver(

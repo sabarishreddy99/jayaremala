@@ -146,50 +146,50 @@
   },
   "opinions": {
     "label": "How I work",
-    "deck": "Stances, each one backed by something I already shipped.",
-    "forLabel": "What I'm for",
-    "againstLabel": "What I won't do",
+    "deck": "Principles I execute by, and the don'ts that keep them honest.",
+    "forLabel": "How I execute",
+    "againstLabel": "The don'ts",
     "for": [
       {
-        "term": "Things that stay up",
-        "line": "Two of these shipped in 2020 and are still in production. Neither one is a portfolio piece."
+        "term": "Execution is the perfection",
+        "line": "An idea is only a guess until it ships. The polish that counts is the polish people actually touch."
       },
       {
-        "term": "Meeting people in their own language",
-        "line": "A Telugu market gets a Telugu site. That is the baseline, not a feature."
+        "term": "Brainstorm the use case before the solution",
+        "line": "Who is it for, and what do they do today? The first site had exactly one person in mind, and it worked because of that."
       },
       {
         "term": "Deterministic where it can be",
         "line": "Plain Python handles the mechanical eighty percent. The model is only asked to author."
       },
       {
-        "term": "Being on call for what you shipped",
-        "line": "Six years on, the calculators still answer during every exam season."
+        "term": "Meet people where they already are",
+        "line": "A Telugu market gets a Telugu site, and WhatsApp instead of a contact form. That is the baseline, not a feature."
       },
       {
-        "term": "One real user before any of the rest",
-        "line": "The first site had exactly one person in mind, and it worked because of that."
+        "term": "Stay on call for what you ship",
+        "line": "Two builds from 2020 are still in production. The calculators still answer every exam season."
       }
     ],
     "against": [
       {
-        "term": "Padding a poor fit",
-        "line": "Roles that don't match get dropped with a reason, instead of stretched until they do."
+        "term": "Polish what nobody has used yet",
+        "line": "Ship to one real user first. What they do with it decides what earns the second pass."
       },
       {
-        "term": "Guessing when a person should decide",
+        "term": "Write code before the problem is clear",
+        "line": "If I can't say who it's for in one sentence, it isn't ready to build."
+      },
+      {
+        "term": "Guess when a person should decide",
         "line": "Some calls genuinely need a human, so the agent parks them instead of guessing."
       },
       {
-        "term": "Reinventing what already works",
+        "term": "Reinvent what already works",
         "line": "Tailorbird wraps an existing skill in automation rather than rebuilding it from scratch."
       },
       {
-        "term": "A contact form where the trade uses WhatsApp",
-        "line": "WhatsApp instead, because that is how the construction trade actually talks."
-      },
-      {
-        "term": "Stock photography standing in for the real thing",
+        "term": "Fake the evidence",
         "line": "If the photograph is not of the actual yard, it does not go on the page."
       }
     ]

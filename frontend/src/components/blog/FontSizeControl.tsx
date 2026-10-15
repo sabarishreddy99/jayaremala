@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { useStoredState } from "@/lib/hooks";
 
 const SIZES = [
   { label: "Small",   value: "0.9375rem", display: 11 },
@@ -13,21 +14,13 @@ const LS_KEY  = "blog-font-size";
 const CSS_VAR = "--blog-font-size";
 
 export default function FontSizeControl() {
-  const [idx, setIdx] = useState(DEFAULT);
+  // The saved size lives in localStorage; reading it through the store keeps
+  // every control on the page (and other tabs) in step.
+  const [saved, setSaved] = useStoredState(LS_KEY, SIZES[DEFAULT].value);
+  const found = SIZES.findIndex((s) => s.value === saved);
+  const idx = found === -1 ? DEFAULT : found;
 
-  useEffect(() => {
-    const saved = localStorage.getItem(LS_KEY);
-    if (saved) {
-      const i = SIZES.findIndex((s) => s.value === saved);
-      if (i !== -1) setIdx(i);
-    }
-  }, []);
-
-  const apply = (i: number) => {
-    setIdx(i);
-    localStorage.setItem(LS_KEY, SIZES[i].value);
-    document.documentElement.style.setProperty(CSS_VAR, SIZES[i].value);
-  };
+  const apply = (i: number) => setSaved(SIZES[i].value);
 
   useEffect(() => {
     document.documentElement.style.setProperty(CSS_VAR, SIZES[idx].value);

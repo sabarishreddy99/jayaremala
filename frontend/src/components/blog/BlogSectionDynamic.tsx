@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useMounted } from "@/lib/hooks";
 import useSWR from "swr";
 import { BlogSection } from "./BlogIndexStats";
 import {
@@ -38,8 +39,7 @@ const fetcher = () => fetchBlogPosts();
  * because the API response (without the new slug) replaced staticPosts entirely.
  */
 export default function BlogSectionDynamic({ staticPosts }: Props) {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => { setMounted(true); }, []);
+  const mounted = useMounted();
 
   const { data: apiPosts } = useSWR<ApiBlogPost[]>(BLOG_POSTS_KEY, fetcher, {
     fallbackData: undefined,
@@ -55,7 +55,9 @@ export default function BlogSectionDynamic({ staticPosts }: Props) {
     );
     if (mounted && apiPosts && apiPosts.length > 0) {
       for (const p of apiPosts) {
-        merged.set(p.slug, normalizeBlogPost(p));
+        const live = normalizeBlogPost(p);
+        // The API copy may not carry the MDX cover image; keep the static one.
+        merged.set(p.slug, { ...live, image: live.image ?? merged.get(p.slug)?.image });
       }
     }
     return Array.from(merged.values()).sort(

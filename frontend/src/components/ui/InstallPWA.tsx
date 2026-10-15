@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useClientValue, useMounted } from "@/lib/hooks";
 import { createPortal } from "react-dom";
 
 // The browser-fired install event (not in TS's lib DOM types).
@@ -79,20 +80,22 @@ export default function InstallPWA({
   onTrigger?: () => void;
 }) {
   const [deferred, setDeferred] = useState<BeforeInstallPromptEvent | null>(null);
-  const [installed, setInstalled] = useState(false);
+  const [installedNow, setInstalled] = useState(false);
+  // Already running as an installed app? Read from the browser, no effect needed.
+  const standalone = useClientValue(
+    () => window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as unknown as { standalone?: boolean }).standalone === true,
+    false,
+  );
+  const installed = standalone || installedNow;
   const [showHelp, setShowHelp] = useState(false);
-  const [mounted, setMounted] = useState(false);
-  const [tab, setTab] = useState<PlatformId>("windows");
+  const mounted = useMounted();
+  // The visitor's platform picks the default tab; a click overrides it.
+  const detected = useClientValue<PlatformId>(detectPlatform, "windows");
+  const [picked, setTab] = useState<PlatformId | null>(null);
+  const tab = picked ?? detected;
 
   useEffect(() => {
-    setMounted(true);
-    setTab(detectPlatform());
-
-    const standalone =
-      window.matchMedia("(display-mode: standalone)").matches ||
-      (navigator as unknown as { standalone?: boolean }).standalone === true;
-    if (standalone) setInstalled(true);
-
     const onBIP = (e: Event) => {
       e.preventDefault();
       setDeferred(e as BeforeInstallPromptEvent);

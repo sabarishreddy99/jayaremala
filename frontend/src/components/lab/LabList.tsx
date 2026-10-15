@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import NoteTile from "@/components/portfolio/NoteTile";
 import { useState, useEffect, useRef } from "react";
 import type { LabMeta, LabStatus } from "@/lib/content/lab";
 
@@ -21,7 +21,7 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
     <div
       ref={ref}
       style={{ transitionDelay: `${delay}ms` }}
-      className={`transition-[opacity,transform] duration-500 ease-out ${
+      className={`flex flex-1 transition-[opacity,transform] duration-500 ease-out ${
         visible ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
       }`}
     >
@@ -125,58 +125,32 @@ export default function LabList({ entries }: { entries: LabMeta[] }) {
         </div>
       )}
 
-      {/* Cards */}
-      <ol className="space-y-4">
+      {/* Cards — the same tilted notes as the blog and the home pile */}
+      <ol className="note-desk grid grid-cols-1 gap-8 sm:grid-cols-2 sm:gap-x-7 sm:gap-y-10 lg:grid-cols-3">
         {filtered.map((entry, i) => {
           const s = STATUS_STYLES[entry.status];
           return (
-            <li key={entry.slug}>
+            <li key={entry.slug} className="flex">
               <Reveal delay={Math.min(i * 70, 350)}>
-              <Link
-                href={`/lab/${entry.slug}`}
-                className={`group relative block rounded-sm border border-border bg-surface p-5 sm:p-6 hover:shadow-md transition-all overflow-hidden ${s.leftBorder}`}
-              >
-                {/* Hover sweep bar */}
-                <div className="absolute inset-x-0 top-0 h-px bg-accent origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
-
-                {/* Header row */}
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <h2 className="text-base font-bold text-fg group-hover:text-accent transition-colors leading-snug">
-                    {entry.title}
-                  </h2>
-                  <span className={`shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-sm border text-[10px] font-semibold ${s.bg} ${s.text}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full ${s.dot}`} />
-                    {s.label}
-                  </span>
-                </div>
-
-                <p className="text-sm text-fg-subtle leading-relaxed mb-4">{entry.description}</p>
-
-                {/* Footer: tech tags + date range + explore arrow */}
-                <div className="flex items-end justify-between gap-3">
-                  <div className="flex flex-wrap gap-1.5">
-                    {entry.tech.map((t) => (
-                      <span key={t} className="rounded-sm bg-surface-raised px-2 py-0.5 text-[10px] font-mono font-medium text-fg-subtle border border-border">
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className="flex flex-col items-end gap-1 shrink-0">
-                    {entry.startedAt && (
-                      <span className="text-[10px] text-fg-faint whitespace-nowrap">
-                        {formatMonth(entry.startedAt)} → {formatMonth(entry.updatedAt)}
-                      </span>
-                    )}
-                    <span className="flex items-center gap-1 text-[11px] font-medium text-accent opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-200">
-                      Explore
-                      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                        <path d="M5 12h14M12 5l7 7-7 7"/>
-                      </svg>
+                <NoteTile
+                  href={`/lab/${entry.slug}`}
+                  index={i}
+                  tags={entry.tech}
+                  title={entry.title}
+                  description={entry.description}
+                  eyebrow={<>Lab{entry.startedAt ? <> · {formatMonth(entry.startedAt)} → {formatMonth(entry.updatedAt)}</> : null}</>}
+                  badge={
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-bg/85 px-2.5 py-0.5 font-mono text-[0.6875rem] text-fg-muted backdrop-blur-sm">
+                      <span className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+                      {s.label}
                     </span>
-                  </div>
-                </div>
-              </Link>
+                  }
+                  footer={
+                    <span className="min-w-0 truncate font-mono text-[0.6875rem] opacity-70">
+                      {entry.tech.slice(0, 3).join(" · ")}
+                    </span>
+                  }
+                />
               </Reveal>
             </li>
           );

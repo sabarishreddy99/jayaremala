@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { useMounted } from "@/lib/hooks";
 
 interface Props {
   src: string;
@@ -15,13 +16,13 @@ export default function BlogImage({ src, alt, caption }: Props) {
   const fullSrc = src.startsWith("http") ? src : `${BASE}${src}`;
   const [open, setOpen]       = useState(false);
   const [animIn, setAnimIn]   = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => { setMounted(true); }, []);
+  // Closing also resets the entrance animation, ready for the next open.
+  const close = () => { setOpen(false); setAnimIn(false); };
+  const mounted = useMounted();
 
   // Drive entrance animation after the portal mounts
   useEffect(() => {
-    if (!open) { setAnimIn(false); return; }
+    if (!open) return;
     const raf = requestAnimationFrame(() => setAnimIn(true));
     return () => cancelAnimationFrame(raf);
   }, [open]);
@@ -29,7 +30,7 @@ export default function BlogImage({ src, alt, caption }: Props) {
   // Scroll lock + ESC
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") close(); };
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
     return () => {
@@ -41,7 +42,7 @@ export default function BlogImage({ src, alt, caption }: Props) {
   /* ── Lightbox overlay (portal) ─────────────────────────────────────── */
   const overlay = (
     <div
-      onClick={() => setOpen(false)}
+      onClick={() => close()}
       style={{
         position: "fixed",
         inset: 0,
@@ -105,7 +106,7 @@ export default function BlogImage({ src, alt, caption }: Props) {
 
       {/* Close button */}
       <button
-        onClick={() => setOpen(false)}
+        onClick={() => close()}
         aria-label="Close image"
         style={{
           position: "fixed",

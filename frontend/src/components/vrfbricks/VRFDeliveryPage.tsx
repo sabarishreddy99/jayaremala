@@ -1,7 +1,7 @@
 "use client";
 
 import ScrollReveal from "@/components/ui/ScrollReveal";
-import { BRICKS, BUSINESS, DELIVERY, NEEDS_CONFIRMATION, fmtHours } from "@/data/vrfbricks/business";
+import { BRICKS, DELIVERY, NEEDS_CONFIRMATION, fmtHours } from "@/data/vrfbricks/business";
 import { COPY } from "@/data/vrfbricks/copy";
 import { useLang } from "./VRFLang";
 import VRFFaq from "./VRFFaq";

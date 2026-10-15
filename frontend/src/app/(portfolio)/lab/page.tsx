@@ -12,7 +12,7 @@ export default function LabPage() {
   const shippedCount = staticEntries.filter((e) => e.status === "shipped").length;
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 sm:px-6 py-12 sm:py-16">
+    <div className="mx-auto w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl 2xl:max-w-7xl px-4 sm:px-6 xl:px-8 py-12 sm:py-16">
       <header className="mb-12 sm:mb-16 relative">
         {/* Decorative background bloom */}
         <div

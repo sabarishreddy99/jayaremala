@@ -1,8 +1,17 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { takePendingWrite } from "@/lib/admin/openInWriter";
+import { useLoadOnMount, useNow } from "@/lib/hooks";
 import { API_BASE_URL } from "@/lib/api/client";
-import { triggerReingest } from "./AdminShared";
+
+/** Editor toolbars are data: each button says what to insert, and the click
+ *  handler supplies the insert functions (which read the textarea ref) — so no
+ *  ref-reading closure is created during render. */
+type EditorTools = {
+  inline: (before: string, after: string, placeholder: string) => void;
+  block: (template: string, caretOffset?: number) => void;
+};
 
 /* ────────────────────────────────────────────────────────────────────────────
    Write Lab — full-featured authoring view for Lab (living system docs).
@@ -31,6 +40,8 @@ interface LabRow {
   tech: string[];
   links: LabLink[];
   content: string;
+  /** "mdx" when the entry comes from a file in the repo, "api" when created live. */
+  source?: string;
 }
 
 interface DraftEntry {
@@ -129,7 +140,7 @@ function mdxToHTML(md: string): string {
     if (line.startsWith("### "))  { html += `<h3 style="font-size:1.05rem;font-weight:700;margin:1.5em 0 0.4em">${inlineFmt(line.slice(4))}</h3>`; i++; continue; }
     if (line.startsWith("## "))   { html += `<h2 style="font-size:1.3rem;font-weight:700;margin:2em 0 0.5em;padding-bottom:0.3em;border-bottom:1px solid #3f3f46">${inlineFmt(line.slice(3))}</h2>`; i++; continue; }
     if (line.startsWith("# "))    { html += `<h1 style="font-size:1.75rem;font-weight:800;margin:0 0 0.5em">${inlineFmt(line.slice(2))}</h1>`; i++; continue; }
-    if (line.startsWith("> "))    { html += `<blockquote style="border-left:3px solid #4f46e5;padding:0.5em 1em;margin:1em 0;background:#eef2ff;border-radius:0 0.5rem 0.5rem 0;font-style:italic"><p style="margin:0">${inlineFmt(line.slice(2))}</p></blockquote>`; i++; continue; }
+    if (line.startsWith("> "))    { html += `<blockquote style="border-left:3px solid var(--accent);padding:0.5em 1em;margin:1em 0;background:var(--accent-light);border-radius:0 0.5rem 0.5rem 0;font-style:italic"><p style="margin:0">${inlineFmt(line.slice(2))}</p></blockquote>`; i++; continue; }
     if (line === "---") { html += `<hr style="border:none;border-top:1px solid #3f3f46;margin:2em 0" />`; i++; continue; }
     if (/^[-*] /.test(line)) {
       let items = "";
@@ -162,7 +173,7 @@ function mdxToHTML(md: string): string {
       i++;
       while (i < lines.length && !lines[i].trim().startsWith(`</${tag}`)) { inner.push(lines[i]); i++; }
       i++; // skip closing tag
-      html += `<div style="border-left:3px solid #6366f1;padding:0.5em 0.9em;margin:1em 0;background:#1e1b4b0d;border-radius:0 0.5rem 0.5rem 0"><div style="font-size:9px;color:#6366f1;font-family:monospace;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3em">⬡ ${tag}</div><div style="color:#71717a">${inner.map((l) => inlineFmt(l)).join("<br />")}</div></div>`;
+      html += `<div style="border-left:3px solid var(--accent);padding:0.5em 0.9em;margin:1em 0;background:var(--accent-light);border-radius:0 0.5rem 0.5rem 0"><div style="font-size:9px;color:var(--accent);font-family:monospace;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:0.3em">⬡ ${tag}</div><div style="color:#71717a">${inner.map((l) => inlineFmt(l)).join("<br />")}</div></div>`;
       continue;
     }
     html += `<p style="margin:0 0 0.8em;line-height:1.75;color:#71717a">${inlineFmt(line)}</p>`;
@@ -257,6 +268,7 @@ export default function LabEditor() {
   // Draft management
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null);
   const [lastSaved, setLastSaved]           = useState<Date | null>(null);
+  const clock = useNow(10_000); // refreshes the "saved Xs ago" label
   const [drafts, setDrafts]                 = useState<DraftEntry[]>([]);
   const [showDraftMenu, setShowDraftMenu]   = useState(false);
 
@@ -283,6 +295,8 @@ export default function LabEditor() {
   const [confirmDeleteSlug, setConfirmDeleteSlug] = useState<string | null>(null);
   const [deletingSlug, setDeletingSlug]         = useState<string | null>(null);
   const [editingExisting, setEditingExisting]   = useState(false);
+  // "mdx" while editing an entry whose source of truth is a file in the repo.
+  const [editingSource, setEditingSource] = useState<string | null>(null);
   const [selectedSlugs, setSelectedSlugs]       = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting]         = useState(false);
   const [bulkConfirm, setBulkConfirm]           = useState(false);
@@ -316,7 +330,7 @@ export default function LabEditor() {
 
   const savedAgoText = lastSaved
     ? (() => {
-        const s = Math.round((Date.now() - lastSaved.getTime()) / 1000);
+        const s = Math.round(((clock ?? lastSaved.getTime()) - lastSaved.getTime()) / 1000);
         if (s < 10) return "just saved";
         if (s < 60) return `saved ${s}s ago`;
         return `saved ${Math.round(s / 60)}m ago`;
@@ -365,6 +379,7 @@ export default function LabEditor() {
     setShowTemplates(false);
     setShowDraftMenu(false);
     setEditingExisting(false);
+    setEditingSource(null);
   }
 
   function deleteDraftEntry(id: string) {
@@ -381,6 +396,7 @@ export default function LabEditor() {
     setCurrentDraftId(null); setLastSaved(null); setShowTemplates(true);
     setResult(null); setShowDraftMenu(false); setActivePanel("write");
     setEditingExisting(false);
+    setEditingSource(null);
   }
 
   // === EFFECTS ===
@@ -566,7 +582,35 @@ export default function LabEditor() {
     }
   }
 
-  function loadEntryForEdit(e: LabRow) {
+  // Repo-backed entries are edited from their MDX file. The database copy is
+  // the searchable text Avocado reads (code blocks reduced, components
+  // stripped), so publishing it back would damage the MDX.
+  async function fetchMdxBody(slugVal: string): Promise<string | null> {
+    const res = await fetch(`${GITHUB_LAB_MDX_BASE}/${slugVal}.mdx`, {
+      headers: { Authorization: `Bearer ${githubPat.trim()}`, Accept: "application/vnd.github+json" },
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    const bytes = Uint8Array.from(atob(String(data.content).replace(/\n/g, "")), (c) => c.charCodeAt(0));
+    const raw = new TextDecoder("utf-8").decode(bytes);
+    const end = raw.startsWith("---") ? raw.indexOf("\n---", 3) : -1;
+    return end === -1 ? raw : raw.slice(end + 4).replace(/^\s*\n/, "");
+  }
+
+  async function loadEntryForEdit(e: LabRow) {
+    let body = e.content;
+    if (e.source === "mdx") {
+      if (!githubPat.trim()) {
+        setEntriesResult({ ok: false, message: `Connect GitHub to edit “${e.title}”: it is an MDX file in the repo.` });
+        return;
+      }
+      const mdx = await fetchMdxBody(e.slug);
+      if (mdx === null) {
+        setEntriesResult({ ok: false, message: `Could not load ${e.slug}.mdx from GitHub.` });
+        return;
+      }
+      body = mdx;
+    }
     setTitle(e.title);
     setSlug(e.slug);
     setSlugEdited(true);
@@ -576,30 +620,42 @@ export default function LabEditor() {
     setUpdatedAt(e.updated_at);
     setTech(e.tech);
     setLinks(e.links.length > 0 ? e.links : [{ label: "", url: "" }]);
-    setContent(e.content);
+    setContent(body);
     setCurrentDraftId(null);
     setLastSaved(null);
     setShowTemplates(false);
     setActivePanel("write");
     setEditingExisting(true);
+    setEditingSource(e.source ?? null);
     setShowPublished(false);
     setResult(null);
     requestAnimationFrame(() => textareaRef.current?.focus());
   }
 
+  // Opened from "Edit in GitHub writer" in Live lab entries.
+  useLoadOnMount(() => {
+    const slug = takePendingWrite("lab");
+    if (!slug) return;
+    void loadEntries().then((rows) => {
+      const row = rows.find((r) => r.slug === slug);
+      if (row) void loadEntryForEdit(row);
+    });
+  });
+
   // === GitHub sync (optional — only when PAT present) ===
-  async function pushMdxToGitHub(slugVal: string, mdx: string) {
-    if (!githubPat.trim()) return;
+  async function pushMdxToGitHub(slugVal: string, mdx: string): Promise<boolean> {
+    if (!githubPat.trim()) return false;
     try {
       const url  = `${GITHUB_LAB_MDX_BASE}/${slugVal}.mdx`;
       const hdrs = { Authorization: `Bearer ${githubPat.trim()}`, Accept: "application/vnd.github+json", "Content-Type": "application/json" };
       const getRes = await fetch(url, { headers: hdrs });
-      if (!getRes.ok && getRes.status !== 404) return;
+      if (!getRes.ok && getRes.status !== 404) return false;
       const sha = getRes.ok ? (await getRes.json() as { sha: string }).sha : undefined;
       const body: Record<string, string> = { message: `lab: ${sha ? "update" : "add"} ${slugVal}`, content: btoa(unescape(encodeURIComponent(mdx))), branch: "main" };
       if (sha) body.sha = sha;
-      await fetch(url, { method: "PUT", headers: hdrs, body: JSON.stringify(body) });
-    } catch { /* non-fatal — content.db save already succeeded */ }
+      const put = await fetch(url, { method: "PUT", headers: hdrs, body: JSON.stringify(body) });
+      return put.ok;
+    } catch { return false; /* non-fatal for new entries — content.db save already succeeded */ }
   }
 
   async function pushAggregateJson(rows: LabRow[]) {
@@ -645,6 +701,26 @@ export default function LabEditor() {
       started_at: startedAt, updated_at: updatedAt, tech: techArr, links: cleanLinks, content,
     };
     const exists = editingExisting || entries.some((e) => e.slug === slug.trim());
+
+    // An MDX entry is changed by committing its file; the deploy then syncs the
+    // database and Avocado. Writing the database directly would be refused (and
+    // overwritten on the next deploy anyway).
+    if (exists && editingSource === "mdx") {
+      if (!githubPat.trim()) {
+        setResult({ ok: false, message: "Connect GitHub to update this entry: it is an MDX file in the repo." });
+        setPublishing(false);
+        return;
+      }
+      const mdx = buildLabMdx({ title: body.title, status: body.status, description: body.description, startedAt, updatedAt, tech: techArr, links: cleanLinks, content });
+      const ok = await pushMdxToGitHub(slug.trim(), mdx);
+      setResult(ok
+        ? { ok: true, message: `Committed ${slug.trim()}.mdx. The page and Avocado update when the deploy finishes, in a few minutes.` }
+        : { ok: false, message: `Could not commit ${slug.trim()}.mdx to GitHub. Check the token's contents:write permission.` });
+      if (ok && currentDraftId) deleteDraftEntry(currentDraftId);
+      setPublishing(false);
+      return;
+    }
+
     try {
       const url = exists ? `${API_BASE_URL}/content/lab/${slug.trim()}` : `${API_BASE_URL}/content/lab`;
       const res = await fetch(url, {
@@ -655,7 +731,6 @@ export default function LabEditor() {
       if (res.ok) {
         setResult({ ok: true, message: `${exists ? "Updated" : "Published"}! /lab/${slug.trim()} is live.` });
         setEditingExisting(true);
-        triggerReingest();
         // Optional git sync (MDX file + aggregate lab.json)
         const mdx = buildLabMdx({ title: body.title, status: body.status, description: body.description, startedAt, updatedAt, tech: techArr, links: cleanLinks, content });
         void pushMdxToGitHub(slug.trim(), mdx);
@@ -687,7 +762,6 @@ export default function LabEditor() {
         setConfirmDeleteSlug(null);
         if (slug === slugVal) newEntry();
         const rows = await loadEntries();
-        triggerReingest();
         void deleteMdxFromGitHub(slugVal);
         void pushAggregateJson(rows);
       } else {
@@ -723,7 +797,6 @@ export default function LabEditor() {
     }
     setSelectedSlugs(new Set());
     const rows = await loadEntries();
-    triggerReingest();
     void pushAggregateJson(rows);
     setBulkDeleting(false);
     setEntriesResult({ ok: true, message: `Deleted ${slugsToDelete.length} entr${slugsToDelete.length !== 1 ? "ies" : "y"}.` });
@@ -732,7 +805,7 @@ export default function LabEditor() {
   const STATUS_PILL: Record<LabStatus, string> = {
     active:  "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400",
     paused:  "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400",
-    shipped: "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400",
+    shipped: "bg-accent-light  text-accent ",
   };
 
   // === FOCUS MODE ===
@@ -750,14 +823,14 @@ export default function LabEditor() {
           </div>
           <div className="flex items-center gap-4">
             {[
-              { label: "B",  title: "Bold (⌘B)",   action: () => insertInline("**","**","bold text") },
-              { label: "I",  title: "Italic (⌘I)", action: () => insertInline("*","*","italic text") },
-              { label: "`",  title: "Code (⌘`)",   action: () => insertInline("`","`","code") },
-              { label: "H2", title: "Heading 2",   action: () => insertBlock("## ") },
-              { label: "•",  title: "Bullet list", action: () => insertBlock("- ") },
-              { label: "⬡",  title: "Update entry", action: () => insertBlock(`<Update date="${todayISO()}">\n\n</Update>`, 24) },
+              { label: "B",  title: "Bold (⌘B)",   run: (t: EditorTools) => t.inline("**","**","bold text") },
+              { label: "I",  title: "Italic (⌘I)", run: (t: EditorTools) => t.inline("*","*","italic text") },
+              { label: "`",  title: "Code (⌘`)",   run: (t: EditorTools) => t.inline("`","`","code") },
+              { label: "H2", title: "Heading 2",   run: (t: EditorTools) => t.block("## ") },
+              { label: "•",  title: "Bullet list", run: (t: EditorTools) => t.block("- ") },
+              { label: "⬡",  title: "Update entry", run: (t: EditorTools) => t.block(`<Update date="${todayISO()}">\n\n</Update>`, 24) },
             ].map((btn) => (
-              <button key={btn.label} onClick={btn.action} title={btn.title}
+              <button key={btn.label} onClick={() => btn.run({ inline: insertInline, block: insertBlock })} title={btn.title}
                 className="px-2 py-0.5 rounded text-[11px] text-fg-muted hover:text-fg transition-colors font-mono">
                 {btn.label}
               </button>
@@ -835,7 +908,7 @@ export default function LabEditor() {
       </div>
 
       {/* ── Published entries ───────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="rounded-card border border-border bg-surface overflow-hidden">
         <button
           onClick={() => { const next = !showPublished; setShowPublished(next); if (next && entries.length === 0) void loadEntries(); }}
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-raised transition-colors"
@@ -859,7 +932,7 @@ export default function LabEditor() {
               <button
                 onClick={loadEntries}
                 disabled={loadingEntries}
-                className="inline-flex items-center gap-1.5 text-xs font-medium border border-border rounded px-3 py-1.5 text-fg-muted hover:text-fg hover:border-indigo-400 transition-colors disabled:opacity-40"
+                className="inline-flex items-center gap-1.5 text-xs font-medium border border-border rounded px-3 py-1.5 text-fg-muted hover:text-fg hover:border-accent transition-colors disabled:opacity-40"
               >
                 {loadingEntries ? (
                   <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Loading…</>
@@ -919,8 +992,8 @@ export default function LabEditor() {
                     </div>
                     <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_PILL[e.status]}`}>{e.status}</span>
                     <div className="flex items-center gap-2 shrink-0">
-                      <button onClick={() => loadEntryForEdit(e)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-border text-[11px] font-medium text-fg-muted hover:border-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                      <button onClick={() => void loadEntryForEdit(e)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1 rounded border border-border text-[11px] font-medium text-fg-muted hover:border-accent hover:text-accent  transition-colors">
                         <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                         Edit
                       </button>
@@ -957,27 +1030,29 @@ export default function LabEditor() {
       </div>
 
       {/* ── Entry header card ───────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="rounded-card border border-border bg-surface overflow-hidden">
         <div className="p-5 sm:p-7 space-y-4">
 
           {editingExisting && (
             <div className="flex items-center gap-2 text-[11px] bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded px-3 py-2 text-amber-700 dark:text-amber-400">
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
               <span>Editing existing entry, publishing will update <code className="font-mono bg-amber-100 dark:bg-amber-900/50 px-1 rounded">/lab/{slug}</code></span>
-              <button onClick={() => setEditingExisting(false)} className="ml-auto opacity-60 hover:opacity-100 transition-opacity text-sm leading-none">×</button>
+              <button onClick={() => { setEditingExisting(false); setEditingSource(null); }} className="ml-auto opacity-60 hover:opacity-100 transition-opacity text-sm leading-none">×</button>
             </div>
           )}
 
           {/* Large title */}
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
             placeholder="Entry title…"
-            className="w-full bg-transparent text-2xl sm:text-3xl font-bold text-fg placeholder:text-fg-subtle focus:outline-none leading-tight" />
+            aria-label="Title"
+            className="display-serif display-md w-full bg-transparent text-fg placeholder:text-fg-faint focus:outline-none" />
 
           {/* Description */}
           <div className="relative">
             <input type="text" value={description} onChange={(e) => setDescription(e.target.value)}
               placeholder="One-line description shown on the lab index…"
-              className="w-full bg-transparent text-sm text-fg-subtle placeholder:text-fg-faint focus:outline-none pr-14" />
+              aria-label="Description"
+              className="voice-serif w-full bg-transparent text-[1.0625rem] text-fg-muted placeholder:text-fg-faint focus:outline-none pr-14" />
             <span className={`absolute right-0 top-0 text-[10px] tabular-nums font-mono ${description.length > 160 ? "text-rose-500" : description.length > 130 ? "text-amber-500" : "text-fg-faint"}`}>
               {description.length}/160
             </span>
@@ -987,9 +1062,9 @@ export default function LabEditor() {
           <div>
             <div className="flex flex-wrap items-center gap-1.5 min-h-[28px]">
               {tech.map((t) => (
-                <span key={t} className="inline-flex items-center gap-1 bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 text-[11px] font-medium rounded-sm px-2.5 py-0.5">
+                <span key={t} className="inline-flex items-center gap-1 bg-accent-light  text-accent  text-[11px] font-medium rounded-full px-2.5 py-0.5">
                   {t}
-                  <button onClick={() => removeTech(t)} className="text-indigo-400 hover:text-indigo-600 dark:hover:text-indigo-200 leading-none ml-0.5">×</button>
+                  <button onClick={() => removeTech(t)} className="text-accent hover:text-accent  leading-none ml-0.5">×</button>
                 </span>
               ))}
               <input type="text" value={techInput} onChange={(e) => setTechInput(e.target.value)}
@@ -1001,7 +1076,7 @@ export default function LabEditor() {
               <div className="flex flex-wrap gap-1 mt-2">
                 {suggestedTech.map((t) => (
                   <button key={t} onClick={() => addTech(t)}
-                    className="text-[10px] text-fg-faint hover:text-indigo-600 dark:hover:text-indigo-400 border border-border rounded-sm px-2 py-0.5 transition-colors hover:border-indigo-300 dark:hover:border-indigo-700">
+                    className="text-[11px] text-fg-subtle hover:text-fg border border-border rounded-full px-2.5 py-0.5 transition-colors hover:border-accent hover:bg-accent-light">
                     + {t}
                   </button>
                 ))}
@@ -1009,35 +1084,39 @@ export default function LabEditor() {
             )}
           </div>
 
-          {/* Slug + status + dates row */}
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 pt-2 border-t border-border-subtle text-[11px]">
-            <div className="flex items-center gap-1 font-mono text-fg-faint">
-              <span>/lab/</span>
-              <input type="text" value={slug} onChange={(e) => { setSlug(e.target.value); setSlugEdited(true); }}
-                placeholder="entry-slug"
-                className="bg-transparent text-accent focus:outline-none w-40" />
-            </div>
-            <span className="text-fg-faint">·</span>
-            <select value={status} onChange={(e) => setStatus(e.target.value as LabStatus)}
-              className="bg-transparent text-fg-faint focus:outline-none focus:text-fg cursor-pointer">
-              <option value="active">active</option>
-              <option value="paused">paused</option>
-              <option value="shipped">shipped</option>
-            </select>
-            <span className="text-fg-faint">·</span>
-            <span className="text-fg-faint text-[10px] uppercase tracking-wider">Started:</span>
-            <input type="date" value={startedAt} onChange={(e) => setStartedAt(e.target.value)}
-              className="bg-transparent text-accent focus:outline-none focus:text-fg cursor-pointer font-mono text-xs" />
-            <span className="text-fg-faint">·</span>
-            <span className="text-fg-faint text-[10px] uppercase tracking-wider">Updated:</span>
-            <input type="date" value={updatedAt} onChange={(e) => setUpdatedAt(e.target.value)}
-              className="bg-transparent text-fg-faint focus:outline-none focus:text-fg cursor-pointer" />
+          {/* URL, status and dates: labelled fields that stack on phones. */}
+          <div className="grid gap-3 border-t border-border-subtle pt-4 sm:grid-cols-2 xl:grid-cols-[minmax(0,1.4fr)_minmax(0,0.8fr)_minmax(0,1fr)_minmax(0,1fr)]">
+            <label className="block min-w-0">
+              <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-fg-subtle">URL</span>
+              <span className="mt-1.5 flex items-center rounded-xl border border-border bg-bg pl-3 font-mono text-[0.8125rem] focus-within:border-accent focus-within:ring-2 focus-within:ring-accent/15">
+                <span className="shrink-0 text-fg-faint">/lab/</span>
+                <input type="text" value={slug} onChange={(e) => { setSlug(e.target.value); setSlugEdited(true); }}
+                  placeholder="entry-slug"
+                  className="min-w-0 flex-1 bg-transparent py-2 pr-3 text-fg focus:outline-none" />
+              </span>
+            </label>
+            <label className="block">
+              <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-fg-subtle">Status</span>
+              <select value={status} onChange={(e) => setStatus(e.target.value as LabStatus)} className="mt-1.5 w-full rounded-xl border border-border bg-bg px-3 py-2 text-[0.8125rem] text-fg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 transition-colors">
+                <option value="active">Active</option>
+                <option value="paused">Paused</option>
+                <option value="shipped">Shipped</option>
+              </select>
+            </label>
+            <label className="block">
+              <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-fg-subtle">Started</span>
+              <input type="date" value={startedAt} onChange={(e) => setStartedAt(e.target.value)} className="mt-1.5 w-full rounded-xl border border-border bg-bg px-3 py-2 text-[0.8125rem] text-fg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 transition-colors" />
+            </label>
+            <label className="block">
+              <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-fg-subtle">Last updated</span>
+              <input type="date" value={updatedAt} onChange={(e) => setUpdatedAt(e.target.value)} className="mt-1.5 w-full rounded-xl border border-border bg-bg px-3 py-2 text-[0.8125rem] text-fg focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 transition-colors" />
+            </label>
           </div>
 
           {/* Links */}
           <div className="pt-2 border-t border-border-subtle">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-semibold uppercase tracking-widest text-fg-faint">Links</span>
+              <span className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-fg-subtle">Links</span>
               {links.length < 5 && (
                 <button onClick={addLink} className="text-[10px] text-accent hover:text-accent/80 transition-colors">+ Add link</button>
               )}
@@ -1047,10 +1126,10 @@ export default function LabEditor() {
                 <div key={idx} className="flex gap-2">
                   <input value={link.label} onChange={(e) => updateLink(idx, "label", e.target.value)}
                     placeholder="Label (e.g. GitHub)"
-                    className="w-1/3 rounded border border-border bg-bg px-2 py-1.5 text-xs text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent" />
+                    className="w-1/3 rounded-xl border border-border bg-bg px-3 py-2 text-[0.8125rem] text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent" />
                   <input value={link.url} onChange={(e) => updateLink(idx, "url", e.target.value)}
                     placeholder="https://…"
-                    className="flex-1 rounded border border-border bg-bg px-2 py-1.5 text-xs text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent" />
+                    className="min-w-0 flex-1 rounded-xl border border-border bg-bg px-3 py-2 text-[0.8125rem] text-fg font-mono placeholder:text-fg-faint focus:outline-none focus:border-accent" />
                   {links.length > 1 && (
                     <button onClick={() => removeLink(idx)} className="text-[11px] text-rose-500 hover:text-rose-600 px-2 shrink-0">✕</button>
                   )}
@@ -1063,10 +1142,10 @@ export default function LabEditor() {
 
       {/* ── Template picker ───────────────────────────────────────────────────── */}
       {showTemplates && !content && (
-        <div className="rounded border border-dashed border-border bg-surface-raised/40 p-6">
-          <p className="text-[11px] font-bold uppercase tracking-widest text-fg-faint mb-4 text-center">Start with a template, or just type below</p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {LAB_TEMPLATES.map((t) => {
+        <div className="py-2">
+          <p className="font-mono text-[0.625rem] uppercase tracking-[0.14em] text-fg-subtle mb-5">Start from a template, or just type below</p>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {LAB_TEMPLATES.map((t, ti) => {
               const tmplIcons: Record<string, React.ReactNode> = {
                 layers: <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
                 flask:  <><path d="M9 3h6M10 3v6.5L4.5 19a1 1 0 0 0 .9 1.5h13.2a1 1 0 0 0 .9-1.5L14 9.5V3"/></>,
@@ -1076,21 +1155,23 @@ export default function LabEditor() {
               return (
                 <button key={t.id}
                   onClick={() => { setContent(t.content); setShowTemplates(false); setActivePanel("write"); requestAnimationFrame(() => textareaRef.current?.focus()); }}
-                  className="rounded-xl border border-border bg-surface p-4 text-left hover:border-accent/50 hover:shadow-sm transition-all group">
-                  <div className="w-7 h-7 rounded bg-surface-raised flex items-center justify-center mb-2.5 group-hover:bg-indigo-50 dark:group-hover:bg-indigo-950/40 transition-colors">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="text-fg-faint group-hover:text-indigo-500 transition-colors">
-                      {tmplIcons[t.icon]}
-                    </svg>
-                  </div>
-                  <p className="text-xs font-semibold text-fg group-hover:text-accent transition-colors leading-snug">{t.label}</p>
-                  <p className="text-[10px] text-fg-faint mt-1 leading-relaxed">{t.desc}</p>
+                  data-face={(["skin", "paper", "flesh", "paper"] as const)[ti % 4]}
+                  style={{ "--tilt": `${[-1.4, 1, -0.7, 1.3][ti % 4]}deg` } as React.CSSProperties}
+                  className="prompt-card group flex h-full min-h-[8.5rem] w-full flex-col justify-between rounded-card p-5 text-left">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="opacity-70">
+                    {tmplIcons[t.icon]}
+                  </svg>
+                  <span className="mt-4 block">
+                    <span className="display-serif block text-[1.25rem] leading-tight">{t.label}</span>
+                    <span className="mt-1 block text-[0.75rem] leading-relaxed opacity-75">{t.desc}</span>
+                  </span>
                 </button>
               );
             })}
           </div>
-          <div className="mt-4 text-center">
+          <div className="mt-5">
             <button onClick={() => { setShowTemplates(false); requestAnimationFrame(() => textareaRef.current?.focus()); }}
-              className="text-[10px] text-fg-faint hover:text-fg transition-colors">
+              className="text-xs font-medium text-fg-muted underline decoration-border-strong underline-offset-4 hover:text-fg transition-colors">
               Skip, start from blank →
             </button>
           </div>
@@ -1098,18 +1179,19 @@ export default function LabEditor() {
       )}
 
       {/* ── Editor ───────────────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      {/* overflow stays visible so the toolbar can stick while you write. */}
+      <div className="rounded-card border border-border bg-surface">
 
         {/* Toolbar */}
-        <div className="border-b border-border bg-surface-raised px-3 py-2 flex items-center gap-1 flex-wrap">
+        <div className="sticky top-0 z-10 border-b border-border bg-surface/95 backdrop-blur-md px-3 py-2 flex items-center gap-1 flex-wrap">
           {/* Format */}
           {[
-            { label: "B",  title: "Bold (⌘B)",       action: () => insertInline("**", "**", "bold text") },
-            { label: "I",  title: "Italic (⌘I)",      action: () => insertInline("*", "*", "italic text") },
-            { label: "`",  title: "Inline code (⌘`)", action: () => insertInline("`", "`", "code") },
-            { label: "~~", title: "Strikethrough",     action: () => insertInline("~~", "~~", "text") },
+            { label: "B",  title: "Bold (⌘B)",       run: (t: EditorTools) => t.inline("**", "**", "bold text") },
+            { label: "I",  title: "Italic (⌘I)",      run: (t: EditorTools) => t.inline("*", "*", "italic text") },
+            { label: "`",  title: "Inline code (⌘`)", run: (t: EditorTools) => t.inline("`", "`", "code") },
+            { label: "~~", title: "Strikethrough",     run: (t: EditorTools) => t.inline("~~", "~~", "text") },
           ].map((b) => (
-            <button key={b.label} onClick={b.action} title={b.title}
+            <button key={b.label} onClick={() => b.run({ inline: insertInline, block: insertBlock })} title={b.title}
               className="px-2 py-0.5 rounded-md text-[11px] font-mono text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
               {b.label}
             </button>
@@ -1117,11 +1199,11 @@ export default function LabEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
           {/* Headings */}
           {[
-            { label: "H2", action: () => insertBlock("## ") },
-            { label: "H3", action: () => insertBlock("### ") },
-            { label: "H4", action: () => insertBlock("#### ") },
+            { label: "H2", run: (t: EditorTools) => t.block("## ") },
+            { label: "H3", run: (t: EditorTools) => t.block("### ") },
+            { label: "H4", run: (t: EditorTools) => t.block("#### ") },
           ].map((b) => (
-            <button key={b.label} onClick={b.action} title={`Heading ${b.label.slice(1)}`}
+            <button key={b.label} onClick={() => b.run({ inline: insertInline, block: insertBlock })} title={`Heading ${b.label.slice(1)}`}
               className="px-2 py-0.5 rounded-md text-[11px] font-mono text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
               {b.label}
             </button>
@@ -1129,13 +1211,13 @@ export default function LabEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
           {/* Block elements */}
           {[
-            { label: "lnk", title: "Link (⌘K)",       action: () => insertInline("[", "](url)", "link text") },
-            { label: ">",   title: "Blockquote",       action: () => insertBlock("> ") },
-            { label: "•",   title: "Bullet list",      action: () => insertBlock("- Item 1\n- Item 2") },
-            { label: "1.",  title: "Numbered list",    action: () => insertBlock("1. First\n2. Second") },
-            { label: "▦",   title: "Insert table",     action: () => insertBlock("| Column A | Column B |\n|----------|----------|\n| Cell     | Cell     |") },
+            { label: "lnk", title: "Link (⌘K)",       run: (t: EditorTools) => t.inline("[", "](url)", "link text") },
+            { label: ">",   title: "Blockquote",       run: (t: EditorTools) => t.block("> ") },
+            { label: "•",   title: "Bullet list",      run: (t: EditorTools) => t.block("- Item 1\n- Item 2") },
+            { label: "1.",  title: "Numbered list",    run: (t: EditorTools) => t.block("1. First\n2. Second") },
+            { label: "▦",   title: "Insert table",     run: (t: EditorTools) => t.block("| Column A | Column B |\n|----------|----------|\n| Cell     | Cell     |") },
           ].map((b) => (
-            <button key={b.label} onClick={b.action} title={b.title}
+            <button key={b.label} onClick={() => b.run({ inline: insertInline, block: insertBlock })} title={b.title}
               className="px-2 py-0.5 rounded-md text-[11px] font-mono text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
               {b.label}
             </button>
@@ -1143,27 +1225,27 @@ export default function LabEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
           {/* Lab components */}
           {[
-            { label: "status",  title: "Status badge",   action: () => insertBlock('<Status status="active" />') },
-            { label: "decision",title: "Decision log",   action: () => insertBlock(`<Decision date="${todayISO()}" title="Title">\nWhy.\n</Decision>`) },
-            { label: "update",  title: "Progress update",action: () => insertBlock(`<Update date="${todayISO()}">\nWhat changed.\n</Update>`) },
-            { label: "stack",   title: "Tech stack row", action: () => insertBlock('<Stack items={["Next.js", "FastAPI"]} />') },
-            { label: "metric",  title: "Metric",         action: () => insertBlock('<Metric value="40%" label="latency drop" />') },
-            { label: "arch",    title: "Architecture diagram", action: () => insertBlock("```arch\n┌──────────┐\n│ Frontend │\n└──────────┘\n```", 8) },
+            { label: "status",  title: "Status badge",   run: (t: EditorTools) => t.block('<Status status="active" />') },
+            { label: "decision",title: "Decision log",   run: (t: EditorTools) => t.block(`<Decision date="${todayISO()}" title="Title">\nWhy.\n</Decision>`) },
+            { label: "update",  title: "Progress update",run: (t: EditorTools) => t.block(`<Update date="${todayISO()}">\nWhat changed.\n</Update>`) },
+            { label: "stack",   title: "Tech stack row", run: (t: EditorTools) => t.block('<Stack items={["Next.js", "FastAPI"]} />') },
+            { label: "metric",  title: "Metric",         run: (t: EditorTools) => t.block('<Metric value="40%" label="latency drop" />') },
+            { label: "arch",    title: "Architecture diagram", run: (t: EditorTools) => t.block("```arch\n┌──────────┐\n│ Frontend │\n└──────────┘\n```", 8) },
           ].map((b) => (
-            <button key={b.label} onClick={b.action} title={b.title}
-              className="px-2 py-0.5 rounded-md text-[11px] font-mono text-indigo-600 dark:text-indigo-400 hover:bg-surface border border-transparent hover:border-indigo-300 dark:hover:border-indigo-800 transition-colors">
+            <button key={b.label} onClick={() => b.run({ inline: insertInline, block: insertBlock })} title={b.title}
+              className="px-2 py-0.5 rounded-md text-[11px] font-mono text-accent  hover:bg-surface border border-transparent hover:border-accent/40  transition-colors">
               {b.label}
             </button>
           ))}
           <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
           {/* Code blocks */}
           {[
-            { label: "</>py", title: "Python code block",     action: () => insertBlock("```python\n# code here\n```", 10) },
-            { label: "</>ts", title: "TypeScript code block", action: () => insertBlock("```typescript\n// code here\n```", 14) },
-            { label: "</>sh", title: "Shell / bash block",     action: () => insertBlock("```bash\n# command\n```", 7) },
-            { label: "</>",   title: "Generic code block",     action: () => insertBlock("```\n\n```", 4) },
+            { label: "</>py", title: "Python code block",     run: (t: EditorTools) => t.block("```python\n# code here\n```", 10) },
+            { label: "</>ts", title: "TypeScript code block", run: (t: EditorTools) => t.block("```typescript\n// code here\n```", 14) },
+            { label: "</>sh", title: "Shell / bash block",     run: (t: EditorTools) => t.block("```bash\n# command\n```", 7) },
+            { label: "</>",   title: "Generic code block",     run: (t: EditorTools) => t.block("```\n\n```", 4) },
           ].map((b) => (
-            <button key={b.label} onClick={b.action} title={b.title}
+            <button key={b.label} onClick={() => b.run({ inline: insertInline, block: insertBlock })} title={b.title}
               className="px-2 py-0.5 rounded-md text-[11px] font-mono text-fg-muted hover:bg-surface hover:text-fg border border-transparent hover:border-border transition-colors">
               {b.label}
             </button>
@@ -1171,7 +1253,7 @@ export default function LabEditor() {
           <span className="w-px h-4 bg-border mx-0.5 shrink-0" />
           {/* Image manager toggle */}
           <button onClick={() => setShowImageManager(!showImageManager)} title="Image Library"
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition-colors whitespace-nowrap ${showImageManager ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}>
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition-colors whitespace-nowrap ${showImageManager ? "border-accent bg-accent-light  text-accent " : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}>
             {uploadingImg ? (
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin shrink-0"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
             ) : (
@@ -1186,7 +1268,7 @@ export default function LabEditor() {
           </span>
           <span className="w-px h-4 bg-border mx-0.5 shrink-0 hidden sm:block" />
           <button onClick={() => setActivePanel(activePanel === "preview" ? "write" : "preview")} title="Toggle preview"
-            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition-colors shrink-0 ${activePanel === "preview" ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400" : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}>
+            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] border transition-colors shrink-0 ${activePanel === "preview" ? "border-accent bg-accent-light  text-accent " : "border-transparent text-fg-muted hover:bg-surface hover:text-fg hover:border-border"}`}>
             {activePanel === "preview" ? (
               <><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 9.5-9.5z"/></svg>Write</>
             ) : (
@@ -1213,7 +1295,7 @@ export default function LabEditor() {
             </div>
 
             <div className="p-4 space-y-3">
-              <label className={`flex flex-col items-center justify-center rounded border-2 border-dashed py-6 px-4 cursor-pointer transition-all ${uploadingImg ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 cursor-wait" : "border-border hover:border-indigo-400 hover:bg-indigo-50/20 dark:hover:bg-indigo-950/20"}`}>
+              <label className={`flex flex-col items-center justify-center rounded border-2 border-dashed py-6 px-4 cursor-pointer transition-all ${uploadingImg ? "border-amber-400 bg-amber-50/50 dark:bg-amber-950/20 cursor-wait" : "border-border hover:border-accent hover:bg-accent-light "}`}>
                 <div className="w-9 h-9 rounded bg-surface-raised border border-border flex items-center justify-center mb-2">
                   {uploadingImg ? (
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="animate-spin text-fg-faint"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
@@ -1261,7 +1343,7 @@ export default function LabEditor() {
                               <div className="mt-2 space-y-1.5">
                                 <input type="text" value={captionInput} onChange={(e) => setCaptionInput(e.target.value)}
                                   placeholder="Caption (optional) — press Enter to insert" autoFocus
-                                  className="w-full bg-bg border border-border rounded px-2 py-1 text-xs text-fg placeholder:text-fg-faint focus:outline-none focus:border-indigo-400 transition-colors"
+                                  className="w-full bg-bg border border-border rounded px-2 py-1 text-xs text-fg placeholder:text-fg-faint focus:outline-none focus:border-accent transition-colors"
                                   onKeyDown={(e) => {
                                     if (e.key === "Enter") {
                                       insertBlock(captionInput.trim() ? `![${img.name}](${img.url} "${captionInput.trim()}")` : `![${img.name}](${img.url})`);
@@ -1271,7 +1353,7 @@ export default function LabEditor() {
                                   }} />
                                 <div className="flex gap-1.5">
                                   <button onClick={() => { insertBlock(captionInput.trim() ? `![${img.name}](${img.url} "${captionInput.trim()}")` : `![${img.name}](${img.url})`); setInsertingFor(null); setCaptionInput(""); }}
-                                    className="flex-1 px-2 py-1 rounded bg-indigo-600 text-white text-[10px] font-semibold hover:bg-indigo-700 transition-colors">Insert ✓</button>
+                                    className="flex-1 px-2 py-1 rounded bg-accent text-accent-fg text-[10px] font-semibold hover:bg-accent-hover transition-colors">Insert ✓</button>
                                   <button onClick={() => { setInsertingFor(null); setCaptionInput(""); }}
                                     className="px-2 py-1 rounded border border-border text-[10px] text-fg-faint hover:text-fg transition-colors">Cancel</button>
                                 </div>
@@ -1279,9 +1361,9 @@ export default function LabEditor() {
                             ) : (
                               <div className="flex flex-wrap gap-1 mt-2">
                                 <button onClick={() => insertBlock(`![${img.name}](${img.url})`)} title="Insert at cursor"
-                                  className="px-2 py-0.5 rounded-md bg-indigo-600 text-white text-[10px] font-medium hover:bg-indigo-700 transition-colors">Insert</button>
+                                  className="px-2 py-0.5 rounded-md bg-accent text-accent-fg text-[10px] font-medium hover:bg-accent-hover transition-colors">Insert</button>
                                 <button onClick={() => setInsertingFor(img.url)} title="Insert with caption"
-                                  className="px-2 py-0.5 rounded-md border border-border bg-surface-raised text-[10px] font-medium text-fg-muted hover:border-indigo-400 hover:text-fg transition-colors">+ Caption</button>
+                                  className="px-2 py-0.5 rounded-md border border-border bg-surface-raised text-[10px] font-medium text-fg-muted hover:border-accent hover:text-fg transition-colors">+ Caption</button>
                               </div>
                             )}
                           </div>
@@ -1308,11 +1390,12 @@ export default function LabEditor() {
               onChange={(e) => { setContent(e.target.value); if (showTemplates && e.target.value) setShowTemplates(false); }}
               onKeyDown={handleKeyDown}
               spellCheck
-              className="w-full bg-bg px-5 sm:px-8 py-6 text-sm text-fg font-mono leading-relaxed focus:outline-none resize-none"
+              aria-label="Content"
+              className="w-full bg-bg px-5 sm:px-8 py-7 text-[0.9375rem] text-fg font-mono leading-[1.85] focus:outline-none resize-y"
               placeholder={`Write your lab entry here…${"\n"}Keyboard shortcuts: ⌘B bold · ⌘I italic · ⌘K link · ⌘\` code · ⌘S save draft`}
               style={{ minHeight: "420px" }}
             />
-            <div className="px-5 py-2 border-t border-border flex items-center justify-between text-[10px] text-fg-faint bg-surface-raised">
+            <div className="px-5 py-2.5 border-t border-border flex items-center justify-between rounded-b-card font-mono text-[0.6875rem] text-fg-subtle bg-surface">
               <span>{wordCount > 0 ? `${wordCount} words · ~${readingTime} min read` : "Start writing, use the toolbar above or keyboard shortcuts"}</span>
               <span className="font-mono hidden sm:block">⌘B · ⌘I · ⌘K · ⌘S save</span>
             </div>
@@ -1325,8 +1408,8 @@ export default function LabEditor() {
             <pre className="px-5 sm:px-8 pt-5 pb-4 text-[10px] font-mono leading-relaxed text-fg-faint bg-surface border-b border-border whitespace-pre-wrap overflow-x-auto">
               {buildFrontmatterPreview()}
             </pre>
-            <div className="px-5 sm:px-8 py-8"
-              style={{ fontFamily: "var(--font-blog, Georgia, serif)", lineHeight: 1.8 }}
+            {/* `prose` = the same article styles the published page uses. */}
+            <div className="prose mx-auto px-5 sm:px-8 py-10 font-[family-name:var(--font-blog)] leading-[1.85]"
               dangerouslySetInnerHTML={{ __html: mdxToHTML(content) }}
             />
           </div>
@@ -1334,7 +1417,7 @@ export default function LabEditor() {
       </div>
 
       {/* ── Format Reference (collapsible) ───────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="rounded-card border border-border bg-surface overflow-hidden">
         <button onClick={() => setShowFormatRef(!showFormatRef)}
           className="w-full flex items-center justify-between px-5 py-3.5 hover:bg-surface-raised transition-colors">
           <span className="text-[10px] font-bold uppercase tracking-widest text-fg-subtle flex items-center gap-2">
@@ -1378,7 +1461,7 @@ export default function LabEditor() {
       </div>
 
       {/* ── Publish section ──────────────────────────────────────────────────── */}
-      <div className="rounded-xl border border-border bg-surface overflow-hidden">
+      <div className="rounded-card border border-border bg-surface overflow-hidden">
         <button onClick={() => setShowPublish(!showPublish)}
           className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-raised transition-colors">
           <div className="flex items-center gap-2">
@@ -1467,7 +1550,7 @@ export default function LabEditor() {
                 <p>Avocado re-indexes automatically.</p>
               </div>
               <button onClick={publish} disabled={publishing || !allValid}
-                className="inline-flex items-center gap-2 rounded bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:shadow-xl hover:shadow-indigo-500/50 hover:-translate-y-px transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0">
+                className="inline-flex items-center gap-2 rounded bg-gradient-to-r from-accent to-accent px-6 py-2.5 text-sm font-semibold text-white shadow-lg shadow-accent/20 hover:shadow-xl hover:shadow-accent/20 hover:-translate-y-px transition-all duration-200 disabled:opacity-40 disabled:cursor-not-allowed disabled:translate-y-0">
                 {publishing ? (
                   <><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="animate-spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>Publishing…</>
                 ) : (

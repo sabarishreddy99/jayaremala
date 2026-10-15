@@ -7,24 +7,19 @@ import { Suspense } from "react";
 
 function CallbackHandler() {
   const searchParams = useSearchParams();
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState("");
+  const code = searchParams.get("code");
+  const denied = searchParams.get("error");
+  // A refusal or a missing code is known from the URL alone — no request, no state.
+  const early = denied
+    ? `Google denied access: ${denied}`
+    : !code ? "No authorization code received from Google." : null;
+  const [result, setResult] = useState<{ status: "loading" | "success" | "error"; message: string }>({ status: "loading", message: "" });
+  const { status, message } = early ? { status: "error" as const, message: early } : result;
+  const setStatus = (s: "success" | "error") => setResult((r) => ({ ...r, status: s }));
+  const setMessage = (m: string) => setResult((r) => ({ ...r, message: m }));
 
   useEffect(() => {
-    const code = searchParams.get("code");
-    const error = searchParams.get("error");
-
-    if (error) {
-      setStatus("error");
-      setMessage(`Google denied access: ${error}`);
-      return;
-    }
-
-    if (!code) {
-      setStatus("error");
-      setMessage("No authorization code received from Google.");
-      return;
-    }
+    if (early || !code) return;
 
     const token = typeof window !== "undefined"
       ? localStorage.getItem("avocado_admin_token") ?? ""

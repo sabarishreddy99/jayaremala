@@ -2,7 +2,7 @@
 
 Builds 3 relationship maps at startup from knowledge JSON files (no LLM, no graph library):
   project → skill category docs  (from projects.json tags[])
-  experience → project docs       (temporal co-occurrence, hard-coded for the 5-6 known links)
+  experience → project docs       (from each role's `projects` list in experience.json)
   project → experience doc        (reverse of the above)
 
 After retrieval, expand_context() follows 1-hop relationships to pull in related docs
@@ -35,17 +35,23 @@ _project_experience: dict[str, str] = {}
 # lowercase skill string → list of skill_category doc_ids that contain it
 _skill_to_docs: dict[str, list[str]] = {}
 
-# Hard-coded experience→project links based on role descriptions and project notes.
-# exp_0 = NYU CAS (Jun 2025 - Present)              → GeneCart (proj_2)
-# exp_1 = NYU IT Web Apps Lead (Sep 2024-May 2025)  → Multi-Agent (proj_3), portfolio (proj_0)
-# exp_2 = NYU IT Intern (May 2024-Aug 2024)         → same research infra as exp_1 (proj_3)
-# exp_5 = VIT Full Stack (Jan-Jun 2021)             → gradeVITian (proj_5)
-_HARD_EXP_PROJ: dict[str, list[str]] = {
-    "exp_0_overview": ["proj_2_overview"],
-    "exp_1_overview": ["proj_3_overview", "proj_0_overview"],
-    "exp_2_overview": ["proj_3_overview"],
-    "exp_5_overview": ["proj_5_overview"],
-}
+def _norm(title: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", title.lower()).strip()
+
+
+def _resolve_project(name: str, titles: list[str]) -> int | None:
+    """Index of the project whose title matches `name` (exact, then prefix/contains)."""
+    want = _norm(name)
+    if not want:
+        return None
+    normed = [_norm(t) for t in titles]
+    for i, t in enumerate(normed):
+        if t == want:
+            return i
+    for i, t in enumerate(normed):
+        if t.startswith(want) or want in t:
+            return i
+    return None
 
 
 def build_graph() -> None:
@@ -91,8 +97,23 @@ def build_graph() -> None:
                 doc_id = f"exp_{i}_overview" if j == 0 else f"exp_{i}_bullet_{j - 1}"
                 _experience_skills[doc_id] = tech
 
-    # ── Experience → projects (temporal co-occurrence) ────────────────────────
-    _experience_projects = dict(_HARD_EXP_PROJ)
+    # ── Experience → projects (data-driven) ───────────────────────────────────
+    # Each role lists the projects it produced by title in experience.json
+    # (`projects: [...]`, editable in the admin). Resolved to doc ids here, so
+    # reordering either file can never point a role at the wrong project.
+    _experience_projects = {}
+    titles = [str(p.get("title", "")) for p in json.loads(proj_path.read_text())] if proj_path.exists() else []
+    if exp_path.exists():
+        for i, exp in enumerate(json.loads(exp_path.read_text())):
+            ids = []
+            for name in exp.get("projects", []) or []:
+                j = _resolve_project(str(name), titles)
+                if j is None:
+                    logger.warning("experience[%d] links unknown project %r", i, name)
+                    continue
+                ids.append(f"proj_{j}_overview")
+            if ids:
+                _experience_projects[f"exp_{i}_overview"] = ids
     _project_experience = {
         proj_id: exp_id
         for exp_id, proj_ids in _experience_projects.items()

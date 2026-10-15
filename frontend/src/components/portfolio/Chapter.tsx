@@ -188,7 +188,8 @@ export default function Chapter({
           </>
         )}
 
-        {nextHref && (
+        {/* The label comes from site.json; a chapter with no label has no link. */}
+        {nextHref && nextLabel && (
           <div className="mt-10 flex items-center justify-end border-t border-border pt-4">
             <a
               href={nextHref}

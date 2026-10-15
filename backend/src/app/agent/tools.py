@@ -50,11 +50,93 @@ def _search_knowledge(query: str, limit: int = 5) -> list[dict]:
 
 
 def _get_profile() -> dict:
+    """Who Jaya is, as the home page tells it: identity, the hero, the award and
+    headline numbers, links. The story blocks have their own tools below."""
     p = _load("profile") or {}
-    return {k: p.get(k) for k in (
-        "name", "tagline", "bio", "summary", "location", "email",
-        "github", "linkedin", "interested_domain", "previous",
-    )}
+    out = {k: p.get(k) for k in (
+        "name", "tagline", "bio", "summary", "location", "email", "github", "linkedin",
+        "resume", "booking_url", "previous", "prev_domain", "interested_domain",
+        "obsession", "currently", "award", "hero", "heroStats",
+    ) if p.get(k)}
+    out["site"] = SITE_URL
+    return out
+
+
+def _get_how_i_work() -> dict:
+    """Jaya's working principles and the don'ts that keep them honest."""
+    o = (_load("profile") or {}).get("opinions") or {}
+    return {
+        "summary": o.get("deck", ""),
+        "principles": [{"principle": x.get("term"), "why": x.get("line")} for x in o.get("for", [])],
+        "donts": [{"dont": x.get("term"), "why": x.get("line")} for x in o.get("against", [])],
+    }
+
+
+def _get_hiring_fit() -> dict:
+    """What a hiring team gets: role fit, each need with its proof, availability and booking."""
+    p = _load("profile") or {}
+    hire = p.get("hire") or {}
+    return {
+        "fit": hire.get("fit", ""),
+        "needs": [
+            {k: n.get(k) for k in ("need", "metric", "metricLabel", "context", "where", "how")}
+            for n in hire.get("needs", [])
+        ],
+        "availability": p.get("availability"),
+        "booking_url": p.get("booking_url", ""),
+        "resume": p.get("resume", ""),
+    }
+
+
+def _get_story() -> dict:
+    """Why Jaya builds: the origin story, what he optimizes for, and what is still running."""
+    p = _load("profile") or {}
+    why = p.get("why") or {}
+    hope = p.get("hopeMolecules") or {}
+    return {
+        "origin": " ".join(why.get("paragraphs", [])),
+        "pull_quote": why.get("pullQuote", ""),
+        "values": {k: hope.get(k) for k in ("term", "definition", "belief", "closing") if hope.get(k)},
+        "still_running": [
+            {k: s.get(k) for k in ("name", "what", "who", "sinceLabel", "url", "status")}
+            for s in p.get("shipped", [])
+        ],
+        "still_running_note": p.get("shippedNote", ""),
+        "motto": (p.get("hero") or {}).get("signature", ""),
+    }
+
+
+def _get_site_map() -> list:
+    """Every page on jayaremala.com with its URL and what is on it."""
+    site = _load("site") or {}
+    base = site.get("url", SITE_URL)
+    return [
+        {"page": pg.get("label"), "url": f"{base}{pg.get('href', '')}", "section": pg.get("group"),
+         "what_is_there": pg.get("about") or pg.get("desc")}
+        for pg in site.get("pages", [])
+    ]
+
+
+def _get_gallery(category: str = "") -> list:
+    """Milestones and moments from the gallery, optionally filtered by category or keyword."""
+    q = (category or "").lower().strip()
+    items = []
+    for g in _load("gallery") or []:
+        row = {k: g.get(k) for k in ("title", "caption", "category", "date", "location") if g.get(k)}
+        if not q or q in " ".join(str(v) for v in row.values()).lower():
+            items.append(row)
+    return items
+
+
+def _get_quotes(category: str = "") -> list:
+    """Quotes Jaya returns to, optionally filtered by category or keyword."""
+    q = (category or "").lower().strip()
+    out = []
+    for x in _load("quotes") or []:
+        row = {k: x.get(k) for k in ("text", "author", "source", "category", "favorite") if x.get(k) not in (None, "")}
+        if not q or q in " ".join(str(v) for v in row.values()).lower():
+            out.append(row)
+    return out
 
 
 def _get_experience() -> list:
@@ -159,18 +241,18 @@ def _absolutize_links(entry: dict) -> dict:
 def _get_case_studies(slug: str = "") -> Any:
     """List case studies, or one by `slug`.
 
-    Case study bodies are self-contained HTML decks under
-    frontend/public/case-studies/, not JSON, so even the detail view returns
-    metadata plus the links to read the deck and open its prototype. Reads
-    case-studies.json fresh on every call, so a new brief appears with no
-    restart.
+    The list view returns metadata; the detail view adds `full_text`, the
+    deck's readable text extracted by scripts/sync-knowledge.mjs. Reads fresh
+    on every call, so a new brief appears with no restart.
     """
     entries = [_absolutize_links(c) for c in (_load("case-studies") or [])]
     if slug:
         q = slug.lower().strip()
+        texts = {d.get("slug"): d.get("text", "") for d in (_load("case-study-text") or [])}
         for c in entries:
             if q in str(c.get("slug", "")).lower() or q in str(c.get("title", "")).lower():
-                return c
+                # The deck's full text (extracted at sync time) rides along.
+                return {**c, "full_text": texts.get(c.get("slug"), "")} if texts.get(c.get("slug")) else c
         return None
     return [
         {k: c.get(k) for k in
@@ -303,9 +385,10 @@ TOOLS: list[Tool] = [
     Tool(
         name="search_knowledge",
         description=(
-            "Semantic + keyword search over Jaya's full portfolio knowledge base "
-            "(experience, projects, skills, education, blog, lab notes, hosted apps, "
-            "case studies, testimonials, quotes, and gallery milestones). "
+            "Semantic + keyword search over everything published on jayaremala.com: "
+            "experience, projects, skills, education, full blog posts and lab build logs, "
+            "case studies, hosted apps, testimonials, quotes, gallery, his principles, "
+            "origin story, hiring pitch and the site's pages. "
             "Returns the most relevant grounded snippets. Use this for open-ended questions."
         ),
         handler=_search_knowledge,
@@ -319,8 +402,56 @@ TOOLS: list[Tool] = [
     ),
     Tool(
         name="get_profile",
-        description="Jaya's headline profile: name, tagline, bio, summary, location, and contact links.",
+        description=(
+            "Jaya's profile as his home page tells it: name, tagline, bio, summary, location, "
+            "contact and résumé links, past and target domains, his award, the hero introduction "
+            "and headline numbers."
+        ),
         handler=_get_profile,
+    ),
+    Tool(
+        name="get_hiring_fit",
+        description=(
+            "What a hiring team gets with Jaya: the roles he is looking for, and for each problem "
+            "a team might be hiring for (faster AI, trustworthy retrieval, …) the measured result, "
+            "where it happened and how. Includes availability, résumé and booking link. Use for "
+            "'why hire him', 'is he a fit for X', or recruiter questions."
+        ),
+        handler=_get_hiring_fit,
+    ),
+    Tool(
+        name="get_how_i_work",
+        description="Jaya's working principles and his don'ts — how he approaches building and execution.",
+        handler=_get_how_i_work,
+    ),
+    Tool(
+        name="get_story",
+        description=(
+            "Why Jaya builds: his origin story (a site for his father's brick business), what he "
+            "optimizes for, his motto, and the products he shipped that are still running today."
+        ),
+        handler=_get_story,
+    ),
+    Tool(
+        name="get_site_map",
+        description="Every page on jayaremala.com with its URL and what is on it. Use to point people to the right page.",
+        handler=_get_site_map,
+    ),
+    Tool(
+        name="get_gallery",
+        description="Milestones and moments from Jaya's gallery (title, caption, category, date). Optional `category` keyword filter.",
+        handler=_get_gallery,
+        parameters=_obj(
+            {"category": {"type": "string", "description": "Optional — category or keyword to filter by."}},
+        ),
+    ),
+    Tool(
+        name="get_quotes",
+        description="Quotes Jaya returns to, with author and theme. Optional `category` keyword filter.",
+        handler=_get_quotes,
+        parameters=_obj(
+            {"category": {"type": "string", "description": "Optional — category or keyword to filter by."}},
+        ),
     ),
     Tool(
         name="get_experience",
@@ -362,7 +493,7 @@ TOOLS: list[Tool] = [
             "Jaya's long-form case studies — a brief worked end to end, each shipping with a "
             "working prototype. Returns slug, title, headline, the client/context, his role, "
             "date, the deck's section outline, tags, and links to read the deck and open the "
-            "prototype. Pass `slug` (a slug or title fragment) for one. Use this when asked "
+            "prototype. Pass `slug` (a slug or title fragment) for one, including its full text. Use this when asked "
             "about case studies, product/design thinking, or how he approaches an open brief."
         ),
         handler=_get_case_studies,

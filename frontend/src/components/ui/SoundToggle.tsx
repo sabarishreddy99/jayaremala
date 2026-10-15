@@ -1,15 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { isSoundEnabled, toggleSound, onSoundChange, playClick } from "@/lib/sound";
 
 export default function SoundToggle() {
-  const [enabled, setEnabled] = useState(true);
-
-  useEffect(() => {
-    setEnabled(isSoundEnabled());
-    return onSoundChange(setEnabled);
-  }, []);
+  // Subscribed to the sound setting itself, so every toggle on the page agrees.
+  const enabled = useSyncExternalStore((cb) => onSoundChange(() => cb()), isSoundEnabled, () => true);
 
   function handle() {
     const next = toggleSound();

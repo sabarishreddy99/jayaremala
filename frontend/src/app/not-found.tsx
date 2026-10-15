@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useClientValue } from "@/lib/hooks";
 import type { ReactNode } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -113,16 +114,16 @@ function InlinePost({ type, slug }: { type: "blog" | "lab"; slug: string }) {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function NotFound() {
-  const [resolved, setResolved] = useState<{ type: "blog" | "lab"; slug: string } | null | "checking">("checking");
-
-  useEffect(() => {
-    const path = window.location.pathname;
-    const blogMatch = path.match(/^\/blog\/([^/]+)\/?$/);
-    const labMatch = path.match(/^\/lab\/([^/]+)\/?$/);
-    if (blogMatch) setResolved({ type: "blog", slug: blogMatch[1] });
-    else if (labMatch) setResolved({ type: "lab", slug: labMatch[1] });
-    else setResolved(null);
-  }, []);
+  // The real path is only known in the browser (this page is served for every
+  // unknown URL). Null while prerendering, so nothing flashes.
+  const path = useClientValue<string | null>(() => window.location.pathname, null);
+  const blogMatch = path?.match(/^\/blog\/([^/]+)\/?$/);
+  const labMatch = path?.match(/^\/lab\/([^/]+)\/?$/);
+  const resolved: { type: "blog" | "lab"; slug: string } | null | "checking" =
+    path === null ? "checking"
+    : blogMatch ? { type: "blog", slug: blogMatch[1] }
+    : labMatch ? { type: "lab", slug: labMatch[1] }
+    : null;
 
   if (resolved === "checking") return null;
   if (resolved) {

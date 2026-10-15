@@ -322,6 +322,7 @@ survives ancestor stacking contexts.
 - **Lift, light** (`0 12px 32px -8px rgb(0 0 0 / 0.08)`): hover on an interactive tile only.
 - **Lift, dark** (`0 4px 16px -2px rgb(5 3 15 / 0.65), 0 8px 32px -4px rgb(5 3 15 / 0.50), 0 1px 3px 0 rgb(5 3 15 / 0.35)`): the same gesture, more layers to read on black.
 - **Stack** (`0 -16px 48px -8px rgb(0 0 0 / 0.12)`; `0.50` in dark): the upward cast under a stacked section.
+- **Printed card** (`--avo-shadow` / `--avo-shadow-lift`): the one exception to flat-at-rest. Avocado-face cards (roles, builds, stances, notes, prompt cards) are printed objects laid on the desk, so they rest on a three-layer shadow — a tight contact line, then a long soft fall tinted with skin ink (`rgb(35 40 15)` / `rgb(59 67 32)`) so it melts into the warm paper rather than greying it. Dark mode uses plain black at higher strength. Hover swaps to the lift variant.
 
 ### Named Rules
 **The Earned Depth Rule.** Surfaces are flat until touched. Shadow is the response to hover, focus, or press — never a resting decoration, and never a substitute for a rule or a tint.
@@ -422,16 +423,22 @@ On `lg+` the hero's right column is a small Avocado card that types out answers 
 One shared surface language for every "printed object" on the site: `data-face="skin" | "flesh" | "paper"` on `.deck-card`, `.role-card`, `.stance-panel`, `.prompt-card` and `.note-card`. Skin is olive with paper ink, Flesh is butter with skin-ink, Paper is the surface with a hairline. Faces keep their colour in both modes; nested `text-fg` inherits the face's ink. Pit never becomes a face — it stays a mark.
 
 ### Card rows ("The work")
-The work chapter spans full width (no rail). Roles and builds share one shape: three equal cards in a row from `lg` up, and below that a swipeable snap row that bleeds to the screen edge with a peek of the next card. Role cards are Avocado faces (Skin, Paper, Flesh) reading top to bottom: dates (mono), company (Garamond), role and qualifier, the first bullet that carries a number (clamped to 5 lines), and the location with a pin at the foot. They lift 4px on hover where hover exists.
+The work chapter spans full width (no rail). Roles and builds share one shape: three equal cards in a row from `lg` up, and below that a swipeable snap row that bleeds to the screen edge with a peek of the next card. Role cards are Avocado faces (Skin, Paper, Flesh) reading top to bottom: dates (mono), company (Garamond), role and qualifier, the first bullet that carries a number (clamped to 5 lines), and the location with a pin at the foot. They lift 4px on hover where hover exists. From `lg` up both rows are laid on the desk like the chat prompt deck: the cards tilt (−1.6°, 1.1°, −0.7°), the middle one drops 14px, and each straightens as it is hovered or focused. The tilt uses the `rotate`/`translate` properties (`.card-row--tilt`) so it composes with the hover lift and ScrollReveal's transform.
 
 ### Note stack ("Writing")
-Blog posts and lab logs as one pile of note cards (`NoteStack`), with an index of titles beside it on `lg+` (below it on smaller screens). The top card shows a cover image if the post has one, otherwise a tinted band with its tags; the two cards beneath peek out tilted and offset. "Next", a swipe or a drag past 90px throws the top card off to the side and it slides in at the bottom; "Previous" pulls the bottom card to the top; the index jumps straight to any note; arrow keys work when the pile is focused. Nothing moves on its own. Reduced motion swaps cards without the throw.
+Blog posts and lab logs as one pile of note cards (`NoteStack`), with an index of titles beside it on `lg+` (below it on smaller screens). The top card shows a cover image if the post has one, otherwise a tinted band with its tags; the two cards beneath peek out tilted and offset. "Next", a swipe or a drag past 90px throws the top card off to the side and it slides in at the bottom; "Previous" pulls the bottom card to the top; the index jumps straight to any note; arrow keys work when the pile is focused. Nothing moves on its own. Reduced motion swaps cards without the throw. The top card is one link (the title's link is stretched over the card); the pointer is captured only once a drag passes 8px, so a plain click or tap always opens the post.
+
+### Note tiles (blog and lab indexes)
+`/blog` and `/lab` lay the same notes flat on the desk (`NoteTile`): Paper, Skin and Flesh in turn, each tilted from the shared set (−1.6°, 1.2°, −0.8°, 1.8°, −1.2°, 0.9°; half that on phones), straightening and lifting 4px on hover or focus. Cover image if the post has one, otherwise the tinted tag band; a mono eyebrow (kind · date · read time or lab dates); Garamond title; "Read it" at the foot. One, two or three columns by width. The whole tile is one stretched link; share and other controls sit above it.
 
 ### Seed ring
 A pit-brown seed with a sentence set around it on a circular path, turning once every 22s (stopped under reduced motion). Used as the "Still running" mark and as Avocado's identity on `/chat`. The sentence is real copy, announced once via sr-only.
 
 ### Avocado chat
 `/chat` opens on the seed ring, a Garamond "Ask me anything about Jaya", a single segmented persona control, and the suggested questions dealt as tilted Avocado-face cards ("pick a card"). Avocado's avatar everywhere is the seed (`SeedAvatar`), replacing the 🥑 emoji; the visitor's own messages sit in accent bubbles.
+
+### Admin (the publishing desk)
+`/admin` renders inside `.portfolio`, so it carries the same palette, type and warm dark mode as the public site. It opens on **The desk**: six tasks as tilted Avocado-face cards (the chat prompt deck), drafts saved in this browser, and a two-line explainer of the two publishing routes. Every writing tool is tagged by route, in the menu and on the cards: **GitHub** (staged; "Publish all" makes one commit and the site rebuilds) or **Live** (saved straight to the content API). The active menu item is an accent pill; group labels are mono. View titles are Garamond `display-md`; labels and figures are Geist Mono. The blog and lab writers use a Garamond title and a serif standfirst, labelled URL/date fields that stack on phones, template cards from the same deck, a toolbar that sticks while you write, and a preview rendered with the site's `.prose`. The GitHub token is asked for once, in a flesh-tinted panel; with a token saved, each editor loads its file on arrival and shows a single "Loaded from GitHub" line. The frame is fixed to the screen height: the sidebar never moves and only the right-hand working area scrolls, so save rows and the editor toolbar stick inside it. The publish bar is a Skin band with a Flesh "Publish all" that starts at the sidebar edge. Every view ends on the admin back page: the site footer's perforated Skin band, full-bleed across the working area, with the Edit → Stage → Publish all workflow, outward links and this browser's publishing status. Errors stay rose and warnings amber; success uses the accent tint.
 
 ### Social preview cards
 Blog and lab posts, and the site-wide `public/og-image.png`, share one card (`lib/portfolio/og-card.tsx`): a Skin sheet, EB Garamond throughout (fetched as TTF at build, falling back silently), Flesh labels and pill outlines, a Pit seed masthead, and the halved-avocado line drawing cropped into the corner. Lab status: Active is Flesh, Paused a light Pit, Shipped paper.
@@ -472,7 +479,7 @@ Post titles are Garamond at display-lg with the description as a voice-serif sta
 - **Don't** put a scrim, wash, or blur behind the sticky nav over body content.
 - **Don't** gate information behind hover — a touch device will never see it.
 - **Don't** override `--font-display`, `--font-garamond`, `--font-cormorant`, or `--font-blog` per theme.
-- **Don't** add a resting shadow in light mode; `--shadow-card` is `none` there on purpose.
+- **Don't** add a resting shadow in light mode; `--shadow-card` is `none` there on purpose. Printed Avocado-face cards are the only exception (`--avo-shadow`).
 - **Don't** invent a fourth radius or a bespoke per-component corner.
 - **Don't** set a measurement in a serif or an opinion in mono.
 - **Don't** bring back Roboto, Inter or Arial as the system face, or pure black as the dark sheet.

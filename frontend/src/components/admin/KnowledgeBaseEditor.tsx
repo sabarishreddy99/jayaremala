@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useLoadOnMount } from "@/lib/hooks";
 
 const REPO    = "sabarishreddy99/jayaremala";
 const PAT_KEY = "avocado_github_pat";
@@ -103,7 +104,7 @@ export default function KnowledgeBaseEditor({ filePath, label, description }: Pr
     }
   }
 
-  useEffect(() => { if (pat.trim()) load(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useLoadOnMount(load, !!pat.trim());
 
   const lineCount = text.split("\n").length;
 

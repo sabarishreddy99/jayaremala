@@ -18,7 +18,10 @@ INSTRUCTIONS = (
     "Tools for exploring the professional portfolio of Jaya Sabarish Reddy Remala — "
     "a Software Engineer specializing in AI infrastructure, RAG systems, and distributed "
     "systems. Use search_knowledge for open-ended questions; use the get_* tools for "
-    "structured facts; use check_availability for scheduling. All data is read-only."
+    "structured facts (get_hiring_fit for recruiter questions, get_how_i_work for his "
+    "principles, get_story for his background, get_site_map to point to a page); use "
+    "check_availability and get_booking_link for scheduling. Everything is read-only and "
+    "reflects the live site."
 )
 
 # Heavier handlers touch ChromaDB / external calendar — run them off the event loop.

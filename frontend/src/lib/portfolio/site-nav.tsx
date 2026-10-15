@@ -7,11 +7,12 @@
  * separately.
  */
 import type { ReactNode } from "react";
+import { sitePage } from "@/data/site";
 
 export type NavItem = { href: string; label: string; desc: string; icon: ReactNode };
 export type NavGroup = { label: string; items: NavItem[] };
 
-export const siteGroups: NavGroup[] = [
+const RAW_GROUPS: NavGroup[] = [
   {
     label: "Work",
     items: [
@@ -80,6 +81,19 @@ export const siteGroups: NavGroup[] = [
     ],
   },
 ];
+
+/**
+ * Names and one-line descriptions come from site.json (edited in the admin's
+ * "Site copy"), so renaming a page there renames it in the menu, the footer
+ * and the page map at once. Icons and order stay here; they are design.
+ */
+export const siteGroups: NavGroup[] = RAW_GROUPS.map((g) => ({
+  ...g,
+  items: g.items.map((item) => {
+    const copy = sitePage(item.href);
+    return copy ? { ...item, label: copy.label || item.label, desc: copy.desc || item.desc } : item;
+  }),
+}));
 
 /**
  * Footer columns derived from the same nav config. Optional per-group title

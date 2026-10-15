@@ -4,7 +4,8 @@ import { useEffect, useRef, useState, startTransition } from "react";
 import { useSearchParams } from "next/navigation";
 import { API_BASE_URL } from "@/lib/api/client";
 import { getOrCreateVisitorId } from "@/lib/visitor";
-import { saveMessages, loadMessages, clearSession, saveModel, loadModel, saveLastQuestions, loadLastQuestions } from "@/lib/session";
+import { saveMessages, loadMessages, clearSession, MODEL_KEY, saveLastQuestions, loadLastQuestions } from "@/lib/session";
+import { useStoredState } from "@/lib/hooks";
 import ChatMessage from "./ChatMessage";
 import ChatInput from "./ChatInput";
 import LoadingGame from "./LoadingGame";
@@ -134,20 +135,28 @@ export default function ChatInterface() {
   // Always-current ref so handleSend reads the right messages even from stale closures
   const messagesRef = useRef<Message[]>([WELCOME]);
   messagesRef.current = messages;
-  const [activeModel, setActiveModel] = useState<string | null>(null);
+  // Last model seen this session, so the badge shows straight after navigation.
+  const [storedModel, setStoredModel] = useStoredState(MODEL_KEY, "", "session");
+  const activeModel = storedModel || null;
   const [backendStatus, setBackendStatus] = useState<"checking" | "ready" | "warming">("checking");
-  const [experienceRating, setExperienceRating] = useState<number | null>(null);
-  const [ratingDismissed, setRatingDismissed] = useState(false);
+  // Rating state survives reloads within the session.
+  const [ratingRaw, setRatingRaw] = useStoredState("avocado_experience_rating", "", "session");
+  const experienceRating = ratingRaw ? Number(ratingRaw) : null;
+  const [dismissedRaw, setDismissedRaw] = useStoredState("avocado_rating_dismissed", "", "session");
+  const ratingDismissed = dismissedRaw === "1";
   const [ratingHover, setRatingHover] = useState(0);
   const [pendingRetry, setPendingRetry] = useState<string | null>(null);
   const [sessionRestored, setSessionRestored] = useState(false);
   const [welcomeBack, setWelcomeBack] = useState<string | null>(null);
   const [dynamicFollowUps, setDynamicFollowUps] = useState<string[]>([]);
   const [followUpsLoading, setFollowUpsLoading] = useState(false);
-  const [persona, setPersona] = useState<PersonaId | null>(null);
+  // The chosen persona and agent mode are remembered across visits.
+  const [personaRaw, setPersonaRaw] = useStoredState(PERSONA_KEY, "");
+  const persona = personaRaw && PROMPTS_BY_PERSONA[personaRaw as PersonaId] ? (personaRaw as PersonaId) : null;
   const personaRef = useRef<PersonaId | null>(null);
   personaRef.current = persona;
-  const [agentMode, setAgentMode] = useState(false);
+  const [agentRaw, setAgentRaw] = useStoredState(AGENT_MODE_KEY, "0");
+  const agentMode = agentRaw === "1";
   const agentModeRef = useRef(false);
   agentModeRef.current = agentMode;
   // Live tool-call steps for the in-flight agent response
@@ -160,30 +169,15 @@ export default function ChatInterface() {
       .catch(() => setBackendStatus("warming"));
     // Pre-warm the embedder + retrieval path so the first real question is hot
     fetch(`${API_BASE_URL}/ai/warmup`, { signal: controller.signal }).catch(() => {});
-    // Restore previously-chosen persona
-    const saved = (typeof localStorage !== "undefined" && localStorage.getItem(PERSONA_KEY)) as PersonaId | null;
-    if (saved && PROMPTS_BY_PERSONA[saved]) setPersona(saved);
-    try { if (localStorage.getItem(AGENT_MODE_KEY) === "1") setAgentMode(true); } catch { /* storage blocked */ }
     return () => controller.abort();
   }, []);
 
   function choosePersona(id: PersonaId) {
-    const next = persona === id ? null : id;
-    setPersona(next);
-    try {
-      if (next) localStorage.setItem(PERSONA_KEY, next);
-      else localStorage.removeItem(PERSONA_KEY);
-    } catch { /* storage blocked */ }
+    setPersonaRaw(persona === id ? null : id);
   }
 
   const activePrompts: Prompt[] = persona ? PROMPTS_BY_PERSONA[persona] : PROMPTS;
 
-  // Restore rating state from sessionStorage after hydration
-  useEffect(() => {
-    const saved = sessionStorage.getItem("avocado_experience_rating");
-    if (saved) setExperienceRating(Number(saved));
-    if (sessionStorage.getItem("avocado_rating_dismissed") === "1") setRatingDismissed(true);
-  }, []);
 
   // Load persisted messages after hydration, then auto-send ?q= if present
   const autoSentRef = useRef(false);
@@ -192,28 +186,21 @@ export default function ChatInterface() {
     const hasHistory = saved && saved.length > 0;
     const restored: Message[] = hasHistory ? [WELCOME, ...saved] : [WELCOME];
     messagesRef.current = restored; // update ref immediately so handleSend reads it
-    startTransition(() => setMessages(restored));
+    // Welcome back: last question from a previous session (localStorage, not sessionStorage)
+    const prev = hasHistory ? null : loadLastQuestions();
+    const welcome = prev && prev.length > 0 ? prev[0] : null;
 
-    // Restore last known model so the badge shows immediately after navigation
-    const savedModel = loadModel();
-    if (savedModel) setActiveModel(savedModel);
-
-    // Show the "restored" pill if there was a real conversation to restore
+    // One non-urgent update after hydration: the restored conversation plus,
+    // for 3s, either the "restored" pill or the welcome-back line.
+    startTransition(() => {
+      setMessages(restored);
+      if (hasHistory) setSessionRestored(true);
+      else if (welcome) setWelcomeBack(welcome);
+    });
     let dismissTimer: ReturnType<typeof setTimeout> | undefined;
-    if (hasHistory) {
-      setSessionRestored(true);
-      dismissTimer = setTimeout(() => setSessionRestored(false), 3000);
-    }
-
-    // Welcome back: show last question from a previous session (localStorage, not sessionStorage)
+    if (hasHistory) dismissTimer = setTimeout(() => setSessionRestored(false), 3000);
     let welcomeTimer: ReturnType<typeof setTimeout> | undefined;
-    if (!hasHistory) {
-      const prev = loadLastQuestions();
-      if (prev && prev.length > 0) {
-        setWelcomeBack(prev[0]);
-        welcomeTimer = setTimeout(() => setWelcomeBack(null), 3000);
-      }
-    }
+    if (welcome) welcomeTimer = setTimeout(() => setWelcomeBack(null), 3000);
 
     const q = searchParams.get("q");
     if (q && !autoSentRef.current) {
@@ -353,7 +340,7 @@ export default function ChatInterface() {
             if (data.booking_card) bookingCard = data.booking_card as BookingCardData;
             if (data.error) { sseError = data.error as string; break outer; }
             if (data.done) {
-              if (data.model) { setActiveModel(data.model); saveModel(data.model as string); traceModel = data.model as string; }
+              if (data.model) { setStoredModel(data.model as string); traceModel = data.model as string; }
               if (data.sources) ragSources = data.sources as string[];
               if (data.lead_capture_prompt) leadCapturePrompt = true;
               if (Array.isArray(data.trace)) traceStages = data.trace as TraceStage[];
@@ -444,8 +431,7 @@ export default function ChatInterface() {
   }
 
   function handleRate(star: number) {
-    setExperienceRating(star);
-    sessionStorage.setItem("avocado_experience_rating", String(star));
+    setRatingRaw(String(star));
     fetch(`${API_BASE_URL}/stats/experience-rating`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -454,8 +440,7 @@ export default function ChatInterface() {
   }
 
   function handleRatingDismiss() {
-    setRatingDismissed(true);
-    sessionStorage.setItem("avocado_rating_dismissed", "1");
+    setDismissedRaw("1");
   }
 
   const isInitial = messages.length === 1 && !streaming;
@@ -475,8 +460,7 @@ export default function ChatInterface() {
           >
             <button
               onClick={() => {
-                setAgentMode(false);
-                try { localStorage.setItem(AGENT_MODE_KEY, "0"); } catch { /* storage blocked */ }
+                setAgentRaw("0");
               }}
               aria-pressed={!agentMode}
               title="Normal, fast, grounded RAG answer"
@@ -488,8 +472,7 @@ export default function ChatInterface() {
             </button>
             <button
               onClick={() => {
-                setAgentMode(true);
-                try { localStorage.setItem(AGENT_MODE_KEY, "1"); } catch { /* storage blocked */ }
+                setAgentRaw("1");
               }}
               aria-pressed={agentMode}
               title="Agent, Avocado picks tools per question and shows its steps live"

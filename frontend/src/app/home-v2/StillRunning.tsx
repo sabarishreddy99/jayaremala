@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useNow } from "@/lib/hooks";
 
 /**
  * The live thing.
@@ -35,14 +36,9 @@ function elapsed(fromISO: string, now: number) {
 export default function StillRunning({ items }: { items: Laid[] }) {
   // Mount-gated so the server and the first client render agree; `new Date()`
   // during render is a hydration hazard in this codebase.
-  const [now, setNow] = useState<number | null>(null);
+  const now = useNow(1000);
   const [open, setOpen] = useState<string | null>(null);
 
-  useEffect(() => {
-    setNow(Date.now());
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
 
   return (
     <ol className="course" style={{ listStyle: "none", margin: 0, padding: 0 }}>

@@ -16,7 +16,7 @@ import FontSizeControl from "@/components/blog/FontSizeControl";
 import BlogSwitcher from "@/components/blog/BlogSwitcher";
 import { TableOfContents, MobileTOC } from "@/components/blog/TableOfContents";
 import type { Heading } from "@/components/blog/TableOfContents";
-import BlogPostMarkdown from "@/components/blog/BlogPostMarkdown";
+import { LiveBody, LiveText } from "@/components/blog/LivePost";
 import ProseReveal from "@/components/blog/ProseReveal";
 import { normalizeBlogPost } from "@/lib/api/content";
 import type { ApiBlogPost } from "@/lib/api/content";
@@ -95,13 +95,13 @@ function BlogPostApiView({ post, allPosts }: { post: ApiBlogPost; allPosts: Post
           <article>
             <header className="mb-10 pb-8 border-b border-border">
               <h1 className="display-serif display-lg text-fg leading-[1.05] text-balance mb-4">
-                {post.title}
+                <LiveText kind="blog" slug={post.slug} field="title" initial={post.title} />
               </h1>
               {/* The standfirst: the post's own description, in the author's
                   voice, so the reader knows what they are settling into. */}
               {post.description && (
                 <p className="voice-serif mb-5 max-w-[56ch] text-[1.125rem] leading-relaxed text-fg-muted sm:text-[1.25rem]">
-                  {post.description}
+                  <LiveText kind="blog" slug={post.slug} field="description" initial={post.description} />
                 </p>
               )}
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
@@ -144,7 +144,7 @@ function BlogPostApiView({ post, allPosts }: { post: ApiBlogPost; allPosts: Post
               className="prose font-[family-name:var(--font-blog)] leading-[1.85]"
               style={{ fontSize: "var(--blog-font-size, 1.0625rem)" }}
             >
-              <BlogPostMarkdown content={post.content} />
+              <LiveBody kind="blog" slug={post.slug} initial={post.content} />
             </ProseReveal>
 
             <div className="mt-10 border-t border-border-subtle pt-6">

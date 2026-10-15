@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import SparkleIcon from "@/components/ui/SparkleIcon";
+import { useMounted } from "@/lib/hooks";
 
 const SESSION_KEY = "avocado_popup_shown";
 const SNOOZE_KEY  = "avocado_popup_snoozed";
@@ -18,13 +19,12 @@ function shouldAutoShow() {
 
 export default function AvocadoChatButton() {
   const pathname = usePathname();
-  const [mounted, setMounted]     = useState(false);
+  const mounted = useMounted();
   const [show, setShow]           = useState(false); // card is in DOM
   const [closing, setClosing]     = useState(false); // exit animation playing
   const autoTimer  = useRef<ReturnType<typeof setTimeout> | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => { setMounted(true); }, []);
 
   // Nav's mobile drawer opens over this corner. It lives inside a z-40 sticky
   // header and can never paint above this z-50 button, so the button yields
@@ -84,7 +84,7 @@ export default function AvocadoChatButton() {
 
   return (
     <div
-      className={`fixed bottom-6 right-5 sm:bottom-8 sm:right-8 z-50 flex flex-col items-end gap-3
+      className={`chat-fab fixed bottom-6 right-5 sm:bottom-8 sm:right-8 z-50 flex flex-col items-end gap-3
         transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           navDrawerOpen
             ? "max-md:pointer-events-none max-md:opacity-0 max-md:translate-y-3 max-md:scale-95"

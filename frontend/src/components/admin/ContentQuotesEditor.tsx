@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useLoadOnMount } from "@/lib/hooks";
 import { API_BASE_URL } from "@/lib/api/client";
-import { triggerReingest } from "./AdminShared";
 
 const GITHUB_QUOTES_URL = "https://api.github.com/repos/sabarishreddy99/jayaremala/contents/backend/data/knowledge/quotes.json";
 
@@ -93,7 +93,7 @@ export default function ContentQuotesEditor() {
     } catch { /* non-fatal — API save already succeeded */ }
   }
 
-  useEffect(() => { loadQuotes(); }, []);
+  useLoadOnMount(loadQuotes);
 
   function resetForm() {
     setForm({ quote_id: "", text: "", author: "", source: "", category: "Philosophy", favorite: false, featured: false, added_at: todayISO });
@@ -137,7 +137,6 @@ export default function ContentQuotesEditor() {
         setResult({ ok: true, message: editingId ? "Updated!" : "Quote added, live immediately." });
         resetForm();
         const updated = await loadQuotes();
-        triggerReingest();
         if (updated !== null) void pushToGitHub(updated);
       } else {
         const err = await res.json().catch(() => ({}));
@@ -150,7 +149,7 @@ export default function ContentQuotesEditor() {
   }
 
   function toggleSelectId(id: string) {
-    setSelectedIds(prev => { const next = new Set(prev); next.has(id) ? next.delete(id) : next.add(id); return next; });
+    setSelectedIds(prev => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   }
   function toggleSelectAll() {
     setSelectedIds(prev => prev.size === quotes.length ? new Set<string>() : new Set(quotes.map(q => q.quote_id)));
@@ -167,7 +166,6 @@ export default function ContentQuotesEditor() {
     }
     setSelectedIds(new Set());
     const updated = await loadQuotes();
-    triggerReingest();
     if (updated !== null) void pushToGitHub(updated);
     setBulkDeleting(false);
     setResult({ ok: true, message: `Deleted ${idsToDelete.length} quote${idsToDelete.length !== 1 ? "s" : ""}.` });
@@ -184,7 +182,6 @@ export default function ContentQuotesEditor() {
         setResult({ ok: true, message: "Deleted." });
         setConfirmDelete(null);
         const updated = await loadQuotes();
-        triggerReingest();
         if (updated !== null) void pushToGitHub(updated);
       } else {
         setResult({ ok: false, message: `Error ${res.status}` });
@@ -283,7 +280,7 @@ export default function ContentQuotesEditor() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors disabled:opacity-50"
+              className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-fg hover:bg-accent/90 transition-colors disabled:opacity-50"
             >
               {saving ? "Saving…" : editingId ? "Update Quote" : "Add Quote"}
             </button>
@@ -349,7 +346,7 @@ export default function ContentQuotesEditor() {
                 <div className="flex gap-2 mt-1">
                   <span className="text-[10px] bg-surface-raised px-2 py-0.5 rounded-full text-fg-muted">{q.category}</span>
                   {q.favorite && <span className="text-[10px] text-amber-500">★ favorite</span>}
-                  {q.featured && <span className="text-[10px] text-indigo-500">◈ featured</span>}
+                  {q.featured && <span className="text-[10px] text-accent">◈ featured</span>}
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">

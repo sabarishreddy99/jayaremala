@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { profile } from "@/data/profile";
+import { chapter } from "@/data/site";
 import { projects } from "@/data/projects";
 import { skills } from "@/data/skills";
 import TestimonialDeck from "@/components/portfolio/TestimonialDeck";
@@ -423,7 +424,7 @@ export default function PortfolioHome() {
           id="impact"
           rail={false}
           nextHref="#projects"
-          nextLabel="Where it was proven"
+          nextLabel={chapter("impact").next}
         >
           <HireImpact data={hire} bookingUrl={profile.booking_url} resumeUrl={profile.resume} />
         </Chapter>
@@ -432,18 +433,19 @@ export default function PortfolioHome() {
       {/* ── 02 · The work ─────────────────────────────────────────── */}
       <Chapter
         n="02"
-        label="The work"
-        place="Shell PLC · NYU"
-        year="2021—present"
-        deck="Three roles, three builds. Everything else is one click away."
+        label={chapter("projects").label ?? "The work"}
+        place={chapter("projects").place}
+        year={chapter("projects").year}
+        deck={chapter("projects").deck}
         id="projects"
         rail={false}
         nextHref="#testimonials"
-        nextLabel="What colleagues say"
+        nextLabel={chapter("projects").next}
       >
         {/* Roles and builds share one shape: a row of three equal cards
-            that lines up on laptop and desktop, and becomes a swipeable row
-            on phones and tablets (snap, one card and a peek of the next).
+            that lines up on laptop and desktop — tilted like the chat prompt
+            deck — and becomes a swipeable row on phones and tablets (snap,
+            one card and a peek of the next).
             Each role leads with its first bullet that carries a number. */}
         {selectedRoles.length > 0 && (
           <div>
@@ -453,7 +455,7 @@ export default function PortfolioHome() {
                 All roles →
               </Link>
             </div>
-            <ol className="card-row">
+            <ol className="card-row card-row--tilt">
               {selectedRoles.map((job, i) => {
                 const { short, qualifier } = splitCompany(job.company);
                 const line = job.bullets.find((b) => /\d/.test(b)) ?? job.bullets[0];
@@ -498,7 +500,7 @@ export default function PortfolioHome() {
                 All projects →
               </Link>
             </div>
-            <div className="card-row">
+            <div className="card-row card-row--tilt">
               {homeProjects.map((p, i) => (
                 <ScrollReveal key={p.title} delay={i * 80} className="flex" direction="scale">
                   {p.title.startsWith("jayaremala") ? (
@@ -545,12 +547,12 @@ export default function PortfolioHome() {
           bottom of the page where only the most patient reader found it. */}
       <Chapter
         n="03"
-        label="Kind words"
-        deck="From people I shipped with at Shell, Wipro and Amazon. Unedited, from LinkedIn."
+        label={chapter("testimonials").label ?? "Kind words"}
+        deck={chapter("testimonials").deck}
         id="testimonials"
         rail={false}
         nextHref="#why"
-        nextLabel="Who I am"
+        nextLabel={chapter("testimonials").next}
       >
         <TestimonialDeck />
       </Chapter>
@@ -564,12 +566,12 @@ export default function PortfolioHome() {
         <Chapter
           n="04"
           label={profile.why.label}
-          place="Kavali, Nellore"
-          year="2020"
-          deck="Where this started, and what is still running because of it."
+          place={chapter("why").place}
+          year={chapter("why").year}
+          deck={chapter("why").deck}
           id="why"
           nextHref="#how"
-          nextLabel="How I work"
+          nextLabel={chapter("why").next}
         >
           <OriginStory why={profile.why} />
 
@@ -606,7 +608,7 @@ export default function PortfolioHome() {
         deck={profile.opinions?.deck}
         id="how"
         nextHref="#writing"
-        nextLabel="What I write"
+        nextLabel={chapter("how").next}
       >
         {profile.opinions && <Opinions data={profile.opinions} />}
 
@@ -634,12 +636,12 @@ export default function PortfolioHome() {
       {notes.length > 0 && (
         <Chapter
           n="06"
-          label="Writing"
-          deck="Notes on building AI systems, and on the life around them. Flip through the pile."
+          label={chapter("writing").label ?? "Writing"}
+          deck={chapter("writing").deck}
           id="writing"
           rail={false}
           nextHref="#contact"
-          nextLabel="Let's talk"
+          nextLabel={chapter("writing").next}
         >
           <NoteStack notes={notes} />
         </Chapter>
@@ -656,12 +658,12 @@ export default function PortfolioHome() {
       <Chapter
         className="hidden md:block"
         n="07"
-        label="Explore the rest"
-        deck="Every other page, coloured by kind. Not sure where to go? The seed in the middle answers questions."
+        label={chapter("explore").label ?? "Explore the rest"}
+        deck={chapter("explore").deck}
         id="explore"
         rail={false}
         nextHref="#contact"
-        nextLabel="Let's talk"
+        nextLabel={chapter("explore").next}
       >
         <SiteBubbles />
       </Chapter>
@@ -669,8 +671,8 @@ export default function PortfolioHome() {
       {/* ── 08 · Connect ──────────────────────────────────────────── */}
       <Chapter
         n="08"
-        label="Let's talk"
-        deck="Open to full-time roles, remote or hybrid. A call is the fastest way to reach me."
+        label={chapter("contact").label ?? "Let's talk"}
+        deck={chapter("contact").deck}
         id="contact"
         rail={false}
       >

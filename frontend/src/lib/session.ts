@@ -12,7 +12,7 @@ const SESSION_ID_KEY = "jsr_session_id";
 
 // Messages and model live in sessionStorage (per-tab, clears when the tab closes)
 const MESSAGES_KEY = "jsr_chat_messages";
-const MODEL_KEY    = "jsr_chat_model";
+export const MODEL_KEY    = "jsr_chat_model";
 
 export function getSessionId(): string {
   if (typeof window === "undefined") return "";

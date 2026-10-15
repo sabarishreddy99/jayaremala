@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { openInWriter } from "@/lib/admin/openInWriter";
+import { useLoadOnMount } from "@/lib/hooks";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { API_BASE_URL } from "@/lib/api/client";
-import { triggerReingest } from "./AdminShared";
 
 const GITHUB_LAB_URL = "https://api.github.com/repos/sabarishreddy99/jayaremala/contents/backend/data/knowledge/lab.json";
 const GITHUB_LAB_MDX_BASE = "https://api.github.com/repos/sabarishreddy99/jayaremala/contents/frontend/src/content/lab";
@@ -63,6 +64,8 @@ interface LabRow {
   tech: string[];
   links: LabLink[];
   content: string;
+  /** "mdx" when the entry is a file in the repo (edit it in the GitHub writer). */
+  source?: string;
 }
 
 type EditorMode = "write" | "split" | "preview";
@@ -201,7 +204,7 @@ function Result({ result }: { result: { ok: boolean; message: string } | null })
 const STATUS_COLORS: Record<string, string> = {
   active:  "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400",
   paused:  "bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400",
-  shipped: "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-400",
+  shipped: "bg-accent-light  text-accent ",
 };
 
 export default function ContentLabEditor() {
@@ -251,7 +254,7 @@ export default function ContentLabEditor() {
     } catch { /* non-fatal — API save already succeeded */ }
   }
 
-  useEffect(() => { loadEntries(); }, []); // eslint-disable-line react-hooks/set-state-in-effect
+  useLoadOnMount(loadEntries);
 
   function resetForm() {
     setForm(EMPTY_FORM);
@@ -335,7 +338,6 @@ export default function ContentLabEditor() {
         const wasEditing = !!editingSlug;
         if (!wasEditing) resetForm();
         const updated = await loadEntries();
-        triggerReingest();
         if (updated !== null) void pushToGitHub(updated);
         void pushLabMdxToGitHub(body);
       } else {
@@ -352,7 +354,9 @@ export default function ContentLabEditor() {
     setSelectedSlugs(prev => { const next = new Set(prev); if (next.has(slug)) next.delete(slug); else next.add(slug); return next; });
   }
   function toggleSelectAll() {
-    setSelectedSlugs(prev => prev.size === entries.length ? new Set<string>() : new Set(entries.map(e => e.slug)));
+    // Repo-backed (MDX) entries cannot be deleted here, so they are never selected.
+    const live = entries.filter(e => e.source !== "mdx").map(e => e.slug);
+    setSelectedSlugs(prev => prev.size === live.length ? new Set<string>() : new Set(live));
   }
   async function handleBulkDelete() {
     if (!bulkConfirm) { setBulkConfirm(true); return; }
@@ -370,7 +374,6 @@ export default function ContentLabEditor() {
     }
     setSelectedSlugs(new Set());
     const updated = await loadEntries();
-    triggerReingest();
     if (updated !== null) void pushToGitHub(updated);
     setBulkDeleting(false);
     setResult({ ok: true, message: `Deleted ${slugsToDelete.length} entr${slugsToDelete.length !== 1 ? "ies" : "y"}.` });
@@ -388,7 +391,6 @@ export default function ContentLabEditor() {
         setConfirmDelete(null);
         if (editingSlug === slug) resetForm();
         const updated = await loadEntries();
-        triggerReingest();
         if (updated !== null) void pushToGitHub(updated);
         void deleteLabMdxFromGitHub(slug);
       } else {
@@ -547,7 +549,7 @@ export default function ContentLabEditor() {
           <div className="ml-auto flex items-center gap-3">
             <Result result={result} />
             <button onClick={handleSave} disabled={saving}
-              className="rounded-xl bg-accent px-5 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors disabled:opacity-50">
+              className="rounded-xl bg-accent px-5 py-2 text-sm font-semibold text-accent-fg hover:bg-accent/90 transition-colors disabled:opacity-50">
               {saving ? "Saving…" : editingSlug ? "Update" : "Publish"}
             </button>
           </div>
@@ -561,7 +563,7 @@ export default function ContentLabEditor() {
     <div className="space-y-8">
       <div className="rounded-2xl border border-border bg-surface p-6">
         <div className="flex items-start justify-between mb-1">
-          <h2 className="text-base font-bold text-fg">{editingSlug ? "Edit lab entry" : "Lab, Content API"}</h2>
+          <h2 className="display-serif text-[1.5rem] leading-tight text-fg">{editingSlug ? "Edit lab entry" : "New lab entry"}</h2>
           {editingSlug && (
             <button onClick={resetForm} className="text-xs text-fg-faint hover:text-fg transition-colors">
               + New entry
@@ -699,7 +701,7 @@ export default function ContentLabEditor() {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors disabled:opacity-50"
+              className="rounded-xl bg-accent px-4 py-2 text-sm font-semibold text-accent-fg hover:bg-accent/90 transition-colors disabled:opacity-50"
             >
               {saving ? "Saving…" : editingSlug ? "Update Entry" : "Add Entry"}
             </button>
@@ -717,7 +719,7 @@ export default function ContentLabEditor() {
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              checked={entries.length > 0 && selectedSlugs.size === entries.length}
+              checked={selectedSlugs.size > 0 && selectedSlugs.size === entries.filter(e => e.source !== "mdx").length}
               onChange={toggleSelectAll}
               disabled={entries.length === 0}
               className="accent-accent cursor-pointer"
@@ -756,10 +758,15 @@ export default function ContentLabEditor() {
                 type="checkbox"
                 checked={selectedSlugs.has(e.slug)}
                 onChange={() => toggleSelect(e.slug)}
-                className="mt-1 shrink-0 accent-accent cursor-pointer"
+                disabled={e.source === "mdx"}
+                aria-label={e.source === "mdx" ? "Repo entry — not selectable" : `Select ${e.title}`}
+                className="mt-1 shrink-0 accent-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
               />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-fg leading-snug truncate">{e.title}</p>
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-medium text-fg leading-snug truncate">{e.title}</p>
+                  {e.source === "mdx" && <span title="This lives as an MDX file in the repo. Its page renders the file, so it is edited in the GitHub writer." className="shrink-0 rounded-full border border-border px-2 py-0.5 font-mono text-[0.625rem] uppercase tracking-[0.1em] text-fg-subtle">MDX · repo</span>}
+                </div>
                 <p className="text-[11px] text-fg-faint mt-0.5 font-mono">/{e.slug}</p>
                 <div className="flex gap-2 mt-1 flex-wrap items-center">
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${STATUS_COLORS[e.status] ?? "bg-surface-raised text-fg-muted"}`}>
@@ -772,6 +779,13 @@ export default function ContentLabEditor() {
                 </div>
               </div>
               <div className="flex gap-2 shrink-0">
+                {e.source === "mdx" ? (
+                <button onClick={() => openInWriter("lab", e.slug)}
+                  className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-[11px] font-medium text-fg-muted transition-colors hover:border-accent hover:bg-accent-light hover:text-fg">
+                  Edit in GitHub writer
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+                ) : (<>
                 <button
                   onClick={() => startEdit(e)}
                   className="text-[11px] text-accent hover:text-accent/80 transition-colors"
@@ -801,6 +815,7 @@ export default function ContentLabEditor() {
                     Delete
                   </button>
                 )}
+                </>)}
               </div>
             </div>
           ))}

@@ -67,9 +67,12 @@ export default function NowPage() {
     ? updated.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : null;
 
-  // Freshness: amber badge if updated > 30 days ago
+  // Freshness: amber badge if updated > 30 days before this build. The page is
+  // a static export, so "now" is the build date (next.config.ts), which is also
+  // when the content was last published.
+  const builtAt = new Date(process.env.NEXT_PUBLIC_BUILD_DATE ?? now?.updated ?? 0);
   const daysSinceUpdate = updated
-    ? Math.floor((Date.now() - updated.getTime()) / (1000 * 60 * 60 * 24))
+    ? Math.floor((builtAt.getTime() - updated.getTime()) / (1000 * 60 * 60 * 24))
     : null;
   const isStale = daysSinceUpdate !== null && daysSinceUpdate > 30;
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { createPortal } from "react-dom";
+import { useMounted } from "@/lib/hooks";
 
 // ── Node definitions ──────────────────────────────────────────────────────────
 
@@ -165,10 +166,16 @@ export default function RagPipelineModal({
     setActiveNode(node);
   }, []);
 
+  // Closing clears the selected node, so the modal reopens on the overview.
+  const close = useCallback(() => {
+    setActiveNode(null);
+    onClose();
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") close();
     }
     document.addEventListener("keydown", onKey);
     document.body.style.overflow = "hidden";
@@ -176,21 +183,16 @@ export default function RagPipelineModal({
       document.removeEventListener("keydown", onKey);
       document.body.style.overflow = "";
     };
-  }, [open, onClose]);
+  }, [open, close]);
 
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  useEffect(() => {
-    if (!open) setActiveNode(null);
-  }, [open]);
+  const mounted = useMounted();
 
   if (!open || !mounted) return null;
 
   return createPortal(
     <div
       className="fixed inset-0 z-[200] flex items-start sm:items-center justify-center p-4 sm:p-6 bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={close}
     >
       <div
         className="relative bg-surface border border-border rounded-2xl w-full max-w-lg max-h-[90dvh] overflow-y-auto shadow-2xl flex flex-col"
@@ -205,7 +207,7 @@ export default function RagPipelineModal({
             </p>
           </div>
           <button
-            onClick={onClose}
+            onClick={close}
             aria-label="Close"
             className="shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-fg-faint hover:text-fg hover:bg-surface-raised transition-colors mt-0.5"
           >

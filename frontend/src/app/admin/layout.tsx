@@ -9,7 +9,9 @@ export const metadata: Metadata = {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <GitHubStagingProvider>
-      <div className="admin-surface">{children}</div>
+      {/* `portfolio` opts the desk into the site's Avocado palette, type and warm
+          dark mode (globals.css scopes all of it to that class). */}
+      <div className="portfolio admin-surface">{children}</div>
       <PublishBar />
     </GitHubStagingProvider>
   );

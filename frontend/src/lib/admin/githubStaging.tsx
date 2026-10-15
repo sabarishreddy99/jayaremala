@@ -6,17 +6,33 @@ const REPO = "sabarishreddy99/jayaremala";
 const PAT_KEY = "avocado_github_pat";
 const API = `https://api.github.com/repos/${REPO}`;
 
+function decodeBase64Utf8(b64: string): string {
+  const bytes = Uint8Array.from(atob(b64.replace(/\n/g, "")), (c) => c.charCodeAt(0));
+  return new TextDecoder("utf-8").decode(bytes);
+}
+
 export function getPat(): string {
   return typeof window !== "undefined" ? localStorage.getItem(PAT_KEY) ?? "" : "";
 }
 
-type StagedFile = { data: unknown; message: string };
+/**
+ * A staged file is either a whole replacement (`patch` false — list files like
+ * experience.json) or a set of top-level keys to change (`patch` true — the
+ * many editors that each own a slice of profile.json or site.json).
+ *
+ * Patches are merged with each other as they are staged, and applied to the
+ * *latest* copy on GitHub at publish time. So two editors never undo each
+ * other, and a direct commit made meanwhile (the Now / Availability editors)
+ * is never reverted by an older staged copy.
+ */
+type StagedFile = { data: unknown; message: string; patch?: boolean };
 type Staged = Record<string, StagedFile>;
 
 interface StagingCtx {
   staged: Staged;
   count: number;
   stage: (path: string, data: unknown, message: string) => void;
+  stagePatch: (path: string, patch: Record<string, unknown>, message: string) => void;
   unstage: (path: string) => void;
   clear: () => void;
   publishAll: () => Promise<boolean>;
@@ -34,6 +50,18 @@ export function GitHubStagingProvider({ children }: { children: React.ReactNode 
 
   const stage = useCallback((path: string, data: unknown, message: string) => {
     setStaged((prev) => ({ ...prev, [path]: { data, message } }));
+  }, []);
+  const stagePatch = useCallback((path: string, patch: Record<string, unknown>, message: string) => {
+    setStaged((prev) => {
+      const before = prev[path];
+      if (before && !before.patch) {
+        // A whole-file edit is already staged: fold the patch into it.
+        return { ...prev, [path]: { data: { ...(before.data as object), ...patch }, message: `${before.message}; ${message}` } };
+      }
+      const data = { ...((before?.data as object) ?? {}), ...patch };
+      const msg = before ? `${before.message}; ${message}` : message;
+      return { ...prev, [path]: { data, message: msg, patch: true } };
+    });
   }, []);
   const unstage = useCallback((path: string) => {
     setStaged((prev) => {
@@ -73,12 +101,16 @@ export function GitHubStagingProvider({ children }: { children: React.ReactNode 
       const baseCommit = await j(await fetch(`${API}/git/commits/${latest}`, { headers }));
       const baseTree = baseCommit.tree.sha as string;
 
-      // 2. one tree with every staged file (GitHub creates the blobs)
-      const tree = entries.map(([path, { data }]) => ({
-        path,
-        mode: "100644",
-        type: "blob",
-        content: JSON.stringify(data, null, 2) + "\n",
+      // 2. one tree with every staged file (GitHub creates the blobs).
+      //    Patches are applied to the file as it is on main right now.
+      const tree = await Promise.all(entries.map(async ([path, { data, patch }]) => {
+        let content = data;
+        if (patch) {
+          const res = await fetch(`${API}/contents/${path}?ref=${latest}`, { headers });
+          const current = res.ok ? JSON.parse(decodeBase64Utf8((await res.json()).content)) : {};
+          content = { ...current, ...(data as object) };
+        }
+        return { path, mode: "100644", type: "blob", content: JSON.stringify(content, null, 2) + "\n" };
       }));
       const newTree = await j(
         await fetch(`${API}/git/trees`, { method: "POST", headers, body: JSON.stringify({ base_tree: baseTree, tree }) }),
@@ -107,7 +139,7 @@ export function GitHubStagingProvider({ children }: { children: React.ReactNode 
   }, [staged]);
 
   return (
-    <Ctx.Provider value={{ staged, count: Object.keys(staged).length, stage, unstage, clear, publishAll, publishing, result, dismissResult }}>
+    <Ctx.Provider value={{ staged, count: Object.keys(staged).length, stage, stagePatch, unstage, clear, publishAll, publishing, result, dismissResult }}>
       {children}
     </Ctx.Provider>
   );

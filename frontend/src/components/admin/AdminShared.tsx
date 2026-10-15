@@ -2,31 +2,20 @@
 
 /** Shared design primitives used by every admin editor */
 
-import { API_BASE_URL } from "@/lib/api/client";
+import { useState } from "react";
 
-// ── Background reingest trigger ───────────────────────────────────────────────
-// Call after any content.db write so Avocado stays in sync automatically.
-export function triggerReingest(): void {
-  const token =
-    typeof window !== "undefined"
-      ? (localStorage.getItem("avocado_admin_token") ?? "")
-      : "";
-  if (!token) return;
-  void fetch(`${API_BASE_URL}/admin/reingest`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-  }).catch(() => {});
-}
+// Avocado's index is kept current by the backend: content-API saves re-ingest
+// on the server, GitHub edits re-ingest on deploy. Editors do not trigger it.
 
 // ── Base class strings (re-usable in editors that build inputs directly) ──────
 
 export const inputCls =
-  "w-full rounded-lg border border-border bg-bg px-3.5 py-3 text-sm text-fg shadow-[inset_0_1px_0_rgb(0_0_0/0.02)] " +
+  "w-full rounded-xl border border-border bg-bg px-3.5 py-3 text-sm text-fg shadow-[inset_0_1px_0_rgb(0_0_0/0.02)] " +
   "placeholder:text-fg-faint hover:border-border-strong focus:outline-none focus:border-accent " +
   "focus:ring-2 focus:ring-accent/15 transition-[border-color,box-shadow,background-color] disabled:cursor-not-allowed disabled:bg-surface-raised disabled:opacity-50";
 
 export const selectCls =
-  "w-full rounded-lg border border-border bg-bg px-3.5 py-3 text-sm text-fg " +
+  "w-full rounded-xl border border-border bg-bg px-3.5 py-3 text-sm text-fg " +
   "hover:border-border-strong focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/15 " +
   "transition-[border-color,box-shadow,background-color] disabled:cursor-not-allowed disabled:bg-surface-raised disabled:opacity-50";
 
@@ -40,7 +29,7 @@ export function AdminCard({
   className?: string;
 }) {
   return (
-    <section className={`rounded-2xl border border-border bg-surface p-5 sm:p-7 ${className}`}>
+    <section className={`rounded-card border border-border bg-surface p-5 sm:p-7 ${className}`}>
       {children}
     </section>
   );
@@ -60,8 +49,8 @@ export function SectionHeader({
   return (
     <div className="flex items-start justify-between gap-4 mb-6 pb-4 border-b border-border-subtle">
       <div>
-        <h2 className="text-lg font-semibold text-fg leading-tight tracking-tight">{title}</h2>
-        {sub && <p className="text-xs text-fg-subtle mt-1.5 leading-relaxed max-w-2xl">{sub}</p>}
+        <h2 className="display-serif text-[1.5rem] leading-tight text-fg">{title}</h2>
+        {sub && <p className="text-[0.8125rem] text-fg-subtle mt-1.5 leading-relaxed max-w-2xl">{sub}</p>}
       </div>
       {actions && <div className="shrink-0">{actions}</div>}
     </div>
@@ -78,7 +67,7 @@ export function FieldLabel({
   required?: boolean;
 }) {
   return (
-    <p className="text-[11px] font-semibold text-fg-muted mb-2 flex items-center gap-1">
+    <p className="mb-2 flex items-center gap-1 font-mono text-[0.6875rem] uppercase tracking-[0.12em] text-fg-subtle">
       {children}
       {required && <span className="text-rose-500 normal-case tracking-normal font-normal">*</span>}
     </p>
@@ -155,9 +144,9 @@ export function Toggle({
       type="button"
       onClick={() => onChange(!checked)}
       aria-pressed={checked}
-      className={`inline-flex min-h-9 items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-medium border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors ${
+      className={`inline-flex min-h-9 items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-medium border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/40 transition-colors ${
         checked
-          ? "bg-accent/10 border-accent/30 text-accent"
+          ? "bg-accent-light border-accent/50 text-fg"
           : "border-border text-fg-muted hover:border-fg-muted hover:bg-surface-raised"
       }`}
     >
@@ -181,9 +170,10 @@ export function ResultBanner({
   if (!result) return null;
   return (
     <div
-      className={`flex items-start gap-2.5 rounded-lg px-3.5 py-2.5 text-xs ${
+      role={result.ok ? "status" : "alert"}
+      className={`flex items-start gap-2.5 rounded-xl px-3.5 py-2.5 text-[0.8125rem] ${
         result.ok
-          ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800"
+          ? "bg-accent-light text-fg border border-accent/40"
           : "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800"
       }`}
     >
@@ -216,14 +206,18 @@ export function ResultBanner({
 export function DirtyBadge({ dirty }: { dirty: boolean }) {
   if (!dirty) return null;
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 px-2.5 py-1 text-[10px] font-semibold text-amber-700 dark:text-amber-400">
-      <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--flesh)] px-2.5 py-1 font-mono text-[0.625rem] uppercase tracking-[0.12em] text-[var(--skin-ink)]">
+      <span className="w-1.5 h-1.5 rounded-full bg-[var(--pit)]" />
       Unsaved
     </span>
   );
 }
 
 // ── GitHub PAT row ────────────────────────────────────────────────────────────
+//
+// The token is stored once (localStorage) and shared by every editor, so this
+// row only asks for it when it is missing; with a token present it collapses
+// to a single "Loaded from GitHub" line.
 
 export function GithubPATRow({
   pat,
@@ -242,52 +236,62 @@ export function GithubPATRow({
   onLoad: () => void;
   loaded: boolean;
 }) {
-  return (
-    <div className="rounded-xl border border-border bg-surface-raised p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <FieldLabel>GitHub Token</FieldLabel>
-        {loaded && (
-          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-            <svg
-              width="10"
-              height="10"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-            >
-              <path d="M20 6L9 17l-5-5" />
-            </svg>
-            Connected
-          </span>
-        )}
+  // Each editor loads its file on arrival when a token is saved, so this row
+  // only has to ask for the token when it is missing.
+  const [editing, setEditing] = useState(() => !pat);
+
+  if (pat && !editing) {
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-full border border-border bg-surface px-4 py-2">
+        <span className="inline-flex items-center gap-2 text-[0.8125rem] text-fg-muted">
+          <span className={`size-2 rounded-full ${loaded ? "bg-accent" : loading ? "bg-[var(--flesh)] animate-pulse" : "bg-[var(--pit)]"}`} />
+          {loading ? "Loading from GitHub…" : loaded ? "Loaded from GitHub. Edit below, then stage your changes." : "GitHub token saved."}
+        </span>
+        <span className="flex items-center gap-1">
+          <button type="button" onClick={onLoad} disabled={loading}
+            className="rounded-full px-3 py-1 text-xs font-medium text-fg-muted transition-colors hover:bg-surface-raised hover:text-fg disabled:opacity-40">
+            {loaded ? "Reload" : "Load"}
+          </button>
+          <button type="button" onClick={() => setEditing(true)}
+            className="rounded-full px-3 py-1 text-xs font-medium text-fg-muted transition-colors hover:bg-surface-raised hover:text-fg">
+            Change token
+          </button>
+        </span>
       </div>
-      <div className="flex gap-2">
+    );
+  }
+
+  return (
+    <div className="rounded-card border border-border bg-accent-light p-4 sm:p-5 space-y-3">
+      <div>
+        <p className="text-sm font-semibold text-fg">Connect GitHub to edit this</p>
+        <p className="mt-1 text-[0.8125rem] leading-relaxed text-fg-muted">
+          Paste a fine-grained token with <code className="rounded bg-bg px-1 font-mono text-[0.75rem]">contents:write</code> on the
+          repo. It stays in this browser and is reused by every editor.
+        </p>
+      </div>
+      <div className="flex flex-col gap-2 sm:flex-row">
         <input
           type={patVisible ? "text" : "password"}
           value={pat}
           onChange={(e) => updatePat(e.target.value)}
-          placeholder="ghp_…"
-          className="flex-1 min-w-0 rounded-lg border border-border bg-bg px-3 py-2.5 text-sm text-fg placeholder:text-fg-subtle focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent/10 transition-all font-mono"
+          placeholder="github_pat_… or ghp_…"
+          aria-label="GitHub token"
+          className={`${inputCls} min-w-0 flex-1 font-mono`}
         />
-        <button
-          onClick={() => setPatVisible(!patVisible)}
-          className="shrink-0 px-3 py-2 rounded-lg border border-border text-xs text-fg-muted hover:text-fg hover:bg-surface transition-colors"
-        >
-          {patVisible ? "Hide" : "Show"}
-        </button>
-        <button
-          onClick={onLoad}
-          disabled={!pat.trim() || loading}
-          className="shrink-0 px-4 py-2 rounded-lg bg-surface border border-border text-xs font-semibold text-fg-muted hover:text-fg hover:border-fg-muted disabled:opacity-40 transition-all"
-        >
-          {loading ? "Loading…" : "Load"}
-        </button>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => setPatVisible(!patVisible)}
+            className="btn-avo-ghost shrink-0 rounded-full px-4 py-2 text-xs font-medium">
+            {patVisible ? "Hide" : "Show"}
+          </button>
+          <button type="button"
+            onClick={() => { onLoad(); setEditing(false); }}
+            disabled={!pat.trim() || loading}
+            className="btn-avo shrink-0 rounded-full px-5 py-2 text-xs font-semibold">
+            {loading ? "Loading…" : "Connect & load"}
+          </button>
+        </div>
       </div>
-      <p className="text-[10px] text-fg-faint leading-relaxed">
-        Needs repo <code className="font-mono bg-bg px-1 rounded">contents:write</code> permission.
-        Stored in localStorage, never sent to a third party.
-      </p>
     </div>
   );
 }
@@ -311,11 +315,12 @@ export function SaveRow({
 }) {
   const disabled = !pat.trim() || !loaded || saving || !dirty;
   return (
-    <div className="flex items-center gap-3 flex-wrap pt-5 border-t border-border">
+    // Sticks to the bottom of the screen on long forms so saving is always one reach away.
+    <div className="sticky bottom-0 z-20 -mx-1 flex flex-wrap items-center gap-3 border-t border-border bg-bg/90 px-1 py-4 backdrop-blur-md">
       <button
         onClick={onSave}
         disabled={disabled}
-        className="inline-flex items-center gap-2 rounded-lg bg-accent px-5 py-2.5 text-sm font-semibold text-white hover:bg-accent-hover transition-colors disabled:opacity-40 shadow-sm shadow-accent/20"
+        className="btn-avo inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold"
       >
         {saving ? (
           <>
@@ -389,7 +394,7 @@ export function MoveButtons({
       <button
         onClick={() => onMove(-1)}
         disabled={idx === 0}
-        className="p-1.5 rounded-md text-fg-faint hover:text-fg hover:bg-surface-raised disabled:opacity-20 transition-all"
+        className="p-1.5 rounded-full text-fg-faint hover:text-fg hover:bg-surface-raised disabled:opacity-20 transition-all"
         title="Move up"
       >
         <svg
@@ -406,7 +411,7 @@ export function MoveButtons({
       <button
         onClick={() => onMove(1)}
         disabled={idx === total - 1}
-        className="p-1.5 rounded-md text-fg-faint hover:text-fg hover:bg-surface-raised disabled:opacity-20 transition-all"
+        className="p-1.5 rounded-full text-fg-faint hover:text-fg hover:bg-surface-raised disabled:opacity-20 transition-all"
         title="Move down"
       >
         <svg

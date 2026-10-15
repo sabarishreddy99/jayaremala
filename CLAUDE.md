@@ -265,7 +265,17 @@ API key is set, so behaviour is unchanged when they are absent.
 | `quotes.json` | `/quotes` entries |
 | `spotlights.json` | homepage spotlight cards |
 | `inbox_signals.json` | weekly-digest inputs |
-| `blog.json` / `lab.json` | **generated** from MDX by the sync script — do not edit |
+| `site.json` | page names, one-liners and what each page holds (menu, footer, page map, Avocado's links) + home chapter copy |
+| `case-studies.json` | case-study cards and links |
+| `blog.json` / `lab.json` | **generated** from MDX by the sync script (full bodies, headings kept) — do not edit |
+| `case-study-text.json` | **generated** — readable text of each case-study deck, for Avocado/MCP only |
+
+**Everything in these files reaches Avocado and MCP.** `rag/ingest.py` chunks
+long bodies by section (never truncates), has a phrased builder for each known
+file and profile block, and a catch-all that ingests any new file or profile key.
+Avocado's system prompt (`rag/persona.py`) and the role→project graph links
+(`experience.json` → `projects`) are derived from the data too.
+`backend/tests/test_knowledge_contract.py` fails if any of that drifts.
 
 After editing any JSON run `npm run sync` from `frontend/`, or just restart `npm run dev`.
 

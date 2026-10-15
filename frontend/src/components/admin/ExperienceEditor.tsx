@@ -1,14 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useLoadOnMount } from "@/lib/hooks";
 import { useGitHubFile } from "@/lib/admin/useGitHubFile";
-import { FieldLabel, TextInput, TextArea, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, MoveButtons, triggerReingest } from "./AdminShared";
+import { FieldLabel, TextInput, TextArea, GithubPATRow, SaveRow, ResultBanner, DirtyBadge, MoveButtons, Toggle } from "./AdminShared";
+import { projects as publishedProjects } from "@/data/projects";
 
 const FILE = "backend/data/knowledge/experience.json";
 
 interface Experience {
   company: string; role: string; start: string; end: string;
   location: string; description: string; tech: string; bullets: string[];
+  /** Project titles this role produced — Avocado follows these links when answering. */
+  projects?: string[];
 }
 
 const DEFAULT: Experience = {
@@ -59,10 +63,10 @@ export default function ExperienceEditor() {
 
   async function handleSave() {
     const ok = await gh.save(entries, "chore: update experience");
-    if (ok) { setDirty(false); triggerReingest(); }
+    if (ok) setDirty(false);
   }
 
-  useEffect(() => { if (gh.pat.trim()) handleLoad(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useLoadOnMount(handleLoad, !!gh.pat.trim());
 
   return (
     <div className="space-y-5 max-w-4xl">
@@ -113,6 +117,21 @@ export default function ExperienceEditor() {
               <div><FieldLabel>End</FieldLabel><TextInput value={entry.end} onChange={v => set("end", v)} placeholder="Present" /></div>
               <div><FieldLabel>Location</FieldLabel><TextInput value={entry.location} onChange={v => set("location", v)} placeholder="New York, NY" /></div>
               <div><FieldLabel>Tech (comma-separated)</FieldLabel><TextInput value={entry.tech} onChange={v => set("tech", v)} placeholder="Python, FastAPI, AWS" /></div>
+              <div>
+                <FieldLabel>Projects from this role</FieldLabel>
+                <p className="-mt-1 mb-2.5 text-[0.75rem] leading-relaxed text-fg-subtle">
+                  When someone asks Avocado about this role, it also brings in the projects ticked here.
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {publishedProjects.map((p) => {
+                    const on = (entry.projects ?? []).includes(p.title);
+                    return (
+                      <Toggle key={p.title} checked={on} label={p.title}
+                        onChange={(v) => set("projects", v ? [...(entry.projects ?? []), p.title] : (entry.projects ?? []).filter((t) => t !== p.title))} />
+                    );
+                  })}
+                </div>
+              </div>
             </div>
             <div>
               <FieldLabel>Description (card summary)</FieldLabel>

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback, Children, isValidElement } from "react";
+import { useRef, useState, useCallback, Children, isValidElement } from "react";
+import { openInWriter } from "@/lib/admin/openInWriter";
+import { useLoadOnMount } from "@/lib/hooks";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { API_BASE_URL } from "@/lib/api/client";
-import { triggerReingest } from "./AdminShared";
 
 /* ── Types ─────────────────────────────────────────────────────────── */
 interface BlogRow {
@@ -17,6 +18,8 @@ interface BlogRow {
   tags: string[];
   content: string;
   published: boolean;
+  /** "mdx" when the post is a file in the repo (edit it in the GitHub writer). */
+  source?: string;
 }
 
 type EditorMode = "write" | "split" | "preview";
@@ -185,7 +188,7 @@ const CALLOUT_STYLES: Record<CalloutType, { border: string; bg: string; icon: st
   info:    { border: "border-blue-200 dark:border-blue-800",   bg: "bg-blue-50 dark:bg-blue-950/50",   icon: "ℹ",  label: "text-blue-700 dark:text-blue-400",   text: "text-blue-800 dark:text-blue-300" },
   tip:     { border: "border-green-200 dark:border-green-800", bg: "bg-green-50 dark:bg-green-950/50", icon: "✦",  label: "text-green-700 dark:text-green-400", text: "text-green-800 dark:text-green-300" },
   warning: { border: "border-amber-200 dark:border-amber-800", bg: "bg-amber-50 dark:bg-amber-950/50", icon: "⚠",  label: "text-amber-700 dark:text-amber-400", text: "text-amber-900 dark:text-amber-300" },
-  quote:   { border: "border-indigo-200 dark:border-indigo-800", bg: "bg-indigo-50 dark:bg-indigo-950/50", icon: "❝", label: "text-indigo-600 dark:text-indigo-400", text: "text-indigo-900 dark:text-indigo-300" },
+  quote:   { border: "border-accent/40 ", bg: "bg-accent-light ", icon: "❝", label: "text-accent ", text: "text-accent " },
 };
 
 /* ── Preprocess markdown before ReactMarkdown ───────────────────────── */
@@ -308,7 +311,7 @@ export default function ContentBlogEditor() {
     setLoading(false);
   }
 
-  useEffect(() => { loadPosts(); }, []);
+  useLoadOnMount(loadPosts);
 
   function resetForm() {
     setForm(EMPTY_FORM);
@@ -367,7 +370,6 @@ export default function ContentBlogEditor() {
         setResult({ ok: true, message: editingSlug ? "Updated!" : "Post created and live!" });
         if (!editingSlug) resetForm();
         await loadPosts();
-        triggerReingest();
         void pushBlogMdxToGitHub(body);
       } else {
         const err = await res.json().catch(() => ({}));
@@ -390,7 +392,6 @@ export default function ContentBlogEditor() {
         setConfirmDelete(null);
         if (editingSlug === slug) resetForm();
         await loadPosts();
-        triggerReingest();
         void deleteBlogMdxFromGitHub(slug);
       } else {
         setResult({ ok: false, message: `Error ${res.status}` });
@@ -402,10 +403,12 @@ export default function ContentBlogEditor() {
   }
 
   function toggleSelect(slug: string) {
-    setSelectedSlugs(prev => { const next = new Set(prev); next.has(slug) ? next.delete(slug) : next.add(slug); return next; });
+    setSelectedSlugs(prev => { const next = new Set(prev); if (next.has(slug)) next.delete(slug); else next.add(slug); return next; });
   }
   function toggleSelectAll() {
-    setSelectedSlugs(prev => prev.size === posts.length ? new Set<string>() : new Set(posts.map(p => p.slug)));
+    // Repo-backed (MDX) posts cannot be deleted here, so they are never selected.
+    const live = posts.filter(p => p.source !== "mdx").map(p => p.slug);
+    setSelectedSlugs(prev => prev.size === live.length ? new Set<string>() : new Set(live));
   }
   async function handleBulkDelete() {
     if (!bulkConfirm) { setBulkConfirm(true); return; }
@@ -423,7 +426,6 @@ export default function ContentBlogEditor() {
     }
     setSelectedSlugs(new Set());
     await loadPosts();
-    triggerReingest();
     setBulkDeleting(false);
     setResult({ ok: true, message: `Deleted ${slugsToDelete.length} post${slugsToDelete.length !== 1 ? "s" : ""}.` });
   }
@@ -577,7 +579,7 @@ export default function ContentBlogEditor() {
           <div className="ml-auto flex items-center gap-3">
             <Result result={result} />
             <button onClick={handleSave} disabled={saving}
-              className="rounded-xl bg-accent px-5 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors disabled:opacity-50">
+              className="rounded-xl bg-accent px-5 py-2 text-sm font-semibold text-accent-fg hover:bg-accent/90 transition-colors disabled:opacity-50">
               {saving ? "Saving…" : editingSlug ? "Update" : "Publish"}
             </button>
           </div>
@@ -594,10 +596,10 @@ export default function ContentBlogEditor() {
         {/* Header */}
         <div className="flex items-start justify-between">
           <div>
-            <h2 className="text-base font-bold text-fg">
+            <h2 className="display-serif text-[1.5rem] leading-tight text-fg">
               {editingSlug ? "Edit post" : "New blog post"}
             </h2>
-            <p className="text-[11px] text-fg-faint mt-0.5">Posts publish immediately via the Content API, no git push needed.</p>
+            <p className="mt-1 text-[0.8125rem] text-fg-subtle">Saves straight to the content API. Live right away, no rebuild.</p>
           </div>
           {editingSlug && (
             <button onClick={resetForm} className="text-xs text-fg-faint hover:text-fg transition-colors">
@@ -672,7 +674,7 @@ export default function ContentBlogEditor() {
               <button onClick={resetForm} className="text-xs text-fg-faint hover:text-fg transition-colors">Cancel</button>
             )}
             <button onClick={handleSave} disabled={saving}
-              className="rounded-xl bg-accent px-5 py-2 text-sm font-semibold text-white hover:bg-accent/90 transition-colors disabled:opacity-50">
+              className="rounded-xl bg-accent px-5 py-2 text-sm font-semibold text-accent-fg hover:bg-accent/90 transition-colors disabled:opacity-50">
               {saving ? "Saving…" : editingSlug ? "Update Post" : "Publish Post"}
             </button>
           </div>
@@ -685,7 +687,7 @@ export default function ContentBlogEditor() {
           <div className="flex items-center gap-2">
             <input
               type="checkbox"
-              checked={posts.length > 0 && selectedSlugs.size === posts.length}
+              checked={selectedSlugs.size > 0 && selectedSlugs.size === posts.filter(p => p.source !== "mdx").length}
               onChange={toggleSelectAll}
               disabled={posts.length === 0}
               className="accent-accent cursor-pointer"
@@ -724,12 +726,15 @@ export default function ContentBlogEditor() {
                 type="checkbox"
                 checked={selectedSlugs.has(p.slug)}
                 onChange={() => toggleSelect(p.slug)}
-                className="mt-1 shrink-0 accent-accent cursor-pointer"
+                disabled={p.source === "mdx"}
+                aria-label={p.source === "mdx" ? "Repo post — not selectable" : `Select ${p.title}`}
+                className="mt-1 shrink-0 accent-accent cursor-pointer disabled:cursor-not-allowed disabled:opacity-30"
               />
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <span className={`inline-block w-1.5 h-1.5 rounded-full shrink-0 ${p.published ? "bg-emerald-400" : "bg-amber-400"}`} />
                   <p className="text-sm font-medium text-fg leading-snug truncate">{p.title}</p>
+                  {p.source === "mdx" && <span title="This lives as an MDX file in the repo. Its page renders the file, so it is edited in the GitHub writer." className="shrink-0 rounded-full border border-border px-2 py-0.5 font-mono text-[0.625rem] uppercase tracking-[0.1em] text-fg-subtle">MDX · repo</span>}
                 </div>
                 <p className="text-[11px] text-fg-faint font-mono pl-3.5">/{p.slug} · {p.date}</p>
                 <div className="flex gap-1.5 mt-1.5 pl-3.5 flex-wrap">
@@ -739,6 +744,13 @@ export default function ContentBlogEditor() {
                 </div>
               </div>
               <div className="flex gap-3 shrink-0 pt-0.5">
+                {p.source === "mdx" ? (
+                <button onClick={() => openInWriter("blog", p.slug)}
+                  className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-[11px] font-medium text-fg-muted transition-colors hover:border-accent hover:bg-accent-light hover:text-fg">
+                  Edit in GitHub writer
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                </button>
+                ) : (<>
                 <button onClick={() => startEdit(p)} className="text-[11px] text-accent hover:text-accent/80 transition-colors">Edit</button>
                 {confirmDelete === p.slug ? (
                   <span className="flex gap-2">
@@ -748,6 +760,7 @@ export default function ContentBlogEditor() {
                 ) : (
                   <button onClick={() => setConfirmDelete(p.slug)} className="text-[11px] text-fg-faint hover:text-rose-600 transition-colors">Delete</button>
                 )}
+                </>)}
               </div>
             </div>
           ))}

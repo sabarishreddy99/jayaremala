@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { triggerReingest } from "./AdminShared";
 
 interface GalleryItem {
   id: string;
@@ -142,7 +141,6 @@ export default function GalleryEditor() {
       setItems(next);
       setFile(null); setTitle(""); setCaption(""); setCategory(""); setDate("");
       setResult({ ok: true, msg: "Uploaded! Live in ~2 min after the rebuild." });
-      triggerReingest();
     } catch (e) {
       setResult({ ok: false, msg: `Upload failed: ${(e as Error).message}` });
     } finally { setBusy(false); }
@@ -280,7 +278,6 @@ export default function GalleryEditor() {
       setQueue([]);
       setBulkProgress(null);
       setResult({ ok: true, msg: `Pushed ${newEntries.length} photo${newEntries.length !== 1 ? "s" : ""} in one commit! Live in ~2 min after rebuild.` });
-      triggerReingest();
     } catch (e) {
       setResult({ ok: false, msg: `Bulk upload failed: ${(e as Error).message}` });
     } finally {
@@ -297,7 +294,6 @@ export default function GalleryEditor() {
       await putJson(next, `gallery: remove ${id}`);
       setItems(next);
       setResult({ ok: true, msg: "Removed." });
-      triggerReingest();
     } catch (e) {
       setResult({ ok: false, msg: `Remove failed: ${(e as Error).message}` });
     } finally { setBusy(false); }
@@ -308,7 +304,7 @@ export default function GalleryEditor() {
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2.5">
-        <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-violet-500 to-indigo-500 shrink-0" />
+        <div className="w-0.5 h-3.5 rounded-full bg-gradient-to-b from-accent to-accent shrink-0" />
         <h2 className="text-xs font-bold uppercase tracking-widest text-fg-faint">Gallery, Upload Photos</h2>
       </div>
 
@@ -328,7 +324,7 @@ export default function GalleryEditor() {
         <div className="flex gap-1 p-1 rounded-xl bg-surface border border-border w-fit">
           {(["single", "bulk"] as const).map((t) => (
             <button key={t} onClick={() => setTab(t)}
-              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize ${tab === t ? "bg-indigo-600 text-white" : "text-fg-subtle hover:text-fg"}`}>
+              className={`px-4 py-1.5 rounded-lg text-xs font-semibold transition-colors capitalize ${tab === t ? "bg-accent text-accent-fg" : "text-fg-subtle hover:text-fg"}`}>
               {t === "bulk" ? "Bulk upload" : "Single upload"}
             </button>
           ))}
@@ -348,7 +344,7 @@ export default function GalleryEditor() {
             <input value={category} onChange={(e) => setCategory(e.target.value)} placeholder="Category (Awards, Events…)" className={inputCls} />
             <input value={date} onChange={(e) => setDate(e.target.value)} placeholder="Date (e.g. Nov 2024)" className={inputCls} />
           </div>
-          <button onClick={addPhoto} disabled={busy} className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 text-sm font-semibold disabled:opacity-50 transition-colors inline-flex items-center gap-2">
+          <button onClick={addPhoto} disabled={busy} className="rounded-full bg-accent hover:bg-accent-hover text-accent-fg px-5 py-2.5 text-sm font-semibold disabled:opacity-50 transition-colors inline-flex items-center gap-2">
             {busy ? "Uploading…" : "Upload photo"}
           </button>
         </div>
@@ -360,14 +356,14 @@ export default function GalleryEditor() {
           {/* Drop zone */}
           <div
             ref={dropRef}
-            onDragOver={(e) => { e.preventDefault(); dropRef.current?.classList.add("border-indigo-500"); }}
-            onDragLeave={() => dropRef.current?.classList.remove("border-indigo-500")}
+            onDragOver={(e) => { e.preventDefault(); dropRef.current?.classList.add("border-accent"); }}
+            onDragLeave={() => dropRef.current?.classList.remove("border-accent")}
             onDrop={(e) => {
               e.preventDefault();
-              dropRef.current?.classList.remove("border-indigo-500");
+              dropRef.current?.classList.remove("border-accent");
               enqueueFiles(Array.from(e.dataTransfer.files));
             }}
-            className="rounded-2xl border-2 border-dashed border-border bg-surface p-6 text-center transition-colors cursor-pointer hover:border-indigo-400"
+            className="rounded-2xl border-2 border-dashed border-border bg-surface p-6 text-center transition-colors cursor-pointer hover:border-accent"
             onClick={() => document.getElementById("bulk-file-input")?.click()}
           >
             <input id="bulk-file-input" type="file" accept="image/*" multiple className="hidden"
@@ -407,7 +403,7 @@ export default function GalleryEditor() {
                       <div className="flex items-center justify-between">
                         <p className="text-[10px] text-fg-faint truncate">{q.file.name} · {(q.file.size / 1024).toFixed(0)} KB</p>
                         {q.status === "done"     && <span className="text-[10px] text-emerald-500 font-medium">Done</span>}
-                        {q.status === "uploading" && <span className="text-[10px] text-indigo-400 font-medium">Uploading…</span>}
+                        {q.status === "uploading" && <span className="text-[10px] text-accent font-medium">Uploading…</span>}
                         {q.status === "error"    && <span className="text-[10px] text-rose-500 font-medium">{q.error}</span>}
                       </div>
                     </div>
@@ -428,7 +424,7 @@ export default function GalleryEditor() {
                 <div className="space-y-1">
                   <div className="h-1.5 rounded-full bg-border overflow-hidden">
                     <div
-                      className="h-full rounded-full bg-indigo-500 transition-all duration-300"
+                      className="h-full rounded-full bg-accent transition-all duration-300"
                       style={{ width: `${(bulkProgress.done / bulkProgress.total) * 100}%` }}
                     />
                   </div>
@@ -437,7 +433,7 @@ export default function GalleryEditor() {
               )}
 
               <button onClick={bulkUpload} disabled={busy || queue.length === 0}
-                className="rounded-full bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 text-sm font-semibold disabled:opacity-50 transition-colors inline-flex items-center gap-2">
+                className="rounded-full bg-accent hover:bg-accent-hover text-accent-fg px-5 py-2.5 text-sm font-semibold disabled:opacity-50 transition-colors inline-flex items-center gap-2">
                 {busy
                   ? bulkProgress ? `Uploading ${bulkProgress.done}/${bulkProgress.total}…` : "Working…"
                   : `Push ${queue.length} photo${queue.length !== 1 ? "s" : ""} in one commit`}

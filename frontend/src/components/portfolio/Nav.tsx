@@ -14,6 +14,7 @@ import { playClick } from "@/lib/sound";
 import { siteGroups as groups } from "@/lib/portfolio/site-nav";
 import SiteBubbles from "@/components/portfolio/SiteBubbles";
 import SeedAvatar from "@/components/chat/SeedAvatar";
+import { useClientValue } from "@/lib/hooks";
 
 /** Dropdown icon chips take their group's bubble colour, so the nav and the
  *  site map read as one system (Work = Skin, Writing = Flesh, Developers = Paper). */
@@ -36,10 +37,7 @@ export default function Nav() {
   const [scrolled, setScrolled] = useState(false);
   const [navVisible, setNavVisible] = useState(true);
   // Default to Mac (⌘) so the SSR/first-paint hint matches this audience; correct on mount.
-  const [isMac, setIsMac] = useState(true);
-  useEffect(() => {
-    setIsMac(/Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent));
-  }, []);
+  const isMac = useClientValue(() => /Mac|iPhone|iPad|iPod/i.test(navigator.platform || navigator.userAgent), true);
 
   // ── Scroll-hide/show refs ─────────────────────────────────────
   const lastScrollY   = useRef(0);

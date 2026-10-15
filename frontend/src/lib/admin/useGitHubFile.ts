@@ -33,7 +33,13 @@ export function useGitHubFile(filePath: string) {
       if (!res.ok) { setResult({ ok: false, message: `GitHub ${res.status}: ${res.statusText}` }); return null; }
       const d = await res.json();
       const bytes = Uint8Array.from(atob(d.content.replace(/\n/g, "")), c => c.charCodeAt(0));
-      const parsed = JSON.parse(new TextDecoder("utf-8").decode(bytes)) as T;
+      let parsed = JSON.parse(new TextDecoder("utf-8").decode(bytes)) as T;
+      // Show what is already staged for this file, so switching editors never
+      // appears to lose an unpublished change.
+      const pending = staging?.staged[filePath];
+      if (pending) {
+        parsed = (pending.patch ? { ...(parsed as object), ...(pending.data as object) } : pending.data) as T;
+      }
       setLoaded(true);
       return parsed;
     } catch (e: unknown) {
@@ -59,5 +65,21 @@ export function useGitHubFile(filePath: string) {
     return true;
   }
 
-  return { pat, patVisible, setPatVisible, updatePat, loading, saving, loaded, result, load, save };
+  // Stage only some top-level keys of the file. Use this whenever an editor
+  // owns a slice of a shared file (profile.json, site.json): the keys are
+  // applied to the latest copy on GitHub at publish time.
+  async function savePatch(patch: Record<string, unknown>, message: string): Promise<boolean> {
+    if (!pat || !loaded) return false;
+    if (!staging) {
+      setResult({ ok: false, message: "Staging unavailable (open inside the admin page)." });
+      return false;
+    }
+    setSaving(true);
+    staging.stagePatch(filePath, patch, message);
+    setResult({ ok: true, message: "Staged, hit “Publish all” at the bottom to deploy." });
+    setSaving(false);
+    return true;
+  }
+
+  return { pat, patVisible, setPatVisible, updatePat, loading, saving, loaded, result, load, save, savePatch };
 }

@@ -31,7 +31,7 @@ export default function AdminThemeControl() {
         <span className="text-[11px] font-medium text-fg-muted">Appearance</span>
         <span className="text-[10px] text-fg-faint">Saved automatically</span>
       </div>
-      <div className="grid grid-cols-3 gap-1 rounded-lg border border-border bg-bg p-1" aria-label="Admin color theme">
+      <div className="grid grid-cols-3 gap-1 rounded-full border border-border bg-bg p-1" aria-label="Admin color theme">
         {OPTIONS.map((option) => {
           const selected = theme === option.value;
           return (
@@ -40,8 +40,8 @@ export default function AdminThemeControl() {
               type="button"
               onClick={() => setTheme(option.value)}
               aria-pressed={selected}
-              className={`flex min-h-9 items-center justify-center gap-1.5 rounded-md px-2 text-[11px] font-medium transition-colors ${
-                selected ? "bg-fg text-bg" : "text-fg-subtle hover:bg-surface-raised hover:text-fg"
+              className={`flex min-h-9 items-center justify-center gap-1.5 rounded-full px-2 text-[11px] font-medium transition-colors ${
+                selected ? "bg-accent text-accent-fg" : "text-fg-subtle hover:bg-surface-raised hover:text-fg"
               }`}
             >
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

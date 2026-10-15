@@ -6,7 +6,9 @@
 /* Prevent iOS Safari auto-zoom on input focus.
    Safari zooms when font-size < 16px — enforce it on mobile only. */
 @media (max-width: 640px) {
-  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  /* Large serif fields (the admin title and standfirst) are already above
+     16px, so they keep their own size. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not(.display-serif):not(.voice-serif),
   textarea,
   select {
     font-size: 16px !important;
@@ -45,6 +47,11 @@
   border: 2px solid var(--surface);
   border-radius: 9999px;
 }
+/* While the fixed publish bar is showing, the scrolling working area keeps
+   room under its last line (the bar sits outside that scroll container). */
+html:has(.publish-bar) .admin-main { padding-bottom: 7rem; }
+@media (min-width: 640px) { html:has(.publish-bar) .admin-main { padding-bottom: 5rem; } }
+
 .admin-surface ::selection {
   color: var(--accent-fg);
   background: var(--accent);
@@ -59,12 +66,27 @@
   position: relative;
   z-index: 1;
   background: var(--surface);
-  border-radius: 0.75rem;
-  padding: 2rem 2.5rem !important;
-  max-width: 720px;
+  border-radius: 1rem;
+  padding: 1.5rem 1.25rem 2rem !important;
+  max-width: 760px;
   margin-inline: auto;
-  box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.62);
+  /* Room for the fixed focus bar under the last line. */
+  margin-bottom: 5.5rem;
+  scroll-margin-top: 5.5rem;
+  /* Spread far enough to cover the related posts and footer below the
+     article on a long phone page, not just one screen. */
+  box-shadow: 0 0 0 500vmax rgb(15 14 12 / 0.66);
   transition: border-radius 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (min-width: 640px) {
+  :root.reading-mode article { padding: 2.25rem 2.5rem 2.75rem !important; }
+}
+@media (min-width: 1024px) {
+  :root.reading-mode article { padding: 2.75rem 3.25rem 3.25rem !important; }
+}
+/* Phones: let the lit sheet use the gutter, so the measure is not squeezed. */
+@media (max-width: 639px) {
+  :root.reading-mode article { margin-inline: -0.5rem; border-radius: 0.875rem; }
 }
 
 /* Don't clip the spotlight shadow anywhere on the path to the viewport */
@@ -82,14 +104,20 @@
   letter-spacing: 0.01em;
 }
 
-/* Dim the sticky nav header — NOT article's internal <header> */
+/* Dim the sticky nav and footer. The table of contents leaves the layout
+   entirely, so the article column centres instead of sitting off to the left. */
 :root.reading-mode header.sticky,
-:root.reading-mode footer,
-:root.reading-mode aside {
+:root.reading-mode footer {
   opacity: 0.04;
   pointer-events: none;
   transition: opacity 0.3s ease;
 }
+:root.reading-mode article ~ aside,
+:root.reading-mode main aside { display: none !important; }
+
+/* Floating chrome steps aside; the focus bar is the only control left. */
+:root.reading-mode .to-top,
+:root.reading-mode .chat-fab { opacity: 0 !important; pointer-events: none !important; }
 
 /* ── float-up ─────────────────────────────────────────────────────────────── */
 
@@ -463,7 +491,7 @@ a[role="button"]:active {
   font-weight: 700;
   font-size: 3.1em;
   line-height: 0.78;
-  margin: 0.02em 0.12em 0 0;
+  margin: 0.04em 0.06em 0 0;
   color: var(--accent);
 }
 
@@ -633,6 +661,9 @@ figcaption[data-rehype-pretty-code-title] + pre {
 }
 /* Image figures (from BlogImage component) get their own margin — not code figures */
 .prose figure:not([data-rehype-pretty-code-figure]) { margin: 1.8em 0; }
+/* Framed images (BlogImage) bring their own frame and shadow: the prose
+   image rules would add a second border and push the picture down inside it. */
+.prose .not-prose img { margin: 0; border: 0; border-radius: 0; box-shadow: none; }
 .prose figcaption:not([data-rehype-pretty-code-title]) { text-align: center; font-size: 0.8rem; color: var(--fg-faint); margin-top: 0.5em; font-style: italic; }
 
 .prose table { width: 100%; border-collapse: collapse; font-size: 0.9em; margin: 1.6em 0; }
@@ -1275,15 +1306,6 @@ figcaption[data-rehype-pretty-code-title] + pre {
     transparent 100%);
 }
 
-/* The "won't do" register in the opinions chapter. Struck on the TERM only.
-   Striking the explanation as well costs more legibility than the tone is
-   worth, and screen readers announce long struck passages badly. */
-.opinion-against {
-  text-decoration: line-through;
-  text-decoration-thickness: 1px;
-  text-decoration-color: color-mix(in srgb, var(--fg-faint) 55%, transparent);
-}
-
 /* Ghost chapter numerals — the chapter's typographic anchor in the rail.
    EB Garamond ships oldstyle figures by default, which gives 01–09 a
    descending zero and uneven widths at display size. Force lining +
@@ -1820,6 +1842,32 @@ html:has(.portfolio) { --page-bg: var(--bg); }
   .deck-card { transition: none; }
 }
 
+/* ── Blended card shadows ──────────────────────────────────────────────
+   Every printed card (roles, builds, stances, notes, prompts) sits on the
+   same shadow: a tight contact line, then a long soft fall tinted with the
+   skin ink so it melts into the warm paper instead of greying it. Dark mode
+   swaps to plain black at higher strength. */
+html:has(.portfolio) {
+  --avo-shadow:
+    0 1px 2px rgb(35 40 15 / 0.07),
+    0 10px 22px -14px rgb(35 40 15 / 0.22),
+    0 34px 64px -38px rgb(59 67 32 / 0.42);
+  --avo-shadow-lift:
+    0 2px 4px rgb(35 40 15 / 0.08),
+    0 18px 34px -18px rgb(35 40 15 / 0.28),
+    0 52px 96px -42px rgb(59 67 32 / 0.52);
+}
+html.dark:has(.portfolio) {
+  --avo-shadow:
+    0 1px 2px rgb(0 0 0 / 0.3),
+    0 12px 24px -14px rgb(0 0 0 / 0.5),
+    0 34px 64px -36px rgb(0 0 0 / 0.7);
+  --avo-shadow-lift:
+    0 2px 4px rgb(0 0 0 / 0.35),
+    0 20px 36px -18px rgb(0 0 0 / 0.55),
+    0 52px 96px -40px rgb(0 0 0 / 0.8);
+}
+
 /* ── Avocado faces ─────────────────────────────────────────────────────
    Shared printed surfaces for the role stack and the stance panels. Like the
    testimonial deck, they keep their colour in both modes. Text inside inherits
@@ -1829,6 +1877,12 @@ html:has(.portfolio) { --page-bg: var(--bg); }
 :is(.role-card, .stance-panel)[data-face="paper"] { background: var(--surface); color: var(--fg); border: 1px solid var(--border); }
 :is(.role-card, .stance-panel) .text-fg { color: inherit; }
 .stance-panel[data-face="skin"] .stance-term { color: var(--flesh); }
+.stance-panel { box-shadow: var(--avo-shadow); }
+@media (min-width: 768px) {
+  .stance-panel { rotate: var(--tilt, 0deg); transition: rotate 0.45s cubic-bezier(0.22, 1, 0.36, 1); }
+  .stance-panel:hover { rotate: 0deg; }
+}
+@media (prefers-reduced-motion: reduce) { .stance-panel { transition: none; } }
 
 /* ── Card rows (home "The work") ──────────────────────────────────────
    Three equal cards in a row from lg up; below that a swipeable snap row
@@ -1855,14 +1909,41 @@ html:has(.portfolio) { --page-bg: var(--bg); }
 .role-card {
   border-radius: 1rem;
   padding: 1.5rem;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 14px 32px -24px rgb(0 0 0 / 0.35);
-  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: var(--avo-shadow);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), rotate 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 @media (min-width: 640px) { .role-card { padding: 1.75rem; } }
 @media (hover: hover) {
-  .role-card:hover { transform: translateY(-4px); box-shadow: 0 2px 4px rgb(0 0 0 / 0.06), 0 26px 50px -26px rgb(0 0 0 / 0.45); }
+  .role-card:hover { transform: translateY(-4px); box-shadow: var(--avo-shadow-lift); }
 }
 @media (prefers-reduced-motion: reduce) { .role-card { transition: none; } }
+
+/* On laptop and desktop the work rows are laid on the desk like the chat
+   prompt deck: each card a little off square, the middle one dropped a
+   touch, straightening as you point at it. `rotate`/`translate` are used
+   (not `transform`) so they compose with the hover lift and ScrollReveal. */
+.card-row--tilt .card-lift { box-shadow: var(--avo-shadow); }
+.card-row--tilt .card-lift:hover { box-shadow: var(--avo-shadow-lift); }
+@media (min-width: 1024px) {
+  .card-row--tilt { gap: 1.75rem; padding-block: 0.75rem 1.5rem; }
+  .card-row--tilt > :nth-child(3n + 1) { --tilt: -1.6deg; }
+  .card-row--tilt > :nth-child(3n + 2) { --tilt: 1.1deg; --drop: 14px; }
+  .card-row--tilt > :nth-child(3n)     { --tilt: -0.7deg; --drop: 4px; }
+  .card-row--tilt > .role-card,
+  .card-row--tilt > * > .card-lift {
+    rotate: var(--tilt, 0deg);
+    translate: 0 var(--drop, 0px);
+    transition: rotate 0.45s cubic-bezier(0.22, 1, 0.36, 1), translate 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.3s ease;
+  }
+  .card-row--tilt > .role-card:hover,
+  .card-row--tilt > .role-card:focus-within,
+  .card-row--tilt > * > .card-lift:hover,
+  .card-row--tilt > * > .card-lift:focus-within { rotate: 0deg; translate: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-row--tilt > .role-card, .card-row--tilt > * > .card-lift { transition: none; }
+}
 
 /* ── Seed ring ─────────────────────────────────────────────────────────── */
 .seed-ring { animation: seed-turn 22s linear infinite; }
@@ -1876,12 +1957,12 @@ html:has(.portfolio) { --page-bg: var(--bg); }
 .prompt-card {
   transform: rotate(var(--tilt, 0deg));
   transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 14px 30px -22px rgb(0 0 0 / 0.35);
+  box-shadow: var(--avo-shadow);
 }
 .prompt-card:hover,
 .prompt-card:focus-visible {
   transform: rotate(0deg) translateY(-4px);
-  box-shadow: 0 2px 4px rgb(0 0 0 / 0.06), 0 24px 48px -24px rgb(0 0 0 / 0.45);
+  box-shadow: var(--avo-shadow-lift);
 }
 @media (prefers-reduced-motion: reduce) { .prompt-card { transition: none; } }
 
@@ -1969,7 +2050,7 @@ html.dark:has(.portfolio) {
 /* ── Note stack (home "Writing") ───────────────────────────────────────── */
 .note-card {
   transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.42s ease, box-shadow 0.42s ease;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 22px 44px -30px rgb(0 0 0 / 0.45);
+  box-shadow: var(--avo-shadow);
   user-select: none;
 }
 .note-card[data-face="paper"] { background: var(--surface); color: var(--fg); border: 1px solid var(--border); }
@@ -1979,8 +2060,23 @@ html.dark:has(.portfolio) {
 .note-card[data-face="skin"]  .note-band { background: var(--skin-deep); color: var(--flesh); }
 .note-card[data-face="flesh"] .note-band { background: color-mix(in srgb, var(--skin) 14%, var(--flesh)); }
 .note-card[data-face="skin"] .note-read { color: var(--flesh); }
-.note-pile:hover .note-card:first-child { box-shadow: 0 2px 4px rgb(0 0 0 / 0.06), 0 30px 60px -30px rgb(0 0 0 / 0.5); }
+.note-pile:hover .note-card:first-child { box-shadow: var(--avo-shadow-lift); }
 @media (prefers-reduced-motion: reduce) { .note-card { transition: none; } }
+
+/* Note tiles (blog + lab indexes): the pile laid flat on the desk. Half the
+   tilt on phones, where a single column needs to read straight. */
+.note-tile {
+  user-select: auto;
+  rotate: calc(var(--tilt, 0deg) * 0.5);
+  transition: rotate 0.45s cubic-bezier(0.22, 1, 0.36, 1), translate 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s ease;
+}
+@media (min-width: 640px) { .note-tile { rotate: var(--tilt, 0deg); } }
+.note-tile:focus-within { rotate: 0deg; translate: 0 -4px; box-shadow: var(--avo-shadow-lift); }
+@media (hover: hover) {
+  .note-tile:hover { rotate: 0deg; translate: 0 -4px; box-shadow: var(--avo-shadow-lift); }
+}
+.note-desk { padding-block: 0.5rem; }
+@media (prefers-reduced-motion: reduce) { .note-tile { transition: none; } }
 
 /* ── Site bubbles (home "Explore the rest" + phone menu) ───────────────
    Pages as bubbles around the seed. Flex-wrap keeps the cluster responsive

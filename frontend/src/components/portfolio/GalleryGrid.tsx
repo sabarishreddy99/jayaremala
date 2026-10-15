@@ -1,23 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useClientValue, useMounted } from "@/lib/hooks";
 import { createPortal } from "react-dom";
 import type { GalleryItem } from "@/data/gallery";
 
 export default function GalleryGrid({ items }: { items: GalleryItem[] }) {
   const [active, setActive] = useState<string | null>(null);   // category filter
-  const [focus, setFocus] = useState<string | null>(null);     // keyword deep-link (?focus=)
   const [query, setQuery] = useState("");                      // free-text search
   const [lightbox, setLightbox] = useState<number | null>(null);
-  const [mounted, setMounted] = useState(false);
 
-  // Read a deep-link focus keyword from the URL once on mount (e.g. /gallery?focus=gradeVITian).
-  // Done here rather than via useSearchParams so the page stays statically prerendered.
-  useEffect(() => {
-    setMounted(true);
-    const f = new URLSearchParams(window.location.search).get("focus");
-    if (f) setFocus(f);
-  }, []);
+  // A deep-link focus keyword from the URL (e.g. /gallery?focus=gradeVITian),
+  // read in the browser rather than via useSearchParams so the page stays
+  // statically prerendered. Clearing it is local state.
+  const urlFocus = useClientValue(() => new URLSearchParams(window.location.search).get("focus"), null);
+  const [focusCleared, setFocusCleared] = useState(false);
+  const focus = focusCleared ? null : urlFocus;
+  const mounted = useMounted();
 
   const categories = Array.from(new Set(items.map((i) => i.category).filter(Boolean))) as string[];
   const matchesFocus = (i: GalleryItem) =>
@@ -94,7 +93,7 @@ export default function GalleryGrid({ items }: { items: GalleryItem[] }) {
             label="All"
             count={items.length}
             active={!active && !focus}
-            onClick={() => { setActive(null); setFocus(null); }}
+            onClick={() => { setActive(null); setFocusCleared(true); }}
           />
           {focus && focusCount > 0 && (
             <FilterChip
@@ -102,13 +101,13 @@ export default function GalleryGrid({ items }: { items: GalleryItem[] }) {
               count={focusCount}
               active
               dismissible
-              onClick={() => setFocus(null)}
+              onClick={() => setFocusCleared(true)}
             />
           )}
           {categories.map((c) => (
             <FilterChip key={c} label={c} count={items.filter((i) => i.category === c).length}
               active={active === c && !focus}
-              onClick={() => { setFocus(null); setActive(active === c ? null : c); }} />
+              onClick={() => { setFocusCleared(true); setActive(active === c ? null : c); }} />
           ))}
         </div>
       )}
@@ -120,7 +119,7 @@ export default function GalleryGrid({ items }: { items: GalleryItem[] }) {
             No matches{query ? <> for &ldquo;<span className="text-fg-muted">{query}</span>&rdquo;</> : null}.
           </p>
           <button
-            onClick={() => { setQuery(""); setActive(null); setFocus(null); }}
+            onClick={() => { setQuery(""); setActive(null); setFocusCleared(true); }}
             className="mt-3 text-xs font-medium text-accent hover:text-accent-hover"
           >
             Clear filters

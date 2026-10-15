@@ -14,6 +14,9 @@
       "Designed the API contracts and normalized PostgreSQL schemas, specifying request validation, pagination behavior, and documented error responses so the frontend and the agent layer both build against one interface.",
       "Shipped the researcher-facing surface in React and TypeScript with real loading and error states, so scientists complete genomic exploration without an engineer in the loop.",
       "Provision the AWS footprint with Terraform modules and Ansible playbooks, so environments rebuild reproducibly from version control instead of by hand."
+    ],
+    "projects": [
+      "GeneCart"
     ]
   },
   {
@@ -33,6 +36,9 @@
       "Cut P99 latency 78%, from 450ms to under 100ms, and per-request compute 60%, by profiling the request path, parallelizing fan-out with AsyncIO behind per-upstream timeouts, and adding a write-through Redis cache.",
       "Held 99.9% uptime at 3,000+ RPS through 3x load spikes with circuit-breaker isolation and backpressure, and made failing multi-hop tool-call chains reproducible with distributed tracing.",
       "Built the golden-path service templates, adapters, and deployment standards later work was built on, and owned CI/CD on Kubernetes with automated test gates and zero-downtime blue-green deploys, cutting deployment lead time 65%."
+    ],
+    "projects": [
+      "Multi-Agent Research Discovery Engine"
     ]
   },
   {
@@ -47,6 +53,9 @@
       "Built a FastAPI microservice on AWS ECS (Fargate) using AsyncIO to parallelize data fetching from 5+ external APIs, slashing P99 latency from 450ms to <100ms.",
       "Deployed a Redis Write-Through caching layer with custom TTL eviction policies, handling >3,000 RPS with sub-millisecond retrieval times.",
       "Modernized CI/CD pipelines using Docker and Kubernetes, enabling zero-downtime blue green deployments."
+    ],
+    "projects": [
+      "Multi-Agent Research Discovery Engine"
     ]
   },
   {
@@ -94,6 +103,9 @@
       "Designed the normalized MySQL schema behind high-volume grade calculations.",
       "Reached #2 on Google for the target queries through programmatic SEO, and tuned the app against Core Web Vitals with a PWA and service workers for sub-second mobile loads.",
       "Rebuilt it later on Next.js and FastAPI."
+    ],
+    "projects": [
+      "gradeVITian"
     ]
   }
 ]

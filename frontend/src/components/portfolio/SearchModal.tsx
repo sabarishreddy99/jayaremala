@@ -102,7 +102,7 @@ export default function SearchModal({ items }: Props) {
       list.push({ type: "action", title: "Latest post", description: latestPost.title, href: latestPost.href });
     }
     return list;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+   
   }, [resolvedTheme, setTheme, latestPost]);
 
   const searchPool  = useMemo(() => [...actions, ...items], [actions, items]);
@@ -161,8 +161,7 @@ export default function SearchModal({ items }: Props) {
       }, {}))
     : null;
 
-  // Flat ordered list for keyboard index
-  const flatItems = grouped ? grouped.flatMap(([, g]) => g) : navItems;
+  // Running index across groups for keyboard navigation
   let kidx = 0;
 
   // Count of unique content types in the index (for the hint)

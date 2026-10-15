@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import { useClientValue } from "@/lib/hooks";
 
 interface ChatInputProps {
   onSend: (text: string) => void;
@@ -23,12 +24,9 @@ export default function ChatInput({ onSend, disabled, prefill, onPrefillConsumed
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const [isListening, setIsListening]     = useState(false);
-  const [voiceSupported, setVoiceSupported] = useState(false);
+  const voiceSupported = useClientValue(() => "SpeechRecognition" in window || "webkitSpeechRecognition" in window, false);
   const [hasContent, setHasContent]       = useState(false);
 
-  useEffect(() => {
-    setVoiceSupported("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
-  }, []);
 
   useEffect(() => {
     if (!prefill || !textareaRef.current) return;

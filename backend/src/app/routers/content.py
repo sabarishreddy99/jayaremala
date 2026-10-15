@@ -15,7 +15,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
 from pydantic import BaseModel, field_validator
 
 from app.db import content as content_db
-from app.rag.ingest import remove_docs_by_id, run_ingest
+from app.rag.ingest import remove_docs_by_id, remove_entity_docs, run_ingest
 from app.routers.admin import _require_token
 
 logger = logging.getLogger(__name__)
@@ -97,7 +97,7 @@ class QuoteOut(QuoteIn):
 def _sync_blog_to_rag() -> None:
     try:
         content_db.regenerate_blog_json()
-        run_ingest()
+        run_ingest(trigger="content")
     except Exception as exc:
         logger.error("Blog RAG sync failed (non-fatal): %s", exc)
 
@@ -105,7 +105,7 @@ def _sync_blog_to_rag() -> None:
 def _sync_lab_to_rag() -> None:
     try:
         content_db.regenerate_lab_json()
-        run_ingest()
+        run_ingest(trigger="content")
     except Exception as exc:
         logger.error("Lab RAG sync failed (non-fatal): %s", exc)
 
@@ -129,7 +129,7 @@ def _rag_sync_after_delete() -> None:
     Also rebuilds the BM25 index and updates FAQ summary documents.
     """
     try:
-        run_ingest()
+        run_ingest(trigger="content")
     except Exception as exc:
         logger.error("RAG sync after delete failed (non-fatal): %s", exc)
 
@@ -137,7 +137,7 @@ def _rag_sync_after_delete() -> None:
 def _sync_quotes_to_rag() -> None:
     try:
         content_db.regenerate_quotes_json()
-        run_ingest()
+        run_ingest(trigger="content")
     except Exception as exc:
         logger.error("Quotes RAG sync failed (non-fatal): %s", exc)
 
@@ -148,6 +148,26 @@ def _cleanup_lab_analytics(slug: str) -> None:
         delete_page_visits(f"/lab/{slug}")
     except Exception as exc:
         logger.error("Lab analytics cleanup failed (non-fatal): %s", exc)
+
+
+# ── Repo-backed (MDX) entries are read-only here ──────────────────────────────
+#
+# Posts and lab entries that come from MDX files in the repo (source == "mdx")
+# are re-synced from those files on every deploy, and their pages render the
+# MDX. A live edit would show to Avocado for a while, never appear on the page,
+# and then be silently overwritten — so the API refuses it and says where to
+# edit instead.
+
+def _refuse_if_mdx(entry: dict | None, kind: str) -> None:
+    if entry and entry.get("source") == "mdx":
+        where = "Write a blog post" if kind == "post" else "Write a lab update"
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                f"This {kind} is an MDX file in the repo. Edit it in “{where}” so the change is "
+                "committed; a live edit would be overwritten on the next deploy."
+            ),
+        )
 
 
 # ── Blog endpoints ─────────────────────────────────────────────────────────────
@@ -185,6 +205,7 @@ def create_blog_post(body: BlogPostIn, background_tasks: BackgroundTasks) -> dic
 
 @router.put("/blog/{slug}", dependencies=[Depends(_require_token)])
 def update_blog_post(slug: str, body: BlogPostIn, background_tasks: BackgroundTasks) -> dict:
+    _refuse_if_mdx(content_db.get_blog_post(slug), "post")
     result = content_db.update_blog_post(slug, body.model_dump())
     if not result:
         raise HTTPException(status_code=404, detail="Post not found")
@@ -194,13 +215,13 @@ def update_blog_post(slug: str, body: BlogPostIn, background_tasks: BackgroundTa
 
 @router.delete("/blog/{slug}", status_code=204, dependencies=[Depends(_require_token)])
 def delete_blog_post(slug: str, background_tasks: BackgroundTasks) -> None:
+    _refuse_if_mdx(content_db.get_blog_post(slug), "post")
     if not content_db.delete_blog_post(slug):
         raise HTTPException(status_code=404, detail="Post not found")
-    # Regenerate blog.json synchronously so any reingest triggered by the
-    # frontend (triggerReingest) sees the correct post-delete state.
+    # Regenerate blog.json synchronously so the ingest below sees the post-delete state.
     content_db.regenerate_blog_json()
     # Directly evict the document from ChromaDB + hash file immediately.
-    remove_docs_by_id([f"blog_{slug}"])
+    remove_entity_docs(f"blog_{slug}")  # the post and every chunk of its body
     # Full incremental ingest in background: updates faq_blog count, BM25 index,
     # and removes any remaining stale hashes.
     background_tasks.add_task(_rag_sync_after_delete)
@@ -233,6 +254,7 @@ def create_lab_entry(body: LabEntryIn, background_tasks: BackgroundTasks) -> dic
 
 @router.put("/lab/{slug}", dependencies=[Depends(_require_token)])
 def update_lab_entry(slug: str, body: LabEntryIn, background_tasks: BackgroundTasks) -> dict:
+    _refuse_if_mdx(content_db.get_lab_entry(slug), "lab entry")
     result = content_db.update_lab_entry(slug, body.model_dump())
     if not result:
         raise HTTPException(status_code=404, detail="Lab entry not found")
@@ -242,10 +264,11 @@ def update_lab_entry(slug: str, body: LabEntryIn, background_tasks: BackgroundTa
 
 @router.delete("/lab/{slug}", status_code=204, dependencies=[Depends(_require_token)])
 def delete_lab_entry(slug: str, background_tasks: BackgroundTasks) -> None:
+    _refuse_if_mdx(content_db.get_lab_entry(slug), "lab entry")
     if not content_db.delete_lab_entry(slug):
         raise HTTPException(status_code=404, detail="Lab entry not found")
     content_db.regenerate_lab_json()
-    remove_docs_by_id([f"lab_{slug}"])
+    remove_entity_docs(f"lab_{slug}")
     background_tasks.add_task(_rag_sync_after_delete)
     background_tasks.add_task(_cleanup_lab_analytics, slug)
 

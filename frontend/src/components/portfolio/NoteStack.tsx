@@ -87,21 +87,29 @@ export default function NoteStack({ notes }: { notes: Note[] }) {
   };
 
   // Pointer drag on the top card: past 90px it is thrown in that direction.
+  // The pointer is captured only once the card has actually moved. Capturing
+  // on press would retarget the click to the card and the link would never
+  // open — a plain tap or click must reach the link untouched.
   const onPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0) return;
     dragStart.current = e.clientX;
     moved.current = false;
-    setDragging(true);
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent) => {
     if (dragStart.current === null) return;
     const dx = e.clientX - dragStart.current;
-    if (Math.abs(dx) > 6) moved.current = true;
+    if (!moved.current) {
+      if (Math.abs(dx) < 8) return;
+      moved.current = true;
+      setDragging(true);
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+    }
     setDrag(dx);
   };
   const onPointerUp = () => {
     if (dragStart.current === null) return;
     dragStart.current = null;
+    if (!moved.current) return;
     setDragging(false);
     if (Math.abs(drag) > 90) next(drag > 0 ? 1 : -1);
     else setDrag(0);
@@ -187,7 +195,7 @@ export default function NoteStack({ notes }: { notes: Note[] }) {
                 key={n.href}
                 data-face={face}
                 aria-hidden={!isTop || undefined}
-                className={`note-card absolute inset-0 flex flex-col overflow-hidden rounded-card ${isTop ? "cursor-grab touch-pan-y active:cursor-grabbing" : "pointer-events-none"}`}
+                className={`note-card group absolute inset-0 flex flex-col overflow-hidden rounded-card ${isTop ? "cursor-pointer touch-pan-y" : "pointer-events-none"}`}
                 style={style}
                 {...(isTop ? { onPointerDown, onPointerMove, onPointerUp, onPointerCancel: onPointerUp } : {})}
               >
@@ -203,19 +211,27 @@ export default function NoteStack({ notes }: { notes: Note[] }) {
                   <p className="font-mono text-[0.6875rem] uppercase tracking-[0.14em] opacity-75">
                     {n.kind} · {formatDate(n.date)} · {n.meta}
                   </p>
-                  <h3 className="display-serif mt-3 text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.1]">{n.title}</h3>
+                  <h3 className="display-serif mt-3 text-[clamp(1.5rem,2.4vw,2rem)] leading-[1.1]">
+                    {isTop ? (
+                      // The title link stretches over the whole card, so a
+                      // tap anywhere on the top note opens it.
+                      <Link
+                        href={n.href}
+                        draggable={false}
+                        onClick={(e) => { if (moved.current) e.preventDefault(); }}
+                        className="outline-none after:absolute after:inset-0 after:rounded-card after:content-[''] focus-visible:after:outline-2 focus-visible:after:outline-offset-4 focus-visible:after:outline-accent"
+                      >
+                        {n.title}
+                      </Link>
+                    ) : n.title}
+                  </h3>
                   <p className="mt-3 line-clamp-3 text-[0.9375rem] leading-relaxed opacity-80">{n.description}</p>
                   <span className="flex-1" />
                   {isTop && (
-                    <Link
-                      href={n.href}
-                      onClick={(e) => { if (moved.current) e.preventDefault(); }}
-                      draggable={false}
-                      className="note-read mt-5 inline-flex w-fit items-center gap-1.5 text-sm font-semibold underline decoration-current/30 underline-offset-4 hover:decoration-current"
-                    >
+                    <span aria-hidden className="note-read mt-5 inline-flex w-fit items-center gap-1.5 text-sm font-semibold underline decoration-current/30 underline-offset-4">
                       Read it
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden><path d="M5 12h14M12 5l7 7-7 7" /></svg>
-                    </Link>
+                    </span>
                   )}
                 </div>
               </article>

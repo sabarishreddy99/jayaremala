@@ -38,7 +38,7 @@ except Exception as exc:  # noqa: BLE001
 def _background_startup() -> None:
     logger.info("Starting up — ingesting knowledge base...")
     try:
-        result = run_ingest()
+        result = run_ingest(trigger="startup")
         logger.info("Knowledge base ready: %s", result)
         rag_graph.build_graph()
     except Exception as exc:

@@ -10,7 +10,7 @@ import type { Heading } from "@/components/blog/TableOfContents";
 import FontSizeControl from "@/components/blog/FontSizeControl";
 import BlogSwitcher from "@/components/blog/BlogSwitcher";
 import ProseReveal from "@/components/blog/ProseReveal";
-import BlogPostMarkdown from "@/components/blog/BlogPostMarkdown";
+import { LiveBody, LiveText } from "@/components/blog/LivePost";
 import { normalizeLabEntry } from "@/lib/api/content";
 import type { ApiLabEntry } from "@/lib/api/content";
 
@@ -93,9 +93,9 @@ function LabEntryApiView({ entry, allEntries }: { entry: ApiLabEntry; allEntries
               </div>
 
               <h1 className="display-serif display-lg text-fg leading-[1.05] text-balance mb-4">
-                {entry.title}
+                <LiveText kind="lab" slug={entry.slug} field="title" initial={entry.title} />
               </h1>
-              <p className="voice-serif mb-5 max-w-[56ch] text-[1.125rem] leading-relaxed text-fg-muted sm:text-[1.25rem]">{entry.description}</p>
+              <p className="voice-serif mb-5 max-w-[56ch] text-[1.125rem] leading-relaxed text-fg-muted sm:text-[1.25rem]"><LiveText kind="lab" slug={entry.slug} field="description" initial={entry.description} /></p>
 
               {/* Eight tags up front; the rest wait behind "+N more" so a long
                   stack never pushes the article below the fold on a phone. */}
@@ -147,7 +147,7 @@ function LabEntryApiView({ entry, allEntries }: { entry: ApiLabEntry; allEntries
               className="prose max-w-none font-[family-name:var(--font-blog)] leading-[1.85]"
               style={{ fontSize: "var(--blog-font-size, 1.0rem)" }}
             >
-              <BlogPostMarkdown content={entry.content} />
+              <LiveBody kind="lab" slug={entry.slug} initial={entry.content} />
             </ProseReveal>
           </article>
 

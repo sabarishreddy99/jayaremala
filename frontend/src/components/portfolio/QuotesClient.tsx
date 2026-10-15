@@ -236,7 +236,7 @@ export default function QuotesClient({ quotes }: { quotes: Quote[] }) {
           onClick={() => setActiveCategory("All")}
           className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-1.5 border transition-all duration-150 ${
             activeCategory === "All"
-              ? "bg-fg text-bg border-fg shadow-sm"
+              ? "bg-accent text-accent-fg border-accent shadow-sm"
               : "bg-surface border-border text-fg-faint hover:text-fg"
           }`}
         >

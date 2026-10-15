@@ -44,7 +44,7 @@ export default function RichCards({ content }: { content: string }) {
             <div className="flex items-start justify-between gap-2 mb-2">
               <p className="text-[12px] font-semibold text-fg leading-snug min-w-0">{name}</p>
               {p.award && (
-                <span className="shrink-0 rounded-full bg-amber-50 dark:bg-amber-950/60 border border-amber-200 dark:border-amber-800 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-amber-700 dark:text-amber-400">
+                <span className="shrink-0 rounded-full bg-surface-raised border border-border-strong px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-fg">
                   Winner
                 </span>
               )}
@@ -69,7 +69,7 @@ export default function RichCards({ content }: { content: string }) {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-full bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:opacity-80 transition-opacity"
+                  className="inline-flex items-center gap-1 rounded-full bg-accent-light border border-accent/30 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:opacity-80 transition-opacity"
                 >
                   {link.label}
                   <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

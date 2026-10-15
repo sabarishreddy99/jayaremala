@@ -55,7 +55,7 @@ export function Decision({ date, title, children }: { date: string; title: strin
   return (
     <div className="not-prose my-4 flex gap-4">
       <div className="flex flex-col items-center">
-        <div className="w-2 h-2 rounded-full bg-indigo-500 mt-1 shrink-0" />
+        <div className="w-2 h-2 rounded-full bg-accent mt-1 shrink-0" />
         <div className="w-px flex-1 bg-border mt-1" />
       </div>
       <div className="pb-6 flex-1 min-w-0">
@@ -112,7 +112,7 @@ export function Metric({ value, label }: { value: string; label: string }) {
 /* ── Inline code override ──────────────────────────────────────────── */
 function InlineCode({ children }: { children?: React.ReactNode }) {
   return (
-    <code className="bg-surface-raised border border-border rounded px-1.5 py-0.5 text-[0.83em] font-mono text-fuchsia-700 dark:text-fuchsia-400">
+    <code className="bg-surface-raised border border-border rounded px-1.5 py-0.5 text-[0.83em] font-mono text-accent">
       {children}
     </code>
   );

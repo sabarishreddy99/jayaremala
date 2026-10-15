@@ -7,15 +7,14 @@ import { usePathname } from "next/navigation";
 // a mismatch renders a rail that never activates, with no error.
 const SECTIONS = [
   { id: "hero",          label: "Intro"         },
-  { id: "why",           label: "Kavali"        },
-  { id: "gradevitian",   label: "Vellore"       },
-  { id: "projects",      label: "Offshore & NYU" },
-  { id: "creed",         label: "Dallas"        },
-  { id: "still-running", label: "Still Running" },
-  { id: "opinions",      label: "Where I Stand" },
-  { id: "skills",        label: "Craft"         },
-  { id: "testimonials",  label: "Kind Words"    },
-  { id: "contact",       label: "Connect"       },
+  { id: "impact",        label: "For your team" },
+  { id: "projects",      label: "The work"      },
+  { id: "testimonials",  label: "Kind words"    },
+  { id: "why",           label: "Why I build"   },
+  { id: "how",           label: "How I work"    },
+  { id: "writing",       label: "Writing"       },
+  { id: "explore",       label: "Explore"       },
+  { id: "contact",       label: "Let's talk"    },
 ];
 
 export default function SectionIndicator() {

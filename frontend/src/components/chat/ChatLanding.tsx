@@ -1,6 +1,6 @@
 "use client";
 
-import Tile from "./Tile";
+import SeedRing from "@/components/portfolio/SeedRing";
 import { profile } from "@/data/profile";
 import { formatModel } from "@/lib/chat-model";
 
@@ -40,6 +40,11 @@ function delay(i: number) {
   return { animationDelay: `${i * 70}ms` } as const;
 }
 
+/** Prompt cards are dealt like the home page's testimonial deck: small tilts,
+ *  faces cycling Skin / Paper / Flesh, straightening on hover. */
+const FACES = ["skin", "paper", "flesh"] as const;
+const TILTS = [-2, 1.5, -1, 2, -1.5, 1];
+
 export default function ChatLanding({
   personas,
   persona,
@@ -53,153 +58,105 @@ export default function ChatLanding({
 }: ChatLandingProps) {
   return (
     <div className="mx-auto w-full max-w-3xl lg:max-w-4xl px-1 pt-6 sm:pt-10 pb-4">
-      {/* Header */}
-      <div className="flex flex-col items-center text-center mb-6 sm:mb-8 animate-fade-up">
-        <div className="relative mb-3">
-          <div className="w-12 h-12 rounded-full bg-accent flex items-center justify-center text-2xl">🥑</div>
-          <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-accent border-2 border-bg" />
-        </div>
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-fg leading-tight">
-          Ask me anything about Jaya
-        </h1>
-        <p className="mt-1.5 text-xs text-fg-subtle">{greeting}! I&apos;m Avocado, his AI assistant.</p>
+      {/* ── Identity: the seed, with a sentence turning around it ── */}
+      <div className="mb-8 flex flex-col items-center text-center animate-fade-up sm:mb-10">
+        <SeedRing text="Ask Avocado · answers from Jaya's own knowledge base · " size={104} />
+        <h1 className="display-serif display-lg mt-5 text-fg">Ask me anything about Jaya</h1>
+        <p className="mt-2 text-[0.9375rem] text-fg-subtle">{greeting}! I&apos;m Avocado, his AI assistant.</p>
 
-        <div className="mt-3 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-[11px] text-fg-subtle">
+        <div className="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 font-mono text-[0.6875rem] text-fg-subtle">
           <span
-            className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-              backendStatus === "warming" ? "bg-fg-faint animate-pulse" : "bg-accent"
-            }`}
+            className={`h-1.5 w-1.5 shrink-0 rounded-full ${backendStatus === "warming" ? "bg-fg-faint animate-pulse" : "bg-accent"}`}
             aria-hidden
           />
-          <span className="font-medium text-fg-muted">
-            {backendStatus === "warming" ? "Waking up…" : "Online"}
-          </span>
+          <span className="text-fg-muted">{backendStatus === "warming" ? "Waking up…" : "Online"}</span>
           <span aria-hidden>·</span>
           <span>{formatModel(activeModel, "Gemini 2.5 Flash")}</span>
           <span className="hidden sm:inline" aria-hidden>·</span>
-          <span className="hidden font-mono sm:inline">
-            Hybrid RAG → BM25 + vectors → RRF
-          </span>
+          <span className="hidden sm:inline">Hybrid RAG → BM25 + vectors → RRF</span>
         </div>
       </div>
 
-      {/* Bento grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 items-start gap-3">
-        {/* Try asking — persona-aware prompts (wide, tall) */}
-        <Tile className="sm:col-span-2 p-4 sm:p-5 animate-fade-up" brackets>
-          <div style={delay(3)} className="animate-fade-up">
-            <p className="text-nano font-bold uppercase tracking-[0.18em] text-fg-faint">Try asking</p>
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {activePrompts.map((p) => (
-                <button
-                  key={p.full}
-                  onClick={() => onPrompt(p.full)}
-                  className="group/prompt flex items-center gap-2 rounded-chip border border-border/60 bg-surface/50 px-3 py-2.5 text-left transition-all duration-150 hover:border-accent/50 hover:bg-surface"
-                >
-                  <span className="text-accent/70 group-hover/prompt:text-accent transition-colors shrink-0" aria-hidden>
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M7 17 17 7M7 7h10v10" />
-                    </svg>
-                  </span>
-                  <span className="text-[13px] text-fg-muted group-hover/prompt:text-fg transition-colors leading-snug">
-                    {p.label}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </Tile>
+      {/* ── Who's asking: one segmented control ── */}
+      <div className="mb-8 flex flex-col items-center gap-2 animate-fade-up" style={delay(1)}>
+        <div role="group" aria-label="Tailor answers for" className="inline-flex rounded-full border border-border bg-surface p-1">
+          {personas.map((p) => {
+            const selected = persona === p.id;
+            return (
+              <button
+                key={p.id}
+                onClick={() => onChoosePersona(p.id)}
+                title={p.hint}
+                aria-pressed={selected}
+                className={`rounded-full px-4 py-2 text-[0.8125rem] font-medium transition-colors duration-200 ${
+                  selected ? "bg-accent text-accent-fg" : "text-fg-muted hover:text-fg"
+                }`}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-xs text-fg-faint">
+          {persona
+            ? `${personas.find((p) => p.id === persona)?.hint} · tap again to clear`
+            : "I'm a… — answers lead with what matters to you"}
+        </p>
+      </div>
 
-        {/* Book a call */}
-        <Tile
-          onClick={onBook}
-          sweep
-          brackets
-          ariaLabel="Book a call with Jaya"
-          className="p-4 sm:p-5 flex flex-col justify-between min-h-[112px] animate-fade-up"
-        >
-          <div style={delay(2)} className="animate-fade-up flex h-full flex-col justify-between">
-            <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-accent-light text-accent">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="4" width="18" height="18" rx="2" /><path d="M16 2v4M8 2v4M3 10h18" />
-              </svg>
-            </span>
-            <div className="mt-3">
-              <p className="text-sm font-semibold text-fg group-hover:text-accent transition-colors">Book a call →</p>
-              <p className="mt-0.5 text-[11px] text-fg-faint">See Jaya&apos;s open 30-min slots.</p>
-            </div>
-          </div>
-        </Tile>
-
-        {/* Persona — tailor answers (wide) */}
-        <Tile className="sm:col-span-2 p-4 sm:p-5 animate-fade-up bg-transparent">
-          <div style={delay(1)} className="animate-fade-up">
-            <p className="text-nano font-bold uppercase tracking-[0.18em] text-fg-faint">
-              {persona ? "Tailored for a" : "Tailor your answers · I'm a…"}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {personas.map((p) => {
-                const selected = persona === p.id;
-                return (
-                  <button
-                    key={p.id}
-                    onClick={() => onChoosePersona(p.id)}
-                    title={p.hint}
-                    aria-pressed={selected}
-                    className={`rounded-full border px-3.5 py-2 text-[12px] font-medium transition-all duration-150 ${
-                      selected
-                        ? "border-accent bg-accent text-accent-fg"
-                        : "border-border bg-surface/60 text-fg-muted hover:border-accent/50 hover:text-accent"
-                    }`}
-                  >
-                    {p.label}
-                  </button>
-                );
-              })}
-            </div>
-            <p className="mt-2.5 text-[11px] text-fg-faint">
-              {persona
-                ? `${personas.find((p) => p.id === persona)?.hint} · tap again to clear`
-                : "Answers lead with what matters most to you."}
-            </p>
-          </div>
-        </Tile>
-
-        {/* Explore — quick links + resume/socials */}
-        <Tile className="p-4 sm:p-5 animate-fade-up bg-transparent">
-          <div style={delay(4)} className="animate-fade-up">
-            <p className="text-nano font-bold uppercase tracking-[0.18em] text-fg-faint">Explore</p>
-            <div className="mt-3 flex flex-col gap-1">
-              {INTERNAL_LINKS.map((l) => (
-                <a
-                  key={l.href}
-                  href={l.href}
-                  className="group/link flex items-center gap-2 rounded-chip px-2 py-1.5 text-[13px] text-fg-muted hover:bg-surface-raised hover:text-accent transition-colors"
-                >
-                  <span className="text-fg-faint group-hover/link:text-accent transition-colors" aria-hidden>{l.icon}</span>
-                  {l.label}
-                </a>
-              ))}
-            </div>
-            <div className="mt-3 flex flex-wrap gap-1.5 border-t border-border/60 pt-3">
-              {profile.resume && (
-                <a href={profile.resume} target="_blank" rel="noopener noreferrer"
-                  className="rounded-full border border-border bg-surface-raised px-2.5 py-1 text-[10px] font-medium text-fg-muted hover:border-accent/50 hover:text-accent transition-colors">
-                  Résumé ↗
-                </a>
+      {/* ── Pick a card ── */}
+      <ul className="grid grid-cols-1 gap-4 px-2 sm:grid-cols-2 lg:grid-cols-3">
+        {activePrompts.map((p, i) => (
+          <li key={p.full} className="animate-fade-up" style={delay(i + 2)}>
+            <button
+              onClick={() => onPrompt(p.full)}
+              data-face={FACES[i % FACES.length]}
+              style={{ "--tilt": `${TILTS[i % TILTS.length]}deg` } as React.CSSProperties}
+              className="prompt-card group flex h-full min-h-[7.5rem] w-full flex-col justify-between rounded-card p-5 text-left"
+            >
+              {p.category && (
+                <span className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] opacity-70">{p.category}</span>
               )}
-              <a href={profile.github} target="_blank" rel="noopener noreferrer"
-                className="rounded-full border border-border bg-surface-raised px-2.5 py-1 text-[10px] font-medium text-fg-muted hover:border-accent/50 hover:text-accent transition-colors">
-                GitHub ↗
-              </a>
-              <a href={profile.linkedin} target="_blank" rel="noopener noreferrer"
-                className="rounded-full border border-border bg-surface-raised px-2.5 py-1 text-[10px] font-medium text-fg-muted hover:border-accent/50 hover:text-accent transition-colors">
-                LinkedIn ↗
-              </a>
-            </div>
-          </div>
-        </Tile>
+              <span className="mt-4 flex items-end justify-between gap-3">
+                <span className="display-serif text-[1.35rem] leading-tight">{p.label}</span>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden
+                  className="shrink-0 opacity-60 transition-transform duration-300 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:opacity-100">
+                  <path d="M7 17 17 7M7 7h10v10" />
+                </svg>
+              </span>
+            </button>
+          </li>
+        ))}
+      </ul>
 
+      {/* ── The two other doors ── */}
+      <div className="mt-6 grid gap-4 px-2 sm:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+        <button
+          onClick={onBook}
+          aria-label="Book a call with Jaya"
+          className="group flex items-center justify-between gap-4 rounded-card border border-border bg-surface p-5 text-left transition-colors hover:border-border-strong animate-fade-up"
+          style={delay(9)}
+        >
+          <span>
+            <span className="block text-[0.9375rem] font-semibold text-fg">Rather talk to Jaya?</span>
+            <span className="mt-0.5 block text-sm text-fg-subtle">See open 30-minute slots and book one.</span>
+          </span>
+          <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-fg transition-transform duration-200 group-hover:translate-x-0.5">
+            Book a call →
+          </span>
+        </button>
+
+        <nav aria-label="Explore the site" className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-card border border-border p-5 animate-fade-up" style={delay(10)}>
+          {INTERNAL_LINKS.map((l) => (
+            <a key={l.href} href={l.href} className="inline-flex items-center gap-1.5 text-sm text-fg-muted transition-colors hover:text-fg">
+              <span className="text-fg-faint" aria-hidden>{l.icon}</span>
+              {l.label}
+            </a>
+          ))}
+          {profile.resume && (
+            <a href={profile.resume} target="_blank" rel="noopener noreferrer" className="text-sm text-fg-muted transition-colors hover:text-fg">Résumé ↗</a>
+          )}
+        </nav>
       </div>
     </div>
   );

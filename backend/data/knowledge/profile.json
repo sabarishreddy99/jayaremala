@@ -37,6 +37,90 @@
     "sub": "These days that's AI infrastructure: retrieval pipelines, inference at the edge, telemetry that can't drop a byte. Same job, bigger machines.",
     "signature": "Do hard things!"
   },
+  "hire": {
+    "label": "What your team gets",
+    "deck": "Pick the problem you're hiring for. Each answer is work that already shipped.",
+    "fit": "Looking for full-time AI/ML infrastructure, distributed systems or full-stack roles. Most curious about healthcare, finance and consumer products.",
+    "needs": [
+      {
+        "need": "Faster AI in production",
+        "metric": "78%",
+        "metricLabel": "P99 latency cut, 450ms to under 100ms",
+        "context": "Held 99.9% uptime at 3,000+ RPS through 3x load spikes.",
+        "where": "NYU IT · Research Infrastructure",
+        "how": "Profiled the request path, parallelized fan-out with AsyncIO behind per-upstream timeouts, and added a write-through Redis cache.",
+        "href": "/experience",
+        "linkLabel": "See the role"
+      },
+      {
+        "need": "Retrieval you can trust",
+        "metric": "40%",
+        "metricLabel": "better answers from hybrid retrieval",
+        "context": "Graded on NDCG@10 against held-out queries, regression-tested on every prompt change.",
+        "where": "NYU IT · multi-agent platform on Llama 3.1 70B",
+        "how": "Fused BGE-M3 dense embeddings and BM25 lexical scoring through Reciprocal Rank Fusion. Avocado on this site runs the same idea.",
+        "href": "/chat",
+        "linkLabel": "Try it on Avocado"
+      },
+      {
+        "need": "Data pipelines that can't lose a byte",
+        "metric": "115GB",
+        "metricLabel": "a day from 200+ offshore stations",
+        "context": "Zero data loss, exactly-once under broker failure.",
+        "where": "Shell PLC · via Wipro",
+        "how": "Fault-tolerant Kafka with idempotent consumers and dead-letter routing to S3. A quarantine layer cut production incidents 25%.",
+        "href": "/experience",
+        "linkLabel": "See the role"
+      },
+      {
+        "need": "Models that run on the device",
+        "metric": "15ms",
+        "metricLabel": "token latency on Snapdragon NPUs",
+        "context": "10x faster than the cloud baseline.",
+        "where": "Qualcomm Edge AI Hackathon · Winner",
+        "how": "Fine-tuned Llama 3.2 3B with QLoRA and shipped it 4-bit AWQ-quantized through ONNX Runtime on the device.",
+        "href": "/projects",
+        "linkLabel": "See SnapLog"
+      },
+      {
+        "need": "Someone who owns it end to end",
+        "metric": "17K",
+        "metricLabel": "people a month on gradeVITian",
+        "context": "Built as an undergrad. Live and on call since Aug 2020.",
+        "where": "Vellore Institute of Technology",
+        "how": "Shipped only the workflows students asked for, reached #2 on Google, then rebuilt it on Next.js and FastAPI.",
+        "href": "https://gradevitian.jayaremala.com",
+        "linkLabel": "Open gradeVITian"
+      }
+    ]
+  },
+  "avocadoPreview": [
+    {
+      "q": "Has Jaya kept anything running in production?",
+      "a": "Yes. gradeVITian has been live since Aug 2020 and serves about 17,000 people a month. Jaya built it as an undergrad and is still on call for it.",
+      "source": "projects.json · gradeVITian"
+    },
+    {
+      "q": "Can Jaya make an AI system faster?",
+      "a": "At NYU IT, Jaya cut P99 latency 78%, from 450ms to under 100ms, while holding 99.9% uptime at 3,000+ RPS.",
+      "source": "experience.json · NYU IT"
+    },
+    {
+      "q": "What did Jaya build for Shell?",
+      "a": "Through Wipro, zero-data-loss ingestion of maritime telemetry: 115GB a day from 200+ offshore stations on a fault-tolerant Kafka pipeline.",
+      "source": "experience.json · Wipro, client Shell PLC"
+    },
+    {
+      "q": "Has Jaya won anything?",
+      "a": "The Qualcomm Edge AI Hackathon, with SnapLog: Llama 3.2 3B running on Snapdragon NPUs at 15ms token latency.",
+      "source": "projects.json · SnapLog"
+    },
+    {
+      "q": "Is Jaya open to new roles?",
+      "a": "Yes. Full-time AI/ML infrastructure, distributed systems or full-stack roles, remote or hybrid, from Dallas, TX.",
+      "source": "profile.json · availability"
+    }
+  ],
   "why": {
     "label": "Why I build",
     "paragraphs": [
@@ -61,8 +145,8 @@
     "footnote": "Six years of gradeVITian, one brick site, and this page are all the same reaction."
   },
   "opinions": {
-    "label": "Where I stand",
-    "deck": "Opinions held loudly enough to put on the page. Every line here is something already shipped, not a slogan.",
+    "label": "How I work",
+    "deck": "Stances, each one backed by something I already shipped.",
     "forLabel": "What I'm for",
     "againstLabel": "What I won't do",
     "for": [

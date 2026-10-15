@@ -168,7 +168,7 @@ export default function Chapter({
 
   return (
     <section id={id} className={`chapter relative ${className}`}>
-      <Inner className="pt-16 pb-12 sm:pt-20 sm:pb-14 md:pt-24 md:pb-16 lg:pt-32 lg:pb-20 xl:pt-36 xl:pb-24">
+      <Inner className="pt-14 pb-10 sm:pt-16 sm:pb-12 md:pt-20 md:pb-14 lg:pt-24 lg:pb-16 xl:pt-28 xl:pb-20">
         {rail ? (
           <div
             className="grid gap-8 md:gap-10
@@ -189,7 +189,7 @@ export default function Chapter({
         )}
 
         {nextHref && (
-          <div className="mt-12 flex items-center justify-end border-t border-border pt-5">
+          <div className="mt-10 flex items-center justify-end border-t border-border pt-4">
             <a
               href={nextHref}
               className="group -mr-3 inline-flex items-center gap-1.5 rounded-chip px-3 py-2.5 text-[11px] text-fg-faint transition-colors hover:text-fg"

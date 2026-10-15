@@ -61,7 +61,7 @@ export default function AgentSteps({ steps }: { steps: StepEvent[] }) {
                 <span className="w-1 h-1 rounded-full bg-accent animate-think-wave [animation-delay:300ms]" />
               </span>
             ) : (
-              <span className="inline-flex items-center gap-1 text-emerald-500">
+              <span className="inline-flex items-center gap-1 text-accent">
                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M20 6L9 17l-5-5" />
                 </svg>

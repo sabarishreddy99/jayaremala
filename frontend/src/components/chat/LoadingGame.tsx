@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import SeedAvatar from "@/components/chat/SeedAvatar";
 
 const THOUGHTS = [
   "Retrieving context from knowledge base…",
@@ -65,9 +66,7 @@ export default function LoadingGame() {
           </svg>
 
           {/* Avocado avatar */}
-          <div className="relative z-10 w-7 h-7 rounded-full bg-accent flex items-center justify-center text-base select-none">
-            🥑
-          </div>
+          <span className="relative z-10"><SeedAvatar size={28} /></span>
         </div>
 
         {/* Thinking bubble */}
@@ -78,7 +77,7 @@ export default function LoadingGame() {
             {[0, 1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="w-[3px] rounded-full bg-indigo-400/60 animate-think-wave"
+                className="w-[3px] rounded-full bg-accent/60 animate-think-wave"
                 style={{
                   height: 14,
                   animationDelay: `${i * 0.12}s`,

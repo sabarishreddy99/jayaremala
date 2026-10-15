@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import SeedAvatar from "@/components/chat/SeedAvatar";
 import { API_BASE_URL } from "@/lib/api/client";
 
 export interface Message {
@@ -169,7 +170,7 @@ export default function ChatMessage({ message, streaming }: Props) {
   if (isUser) {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-tr-md bg-surface-raised px-4 py-2.5 text-[15px] leading-relaxed text-fg">
+        <div className="max-w-[85%] sm:max-w-[75%] rounded-2xl rounded-tr-md bg-accent px-4 py-2.5 text-[15px] leading-relaxed text-accent-fg">
           {message.content}
         </div>
       </div>
@@ -178,9 +179,7 @@ export default function ChatMessage({ message, streaming }: Props) {
 
   return (
     <div className="flex justify-start gap-3">
-      <div className="flex-shrink-0 w-7 h-7 rounded-full bg-accent flex items-center justify-center text-base mt-0.5" title="Avocado">
-        🥑
-      </div>
+      <span className="mt-0.5" title="Avocado"><SeedAvatar size={28} /></span>
       <div className="relative min-w-0 flex-1 max-w-[calc(100%-2.5rem)] pl-3.5">
         {/* Left accent bar — refined pull-quote marker for Avocado's replies */}
         <span

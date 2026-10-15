@@ -53,7 +53,7 @@ const STATUS_STYLES: Record<LabStatus, {
     text: "text-fg-muted",
     bg: "bg-surface-raised border-border-strong",
     label: "Shipped",
-    pillActive: "bg-fg text-bg border-fg",
+    pillActive: "bg-accent text-accent-fg border-accent",
     leftBorder: "border-l border-l-border-strong",
     sweep: "accent",
   },
@@ -92,7 +92,7 @@ export default function LabList({ entries }: { entries: LabMeta[] }) {
             onClick={() => setActiveStatus(null)}
             className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-sm px-3.5 py-1.5 border transition-all duration-150 ${
               !activeStatus
-                ? "bg-fg text-bg border-fg shadow-sm"
+                ? "bg-accent text-accent-fg border-accent shadow-sm"
                 : "bg-surface border-border text-fg-faint hover:text-fg"
             }`}
           >

@@ -4,13 +4,13 @@
   "title": "Design System: jayaremala.com",
   "extensions": {
     "colorMeta": {
-      "signal-indigo": {
+      "skin": {
         "role": "primary",
-        "displayName": "Signal Indigo",
-        "canonical": "#3730a3",
-        "darkValue": "#6f7bf7",
-        "note": "Portfolio-scoped override of the shared site indigo, set on .portfolio. Deepened toward the ink so it reads as a second ink rather than a UI highlight. 9.86:1 on #fefefb, 5.85:1 on #000000.",
-        "tonalRamp": ["#14113d", "#1d1a5c", "#27227b", "#312c99", "#3730a3", "#5d57bd", "#8b86d6", "#c4c1ec"]
+        "displayName": "Skin (Avocado palette)",
+        "canonical": "#3b4320",
+        "darkValue": "#d8de8a",
+        "note": "Three-colour palette from a halved Hass avocado: Skin #3b4320 (light accent, footer band; 10.34:1 on paper), Flesh #d8de8a (dark accent, fills; 13.54:1 on #0f0e0c), Pit #7a4a2b (small marks only). Text on Flesh is #23280f.",
+        "tonalRamp": ["#1a1e0b", "#23280f", "#2b3117", "#3b4320", "#5c6630", "#a3ad5c", "#d8de8a", "#eef0d2"]
       },
       "signal-violet": {
         "role": "secondary",
@@ -32,7 +32,7 @@
         "role": "neutral",
         "displayName": "Newsprint",
         "canonical": "#fefefb",
-        "darkValue": "#000000",
+        "darkValue": "#0f0e0c",
         "note": "Normative intent is cool blue-slate newsprint; the shipped hex carries a warm cast. Known drift, correction pending (The Cool Newsprint Rule).",
         "tonalRamp": ["#191815", "#33312b", "#4d4a41", "#6d685c", "#928c7e", "#b8b2a5", "#dedad3", "#fefefb"]
       },
@@ -40,28 +40,28 @@
         "role": "neutral",
         "displayName": "Sheet",
         "canonical": "#f5f4f0",
-        "darkValue": "#0c0c0c",
+        "darkValue": "#171613",
         "tonalRamp": ["#1a1a17", "#33322d", "#4d4b44", "#6b685f", "#918d82", "#b7b3a8", "#dbd9d2", "#f5f4f0"]
       },
       "surface-raised": {
         "role": "neutral",
         "displayName": "Raised Sheet",
         "canonical": "#eceae6",
-        "darkValue": "#181818",
+        "darkValue": "#201e1a",
         "tonalRamp": ["#1a1917", "#32302c", "#4b4842", "#69655d", "#8e8a80", "#b4b0a6", "#d3d0ca", "#eceae6"]
       },
       "surface-sunken": {
         "role": "neutral",
         "displayName": "Sunken Sheet",
         "canonical": "#e3e0da",
-        "darkValue": "#000000",
+        "darkValue": "#0a0908",
         "tonalRamp": ["#191814", "#312f29", "#49463e", "#666255", "#8b8677", "#b0ab9c", "#cbc7bf", "#e3e0da"]
       },
       "border": {
         "role": "neutral",
         "displayName": "Column Rule",
         "canonical": "#c6c2bb",
-        "darkValue": "#252525",
+        "darkValue": "#2e2b26",
         "note": "The standard hairline. Divides ruled bands and outlines tiles.",
         "tonalRamp": ["#191814", "#302e29", "#48453d", "#645f54", "#89836f", "#a8a297", "#c6c2bb", "#e6e3de"]
       },
@@ -69,14 +69,14 @@
         "role": "neutral",
         "displayName": "Faint Rule",
         "canonical": "#dedad3",
-        "darkValue": "#161616",
+        "darkValue": "#1f1d19",
         "tonalRamp": ["#1a1815", "#322f2a", "#4a463e", "#676156", "#8c8578", "#b1aa9d", "#dedad3", "#f1efeb"]
       },
       "border-strong": {
         "role": "neutral",
         "displayName": "Heavy Rule",
         "canonical": "#978f87",
-        "darkValue": "#3a3a3a",
+        "darkValue": "#4d4840",
         "note": "Where a rule begins and where a pull-quote hangs.",
         "tonalRamp": ["#181613", "#2f2c28", "#46423c", "#5f5a51", "#7b756b", "#978f87", "#bab4ac", "#ddd9d4"]
       },
@@ -84,7 +84,7 @@
         "role": "neutral",
         "displayName": "Ink",
         "canonical": "#181410",
-        "darkValue": "#f0f0f0",
+        "darkValue": "#eeebe5",
         "note": "Top of the four-step ink ramp. Full ink is the system's emphasis device (The One Ink Rule).",
         "tonalRamp": ["#0a0806", "#181410", "#2b251e", "#3f372d", "#5a5148", "#837b71", "#b0a9a0", "#e0dbd5"]
       },
@@ -92,21 +92,21 @@
         "role": "neutral",
         "displayName": "Muted Ink",
         "canonical": "#3a342c",
-        "darkValue": "#cccccc",
+        "darkValue": "#cfcac1",
         "tonalRamp": ["#0d0b09", "#1c1915", "#2b2620", "#3a342c", "#544c41", "#7d7466", "#a9a196", "#d6d2cc"]
       },
       "fg-subtle": {
         "role": "neutral",
         "displayName": "Subtle Ink",
         "canonical": "#5a5248",
-        "darkValue": "#888888",
+        "darkValue": "#9a948a",
         "tonalRamp": ["#0f0e0c", "#1f1c18", "#2f2b25", "#413b33", "#5a5248", "#7f766a", "#a8a096", "#d3cfc9"]
       },
       "fg-faint": {
         "role": "neutral",
         "displayName": "Faint Ink",
         "canonical": "#8c867e",
-        "darkValue": "#484848",
+        "darkValue": "#6f6a62",
         "note": "Dormant state. Anything not live and not distinguished sits here.",
         "tonalRamp": ["#131210", "#26231f", "#39352f", "#4e4941", "#6a6459", "#8c867e", "#b3aea7", "#dbd8d3"]
       }
@@ -115,7 +115,7 @@
       "display": { "displayName": "Display — the author announcing", "purpose": "Hero headline only. EB Garamond via .display-serif + .display-xl. Modest vw factor so the headline never pushes the CTAs and signature below the fold." },
       "display-lg": { "displayName": "Display Large", "purpose": "Page titles across /blog, /lab, /experience, /projects, /education, /apps, /now." },
       "headline": { "displayName": "Headline", "purpose": "Chapter labels in the home page rail (.display-md)." },
-      "title": { "displayName": "Title — the system talking", "purpose": "Card and section headings. Roboto 600." },
+      "title": { "displayName": "Title — the system talking", "purpose": "Card and section headings. Instrument Sans 600." },
       "body": { "displayName": "Body — the system talking", "purpose": "All UI and card copy at 15px/1.55." },
       "lead": { "displayName": "Lead", "purpose": "Bios and intro paragraphs at 17px/1.8." },
       "prose": { "displayName": "Prose — the reader's voice", "purpose": "/blog and /lab article bodies. Source Serif 4, 68ch, Garamond headings, indigo drop cap. Never themed away." },
@@ -244,7 +244,7 @@
   ],
   "narrative": {
     "northStar": "Three Voices",
-    "overview": "The site is a printed thing that happens to run in a browser. Its material is newsprint and ink: an off-white sheet, a deep near-black ink, hairline column rules doing the work that boxes and shadows do elsewhere. Nothing floats decoratively; where something lifts, it lifts because you touched it.\n\nThe organizing idea is that type is casting, not decoration. Roboto is the system talking — chrome, labels, UI copy, the default `midnight` theme applied pre-hydration by an inline script so the first paint is already correct. EB Garamond (and Cormorant for the signature) is the author talking — hero and chapter headlines, pull-quotes, opinions, the signature mark. Geist Mono is the machine reporting — measurements, datelines, uptime counters, model ids, anything the build knows rather than claims. Source Serif 4 is the reader's voice — long-form /blog and /lab prose, set at reading size and never themed away. A visitor should be able to tell who is speaking without reading a word.\n\nDensity is editorial, not dashboard: one column, generous vertical rhythm between chapters, tight leading inside them. Colour is almost entirely absent — the page is ink on paper, and a single indigo appears only where something is alive. The confirmed anti-reference is the generic developer-portfolio dark mode: neon-on-charcoal, gradient hero, glassmorphic cards, a rainbow of tag colours. This system rejects all of it.",
+    "overview": "The site is a printed thing that happens to run in a browser. Its material is newsprint and ink: an off-white sheet, a deep near-black ink, hairline column rules doing the work that boxes and shadows do elsewhere. Nothing floats decoratively; where something lifts, it lifts because you touched it.\n\nThe organizing idea is that type is casting, not decoration. Instrument Sans is the system talking — chrome, labels, UI copy, bound under `html:has(.portfolio)` so it covers every portfolio route and /chat while gradeVITian and VRF Bricks keep their own faces. EB Garamond (and Cormorant for the signature) is the author talking — hero and chapter headlines, pull-quotes, opinions, the signature mark. Geist Mono is the machine reporting — measurements, datelines, uptime counters, model ids, anything the build knows rather than claims. Source Serif 4 is the reader's voice — long-form /blog and /lab prose, set at reading size and never themed away. A visitor should be able to tell who is speaking without reading a word.\n\nDensity is editorial, not dashboard: one column, generous vertical rhythm between chapters, tight leading inside them. Colour is almost entirely absent — the page is ink on paper, and a single indigo appears only where something is alive. The confirmed anti-reference is the generic developer-portfolio dark mode: neon-on-charcoal, gradient hero, glassmorphic cards, a rainbow of tag colours. This system rejects all of it.",
     "keyCharacteristics": [
       "Ink-on-paper primaries; a cool newsprint sheet and a deep near-black ink",
       "One accent, Signal Indigo, reserved for live state",
@@ -260,9 +260,9 @@
       { "name": "The Cool Newsprint Rule", "body": "The neutral ramp is normatively cool blue-slate — quality newsprint under natural light. The shipped hexes carry a warm cast (#fefefb / #181410) that is known drift, not intent; the correction is still pending. New neutrals are chosen cool.", "section": "colors" },
       { "name": "The Signal Rule", "body": "Signal Indigo means live: something running, open, active, or focused. It is not a brand wash, not a category colour, and not a hover flourish on a static element. Live is indigo, distinguished is full ink, dormant is faint — three states, one hue.", "section": "colors" },
       { "name": "The No-Category-Colour Rule", "body": "Tags, skills, project types, roles and post kinds are never colour-coded. They are distinguished by ink weight, rule weight, and position.", "section": "colors" },
-      { "name": "The Assigned Speaker Rule", "body": "Four faces, four speakers: Roboto is the system, Garamond/Cormorant is the author, Geist Mono is the machine, Source Serif 4 is the reader. Before setting a new string, name its speaker; that names the face. A measurement never appears in Garamond, and an opinion never appears in mono.", "section": "typography" },
+      { "name": "The Assigned Speaker Rule", "body": "Four faces, four speakers: Instrument Sans is the system, Garamond/Cormorant is the author, Geist Mono is the machine, Source Serif 4 is the reader. Before setting a new string, name its speaker; that names the face. A measurement never appears in Garamond, and an opinion never appears in mono.", "section": "typography" },
       { "name": "The Unthemeable Voice Rule", "body": "`--font-garamond`, `--font-cormorant` and `--font-blog` are deliberately never overridden by `[data-theme]`. The author's voice and the reader's voice survive every theme; only the system's voice swaps.", "section": "typography" },
-      { "name": "The Escape Hatch Rule", "body": "The display serif is a class (`.display-serif`), never a `--font-display` override. That variable is the hatch `midnight` — the default theme — uses to swap the whole site to Roboto, and gradeVITian and VRF Bricks inherit it and must stay grotesque. Overriding it would silently break the experience most visitors get.", "section": "typography" },
+      { "name": "The Escape Hatch Rule", "body": "`--font-display` is overridden in exactly one place: `html:has(.portfolio)` points it at Garamond, making Garamond the portfolio's one display voice (h1 and the hero name band included). Never override it per theme or at `:root`; gradeVITian and VRF Bricks inherit the root value and must stay grotesque. Inside components, keep reaching for `.display-serif`.", "section": "typography" },
       { "name": "The Ghost Numeral Rule", "body": "A chapter is counted once, by the oversized ghost numeral in the rail. No second mono numeral, no third line above the heading; the dateline below carries the filing.", "section": "typography" },
       { "name": "The One Column Rule", "body": "The page is one column of reading at every width. Side rails carry identity, never content the reader must have. A layout that only works above `lg` is not a layout.", "section": "layout" },
       { "name": "The Measure Rule", "body": "Every run of text declares its measure. Nothing sets wider than 72ch, and prose sets at 68ch.", "section": "layout" },
@@ -274,7 +274,7 @@
       { "name": "The Two Curves Rule", "body": "The system has two easing curves and no third: cubic-bezier(0.16, 1, 0.3, 1) for a surface settling into place, and cubic-bezier(0.22, 1, 0.36, 1) for a stroke being drawn. Every transition picks one.", "section": "elevation" }
     ],
     "dos": [
-      "Do name the speaker before choosing a face: system (Roboto), author (Garamond/Cormorant), machine (Geist Mono), reader (Source Serif 4).",
+      "Do name the speaker before choosing a face: system (Instrument Sans), author (Garamond/Cormorant), machine (Geist Mono), reader (Source Serif 4).",
       "Do build hierarchy from the four-step ink ramp — fg → fg-muted → fg-subtle → fg-faint — before reaching for any colour.",
       "Do reserve Signal Indigo for live state: running, open, active, focused.",
       "Do express a group of figures as a ruled band (border-y + divide-x) at reading scale, with every line visible at rest.",

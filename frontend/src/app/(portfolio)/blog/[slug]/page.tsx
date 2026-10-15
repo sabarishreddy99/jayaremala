@@ -94,9 +94,16 @@ function BlogPostApiView({ post, allPosts }: { post: ApiBlogPost; allPosts: Post
         <div className="flex-1 min-w-0">
           <article>
             <header className="mb-10 pb-8 border-b border-border">
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-fg leading-tight mb-4 font-[family-name:var(--font-blog)]">
+              <h1 className="display-serif display-lg text-fg leading-[1.05] text-balance mb-4">
                 {post.title}
               </h1>
+              {/* The standfirst: the post's own description, in the author's
+                  voice, so the reader knows what they are settling into. */}
+              {post.description && (
+                <p className="voice-serif mb-5 max-w-[56ch] text-[1.125rem] leading-relaxed text-fg-muted sm:text-[1.25rem]">
+                  {post.description}
+                </p>
+              )}
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
                   <span className="text-sm text-fg-faint">{post.date}</span>
@@ -392,9 +399,16 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="flex-1 min-w-0">
           <article>
             <header className="mb-10 pb-8 border-b border-border">
-              <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-fg leading-tight mb-4 font-[family-name:var(--font-blog)]">
+              <h1 className="display-serif display-lg text-fg leading-[1.05] text-balance mb-4">
                 {post.title}
               </h1>
+              {/* The standfirst: the post's own description, in the author's
+                  voice, so the reader knows what they are settling into. */}
+              {post.description && (
+                <p className="voice-serif mb-5 max-w-[56ch] text-[1.125rem] leading-relaxed text-fg-muted sm:text-[1.25rem]">
+                  {post.description}
+                </p>
+              )}
               {/* Meta row: date · reading time · views | font size + reading mode */}
               <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-3">
                 <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">

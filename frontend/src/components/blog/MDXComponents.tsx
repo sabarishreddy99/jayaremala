@@ -7,10 +7,12 @@ import CodeBlock from "./CodeBlock";
 type CalloutVariant = "info" | "tip" | "warning" | "quote";
 
 const CALLOUT_STYLES: Record<CalloutVariant, { border: string; bg: string; icon: string; label: string; text: string }> = {
-  info:    { border: "border-blue-200 dark:border-blue-800",   bg: "bg-blue-50 dark:bg-blue-950/50",   icon: "ℹ",  label: "text-blue-700 dark:text-blue-400",   text: "text-blue-800 dark:text-blue-300" },
-  tip:     { border: "border-green-200 dark:border-green-800", bg: "bg-green-50 dark:bg-green-950/50", icon: "✦",  label: "text-green-700 dark:text-green-400", text: "text-green-800 dark:text-green-300" },
+  // Info, tip and quote share the portfolio's one accent; only a warning
+  // keeps its own (semantic) amber.
+  info:    { border: "border-border",      bg: "bg-surface",      icon: "ℹ",  label: "text-fg",     text: "text-fg-muted" },
+  tip:     { border: "border-accent/30",   bg: "bg-accent-light", icon: "✦",  label: "text-accent", text: "text-fg-muted" },
   warning: { border: "border-amber-200 dark:border-amber-800", bg: "bg-amber-50 dark:bg-amber-950/50", icon: "⚠",  label: "text-amber-700 dark:text-amber-400", text: "text-amber-900 dark:text-amber-300" },
-  quote:   { border: "border-indigo-200 dark:border-indigo-800", bg: "bg-indigo-50 dark:bg-indigo-950/50", icon: "❝", label: "text-indigo-600 dark:text-indigo-400", text: "text-indigo-900 dark:text-indigo-300" },
+  quote:   { border: "border-border-strong", bg: "bg-surface", icon: "❝", label: "text-accent", text: "text-fg-muted" },
 };
 
 export function Callout({ type = "info", title, children }: { type?: CalloutVariant; title?: string; children: React.ReactNode }) {

@@ -24,16 +24,16 @@ function Column({
   tone: "for" | "against";
 }) {
   const isFor = tone === "for";
+  // Two printed panels: "for" on Skin, "won't" on paper. Text inherits the
+  // panel's ink and steps down by opacity, so the same markup reads on both.
   return (
-    <div className="min-w-0">
+    <div data-face={isFor ? "skin" : "paper"} className="stance-panel min-w-0 rounded-card p-6 sm:p-8">
       <div className="mb-6 flex items-center gap-2.5">
         <span
           aria-hidden
-          className={`h-1.5 w-1.5 shrink-0 rounded-full ${
-            isFor ? "bg-accent" : "bg-fg-faint"
-          }`}
+          className={`h-2 w-2 shrink-0 rounded-full ${isFor ? "bg-[var(--flesh)]" : "bg-[var(--pit)]"}`}
         />
-        <h3 className="text-[11px] font-bold uppercase tracking-[0.2em] text-fg-faint">
+        <h3 className="font-mono text-[0.6875rem] uppercase tracking-[0.18em] opacity-75">
           {heading}
         </h3>
       </div>
@@ -42,13 +42,13 @@ function Column({
         {items.map((o) => (
           <li key={o.term} className="min-w-0">
             <p
-              className={`display-serif text-[1.35rem] leading-snug sm:text-[1.45rem] ${
-                isFor ? "text-fg" : "text-fg-subtle opinion-against"
+              className={`display-serif text-[1.35rem] leading-snug sm:text-[1.5rem] ${
+                isFor ? "stance-term" : "opinion-against"
               }`}
             >
               {o.term}
             </p>
-            <p className="voice-serif mt-1.5 max-w-[46ch] text-[0.9375rem] leading-relaxed text-fg-subtle">
+            <p className="voice-serif mt-1.5 max-w-[46ch] text-[0.9375rem] leading-relaxed opacity-80">
               {o.line}
             </p>
           </li>
@@ -60,18 +60,9 @@ function Column({
 
 export default function Opinions({ data }: { data: OpinionsBlock }) {
   return (
-    <div className="grid gap-12 sm:grid-cols-2 sm:gap-10 lg:gap-16">
+    <div className="grid gap-4 md:grid-cols-2 md:gap-5">
       <Column heading={data.forLabel} items={data.for} tone="for" />
-
-      {/* Hairline spine between the two registers. Horizontal on phone where
-          the columns stack, vertical once they sit side by side. */}
-      <div className="relative">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-6 left-0 right-0 h-px bg-border sm:-left-5 sm:top-0 sm:bottom-0 sm:right-auto sm:h-auto sm:w-px lg:-left-8"
-        />
-        <Column heading={data.againstLabel} items={data.against} tone="against" />
-      </div>
+      <Column heading={data.againstLabel} items={data.against} tone="against" />
     </div>
   );
 }

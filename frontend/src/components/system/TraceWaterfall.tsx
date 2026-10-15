@@ -50,7 +50,7 @@ export default function TraceWaterfall({ refreshKey }: { refreshKey: number }) {
                 <span className="flex items-center gap-2 min-w-0">
                   <span
                     className={`w-1.5 h-1.5 rounded-full shrink-0 ${
-                      t.status === "ok" ? "bg-emerald-500" : "bg-rose-500"
+                      t.status === "ok" ? "bg-accent" : "bg-rose-500"
                     }`}
                   />
                   <span className="font-mono text-[11px] text-fg-muted truncate">{t.model}</span>

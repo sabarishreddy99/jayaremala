@@ -45,7 +45,7 @@ export default async function BlogTagPage({ params }: Props) {
 
         <div className="flex items-center gap-3 mb-2">
           <span
-            className="rounded-full border border-indigo-200 dark:border-indigo-800 bg-accent-light px-3 py-1 text-sm font-semibold text-accent"
+            className="rounded-full border border-accent/30 bg-accent-light px-3 py-1 text-sm font-semibold text-accent"
           >
             #{decoded}
           </span>

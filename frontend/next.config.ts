@@ -22,6 +22,9 @@ const nextConfig: NextConfig = {
    */
   env: {
     NEXT_PUBLIC_BUILD_YEAR: String(new Date().getFullYear()),
+    // The footer's "last edition" line. Same reasoning: the deploy date, not
+    // the visitor's today (the old footer printed today's date as "Updated").
+    NEXT_PUBLIC_BUILD_DATE: new Date().toISOString().slice(0, 10),
   },
 };
 

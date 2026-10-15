@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { profile } from "@/data/profile";
 import ThemeToggle from "@/components/ui/ThemeToggle";
 import SoundToggle from "@/components/ui/SoundToggle";
@@ -11,6 +12,12 @@ import InstallPWA from "@/components/ui/InstallPWA";
 import ReadingProgress from "@/components/blog/ReadingProgress";
 import { playClick } from "@/lib/sound";
 import { siteGroups as groups } from "@/lib/portfolio/site-nav";
+import SiteBubbles from "@/components/portfolio/SiteBubbles";
+import SeedAvatar from "@/components/chat/SeedAvatar";
+
+/** Dropdown icon chips take their group's bubble colour, so the nav and the
+ *  site map read as one system (Work = Skin, Writing = Flesh, Developers = Paper). */
+const GROUP_FACE: Record<string, string> = { Work: "skin", Writing: "flesh", Developers: "paper" };
 
 const Chevron = ({ open }: { open: boolean }) => (
   <svg
@@ -45,6 +52,20 @@ export default function Nav() {
   useEffect(() => {
     openRef.current = open;
     window.dispatchEvent(new CustomEvent("nav:drawer", { detail: { open } }));
+  }, [open]);
+
+  // While the site-map sheet is open: lock the page behind it and let Escape
+  // close it.
+  useEffect(() => {
+    if (!open) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      window.removeEventListener("keydown", onKey);
+    };
   }, [open]);
 
   // ── Dropdown menus (desktop) ──────────────────────────────────
@@ -194,7 +215,7 @@ export default function Nav() {
         {/* Logo */}
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-xl font-normal tracking-widest text-fg hover:opacity-70 transition-opacity"
+          className="group/logo inline-flex items-center gap-1 text-xl font-normal tracking-widest text-fg hover:opacity-80 transition-opacity"
           style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
           onClick={() => { setOpen(false); playClick("ui"); }}
         >
@@ -203,7 +224,7 @@ export default function Nav() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {/* Spotlight group — a soft indigo highlight glides between the 3 menu triggers */}
+          {/* Spotlight group — a soft accent highlight glides between the 3 menu triggers */}
           <div
             ref={menubarRef}
             className="relative flex items-center gap-1"
@@ -277,7 +298,7 @@ export default function Nav() {
                               : "hover:bg-surface-raised"
                           }`}
                         >
-                          <span className={`mt-0.5 shrink-0 transition-colors ${active ? "text-accent" : "text-fg-faint group-hover/item:text-fg-muted"}`}>
+                          <span data-face={GROUP_FACE[g.label]} className={`nav-chip mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full transition-transform duration-200 group-hover/item:scale-110 ${active ? "is-active" : ""}`}>
                             {it.icon}
                           </span>
                           <span className="min-w-0">
@@ -314,7 +335,7 @@ export default function Nav() {
           <Link
             href="/chat"
             onClick={() => playClick("primary")}
-            className="group ml-2 relative inline-flex items-center px-5 py-1.5 rounded-full bg-fg text-bg text-sm font-medium hover:opacity-75 transition-opacity duration-200 overflow-hidden"
+            className="btn-avo group ml-2 relative inline-flex items-center px-5 py-1.5 rounded-full text-sm font-medium overflow-hidden"
           >
             <span className="flex items-center gap-1.5 transition-[transform,opacity] duration-300 ease-[cubic-bezier(0.16,1,0.3,1)] group-hover:-translate-x-10 group-hover:opacity-0">
               <SparkleIcon size={13} className="shrink-0" />
@@ -362,91 +383,66 @@ export default function Nav() {
           </button>
           <SoundToggle />
           <ThemeToggle />
+          {/* The site map lives behind the seed: tapping it opens every page as
+              bubbles (the same map as the home page's "Explore the rest"). */}
           <button
-            className="inline-flex items-center justify-center w-11 h-11 rounded text-fg-subtle hover:text-fg hover:bg-surface-raised transition-colors"
+            className="inline-flex items-center justify-center w-11 h-11 rounded-full transition-transform active:scale-95"
             onClick={() => { setOpen(!open); playClick("ui"); }}
-            aria-label="Toggle menu"
+            aria-label={open ? "Close site map" : "Open site map"}
+            aria-expanded={open}
           >
-            {open ? (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12"/>
-              </svg>
-            ) : (
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M4 6h16M4 12h16M4 18h16"/>
-              </svg>
-            )}
+            <SeedAvatar size={30} />
           </button>
         </div>
         </div>{/* ↑ pill */}
 
-        {/* ── Mobile drawer — floats below pill, same glass treatment, grouped by section ──
-            The drawer lives inside the sticky header, so its full height (12 links + 3
-            group headings + 3 utility rows ≈ 730px) exceeds a phone viewport and the tail
-            end was pinned off-screen with no way to reach it. Cap it to the space below
-            the pill and let it scroll itself; overscroll-contain keeps that scroll from
-            chaining into the page underneath. ── */}
-        {open && (
-          <div className="md:hidden mt-1.5 overflow-y-auto overflow-x-hidden overscroll-contain max-h-[calc(100dvh-5.75rem)] rounded-xl
-            bg-surface/92 backdrop-blur-[14px]
-            [box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.10),_0_2px_8px_-2px_rgb(0_0_0/0.06)]
-            dark:[box-shadow:0_8px_32px_-8px_rgb(0_0_0/0.45),_0_2px_8px_-2px_rgb(0_0_0/0.25)]">
-            <nav className="flex flex-col px-2 pt-2 pb-2">
-              {groups.map((g, gi) => (
-                <div key={g.label} className={gi > 0 ? "mt-1 pt-1 border-t border-border/60" : ""}>
-                  <p className="px-3 pt-1.5 pb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-fg-faint">
-                    {g.label}
-                  </p>
-                  {g.items.map((it) => {
-                    const active = pathname.startsWith(it.href);
-                    return (
-                      <Link
-                        key={it.href}
-                        href={it.href}
-                        onClick={() => { setOpen(false); playClick("nav"); }}
-                        className={`flex items-center gap-3 px-3 py-2.5 rounded text-sm transition-colors ${
-                          active
-                            ? "bg-surface-raised text-fg font-medium"
-                            : "text-fg-muted hover:bg-surface-raised hover:text-fg"
-                        }`}
-                      >
-                        <span className={`shrink-0 ${active ? "text-accent" : "text-fg-faint"}`}>
-                          {it.icon}
-                        </span>
-                        {it.label}
-                      </Link>
-                    );
-                  })}
-                </div>
-              ))}
+        {/* ── Phone site map — a full-screen sheet of bubbles ──
+            Portalled to <body>: the header is transformed (show/hide on
+            scroll), which would otherwise make it the containing block for a
+            fixed child. */}
+        {open && typeof document !== "undefined" && createPortal(
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Site map"
+            className="site-sheet fixed inset-0 z-[70] flex flex-col overflow-y-auto overscroll-contain bg-bg md:hidden"
+          >
+            <div className="flex items-center justify-between px-4 py-3">
+              <Link
+                href="/"
+                onClick={() => setOpen(false)}
+                className="inline-flex items-center gap-1.5 text-xl tracking-widest text-fg"
+                style={{ fontFamily: "var(--font-playfair), Georgia, serif" }}
+              >
+                Jaya
+              </Link>
+              <button
+                onClick={() => { setOpen(false); playClick("ui"); }}
+                aria-label="Close site map"
+                className="grid h-11 w-11 place-items-center rounded-full border border-border text-fg-muted"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+              </button>
+            </div>
 
-              <div className="mt-1 pt-1 border-t border-border/60">
-                <InstallPWA variant="mobile" onTrigger={() => setOpen(false)} />
-                <a
-                  href={profile.resume}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => setOpen(false)}
-                  className="px-3 py-2.5 rounded text-sm text-fg-muted hover:bg-surface-raised transition-colors flex items-center gap-1.5"
-                >
-                  Resume
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M7 17L17 7M17 7H7M17 7v10"/>
-                  </svg>
-                </a>
-                <Link
-                  href="/admin"
-                  onClick={() => setOpen(false)}
-                  className="px-3 py-2.5 rounded text-sm text-fg-faint hover:bg-surface-raised transition-colors flex items-center gap-2"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                  </svg>
-                  Admin
-                </Link>
-              </div>
-            </nav>
-          </div>
+            <div className="px-4 pb-4 pt-2 text-center">
+              <p className="display-serif display-md text-fg">Where to?</p>
+              <p className="mt-1 text-sm text-fg-subtle">Every page, by kind. The seed answers questions.</p>
+            </div>
+
+            <div className="px-2 pb-6">
+              <SiteBubbles variant="sheet" onNavigate={() => { setOpen(false); playClick("nav"); }} />
+            </div>
+
+            <div className="mt-auto flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-border px-4 py-5 text-sm text-fg-muted">
+              <InstallPWA variant="mobile" onTrigger={() => setOpen(false)} />
+              <a href={profile.resume} target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="inline-flex items-center gap-1.5 hover:text-fg">
+                Résumé ↗
+              </a>
+              <Link href="/admin" onClick={() => setOpen(false)} className="text-fg-faint hover:text-fg-subtle">Admin</Link>
+            </div>
+          </div>,
+          document.body
         )}
       </div>{/* ↑ floating wrapper */}
 

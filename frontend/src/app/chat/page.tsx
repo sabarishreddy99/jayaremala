@@ -1,7 +1,8 @@
 import { Suspense } from "react";
 import ChatInterface from "@/components/chat/ChatInterface";
 import AvocadoBg from "@/components/chat/AvocadoBg";
-import ChatCloseButton from "@/components/chat/ChatCloseButton";
+import AvocadoCutClose from "@/components/chat/AvocadoCutClose";
+import SeedAvatar from "@/components/chat/SeedAvatar";
 
 export const metadata = {
   title: "Ask Avocado | Jaya's AI",
@@ -11,7 +12,7 @@ export const metadata = {
 
 export default function ChatPage() {
   return (
-    // `portfolio` scopes the deepened indigo accent (globals.css) so Avocado
+    // `portfolio` scopes the Avocado accent (globals.css) so Avocado
     // matches the homepage it is reached from. This route sits outside the
     // (portfolio) group, so it needs the class explicitly.
     <div className="portfolio relative flex flex-col h-[100dvh] bg-bg overflow-hidden">
@@ -23,17 +24,15 @@ export default function ChatPage() {
 
           {/* Avocado identity — clear "who you're talking to" */}
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-lg shrink-0">
-              🥑
-            </div>
+            <SeedAvatar size={32} />
             <div>
-              <p className="text-sm font-bold text-fg leading-none tracking-tight">Avocado</p>
+              <p className="display-serif text-lg text-fg leading-none">Avocado</p>
               <p className="text-[10px] text-fg-faint leading-none mt-0.5">Jaya&apos;s AI · Ask me anything</p>
             </div>
           </div>
 
-          {/* Close / back */}
-          <ChatCloseButton />
+          {/* Close: a whole avocado; clicking it (or Esc) cuts it in half and leaves. */}
+          <AvocadoCutClose />
         </div>
       </header>
 

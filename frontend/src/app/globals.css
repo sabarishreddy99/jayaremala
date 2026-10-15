@@ -521,9 +521,11 @@ a[role="button"]:active {
   padding: 0.15em 0.45em;
   font-size: 0.85em;
   font-family: var(--font-mono), monospace;
-  color: #c026d3;
+  color: var(--skin-ink, #23280f);
+  background: var(--accent-light);
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent);
 }
-.dark .prose :not(pre) > code { color: #e879f9; }
+.dark .prose :not(pre) > code { color: var(--accent); }
 
 /* ── Code blocks — Shiki handles token colors ── */
 .prose pre {
@@ -603,8 +605,8 @@ figcaption[data-rehype-pretty-code-title] + pre {
 
 /* ── Highlighted lines ({1,3-5} syntax in code fence) ── */
 .prose pre [data-highlighted-line] {
-  background: rgba(99, 102, 241, 0.08);
-  border-left: 2px solid #6366f1;
+  background: color-mix(in srgb, var(--accent) 9%, transparent);
+  border-left: 2px solid var(--accent);
   display: block;
   padding-left: calc(1.2em - 2px);
   padding-right: 1.2em;
@@ -614,7 +616,7 @@ figcaption[data-rehype-pretty-code-title] + pre {
 
 /* ── Highlighted words (::highlight syntax) ── */
 .prose pre mark[data-highlighted-chars] {
-  background: rgba(99, 102, 241, 0.18);
+  background: color-mix(in srgb, var(--accent) 20%, transparent);
   border-radius: 3px;
   padding: 0.1em 0.15em;
   color: inherit;
@@ -1525,28 +1527,43 @@ html[data-doodle-drag] { cursor: grabbing; }
    keeps :root's #4f46e5 / #818cf8 so a product with ~17K monthly users is not
    re-skinned as a side effect of a portfolio redesign; VRF keeps terracotta.
 
-   Light goes indigo-600 → indigo-800, closer to the deep blue-black ink the
-   newsprint palette is already built around, so the accent reads as a second
-   ink rather than a UI highlight. Dark goes more saturated instead of lighter,
-   because on true black chroma is what "deeper" can mean.
+   The Avocado palette (Oct 2026). Three colours, all taken from a halved
+   Hass avocado and nothing else:
 
-   Contrast against the page background, computed not eyeballed:
-     #3730a3 on #fefefb = 9.86:1   #6f7bf7 on #000000 = 5.85:1
-   Both clear AA for the 10–11px text-accent micro-labels this page is full of.
+     Skin  #3b4320  the dark olive rind   → light-mode accent, footer band
+     Flesh #d8de8a  the butter-green meat → dark-mode accent, fills
+     Pit   #7a4a2b  the seed              → small marks only (the seed badge,
+                                            the logo's stone); never body text
+                                            in dark mode (2.6:1)
+
+     Skin on paper 10.34:1 · Flesh on ink-stone 13.54:1
+     Skin on Flesh 7.33:1  · Flesh on Pit 5.18:1
+
+   --skin-ink is the text colour on a Flesh fill; --flesh-tint is the pale
+   wash behind accent text in light mode.
+
+   `html:has(.portfolio)` is listed as well as `.portfolio` so modals portalled
+   to <body> get the same accent. gradeVITian and VRF never match either.
    ────────────────────────────────────────────────────────────────────────── */
-.portfolio {
-  --accent:           #3730a3;
-  --accent-hover:     #312e81;
-  --accent-light:     #e9e8f7;
-  --accent-fg:        #ffffff;
-  --accent-secondary: #6d28d9;
+html:has(.portfolio), .portfolio {
+  --skin:             #3b4320;
+  --skin-deep:        #2b3117;
+  --flesh:            #d8de8a;
+  --flesh-tint:       #eef0d2;
+  --pit:              #7a4a2b;
+  --skin-ink:         #23280f;
+  --accent:           var(--skin);
+  --accent-hover:     var(--skin-deep);
+  --accent-light:     var(--flesh-tint);
+  --accent-fg:        #fefefb;
+  --accent-secondary: var(--skin);
 }
-.dark .portfolio {
-  --accent:           #6f7bf7;
-  --accent-hover:     #93a0fb;
-  --accent-light:     #14142b;
-  --accent-fg:        #ffffff;
-  --accent-secondary: #8b7cf6;
+html.dark:has(.portfolio), .dark .portfolio {
+  --accent:           var(--flesh);
+  --accent-hover:     #e6eaa8;
+  --accent-light:     #23261a;
+  --accent-fg:        var(--skin-ink);
+  --accent-secondary: var(--flesh);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -1666,3 +1683,465 @@ html[data-doodle-drag] { cursor: grabbing; }
 @media (prefers-reduced-motion: reduce) {
   .vrf-drift { animation: none; }
 }
+
+/* ── Portfolio type + atmosphere ───────────────────────────────────────
+   Applies to every route that renders `.portfolio` (the (portfolio) group
+   and /chat). `html:has()` rather than `.portfolio` itself so <body>, the
+   page background and portalled modals pick it up too; gradeVITian, VRF
+   Bricks and /admin never render `.portfolio` and are untouched.
+
+   Type: Instrument Sans is the system voice (replacing Roboto); EB Garamond
+   is the one display voice, including the hero name band and h1; Geist Mono
+   stays the machine.
+
+   Colour: one accent. Indigo marks interactive and live elements only.
+   --accent-secondary collapses onto --accent so every old indigo→violet
+   second stop renders as a single hue; the per-section washes, the footer
+   glow and the purple footer wave are retired.
+
+   Dark mode trades pure black for a warm near-black ink-stone, so the dark
+   sheet stays tactile and matches the warm paper of light mode. */
+html:has(.portfolio) {
+  --font-sans: var(--font-instrument);
+  --font-display: var(--font-garamond);
+}
+html:has(.portfolio) body {
+  font-family: var(--font-instrument), system-ui, sans-serif;
+  letter-spacing: -0.003em;
+}
+html.dark:has(.portfolio) {
+  --bg:             #0f0e0c;
+  --surface:        #171613;
+  --surface-raised: #201e1a;
+  --surface-sunken: #0a0908;
+  --border:         #2e2b26;
+  --border-subtle:  #1f1d19;
+  --border-strong:  #4d4840;
+  --fg:             #eeebe5;
+  --fg-muted:       #cfcac1;
+  --fg-subtle:      #9a948a;
+  --fg-faint:       #6f6a62;
+}
+html:has(.portfolio) .scroll-atmosphere { display: none; }
+html:has(.portfolio) .hero-name-word { font-weight: 600 !important; letter-spacing: -0.03em; }
+
+/* ── The back page (portfolio footer) ──────────────────────────────────
+   A Skin band in both modes with Flesh as its accent, so it never blends
+   into the page above. A halved-avocado line drawing sits in the corner. */
+html:has(.portfolio) { --page-bg: var(--bg); }
+.back-page,
+.dark .back-page {
+  /* The band is Skin in both modes. Re-pointing --fg/--bg here lets the
+     footer's bg-fg / text-bg/NN utilities keep working unchanged. */
+  --fg: var(--skin);
+  --bg: #f4f2e6;
+  --accent: var(--flesh);
+}
+
+/* Perforated top edge: page-coloured holes punched along the seam, like a
+   tear-off stub. */
+.back-page-perf {
+  position: absolute;
+  left: 0; right: 0; top: -5px;
+  height: 10px;
+  background: radial-gradient(circle at 50% 50%, var(--page-bg) 0 4px, transparent 4.5px) 0 0 / 18px 10px repeat-x;
+  pointer-events: none;
+}
+
+/* The sign-off writes itself left to right when it scrolls into view, then
+   the rule underneath draws. Visible by default; the hidden start state only
+   applies when motion is allowed and JS has not yet marked it written. */
+@media (prefers-reduced-motion: no-preference) {
+  .back-page-sign {
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 1.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .back-page-sign.is-written { clip-path: inset(0 0 0 0); }
+  .back-page-sign-rule {
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) 1.3s;
+  }
+  .back-page-sign-rule.is-written { transform: scaleX(1); }
+}
+
+/* Install-app icon was drawn for the paper; on the ink band it follows the
+   band's own ink. */
+.back-page-pwa button,
+.back-page-pwa a {
+  border-color: color-mix(in srgb, var(--bg) 20%, transparent) !important;
+  background: transparent !important;
+  color: color-mix(in srgb, var(--bg) 70%, transparent) !important;
+}
+
+/* Avocado preview caret. */
+@keyframes avo-caret-blink { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+.avo-caret { animation: avo-caret-blink 0.9s steps(1) infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .avo-caret { animation: none; }
+}
+
+/* ── Testimonial deck ──────────────────────────────────────────────────
+   Dealt cards in the Avocado palette (Skin, Flesh, Paper). The faces keep
+   their colour in both modes — they are printed cards lying on the page, not themed surfaces. */
+.deck-track {
+  scrollbar-width: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+          mask-image: linear-gradient(90deg, transparent, #000 5%, #000 95%, transparent);
+  overscroll-behavior-x: contain;
+}
+.deck-track::-webkit-scrollbar { display: none; }
+.deck-track:focus-visible { outline-offset: -4px; }
+
+.deck-card {
+  transform: translateY(var(--lift, 0)) rotate(var(--tilt, 0));
+  transition: transform 0.55s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 12px 28px -18px rgb(0 0 0 / 0.28);
+  min-height: 23rem;
+}
+.deck-card + .deck-card { margin-left: -2rem; }
+.deck-card:hover,
+.deck-card:focus-within {
+  transform: translateY(-12px) rotate(0deg) scale(1.025);
+  z-index: 10;
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.06), 0 30px 60px -24px rgb(0 0 0 / 0.42);
+}
+
+.deck-card[data-face="skin"]  { background: var(--skin); color: #f4f2e6; }
+.deck-card[data-face="skin"] .deck-quote { color: var(--flesh); }
+.deck-card[data-face="flesh"] { background: var(--flesh); color: var(--skin-ink); }
+.deck-card[data-face="paper"] { background: #fbfaf4; color: #181410; border: 1px solid #dedad3; }
+
+.deck-soft   { opacity: 0.74; }
+.deck-chip,
+.deck-avatar { background: color-mix(in srgb, currentColor 13%, transparent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .deck-card { transition: none; }
+}
+
+/* ── Avocado faces ─────────────────────────────────────────────────────
+   Shared printed surfaces for the role stack and the stance panels. Like the
+   testimonial deck, they keep their colour in both modes. Text inside inherits
+   the face's ink; nested `text-fg` (e.g. highlighted numbers) inherits too. */
+:is(.role-card, .stance-panel)[data-face="skin"]  { background: var(--skin); color: #f4f2e6; }
+:is(.role-card, .stance-panel)[data-face="flesh"] { background: var(--flesh); color: var(--skin-ink); }
+:is(.role-card, .stance-panel)[data-face="paper"] { background: var(--surface); color: var(--fg); border: 1px solid var(--border); }
+:is(.role-card, .stance-panel) .text-fg { color: inherit; }
+.stance-panel[data-face="skin"] .stance-term { color: var(--flesh); }
+
+/* ── Card rows (home "The work") ──────────────────────────────────────
+   Three equal cards in a row from lg up; below that a swipeable snap row
+   that bleeds to the screen edge and shows a peek of the next card. */
+.card-row {
+  display: grid;
+  gap: 1rem;
+  grid-auto-flow: column;
+  grid-auto-columns: min(84%, 21rem);
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  margin-inline: -1rem;
+  padding: 0.25rem 1rem 0.75rem;
+  scroll-padding-inline: 1rem;
+}
+.card-row::-webkit-scrollbar { display: none; }
+.card-row > * { scroll-snap-align: start; min-width: 0; }
+@media (min-width: 640px) { .card-row { margin-inline: -1.5rem; padding-inline: 1.5rem; scroll-padding-inline: 1.5rem; grid-auto-columns: min(60%, 22rem); } }
+@media (min-width: 768px) { .card-row { margin-inline: -2rem; padding-inline: 2rem; scroll-padding-inline: 2rem; grid-auto-columns: 42%; } }
+@media (min-width: 1024px) {
+  .card-row { grid-auto-flow: row; grid-template-columns: repeat(3, minmax(0, 1fr)); overflow: visible; margin-inline: 0; padding: 0; }
+}
+.role-card {
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 14px 32px -24px rgb(0 0 0 / 0.35);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (min-width: 640px) { .role-card { padding: 1.75rem; } }
+@media (hover: hover) {
+  .role-card:hover { transform: translateY(-4px); box-shadow: 0 2px 4px rgb(0 0 0 / 0.06), 0 26px 50px -26px rgb(0 0 0 / 0.45); }
+}
+@media (prefers-reduced-motion: reduce) { .role-card { transition: none; } }
+
+/* ── Seed ring ─────────────────────────────────────────────────────────── */
+.seed-ring { animation: seed-turn 22s linear infinite; }
+@keyframes seed-turn { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .seed-ring { animation: none; } }
+
+/* ── Chat prompt cards ─────────────────────────────────────────────────── */
+:is(.prompt-card)[data-face="skin"]  { background: var(--skin); color: #f4f2e6; }
+:is(.prompt-card)[data-face="flesh"] { background: var(--flesh); color: var(--skin-ink); }
+:is(.prompt-card)[data-face="paper"] { background: var(--surface); color: var(--fg); border: 1px solid var(--border); }
+.prompt-card {
+  transform: rotate(var(--tilt, 0deg));
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 14px 30px -22px rgb(0 0 0 / 0.35);
+}
+.prompt-card:hover,
+.prompt-card:focus-visible {
+  transform: rotate(0deg) translateY(-4px);
+  box-shadow: 0 2px 4px rgb(0 0 0 / 0.06), 0 24px 48px -24px rgb(0 0 0 / 0.45);
+}
+@media (prefers-reduced-motion: reduce) { .prompt-card { transition: none; } }
+
+/* ── Avocado buttons ───────────────────────────────────────────────────
+   .btn-avo   the primary action. A Skin pill (Flesh in dark mode); on hover
+              or keyboard focus the inside of the fruit sweeps across from the
+              left — Flesh with skin-ink in light mode, Skin with Flesh ink in
+              dark — so the button "opens" rather than just dimming.
+   .btn-avo-ghost  the secondary action: hairline pill that takes the accent
+              border and a pale flesh wash on hover.
+   Selected chips use plain accent utilities (bg-accent text-accent-fg). */
+html:has(.portfolio) {
+  --avo-sweep: var(--flesh);
+  --avo-sweep-ink: var(--skin-ink);
+}
+html.dark:has(.portfolio) {
+  --avo-sweep: var(--skin);
+  --avo-sweep-ink: var(--flesh);
+}
+.btn-avo {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: var(--accent);
+  color: var(--accent-fg);
+  transition: color 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.btn-avo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: var(--avo-sweep);
+  transform: translateX(-101%);
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.btn-avo:hover,
+.btn-avo:focus-visible { color: var(--avo-sweep-ink); }
+.btn-avo:hover::before,
+.btn-avo:focus-visible::before { transform: translateX(0); }
+.btn-avo:disabled { opacity: 0.55; cursor: not-allowed; }
+.btn-avo:disabled::before { display: none; }
+
+.btn-avo-ghost {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--fg);
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+.btn-avo-ghost:hover,
+.btn-avo-ghost:focus-visible {
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+/* The footer band is Skin, so its primary is Flesh and sweeps to paper. */
+.back-page {
+  --accent-fg: var(--skin-ink);
+  --avo-sweep: #f4f2e6;
+  --avo-sweep-ink: var(--skin-ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-avo::before { transition: none; }
+}
+
+/* ── Avocado preview stack ─────────────────────────────────────────────
+   The hero card sits on two sheets — Skin behind-left, Flesh behind-right —
+   that fan a little further when the stack is hovered or focused. */
+.avo-stack-sheet {
+  transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.avo-stack-sheet.is-skin  { background: var(--skin);  transform: translate(-10px, 14px) rotate(-3deg); }
+.avo-stack-sheet.is-flesh { background: var(--flesh); transform: translate(12px, 8px) rotate(2.5deg); }
+.avo-stack:hover .avo-stack-sheet.is-skin,
+.avo-stack:focus-within .avo-stack-sheet.is-skin  { transform: translate(-18px, 20px) rotate(-5deg); }
+.avo-stack:hover .avo-stack-sheet.is-flesh,
+.avo-stack:focus-within .avo-stack-sheet.is-flesh { transform: translate(20px, 12px) rotate(4.5deg); }
+.avo-stack-front {
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 22px 44px -28px rgb(0 0 0 / 0.4);
+}
+@media (prefers-reduced-motion: reduce) { .avo-stack-sheet { transition: none; } }
+
+/* ── Note stack (home "Writing") ───────────────────────────────────────── */
+.note-card {
+  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.42s ease, box-shadow 0.42s ease;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 22px 44px -30px rgb(0 0 0 / 0.45);
+  user-select: none;
+}
+.note-card[data-face="paper"] { background: var(--surface); color: var(--fg); border: 1px solid var(--border); }
+.note-card[data-face="skin"]  { background: var(--skin); color: #f4f2e6; }
+.note-card[data-face="flesh"] { background: var(--flesh); color: var(--skin-ink); }
+.note-card[data-face="paper"] .note-band { background: color-mix(in srgb, var(--flesh) 45%, var(--surface)); color: var(--skin-ink); }
+.note-card[data-face="skin"]  .note-band { background: var(--skin-deep); color: var(--flesh); }
+.note-card[data-face="flesh"] .note-band { background: color-mix(in srgb, var(--skin) 14%, var(--flesh)); }
+.note-card[data-face="skin"] .note-read { color: var(--flesh); }
+.note-pile:hover .note-card:first-child { box-shadow: 0 2px 4px rgb(0 0 0 / 0.06), 0 30px 60px -30px rgb(0 0 0 / 0.5); }
+@media (prefers-reduced-motion: reduce) { .note-card { transition: none; } }
+
+/* ── Site bubbles (home "Explore the rest" + phone menu) ───────────────
+   Pages as bubbles around the seed. Flex-wrap keeps the cluster responsive
+   with no absolute positioning; alternate bubbles sit lower so the field
+   reads as a cluster rather than a grid, and each drifts on its own phase. */
+.bubble-field {
+  display: flex; flex-wrap: wrap; justify-content: center; align-items: center;
+  gap: 0.75rem 0.9rem; max-width: 64rem; margin-inline: auto;
+}
+.bubble-slot { animation: bubble-drift 7s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.bubble-slot:nth-child(even) { margin-top: 1.75rem; }
+@keyframes bubble-drift { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+
+.site-bubble {
+  --s: 8.5rem;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;
+  width: var(--s); height: var(--s); padding: 0.9rem; border-radius: 9999px; gap: 0.15rem;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.05), 0 16px 32px -22px rgb(0 0 0 / 0.45);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.4s ease;
+}
+.site-bubble.is-big   { --s: 10.5rem; }
+.site-bubble.is-small { --s: 7rem; }
+.site-bubble.is-pit   { --s: 11.5rem; background: var(--pit); color: #f4f2e6; box-shadow: inset 0 -10px 24px rgb(0 0 0 / 0.25), 0 18px 36px -20px rgb(0 0 0 / 0.5); }
+.site-bubble[data-face="skin"]  { background: var(--skin); color: #f4f2e6; }
+.site-bubble[data-face="flesh"] { background: var(--flesh); color: var(--skin-ink); }
+.site-bubble[data-face="paper"] { background: var(--surface); color: var(--fg); border: 1px solid var(--border); }
+.site-bubble:hover, .site-bubble:focus-visible { transform: scale(1.07); box-shadow: 0 2px 4px rgb(0 0 0 / 0.06), 0 24px 44px -22px rgb(0 0 0 / 0.55); }
+.site-bubble.is-active { outline: 2px solid var(--accent); outline-offset: 4px; }
+.bubble-icon { opacity: 0.8; margin-bottom: 0.15rem; }
+.bubble-label { font-size: 1.125rem; line-height: 1.1; }
+.site-bubble.is-big .bubble-label, .site-bubble.is-pit .bubble-label { font-size: 1.35rem; }
+.site-bubble.is-small .bubble-label { font-size: 1rem; }
+.bubble-meta { font-family: var(--font-mono), monospace; font-size: 0.625rem; letter-spacing: 0.1em; text-transform: uppercase; opacity: 0.72; }
+.site-bubble.is-small .bubble-meta { display: none; }
+.site-bubble.is-pit .bubble-meta { color: var(--flesh); opacity: 0.9; }
+
+.legend-dot { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 9999px; }
+.legend-dot[data-face="skin"]  { background: var(--skin); }
+.legend-dot[data-face="flesh"] { background: var(--flesh); }
+.legend-dot[data-face="paper"] { background: var(--surface); border: 1px solid var(--border-strong); }
+
+/* Phones: smaller bubbles, tighter field. The sheet variant is tighter still. */
+@media (max-width: 639px) {
+  .bubble-field { gap: 0.5rem 0.55rem; }
+  .bubble-slot:nth-child(even) { margin-top: 1rem; }
+  .site-bubble { --s: 6.4rem; padding: 0.6rem; }
+  .site-bubble.is-big { --s: 7.4rem; }
+  .site-bubble.is-small { --s: 5.6rem; }
+  .site-bubble.is-pit { --s: 8rem; }
+  .bubble-label { font-size: 0.95rem; }
+  .site-bubble.is-big .bubble-label, .site-bubble.is-pit .bubble-label { font-size: 1.05rem; }
+  .bubble-icon { display: none; }
+}
+.site-bubbles.is-sheet .bubble-slot:nth-child(even) { margin-top: 0.75rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble-slot { animation: none; }
+  .site-bubble { transition: none; }
+}
+
+/* ── Nav dropdown chips ────────────────────────────────────────────────
+   Each item's icon sits in a small disc of its group's bubble colour. */
+.nav-chip[data-face="skin"]  { background: var(--skin); color: #f4f2e6; }
+.nav-chip[data-face="flesh"] { background: var(--flesh); color: var(--skin-ink); }
+.nav-chip[data-face="paper"] { background: var(--surface-raised); color: var(--fg-muted); border: 1px solid var(--border); }
+.nav-chip.is-active { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent); }
+.nav-chip svg { width: 13px; height: 13px; }
+
+/* The phone site-map sheet rises in. */
+@media (prefers-reduced-motion: no-preference) {
+  .site-sheet { animation: site-sheet-in 0.36s cubic-bezier(0.22, 1, 0.36, 1); }
+  @keyframes site-sheet-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+}
+
+/* md+: the section variant becomes a cross-section — bubbles on an ellipse
+   around the pit, with the rind drawn as a dashed ring behind them. Tablet
+   sizes first, then roomier from lg. */
+@media (min-width: 768px) {
+  .site-bubbles:not(.is-sheet) .bubble-field {
+    position: relative; display: block; max-width: 68rem; height: 40rem;
+  }
+  .site-bubbles:not(.is-sheet) .bubble-field::before {
+    content: ""; position: absolute; inset: 12% 9%;
+    border: 1.5px dashed color-mix(in srgb, var(--accent) 35%, transparent);
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .site-bubbles:not(.is-sheet) .bubble-slot {
+    position: absolute; left: var(--x); top: var(--y); translate: -50% -50%; margin-top: 0;
+  }
+  .site-bubbles:not(.is-sheet) .bubble-slot:nth-child(even) { margin-top: 0; }
+  .site-bubbles:not(.is-sheet) .bubble-field { height: 36rem; }
+  .site-bubbles:not(.is-sheet) .site-bubble { --s: 6.4rem; padding: 0.6rem; }
+  .site-bubbles:not(.is-sheet) .site-bubble.is-big { --s: 7.4rem; }
+  .site-bubbles:not(.is-sheet) .site-bubble.is-small { --s: 5.6rem; }
+  .site-bubbles:not(.is-sheet) .site-bubble.is-pit { --s: 10.5rem; }
+  .site-bubbles:not(.is-sheet) .bubble-label { font-size: 0.95rem; }
+  .site-bubbles:not(.is-sheet) .site-bubble.is-big .bubble-label { font-size: 1.05rem; }
+  .site-bubbles:not(.is-sheet) .bubble-icon { display: none; }
+}
+@media (min-width: 1024px) {
+  .site-bubbles:not(.is-sheet) .bubble-field { height: 40rem; }
+  .site-bubbles:not(.is-sheet) .site-bubble { --s: 7.75rem; padding: 0.9rem; }
+  .site-bubbles:not(.is-sheet) .site-bubble.is-big { --s: 9.25rem; }
+  .site-bubbles:not(.is-sheet) .site-bubble.is-small { --s: 6.5rem; }
+  .site-bubbles:not(.is-sheet) .site-bubble.is-pit { --s: 13rem; }
+  .site-bubbles:not(.is-sheet) .bubble-label { font-size: 1.125rem; }
+  .site-bubbles:not(.is-sheet) .site-bubble.is-big .bubble-label { font-size: 1.35rem; }
+  .site-bubbles:not(.is-sheet) .site-bubble.is-pit .bubble-label { font-size: 1.6rem; }
+  .site-bubbles:not(.is-sheet) .bubble-icon { display: block; }
+}
+
+/* ── Back to top (left, every portfolio page) ───────────────────────── */
+.to-top {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  color: var(--fg-muted);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 10px 24px -14px rgb(0 0 0 / 0.4);
+  backdrop-filter: blur(6px);
+}
+.to-top:hover, .to-top:focus-visible { background: var(--accent); color: var(--accent-fg); }
+.to-top-track { stroke: var(--border); }
+.to-top-fill { stroke: var(--accent); transition: stroke-dashoffset 0.15s linear; }
+.to-top:hover .to-top-fill, .to-top:focus-visible .to-top-fill { stroke: var(--accent-fg); }
+
+/* ── Chat close: the knife and the avocado (≈950ms, then navigate) ────── */
+.cut-stage { animation: cut-veil 0.95s ease forwards; }
+@keyframes cut-veil {
+  0%   { background: color-mix(in srgb, var(--bg) 0%, transparent); }
+  20%  { background: color-mix(in srgb, var(--bg) 94%, transparent); }
+  100% { background: var(--bg); }
+}
+.cut-stage > div { animation: cut-arrive 0.25s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes cut-arrive { from { transform: scale(0.85); opacity: 0; } to { transform: none; opacity: 1; } }
+.cut-knife { animation: knife-fall 0.5s cubic-bezier(0.55, 0, 0.7, 0.2) 0.12s both; }
+@keyframes knife-fall {
+  0%   { transform: translateY(-120%); opacity: 1; }
+  75%  { transform: translateY(8%); opacity: 1; }
+  100% { transform: translateY(22%); opacity: 0; }
+}
+.cut-line { transform-origin: top; animation: cut-line 0.5s ease 0.15s both; }
+@keyframes cut-line {
+  0% { transform: scaleY(0); opacity: 0.9; } 70% { transform: scaleY(1); opacity: 0.9; } 100% { transform: scaleY(1); opacity: 0; }
+}
+.cut-half { transform-box: fill-box; transform-origin: 50% 100%; animation-duration: 0.45s; animation-delay: 0.5s; animation-fill-mode: both; animation-timing-function: cubic-bezier(0.22, 1, 0.36, 1); }
+.cut-half.is-left  { animation-name: half-left; }
+.cut-half.is-right { animation-name: half-right; }
+@keyframes half-left  { to { transform: translateX(-14px) rotate(-9deg); } }
+@keyframes half-right { to { transform: translateX(14px) rotate(9deg); } }
+
+/* ── Reading upgrades (blog + lab posts) ───────────────────────────────
+   Portfolio-scoped. 18px on wider screens with a slightly narrower measure
+   (~66ch), a darker standfirst paragraph for contrast, larger Garamond
+   section heads with a lighter rule, and links that thicken on hover. */
+html:has(.portfolio) .prose { max-width: 66ch; color: var(--fg-muted); }
+@media (min-width: 768px) {
+  html:has(.portfolio) .prose { font-size: 1.125rem; }
+}
+html:has(.portfolio) .prose > p:first-of-type { color: var(--fg-muted); }
+html:has(.portfolio) .prose h2 { font-size: 1.75rem; border-bottom-color: var(--border-subtle); margin-top: 2.2em; }
+html:has(.portfolio) .prose h3 { font-size: 1.35rem; }
+html:has(.portfolio) .prose a { text-decoration-thickness: 1px; text-underline-offset: 4px; }
+html:has(.portfolio) .prose a:hover { text-decoration-thickness: 2px; }
+html:has(.portfolio) .prose blockquote { color: var(--fg); }
+html:has(.portfolio) .prose img { border-radius: 0.75rem; }

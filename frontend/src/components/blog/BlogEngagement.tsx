@@ -21,7 +21,8 @@ interface ConfettiParticle {
   circle: boolean;
 }
 
-const CONFETTI_COLORS = ["#6366f1","#8b5cf6","#ec4899","#f59e0b","#10b981","#3b82f6","#f97316"];
+// The Avocado palette and its in-between tones: skin, flesh, pit.
+const CONFETTI_COLORS = ["#3b4320","#5c6630","#a3ad5c","#d8de8a","#eef0d2","#7a4a2b","#a46a3f"];
 
 function spawnConfetti(count = 18): ConfettiParticle[] {
   return Array.from({ length: count }, (_, i) => {

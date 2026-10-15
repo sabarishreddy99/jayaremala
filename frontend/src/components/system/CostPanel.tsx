@@ -33,7 +33,7 @@ export default function CostPanel({ data }: { data: SystemData }) {
               </div>
               <div className="mt-1 h-1.5 w-full rounded-full bg-surface-raised overflow-hidden">
                 <div
-                  className={`h-full rounded-full ${m.model === data.primary_model ? "bg-accent" : "bg-amber-400"}`}
+                  className={`h-full rounded-full ${m.model === data.primary_model ? "bg-accent" : "bg-[var(--pit)] dark:bg-[#a46a3f]"}`}
                   style={{ width: `${Math.max(3, (m.count / totalModel) * 100)}%` }}
                 />
               </div>

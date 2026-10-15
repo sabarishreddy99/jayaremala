@@ -179,10 +179,8 @@ export default function AvocadoChatButton() {
               <Link
                 href="/chat"
                 onClick={closeCard}
-                className="group flex w-full items-center justify-between rounded-panel
-                           bg-fg px-4 py-2.5 text-[12px] font-semibold text-bg
-                           transition-[opacity,transform] duration-150
-                           hover:opacity-75 active:scale-[0.98]"
+                className="btn-avo group flex w-full items-center justify-between rounded-panel
+                           px-4 py-2.5 text-[12px] font-semibold active:scale-[0.98]"
               >
                 <span className="flex items-center gap-1.5">
                   <SparkleIcon size={13} className="shrink-0" />

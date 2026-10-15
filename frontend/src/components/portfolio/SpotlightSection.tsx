@@ -8,7 +8,7 @@ const isInternal = (url: string) => url.startsWith("/") && !url.startsWith("//")
 /** CTA that renders a Next <Link> for internal paths and an external <a> otherwise. */
 function PrimaryCta({ cta }: { cta: SpotlightCta }) {
   const cls =
-    "group/cta inline-flex items-center gap-2 rounded-full bg-fg px-6 py-3 text-sm font-semibold text-bg transition-opacity duration-200 hover:opacity-80";
+    "btn-avo group/cta inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold";
   const inner = (
     <>
       {cta.label}
@@ -27,7 +27,7 @@ function PrimaryCta({ cta }: { cta: SpotlightCta }) {
 
 function SecondaryCta({ cta }: { cta: SpotlightCta }) {
   const cls =
-    "group/j inline-flex items-center gap-1.5 rounded-full border border-border bg-surface px-5 py-3 text-sm font-semibold text-fg transition-colors duration-200 hover:border-border-strong hover:bg-surface-raised";
+    "group/j inline-flex items-center gap-1.5 btn-avo-ghost rounded-full px-5 py-3 text-sm font-semibold";
   const inner = (
     <>
       {cta.label}

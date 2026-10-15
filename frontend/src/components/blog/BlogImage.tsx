@@ -151,8 +151,8 @@ export default function BlogImage({ src, alt, caption }: Props) {
     </div>
   );
 
-  const shadowIdle   = "0 0 0 1px var(--border), 0 2px 6px -2px rgba(0,0,0,0.10), 0 16px 40px -10px rgba(0,0,0,0.18), 0 0 48px -16px rgba(79,70,229,0.07)";
-  const shadowActive = "0 0 0 1px var(--border-strong), 0 4px 12px -3px rgba(0,0,0,0.16), 0 32px 64px -14px rgba(0,0,0,0.26), 0 0 56px -14px rgba(79,70,229,0.13)";
+  const shadowIdle   = "0 0 0 1px var(--border), 0 2px 6px -2px rgba(0,0,0,0.10), 0 16px 40px -10px rgba(0,0,0,0.18)";
+  const shadowActive = "0 0 0 1px var(--border-strong), 0 4px 12px -3px rgba(0,0,0,0.16), 0 32px 64px -14px rgba(0,0,0,0.26)";
 
   /* ── Thumbnail ──────────────────────────────────────────────────────── */
   return (

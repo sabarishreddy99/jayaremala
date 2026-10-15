@@ -540,12 +540,12 @@ export default function ChatInterface() {
       {welcomeBack && (
         <div className="shrink-0 px-3 sm:px-10 pt-2">
           <div className="mx-auto max-w-2xl lg:max-w-3xl">
-            <div className="flex items-center justify-between gap-2 rounded-lg border border-violet-200 dark:border-violet-800 bg-violet-50/60 dark:bg-violet-950/30 px-3 py-2">
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-accent/25 bg-accent-light px-3 py-2">
               <div className="flex items-center gap-2 min-w-0">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-violet-400 shrink-0">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-accent shrink-0">
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                 </svg>
-                <p className="text-[11px] text-violet-600 dark:text-violet-400 font-medium truncate">
+                <p className="text-[11px] text-accent font-medium truncate">
                   Welcome back! Last time:{" "}
                   <span className="italic font-normal opacity-80 truncate">&ldquo;{welcomeBack}&rdquo;</span>
                 </p>
@@ -553,7 +553,7 @@ export default function ChatInterface() {
               <button
                 onClick={() => setWelcomeBack(null)}
                 aria-label="Dismiss"
-                className="text-[12px] text-violet-400 hover:text-violet-600 dark:hover:text-violet-300 transition-colors shrink-0 leading-none"
+                className="text-[12px] text-accent/70 hover:text-accent transition-colors shrink-0 leading-none"
               >
                 ×
               </button>

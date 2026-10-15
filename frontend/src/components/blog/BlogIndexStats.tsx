@@ -466,7 +466,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
               aria-pressed={sort === key}
               className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium transition-colors ${
                 sort === key
-                  ? "bg-fg text-bg"
+                  ? "bg-accent text-accent-fg"
                   : "border border-border bg-surface text-fg-muted hover:border-fg-muted hover:text-fg"
               }`}
             >
@@ -486,7 +486,7 @@ export function BlogPostList({ posts, summary }: { posts: PostMeta[]; summary: S
             onClick={() => setActiveTag(null)}
             className={`shrink-0 rounded-full px-3 py-1.5 text-[11px] font-medium transition-colors ${
               !activeTag
-                ? "bg-fg text-bg"
+                ? "bg-accent text-accent-fg"
                 : "border border-border bg-surface text-fg-muted hover:border-fg-muted hover:text-fg"
             }`}
           >

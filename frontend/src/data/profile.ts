@@ -88,6 +88,41 @@ export interface OpinionsBlock {
   against: Opinion[];
 }
 
+/** One answer in the homepage's "What your team gets" selector. A hiring
+ *  problem on the left, the shipped evidence for it on the right. Every field
+ *  restates a fact already in experience.json / projects.json. */
+export interface HireNeed {
+  /** The problem as a hiring manager would phrase it. */
+  need: string;
+  /** The headline figure, unit included ("78%", "115GB"). Machine voice. */
+  metric: string;
+  metricLabel: string;
+  context?: string;
+  /** Where it happened: employer, team, or award. */
+  where: string;
+  /** One sentence on how — the part a peer checks. */
+  how: string;
+  href?: string;
+  linkLabel?: string;
+}
+
+export interface HireBlock {
+  label: string;
+  deck?: string;
+  /** The roles and domains being looked for. */
+  fit?: string;
+  needs: HireNeed[];
+}
+
+/** One exchange in the hero's Avocado preview card. Pre-written from facts in
+ *  the knowledge base (the card says so); clicking hands `q` to the real chat. */
+export interface AvocadoPreviewQA {
+  q: string;
+  a: string;
+  /** Where the answer comes from, shown as a citation line. */
+  source?: string;
+}
+
 /** One row of the "Still running" ledger. */
 export interface ShippedThing {
   name: string;
@@ -139,6 +174,8 @@ export interface Profile {
   /** Label above the hero-stats band in the projects chapter. */
   heroStatsLabel?: string;
   hero?: HeroCopy;
+  hire?: HireBlock;
+  avocadoPreview?: AvocadoPreviewQA[];
   hopeMolecules?: HopeMolecules;
   why?: WhyBlock;
   opinions?: OpinionsBlock;

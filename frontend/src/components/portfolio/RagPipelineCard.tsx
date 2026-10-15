@@ -54,7 +54,7 @@ export default function RagPipelineCard({ title, description, tags, award, note,
           <div className="flex flex-wrap gap-2 pt-1">
             {sourceLinks.map((link) => (
               <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-sm bg-accent-light border border-indigo-200 dark:border-indigo-800 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:opacity-80 transition-opacity">
+                className="inline-flex items-center gap-1 rounded-sm bg-accent-light border border-accent/30 px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:opacity-80 transition-opacity">
                 {link.label}
                 <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
               </a>

@@ -6,6 +6,8 @@ export interface Testimonial {
   company: string;
   linkedin: string;
   description: string;
+  /** Optional verbatim excerpt used as the deck's featured line. */
+  pull?: string;
   givenAt: string;
   source: string;
 }

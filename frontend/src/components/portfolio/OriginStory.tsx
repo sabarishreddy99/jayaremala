@@ -52,31 +52,31 @@ export default function OriginStory({ why }: { why: WhyBlock }) {
         <aside className="lg:pt-1">
           {/* On tablet this becomes a wide strip rather than a tall narrow card,
               so it reads as an artifact label instead of dead space. */}
-          <div className="rounded-panel border border-border bg-surface-sunken p-5 md:flex md:items-center md:gap-8 lg:block">
-            <div className="md:shrink-0 lg:mb-0">
+          <div className="rounded-panel border border-border bg-surface-sunken p-5 md:grid md:grid-cols-[auto_minmax(0,1fr)] md:gap-x-8 md:gap-y-3 lg:block">
+            <div className="md:col-span-2 lg:mb-0">
               <p className="font-mono text-[10px] font-bold uppercase tracking-[0.18em] text-fg-faint">
                 {artifact.year} · {artifact.projectTitle}
               </p>
             </div>
 
-            <div className="my-4 h-px bg-border md:my-0 md:h-10 md:w-px lg:my-4 lg:h-px lg:w-auto" aria-hidden />
+            <div className="my-4 h-px bg-border md:hidden lg:my-4 lg:block" aria-hidden />
 
-            <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 font-mono text-[11px] text-fg-subtle md:flex md:flex-wrap md:gap-x-4 lg:grid lg:grid-cols-2">
+            <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 font-mono text-[11px] text-fg-subtle md:grid-cols-1 lg:grid-cols-2">
               {(project?.tags ?? []).map((t) => (
                 <li key={t}>{t}</li>
               ))}
             </ul>
 
-            <div className="my-4 h-px bg-border md:my-0 md:h-10 md:w-px lg:my-4 lg:h-px lg:w-auto" aria-hidden />
+            <div className="my-4 h-px bg-border md:hidden lg:my-4 lg:block" aria-hidden />
 
-            <p className="text-[13px] leading-relaxed text-fg-muted md:flex-1">{artifact.caption}</p>
+            <p className="text-[13px] leading-relaxed text-fg-muted md:self-center">{artifact.caption}</p>
 
             {link && (
               <a
                 href={link.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-flex items-center gap-1 text-[11px] font-medium text-fg-faint transition-colors hover:text-accent md:mt-0 md:shrink-0 lg:mt-4"
+                className="mt-4 inline-flex items-center gap-1 text-[11px] font-medium text-fg-faint transition-colors hover:text-accent md:col-start-2 md:mt-0 lg:mt-4"
               >
                 {link.label} ↗
               </a>

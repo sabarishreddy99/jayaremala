@@ -12,7 +12,7 @@ export default function Stat({
 }) {
   const valueTone =
     tone === "good"
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "text-accent"
       : tone === "warn"
         ? "text-amber-600 dark:text-amber-400"
         : tone === "bad"

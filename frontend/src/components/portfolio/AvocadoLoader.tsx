@@ -1,10 +1,10 @@
 "use client";
 
 const BOOT_LINES = [
-  { tag: "rag", label: "knowledge base",   status: "OK",    statusCls: "text-green-500 dark:text-green-400"  },
-  { tag: "vec", label: "bge-base · ONNX",  status: "OK",    statusCls: "text-green-500 dark:text-green-400"  },
-  { tag: "llm", label: "gemini-2.5-flash", status: "LIVE",  statusCls: "text-indigo-500 dark:text-indigo-400" },
-  { tag: "sys", label: "avocado online",   status: "✦ ready", statusCls: "text-emerald-500 dark:text-emerald-400" },
+  { tag: "rag", label: "knowledge base",   status: "OK",    statusCls: "text-accent" },
+  { tag: "vec", label: "bge-base · ONNX",  status: "OK",    statusCls: "text-accent" },
+  { tag: "llm", label: "gemini-2.5-flash", status: "LIVE",  statusCls: "text-accent" },
+  { tag: "sys", label: "avocado online",   status: "✦ ready", statusCls: "text-accent" },
 ];
 
 export default function AvocadoLoader({ fullScreen = false }: { fullScreen?: boolean }) {
@@ -44,7 +44,7 @@ export default function AvocadoLoader({ fullScreen = false }: { fullScreen?: boo
           style={{ animationDelay: `${BOOT_LINES.length * 260}ms`, animationFillMode: "both" }}
         >
           <span className="text-fg-faint">{">"}</span>
-          <span className="h-3.5 w-px bg-indigo-400 cursor-blink" />
+          <span className="h-3.5 w-px bg-accent cursor-blink" />
         </div>
       </div>
     </div>

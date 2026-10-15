@@ -155,7 +155,7 @@ export default function CaseStudiesPage() {
                       {primary && (
                         <a
                           href={primary.href}
-                          className="group/cta inline-flex items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-medium text-bg transition-opacity hover:opacity-80"
+                          className="btn-avo group/cta inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium"
                         >
                           {primary.label}
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden
@@ -168,7 +168,7 @@ export default function CaseStudiesPage() {
                         <a
                           key={l.href}
                           href={l.href}
-                          className="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-4 py-2.5 text-sm font-medium text-fg transition-colors hover:border-border-strong hover:bg-surface-raised"
+                          className="inline-flex items-center gap-2 btn-avo-ghost rounded-full px-4 py-2.5 text-sm font-medium"
                         >
                           <LinkIcon kind={l.kind} />
                           {l.label}

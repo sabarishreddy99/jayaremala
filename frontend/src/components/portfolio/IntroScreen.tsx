@@ -185,7 +185,7 @@ export default function IntroScreen() {
         className="pointer-events-none absolute inset-0"
         style={{
           background:
-            "radial-gradient(ellipse 65% 55% at 50% 45%, rgba(99,102,241,0.12) 0%, transparent 70%)",
+            "radial-gradient(ellipse 65% 55% at 50% 45%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 70%)",
         }}
       />
 

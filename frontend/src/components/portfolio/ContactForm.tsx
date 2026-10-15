@@ -32,8 +32,8 @@ function ToastItem({ toast, onDismiss }: { toast: Toast; onDismiss: (id: number)
 
   const styles: Record<ToastType, { wrapper: string; icon: string; iconPath: string }> = {
     success: {
-      wrapper: "border-indigo-200 dark:border-indigo-800 bg-surface",
-      icon: "text-indigo-600 bg-indigo-50 dark:bg-indigo-950",
+      wrapper: "border-accent/30 bg-surface",
+      icon: "text-accent bg-accent-light",
       iconPath: "M20 6L9 17l-5-5",
     },
     warning: {
@@ -135,19 +135,10 @@ export default function ContactForm() {
       </div>
 
       <section aria-label="Contact">
-        {/* The chapter deck already states availability; repeating it here as a
-            status line was a third restatement of the same fact. This paragraph
-            is the one that adds something — the domains. */}
-        {profile.contact_description && (
-          <p className="max-w-[62ch] text-sm leading-relaxed text-fg-subtle">
-            {profile.contact_description}
-          </p>
-        )}
-
         {/* Two rails of equal standing, split by a column rule. Booking leads on
             mobile: it is the shorter thing to read, and the form's four fields
             would otherwise push the calendar below the fold. */}
-        <div className="mt-10 grid gap-10 md:grid-cols-2 md:gap-0">
+        <div className="grid gap-10 md:grid-cols-2 md:gap-0">
           <div className="md:pr-10 lg:pr-14">
             <BookingRail />
           </div>
@@ -243,7 +234,7 @@ export default function ContactForm() {
           <button
             type="submit"
             disabled={sending}
-            className="inline-flex items-center gap-2 rounded-full bg-fg px-5 py-2.5 text-sm font-medium text-bg transition-opacity duration-200 hover:opacity-75 disabled:cursor-not-allowed disabled:opacity-50"
+            className="btn-avo inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
           >
             {sending ? (
               <>

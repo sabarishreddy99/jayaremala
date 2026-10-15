@@ -92,13 +92,30 @@ function LabEntryApiView({ entry, allEntries }: { entry: ApiLabEntry; allEntries
                 <FontSizeControl />
               </div>
 
-              <h1 className="display-serif text-3xl sm:text-4xl text-fg leading-tight mb-3">
+              <h1 className="display-serif display-lg text-fg leading-[1.05] text-balance mb-4">
                 {entry.title}
               </h1>
-              <p className="text-sm text-fg-subtle leading-relaxed mb-4">{entry.description}</p>
+              <p className="voice-serif mb-5 max-w-[56ch] text-[1.125rem] leading-relaxed text-fg-muted sm:text-[1.25rem]">{entry.description}</p>
 
+              {/* Eight tags up front; the rest wait behind "+N more" so a long
+                  stack never pushes the article below the fold on a phone. */}
               <div className="flex flex-wrap gap-1.5">
-                {entry.tech.map((t) => (
+                {entry.tech.length > 8 && (
+                  <details className="group order-last w-full">
+                    <summary className="inline-flex cursor-pointer list-none items-center rounded-sm border border-dashed border-border-strong px-2.5 py-1 font-mono text-[11px] text-fg-subtle transition-colors hover:text-fg [&::-webkit-details-marker]:hidden">
+                      <span className="group-open:hidden">+{entry.tech.length - 8} more</span>
+                      <span className="hidden group-open:inline">Show fewer</span>
+                    </summary>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {entry.tech.slice(8).map((t) => (
+                        <span key={t} className="rounded-sm bg-surface-raised px-2.5 py-1 text-[11px] font-mono font-medium text-fg-muted border border-border">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </details>
+                )}
+                {entry.tech.slice(0, 8).map((t) => (
                   <span key={t} className="rounded-sm bg-surface-raised px-2.5 py-1 text-[11px] font-mono font-medium text-fg-muted border border-border">
                     {t}
                   </span>
@@ -298,13 +315,30 @@ export default async function LabEntryPage({ params }: Props) {
                 <FontSizeControl />
               </div>
 
-              <h1 className="display-serif text-3xl sm:text-4xl text-fg leading-tight mb-3">
+              <h1 className="display-serif display-lg text-fg leading-[1.05] text-balance mb-4">
                 {entry.title}
               </h1>
-              <p className="text-sm text-fg-subtle leading-relaxed mb-4">{entry.description}</p>
+              <p className="voice-serif mb-5 max-w-[56ch] text-[1.125rem] leading-relaxed text-fg-muted sm:text-[1.25rem]">{entry.description}</p>
 
+              {/* Eight tags up front; the rest wait behind "+N more" so a long
+                  stack never pushes the article below the fold on a phone. */}
               <div className="flex flex-wrap gap-1.5">
-                {entry.tech.map((t) => (
+                {entry.tech.length > 8 && (
+                  <details className="group order-last w-full">
+                    <summary className="inline-flex cursor-pointer list-none items-center rounded-sm border border-dashed border-border-strong px-2.5 py-1 font-mono text-[11px] text-fg-subtle transition-colors hover:text-fg [&::-webkit-details-marker]:hidden">
+                      <span className="group-open:hidden">+{entry.tech.length - 8} more</span>
+                      <span className="hidden group-open:inline">Show fewer</span>
+                    </summary>
+                    <div className="mt-1.5 flex flex-wrap gap-1.5">
+                      {entry.tech.slice(8).map((t) => (
+                        <span key={t} className="rounded-sm bg-surface-raised px-2.5 py-1 text-[11px] font-mono font-medium text-fg-muted border border-border">
+                          {t}
+                        </span>
+                      ))}
+                    </div>
+                  </details>
+                )}
+                {entry.tech.slice(0, 8).map((t) => (
                   <span key={t} className="rounded-sm bg-surface-raised px-2.5 py-1 text-[11px] font-mono font-medium text-fg-muted border border-border">
                     {t}
                   </span>

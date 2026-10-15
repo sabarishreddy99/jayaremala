@@ -14,11 +14,11 @@ export default function ReliabilityStrip({ data }: { data: SystemData }) {
         <span
           className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium ${
             healthy
-              ? "border-emerald-300 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400"
+              ? "border-accent/30 bg-accent-light text-accent"
               : "border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400"
           }`}
         >
-          <span className={`w-1.5 h-1.5 rounded-full ${healthy ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${healthy ? "bg-accent animate-pulse" : "bg-amber-500"}`} />
           {healthy ? "All systems operational" : "Degraded"}
         </span>
         <span className="text-[11px] text-fg-faint font-mono">

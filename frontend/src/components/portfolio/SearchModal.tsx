@@ -9,28 +9,28 @@ import type { SearchItem } from "@/lib/portfolio/searchIndex";
 // Re-export so callers don't need a separate import
 export type { SearchItem };
 
-// ── Badge styles ───────────────────────────────────────────────────────────────
+// ── Badge styles — one neutral chip; results are never colour-coded by type ──
 
 const TYPE_META: Record<string, { bg: string; text: string; label: string }> = {
-  page:        { bg: "bg-zinc-100 dark:bg-zinc-800",           text: "text-zinc-500 dark:text-zinc-400",       label: "Page"      },
-  blog:        { bg: "bg-indigo-50 dark:bg-indigo-950/50",     text: "text-indigo-600 dark:text-indigo-400",   label: "Post"      },
-  lab:         { bg: "bg-emerald-50 dark:bg-emerald-950/50",   text: "text-emerald-600 dark:text-emerald-400", label: "Lab"       },
-  project:     { bg: "bg-blue-50 dark:bg-blue-950/50",         text: "text-blue-600 dark:text-blue-400",       label: "Project"   },
-  skill:       { bg: "bg-amber-50 dark:bg-amber-950/50",       text: "text-amber-600 dark:text-amber-400",     label: "Skill"     },
-  quote:       { bg: "bg-violet-50 dark:bg-violet-950/50",     text: "text-violet-600 dark:text-violet-400",   label: "Quote"     },
-  experience:  { bg: "bg-orange-50 dark:bg-orange-950/40",     text: "text-orange-600 dark:text-orange-400",   label: "Work"      },
-  education:   { bg: "bg-sky-50 dark:bg-sky-950/40",           text: "text-sky-600 dark:text-sky-400",         label: "Education" },
-  testimonial: { bg: "bg-rose-50 dark:bg-rose-950/40",         text: "text-rose-600 dark:text-rose-400",       label: "Reference" },
-  gallery:     { bg: "bg-teal-50 dark:bg-teal-950/40",         text: "text-teal-600 dark:text-teal-400",       label: "Gallery"   },
-  tag:         { bg: "bg-purple-50 dark:bg-purple-950/40",     text: "text-purple-600 dark:text-purple-400",   label: "Tag"       },
-  action:      { bg: "bg-indigo-100 dark:bg-indigo-900/50",    text: "text-indigo-700 dark:text-indigo-300",   label: "Action"    },
+  page:        { bg: "bg-surface-raised", text: "text-fg-subtle", label: "Page"      },
+  blog:        { bg: "bg-surface-raised", text: "text-fg-subtle", label: "Post"      },
+  lab:         { bg: "bg-surface-raised", text: "text-fg-subtle", label: "Lab"       },
+  project:     { bg: "bg-surface-raised", text: "text-fg-subtle", label: "Project"   },
+  skill:       { bg: "bg-surface-raised", text: "text-fg-subtle", label: "Skill"     },
+  quote:       { bg: "bg-surface-raised", text: "text-fg-subtle", label: "Quote"     },
+  experience:  { bg: "bg-surface-raised", text: "text-fg-subtle", label: "Work"      },
+  education:   { bg: "bg-surface-raised", text: "text-fg-subtle", label: "Education" },
+  testimonial: { bg: "bg-surface-raised", text: "text-fg-subtle", label: "Reference" },
+  gallery:     { bg: "bg-surface-raised", text: "text-fg-subtle", label: "Gallery"   },
+  tag:         { bg: "bg-surface-raised", text: "text-fg-subtle", label: "Tag"       },
+  action:      { bg: "bg-surface-raised", text: "text-fg", label: "Action"    },
 };
 
 /** Returns metadata for any type — known types get their colour, unknown types get a neutral fallback */
 function typeMeta(type: string) {
   return TYPE_META[type] ?? {
-    bg:    "bg-zinc-100 dark:bg-zinc-800",
-    text:  "text-zinc-500 dark:text-zinc-400",
+    bg:    "bg-surface-raised",
+    text:  "text-fg-subtle",
     label: type.charAt(0).toUpperCase() + type.slice(1),
   };
 }

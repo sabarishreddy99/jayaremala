@@ -142,7 +142,7 @@ export default function BookingRail() {
           href={bookingUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-6 inline-flex items-center gap-2 self-start rounded-full bg-fg px-5 py-2.5 text-sm font-medium text-bg transition-opacity duration-200 hover:opacity-75"
+          className="btn-avo mt-6 inline-flex items-center gap-2 self-start rounded-full px-5 py-2.5 text-sm font-medium"
         >
           {hasSlots ? "Pick a time" : "Open my calendar"}
           <svg

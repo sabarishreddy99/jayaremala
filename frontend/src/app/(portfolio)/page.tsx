@@ -2,12 +2,9 @@ import Link from "next/link";
 import { profile } from "@/data/profile";
 import { projects } from "@/data/projects";
 import { skills } from "@/data/skills";
-import { getAllPosts } from "@/lib/content/blog";
-import TestimonialsCarousel from "@/components/portfolio/TestimonialsCarousel";
+import TestimonialDeck from "@/components/portfolio/TestimonialDeck";
 import ContactForm from "@/components/portfolio/ContactForm";
 import ScrollReveal from "@/components/ui/ScrollReveal";
-import HeroName from "@/components/portfolio/HeroName";
-import HeroStats from "@/components/portfolio/HeroStats";
 import Parallax from "@/components/ui/Parallax";
 import RagPipelineCard from "@/components/portfolio/RagPipelineCard";
 import Chapter, { Inner } from "@/components/portfolio/Chapter";
@@ -17,15 +14,18 @@ import SkillsConstellation from "@/components/portfolio/SkillsConstellation";
 import MobileNoBg from "@/components/ui/MobileNoBg";
 import HeroDotGrid from "@/components/ui/HeroDotGrid";
 import SiteVitals from "@/components/portfolio/SiteVitals";
-import SpotlightSection from "@/components/portfolio/SpotlightSection";
 import InstallPWA from "@/components/ui/InstallPWA";
 import SparkleIcon from "@/components/ui/SparkleIcon";
 import StillRunning from "@/components/portfolio/StillRunning";
 import OriginStory from "@/components/portfolio/OriginStory";
-import Signature from "@/components/portfolio/Signature";
 import HopeMolecules from "@/components/portfolio/HopeMolecules";
-import HeroDoodleField from "@/components/portfolio/HeroDoodleField";
-import GitHubActivity from "@/components/portfolio/GitHubActivity";
+import HireImpact from "@/components/portfolio/HireImpact";
+import NoteStack, { type Note } from "@/components/portfolio/NoteStack";
+import SiteBubbles from "@/components/portfolio/SiteBubbles";
+import { getAllPosts } from "@/lib/content/blog";
+import { getAllLabEntries } from "@/lib/content/lab";
+import SeedRing from "@/components/portfolio/SeedRing";
+import AvocadoPreview from "@/components/portfolio/AvocadoPreview";
 import { experience } from "@/data/experience";
 
 export const metadata = {
@@ -84,7 +84,9 @@ function HighlightNumbers({ text }: { text: string }) {
   return (
     <>
       {parts.map((part, i) =>
-        i % 2 === 1 ? (
+        // A bare decimal with no unit is a version ("Llama 3.1"), not a
+        // measurement, so it stays in the sentence's own face.
+        i % 2 === 1 && !/^\d+\.\d+$/.test(part) ? (
           <span key={i} className="font-mono font-bold text-fg">{part}</span>
         ) : (
           part
@@ -94,89 +96,6 @@ function HighlightNumbers({ text }: { text: string }) {
   );
 }
 
-
-const EXPLORE_PAGES = [
-  {
-    href: "/experience",
-    label: "Experience",
-    desc: "Work history & roles",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/education",
-    label: "Education",
-    desc: "Degrees & institutions",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/projects",
-    label: "Projects",
-    desc: "What I've shipped",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/lab",
-    label: "Lab",
-    desc: "Building in public",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0H5a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-4m-6 0h6"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/blog",
-    label: "Blog",
-    desc: "Notes & deep dives",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/gallery",
-    label: "Gallery",
-    desc: "Moments & visuals",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="M21 15l-5-5L5 21"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/quotes",
-    label: "Quotes",
-    desc: "Lines that stuck",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
-        <path d="M9.983 3v7.391c0 5.704-3.731 9.57-8.983 10.609l-.995-2.151c2.432-.917 3.995-3.638 3.995-5.849h-4v-10h9.983zm14.017 0v7.391c0 5.704-3.748 9.571-9 10.609l-.996-2.151c2.433-.917 3.996-3.638 3.996-5.849h-3.983v-10h9.983z"/>
-      </svg>
-    ),
-  },
-  {
-    href: "/now",
-    label: "Now",
-    desc: "What I'm up to",
-    icon: (
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/>
-      </svg>
-    ),
-  },
-] as const;
 
 /** Concise chip label — drop the qualifier after a dash or parenthesis
  *  ("NYU IT – High-Speed Research Network" → "NYU IT"). */
@@ -214,20 +133,6 @@ function selectedExperience() {
     .slice(0, 3);
 }
 
-/** Career path derived from the experience data — deduped by company,
- *  most-recent first. Auto-updates whenever experience.json changes. */
-function careerPath() {
-  const seen = new Set<string>();
-  const path: { company: string; short: string; role: string; start: string; end: string }[] = [];
-  for (const e of experience) {
-    const company = e.company.trim();
-    if (seen.has(company)) continue; // first hit wins → most recent role per company
-    seen.add(company);
-    path.push({ company, short: shortCompany(company), role: e.role, start: e.start, end: e.end });
-  }
-  return path;
-}
-
 /** Masked word-rise — the same reveal the gradeVITian hero uses. */
 function RisingWords({ text, className = "", style, baseDelay = 0 }: {
   text: string;
@@ -251,12 +156,36 @@ function RisingWords({ text, className = "", style, baseDelay = 0 }: {
 
 export default function PortfolioHome() {
   const featured = projects.filter((p) => p.featured);
-  const latestPost = getAllPosts()[0] ?? null;
+  // gradeVITian and VRF Bricks already have the "Still running" ledger; the
+  // home page shows the three featured builds that appear nowhere else on it.
+  const shippedNames = new Set((profile.shipped ?? []).map((s) => s.name));
+  const homeProjects = featured.filter((p) => !shippedNames.has(p.title)).slice(0, 3);
   const hero = profile.hero;
+  const hire = profile.hire;
   const hope = profile.hopeMolecules;
   const shipped = profile.shipped ?? [];
-  const gradevitianNote = projects.find((p) => p.title === "gradeVITian")?.note;
   const selectedRoles = selectedExperience();
+  const notes: Note[] = [
+    ...getAllPosts().map((p) => ({
+      href: `/blog/${p.slug}`,
+      kind: "Blog",
+      meta: `${p.readingTime} min read`,
+      date: p.publishedAt ?? p.date,
+      title: p.title,
+      description: p.description,
+      tags: p.tags,
+      image: p.image,
+    })),
+    ...getAllLabEntries().map((l) => ({
+      href: `/lab/${l.slug}`,
+      kind: "Lab",
+      meta: l.status,
+      date: l.updatedAt || l.startedAt,
+      title: l.title,
+      description: l.description,
+      tags: l.tech,
+    })),
+  ];
 
   return (
     <div className="w-full">
@@ -276,28 +205,18 @@ export default function PortfolioHome() {
       >
 
         <Parallax speed={0.18} className="pointer-events-none absolute inset-0">
-          <div aria-hidden className="absolute bottom-0 left-0 right-0 h-2/3 bg-gradient-to-t from-accent/[0.05] via-transparent to-transparent" />
           <HeroDotGrid />
         </Parallax>
 
         <div className="relative z-[1] flex-1 flex flex-col">
 
           <Inner className="pt-8 sm:pt-12 md:pt-14 lg:pt-16">
-            {/* One column up to xl. At xl the measure is pinned to the same 62ch
-                it always had and the leftover width becomes a real grid track,
-                so the doodle field is IN FLOW: every token inside it is
-                absolutely positioned, so it contributes no content height and
-                simply stretches to this column's height. It therefore cannot
-                change the hero's height or overlap the copy, and below xl the
-                track does not exist at all.
-
-                The field deliberately does NOT live in the <Parallax> above:
-                that layer is pointer-events-none, and its transform makes it a
-                containing block and a stacking context, so a draggable child of
-                it would be both un-grabbable and mis-anchored. */}
-            <div className="xl:grid xl:grid-cols-[minmax(0,62ch)_minmax(0,1fr)] xl:gap-10">
+            {/* The story column, and from lg up an Avocado preview beside it:
+                the empty right half becomes a working demo of the site's own
+                claim. Below lg it is omitted; the CTA row already links /chat. */}
+            <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-center lg:gap-12 xl:grid-cols-[minmax(0,62ch)_minmax(0,25rem)] xl:justify-between xl:gap-16">
             <div className="max-w-[62ch]">
-            <div className="flex flex-col gap-5 sm:gap-6 md:gap-7 min-w-0">
+            <div className="flex flex-col gap-6 sm:gap-8 md:gap-9 min-w-0">
 
               {/* 1 · Status */}
               {(() => {
@@ -345,81 +264,44 @@ export default function PortfolioHome() {
                       {hero.discipline}
                     </p>
                   )}
-                  {hero?.proof && hero.proof.length > 0 && (
-                    <ul className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-                      {hero.proof.map((item) => {
-                        const isAward = item === profile.award || /hackathon|winner|award/i.test(item);
-                        return (
-                          <li key={item}>
-                            <span
-                              className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-[3px] text-[11px] font-medium tracking-wide ${
-                                isAward
-                                  ? "border-accent/30 bg-accent-light text-accent"
-                                  : "border-border bg-surface text-fg-subtle"
-                              }`}
-                            >
-                              {isAward && (
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                  strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0">
-                                  <path d="M8 21h8M12 17v4M6 4h12v5a6 6 0 0 1-12 0zM6 6H3v2a3 3 0 0 0 3 3M18 6h3v2a3 3 0 0 0-3 3" />
-                                </svg>
-                              )}
-                              {isAward ? `${item} — Winner` : item}
-                            </span>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  )}
+                  {/* A quiet line, not a row of pills: the employers read as
+                      facts, and only the award gets full ink. */}
+                  {hero?.proof && hero.proof.length > 0 && (() => {
+                    const isAward = (item: string) =>
+                      item === profile.award || /hackathon|winner|award/i.test(item);
+                    const places = hero.proof.filter((p) => !isAward(p));
+                    const award = hero.proof.find(isAward);
+                    return (
+                      <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[0.9375rem]">
+                        {places.length > 0 && (
+                          <p className="text-fg-subtle">{places.join("\u00a0\u00a0·\u00a0\u00a0")}</p>
+                        )}
+                        {award && (
+                          <p className="inline-flex items-center gap-1.5 font-medium text-fg">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                              strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden className="shrink-0">
+                              <path d="M8 21h8M12 17v4M6 4h12v5a6 6 0 0 1-12 0zM6 6H3v2a3 3 0 0 0 3 3M18 6h3v2a3 3 0 0 0-3 3" />
+                            </svg>
+                            {award} winner
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
               )}
 
-              {/* 3 · The story — Garamond, the one voice the UI can't produce */}
-              <div className="animate-fade-up flex flex-col gap-3" style={{ animationDelay: "200ms" }}>
-                {hero?.lead && (
-                  <p
-                    className="voice-serif text-fg-muted max-w-[54ch]"
-                    style={{ fontSize: "clamp(1.0625rem, 1.6vw, 1.35rem)", lineHeight: 1.62 }}
-                  >
-                    {hero.lead}
-                  </p>
-                )}
-                {hero?.sub && (
-                  <p className="text-sm leading-relaxed text-fg-subtle max-w-[58ch]">
-                    {hero.sub}
-                  </p>
-                )}
-
-                {/* Below xl the annotation field cannot run — it is an absolutely
-                    positioned canvas. That left the phone's first viewport with no
-                    trace of the stances, so the systems argument only ever appeared
-                    on desktop. These are the same terms from the same source,
-                    stacked instead of scattered. */}
-                <ul
-                  aria-hidden
-                  className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-2 xl:hidden"
+              {/* 3 · The person — one paragraph, in the author's voice. The
+                  "these days" follow-up was cut: the discipline line above
+                  already says it, and the next chapter proves it. */}
+              {hero?.lead && (
+                <p
+                  className="animate-fade-up voice-serif text-fg-muted max-w-[54ch]"
+                  style={{ fontSize: "clamp(1.0625rem, 1.6vw, 1.35rem)", lineHeight: 1.62, animationDelay: "200ms" }}
                 >
-                  {(profile.opinions?.for ?? []).slice(0, 3).map((o, i) => (
-                    <li
-                      key={o.term}
-                      className="relative text-[17px] leading-none text-fg-subtle"
-                      style={{
-                        fontFamily: "var(--font-caveat), 'Segoe Print', cursive",
-                        transform: `rotate(${[-1.5, 1, -0.75][i]}deg)`,
-                      }}
-                    >
-                      {o.term}
-                      {i === 0 && (
-                        <span
-                          className="absolute -bottom-1 left-0 h-px w-full bg-accent/50"
-                          aria-hidden
-                        />
-                      )}
-                    </li>
-                  ))}
-                </ul>
-
-              </div>
+                  {hero.lead}
+                </p>
+              )}
 
               {/* 4 · Two CTAs + social */}
               <div className="animate-fade-up flex flex-col gap-3.5 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3" style={{ animationDelay: "300ms" }}>
@@ -434,7 +316,7 @@ export default function PortfolioHome() {
                       {...(profile.booking_url
                         ? { target: "_blank", rel: "noopener noreferrer" }
                         : {})}
-                      className="group inline-flex items-center justify-center gap-2 rounded-full bg-fg px-7 py-3 text-sm font-medium text-bg transition-opacity duration-200 hover:opacity-75"
+                      className="btn-avo group inline-flex items-center justify-center gap-2 rounded-full px-7 py-3 text-sm font-medium"
                     >
                       Schedule a call
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden
@@ -444,26 +326,12 @@ export default function PortfolioHome() {
                     </a>
                     <Link
                       href="/chat"
-                      className="group inline-flex items-center justify-center gap-2 rounded-full border border-border bg-surface px-6 py-3 text-sm font-medium text-fg transition-colors duration-200 hover:border-border-strong hover:bg-surface-raised"
+                      className="btn-avo-ghost group inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium"
                     >
                       <SparkleIcon size={14} className="shrink-0 transition-transform duration-200 group-hover:scale-110 group-hover:rotate-12" />
                       Ask Avocado
                     </Link>
                   </div>
-                  {/* A calendar shouldn't be the only door — keep the form one
-                      click away for anyone not ready to book time. */}
-                  <p className="text-[11px] text-fg-faint max-w-[42ch]">
-                    {hero?.avocadoNote ? `${hero.avocadoNote} ` : ""}
-                    {profile.booking_url && (
-                      <>
-                        Not ready to book?{" "}
-                        <a href="#contact" className="underline decoration-border underline-offset-2 transition-colors hover:text-accent">
-                          Send a message instead
-                        </a>
-                        .
-                      </>
-                    )}
-                  </p>
                 </div>
 
                 <span className="w-px h-5 bg-border shrink-0 hidden sm:inline-block" aria-hidden />
@@ -490,52 +358,38 @@ export default function PortfolioHome() {
                 </div>
               </div>
 
-              {/* 5 · Latest post — the one micro-CTA that serves the story */}
-              {latestPost && (
-                <div className="animate-fade-up flex flex-wrap items-center gap-2" style={{ animationDelay: "380ms" }}>
-                  <Link href={`/blog/${latestPost.slug}`} className="group inline-flex items-center gap-2 rounded-sm border border-border/60 dark:border-border-strong bg-surface dark:bg-surface-raised px-3.5 py-1.5 hover:border-border-strong transition-all">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-fg-faint shrink-0">Latest</span>
-                    <span className="w-px h-3 bg-border shrink-0" />
-                    <span className="text-[11px] text-fg-subtle group-hover:text-accent transition-colors line-clamp-1 max-w-[55vw] sm:max-w-xs">
-                      {latestPost.title}
-                    </span>
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-fg-faint group-hover:text-accent shrink-0 transition-colors">
-                      <path d="M5 12h14M12 5l7 7-7 7"/>
-                    </svg>
-                  </Link>
-                </div>
-              )}
             </div>
             </div>
 
-            {/* The five stances from chapter 05 plus the signature — copy that
-                is already on the page, so this is reinforcement and never the
-                only place something is said. That is also what makes the
-                field's aria-hidden honest. */}
-            <HeroDoodleField
-              className="hidden xl:block"
-              tokens={[
-                ...(profile.opinions?.for.map((o) => o.term) ?? []),
-                hero?.signature ?? "Do hard things!",
-              ]}
-            />
+            {profile.avocadoPreview && profile.avocadoPreview.length > 0 && (
+              <div className="hidden animate-fade-up lg:block" style={{ animationDelay: "450ms" }}>
+                <AvocadoPreview items={profile.avocadoPreview} />
+              </div>
+            )}
             </div>
           </Inner>
 
           <div className="hidden sm:block sm:flex-1 sm:min-h-[5vh]" />
 
-          {/* ── Bottom — meta row, oversized name, signature ── */}
+          {/* ── Bottom — meta row ── */}
           <div className="flex flex-col gap-2 sm:gap-3 mt-9 sm:mt-0">
             <Inner>
               <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-end sm:justify-between gap-x-8 gap-y-2 border-t border-border pt-3 sm:pt-4">
-                <p className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-xs sm:text-sm font-medium text-fg-muted">
-                  {["Software Engineer", "AI Infrastructure", "Distributed Systems"].map((role, i, arr) => (
-                    <span key={role} className="flex items-center gap-2.5">
-                      {role}
-                      {i < arr.length - 1 && <span className="text-accent" aria-hidden>/</span>}
-                    </span>
-                  ))}
-                </p>
+                {/* The role triple that sat here restated the discipline line
+                    a few inches above it. The row now does a job instead: it is
+                    the hiring manager's shortcut straight to the answer. */}
+                {hire && (
+                  <a
+                    href="#impact"
+                    className="group inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-fg transition-colors hover:text-accent"
+                  >
+                    Hiring? See what your team gets
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden
+                      className="shrink-0 transition-transform duration-200 group-hover:translate-y-0.5">
+                      <path d="M12 5v14M5 12l7 7 7-7" />
+                    </svg>
+                  </a>
+                )}
                 <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-xs sm:text-sm text-fg-muted">
                   <a href={`mailto:${profile.email}`} className="hover:text-accent transition-colors break-all">{profile.email}</a>
                   <span className="text-fg-subtle">{profile.location}</span>
@@ -543,463 +397,296 @@ export default function PortfolioHome() {
               </div>
             </Inner>
 
-            {/* At 390x844 the name band used to break the fold by ~37px, so the
-                first viewport closed on a row of half-glyphs. Clearing it lets
-                the hero end on its own meta row and gives the band a full
-                entrance of its own. */}
-            <div className="pt-10 sm:pt-0">
-              <HeroName name={profile.name} />
-            </div>
-
-            <Inner className="pt-2 pb-8 sm:pb-9 md:pb-11">
-              <Signature text={hero?.signature ?? "Do hard things!"} delay={900} />
-            </Inner>
+            {/* The scrolling name band and the signature under it were cut:
+                the name is already in the nav and the headline, and the
+                footer closes on "Do hard things!". The hero now ends on its
+                meta row. */}
+            <div className="pb-8 sm:pb-10" />
           </div>
         </div>
       </section>
 
-      {/* ── 01 · Kavali, 2020 ──────────────────────────────────────── */}
-      {profile.why && (
+      {/* The page used to run nine chapters in story order, so the answer a
+          recruiter came for (numbers, employers) sat three screens down and
+          the colleagues vouching for it sat at the very bottom. It now runs
+          in the order a screening visit asks its questions: what do I get,
+          where was it proven, who says so, who is this person, how do they
+          work, how do I reach them. */}
+
+
+      {/* ── 01 · What your team gets ──────────────────────────────── */}
+      {hire && hire.needs.length > 0 && (
         <Chapter
           n="01"
-          label={profile.why.label}
-          place="Kavali, Nellore"
-          year="2020"
-          measure="1 named user · HTML + SEO · live since Jun 2020"
-          deck="Where this started, and why it still decides what I pick up."
-          id="why"
-          nextHref="#gradevitian"
-          nextLabel="The next site"
+          label={hire.label}
+          deck={hire.deck}
+          id="impact"
+          rail={false}
+          nextHref="#projects"
+          nextLabel="Where it was proven"
         >
-          <OriginStory why={profile.why} />
+          <HireImpact data={hire} bookingUrl={profile.booking_url} resumeUrl={profile.resume} />
         </Chapter>
       )}
 
-      {/* ── 02 · Vellore, 2020 ──────────────────────────────────────── */}
+      {/* ── 02 · The work ─────────────────────────────────────────── */}
       <Chapter
         n="02"
-        label="gradeVITian"
-        place="Vellore · VIT"
-        year="2020"
-        measure="~17,000 people a month · sub-second mobile loads · on call since Aug 2020"
-        deck="Built as an undergrad, still on call. Six years live and five graduating classes later."
-        id="gradevitian"
-        nextHref="#projects"
-        nextLabel="Where it scaled"
-      >
-        <SpotlightSection hideEyebrow />
-
-        {/* The thank-you letter to the VIT community. It has been sitting in
-            projects.json unrendered, and it is the most human paragraph in
-            the whole dataset. */}
-        {gradevitianNote && (
-          <ScrollReveal>
-            <div className="mt-10 border-t border-border pt-8">
-              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.18em] text-fg-faint">
-                Postscript, 2026
-              </p>
-              <p className="voice-serif hanging-quote max-w-[62ch] border-l border-border-strong pl-5 text-[15px] leading-[1.75] text-fg-muted">
-                {gradevitianNote}
-              </p>
-            </div>
-          </ScrollReveal>
-        )}
-      </Chapter>
-
-      {/* ── 03 · Offshore & NYU ─────────────────────────────────────────── */}
-      {featured.length > 0 && (
-        <Chapter
-          n="03"
-          label="The work"
-          place="Offshore · Shell PLC · NYU"
-          year="2021—present"
-          measure="200+ offshore stations · 115GB/day at zero data loss · 3K+ RPS at 99.9% uptime"
-          deck="Production systems, and the numbers they hold up under."
-          id="projects"
-          nextHref="#creed"
-          nextLabel="Why any of it"
-        >
-          {/* The measurements open the chapter; the prose below explains them.
-              Reversed from evidence-after-claim, which read as an echo. */}
-          {profile.heroStats && profile.heroStats.length > 0 && (
-            <div className="mb-10">
-              {profile.heroStatsLabel && (
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-fg-faint mb-4">
-                  {profile.heroStatsLabel}
-                </p>
-              )}
-              {/* 4-up crushes the labels below ~900px, so 2x2 until there is
-                  room. The switch is at lg, not md: at 768–1023 the four
-                  labels still do not fit, which is exactly the tablet band
-                  this layout used to ignore. */}
-              <div className="hidden lg:block">
-                <HeroStats stats={profile.heroStats} startOnView />
-              </div>
-              <div className="lg:hidden">
-                <HeroStats stats={profile.heroStats} cols={2} startOnView />
-              </div>
-            </div>
-          )}
-
-          {/* The bio, now that the story has paid for it */}
-          <ScrollReveal delay={60}>
-            <p className="text-lg sm:text-xl font-light leading-[1.75] text-fg-muted max-w-2xl">
-              <HighlightNumbers text={profile.bio} />
-            </p>
-          </ScrollReveal>
-
-          {/* The same career in resume voice. The bio above is how he
-              talks; this is what a recruiter is scanning for, and it was
-              already written and sitting unused in profile.json. */}
-          {profile.summary && (
-            <ScrollReveal delay={80}>
-              <div className="mt-7 border-l border-border-strong pl-5">
-                <p className="mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-fg-faint">
-                  The resume version
-                </p>
-                <p className="max-w-[62ch] text-sm leading-relaxed text-fg-subtle">
-                  <HighlightNumbers text={profile.summary} />
-                </p>
-              </div>
-            </ScrollReveal>
-          )}
-
-          {/* Where it happened. The chapter proved the numbers and the bio
-              claimed the career, but a reviewer who never left the home page
-              saw no employer attached to either — Shell and NYU existed only
-              as chips eight screens further down. Curated to three, one
-              impact line each, per the selected-experience shape. */}
-          {selectedRoles.length > 0 && (
-            <div className="mt-12">
-              <div className="mb-6 flex items-center justify-between gap-4">
-                <h3 className="shrink-0 text-xs font-bold uppercase tracking-[0.2em] text-fg-faint">Where it happened</h3>
-                <Link href="/experience" className="shrink-0 text-xs font-medium text-accent hover:text-accent-hover">
-                  All roles →
-                </Link>
-              </div>
-
-              <ol className="space-y-3">
-                {selectedRoles.map((job, i) => {
-                  const { short, qualifier } = splitCompany(job.company);
-                  return (
-                    <ScrollReveal key={`${job.company}-${job.role}`} delay={i * 70}>
-                      <li className="group rounded-card border border-border bg-surface p-5 transition-colors hover:border-border-strong sm:p-6">
-                        <div className="lg:grid lg:grid-cols-[minmax(0,17rem)_minmax(0,1fr)] lg:gap-x-8">
-                          <div>
-                            <h4 className="text-sm font-bold leading-tight text-fg">{job.role}</h4>
-                            <p className="mt-0.5 text-sm font-medium text-accent">{short}</p>
-                            {qualifier && (
-                              <p className="mt-0.5 text-[0.6875rem] leading-snug text-fg-faint">{qualifier}</p>
-                            )}
-                            <p className="mt-2 font-mono text-[0.6875rem] tabular-nums text-fg-faint">
-                              {job.start} – {job.end}
-                            </p>
-                          </div>
-                          {job.bullets[0] && (
-                            <p className="mt-3 max-w-[76ch] text-sm leading-relaxed text-fg-muted lg:mt-0">
-                              <HighlightNumbers text={job.bullets[0]} />
-                            </p>
-                          )}
-                        </div>
-                      </li>
-                    </ScrollReveal>
-                  );
-                })}
-              </ol>
-            </div>
-          )}
-
-          <div className="mt-12 flex items-center justify-between mb-6">
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-fg-faint shrink-0">Featured Projects</h3>
-            <Link href="/projects" className="text-xs font-medium text-accent hover:text-accent-hover">
-              All projects →
-            </Link>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-            {featured.map((p, i) => (
-              <ScrollReveal key={p.title} delay={i * 80} className="flex" direction="scale">
-                {p.title.startsWith("jayaremala") ? (
-                  <RagPipelineCard
-                    title={p.title}
-                    description={p.description}
-                    tags={p.tags}
-                    award={p.award}
-                    note={p.note}
-                    sourceLinks={p.sourceLinks}
-                  />
-                ) : (
-                  <div className="group relative min-w-0 flex-1 rounded-card border border-border bg-surface p-5 sm:p-6 space-y-3 hover:border-border-strong card-lift overflow-hidden">
-                    <div className={`absolute inset-x-0 top-0 h-px ${p.award ? "bg-accent" : "bg-fg/20"} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
-                    <svg className="absolute top-2.5 left-2.5 text-border/50 group-hover:text-accent/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
-                      <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <svg className="absolute bottom-2.5 right-2.5 text-border/50 group-hover:text-accent/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
-                      <path d="M1 9 L9 9 L9 1" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    <div>
-                      <div className="mb-2 flex h-5 items-center">
-                      {p.award && (
-                        <span className="inline-flex max-w-full items-center truncate rounded-chip border border-border-strong bg-surface-raised px-2 py-0.5 text-[10px] font-semibold text-fg">
-                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="inline-block align-[-1px] mr-1" aria-hidden><path d="M8 21h8M12 17v4M6 4h12v5a6 6 0 0 1-12 0zM6 6H3v2a3 3 0 0 0 3 3M18 6h3v2a3 3 0 0 0-3 3" /></svg>{p.award}
-                        </span>
-                      )}
-                      </div>
-                      <h4 className="font-semibold text-fg text-sm leading-snug group-hover:text-accent transition-colors">{p.title}</h4>
-                    </div>
-                    <p className="line-clamp-6 text-xs leading-5 text-fg-subtle">{p.description}</p>
-                    <div className="flex min-w-0 flex-wrap gap-1.5">
-                      {p.tags.slice(0, 4).map((t) => (
-                        <span key={t} className="max-w-full truncate rounded-full border border-border px-2.5 py-0.5 text-[10px] font-medium text-fg-subtle tracking-wide">
-                          {t}
-                        </span>
-                      ))}
-                    </div>
-                    {p.note && (
-                      <p className="text-[11px] text-fg-muted bg-surface-raised border border-border rounded-chip px-2.5 py-1.5 leading-relaxed">
-                        {p.note}
-                      </p>
-                    )}
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {p.sourceLinks && p.sourceLinks.length > 0
-                        ? p.sourceLinks.map((link) => (
-                            <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-0.5 text-[10px] font-semibold text-accent hover:border-accent/50 transition-colors">
-                              {link.label}
-                              <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M7 17L17 7M17 7H7M17 7v10"/></svg>
-                            </a>
-                          ))
-                        : null}
-                    </div>
-                  </div>
-                )}
-              </ScrollReveal>
-            ))}
-          </div>
-        </Chapter>
-      )}
-
-      {/* ── 04 · Dallas, 2026 ──────────────────────────────────────────────
-          Opens the story rather than decorating the hero. This is the claim
-          the rest of the page is evidence for, so it goes first and it goes
-          in full at every viewport. */}
-      {hope && (
-        <Chapter
-          n="04"
-          label={hope.eyebrow ?? "What I optimize for"}
-          place="Dallas"
-          year="2026"
-          measure="hybrid retrieval · a public MCP server · live traces at /system"
-          deck="The reason the rest of this page exists."
-          id="creed"
-          nextHref="#still-running"
-          nextLabel="What's still up"
-        >
-          <HopeMolecules data={hope} variant="chapter" />
-        </Chapter>
-      )}
-
-      {/* ── 05 · Still running ── the signature moment ────────────── */}
-      {shipped.length > 0 && (
-        <Chapter
-          n="05"
-          label={profile.shippedLabel ?? "Still running"}
-          deck="Things I shipped that are still in production. The counters are live."
-          id="still-running"
-          nextHref="#opinions"
-          nextLabel="What the field taught"
-        >
-          <StillRunning items={shipped} note={profile.shippedNote} />
-
-          {/* Live GitHub, next to the live counters — the chapter is already
-              the page's "what is up right now" section, so the commit data
-              belongs here rather than in a section of its own. Renders nothing
-              if GitHub is unreachable or rate-limited. */}
-          <div className="mt-10 pt-8 border-t border-border">
-            <GitHubActivity />
-          </div>
-
-          <div className="mt-10 pt-8 border-t border-border">
-            <SiteVitals />
-          </div>
-        </Chapter>
-      )}
-
-      {/* ── 06 · Where I stand ────────────────────────────────────────
-          The hinge: the page turns here from a record of what shipped into
-          an argument about how it gets built. */}
-      {profile.opinions && (
-        <Chapter
-          n="06"
-          label={profile.opinions.label}
-          deck={profile.opinions.deck}
-          id="opinions"
-          nextHref="#skills"
-          nextLabel="How I work"
-        >
-          <Opinions data={profile.opinions} />
-        </Chapter>
-      )}
-
-      {/* ── 07 · How I work ───────────────────────────────────────── */}
-      <Chapter
-        n="07"
-        label="How I work"
-        /* profile.currently is literally a "what I'm into right now"
-           sentence, which is what a deck is. It replaces a hardcoded
-           string and was previously rendered nowhere. */
-        deck={profile.currently ? `Currently pointed at ${profile.currently}` : "The stack I reach for, and where I am pointing it next."}
-        id="skills"
+        label="The work"
+        place="Shell PLC · NYU"
+        year="2021—present"
+        deck="Three roles, three builds. Everything else is one click away."
+        id="projects"
+        rail={false}
         nextHref="#testimonials"
         nextLabel="What colleagues say"
       >
-        <ScrollReveal>
-          <div className="hanging-quote border-l border-border-strong pl-5 max-w-[62ch] mb-10">
-            <p className="voice-serif text-fg-muted" style={{ fontSize: "1.0625rem", lineHeight: 1.7 }}>
-              {profile.obsession}
-            </p>
-          </div>
-        </ScrollReveal>
-
-        <SkillsSection skills={skills} featuredProjects={featured} />
-
-        {/* Where he's been, and where he's headed */}
-        <div className="mt-12 pt-10 border-t border-border grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Roles and builds share one shape: a row of three equal cards
+            that lines up on laptop and desktop, and becomes a swipeable row
+            on phones and tablets (snap, one card and a peek of the next).
+            Each role leads with its first bullet that carries a number. */}
+        {selectedRoles.length > 0 && (
           <div>
-            {/* The label said "Previously" over a row of industries, which
-                reads as companies. Name the companies (profile.previous was
-                populated and rendered nowhere) and label the chips honestly. */}
-            <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Previously</p>
-            {profile.previous && (
-              <p className="mb-3 font-mono text-[11px] leading-relaxed text-fg-muted">
-                {profile.previous}
-              </p>
-            )}
-            <p className="mb-2 text-[10px] uppercase tracking-widest text-fg-faint/70">Domains</p>
-            <div className="flex flex-wrap gap-2">
-              {profile.prev_domain.split(",").map((d) => (
-                <span key={d} className="rounded-md border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-subtle">
-                  {d.trim()}
-                </span>
-              ))}
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-fg-faint">Roles</h3>
+              <Link href="/experience" className="text-xs font-medium text-fg-muted transition-colors hover:text-fg">
+                All roles →
+              </Link>
             </div>
-          </div>
-
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Excited in</p>
-            <div className="flex flex-wrap gap-2">
-              {profile.interested_domain.split(",").map((d) => (
-                <span key={d} className="rounded-md border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-subtle">
-                  {d.trim()}
-                </span>
-              ))}
-              <span className="rounded-md border border-border bg-surface-raised px-3 py-1 text-xs font-medium text-fg-faint italic">&amp; more</span>
-            </div>
-          </div>
-
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-widest text-fg-faint mb-3">Career path</p>
-            <div className="flex flex-col">
-              {careerPath().map((c, i, arr) => (
-                <div key={c.company} className="flex items-start gap-2.5">
-                  <div className="flex flex-col items-center">
-                    <div className={`w-1.5 h-1.5 rounded-full mt-1 shrink-0 ${i === 0 ? "bg-accent" : "bg-border-strong"}`} />
-                    {i < arr.length - 1 && (
-                      <div className="w-px h-6 bg-gradient-to-b from-border-strong/60 to-transparent mt-0.5" />
+            <ol className="card-row">
+              {selectedRoles.map((job, i) => {
+                const { short, qualifier } = splitCompany(job.company);
+                const line = job.bullets.find((b) => /\d/.test(b)) ?? job.bullets[0];
+                return (
+                  <li
+                    key={`${job.company}-${job.role}`}
+                    data-face={["skin", "paper", "flesh"][i % 3]}
+                    className="role-card flex flex-col"
+                  >
+                    <p className="font-mono text-[0.6875rem] uppercase tracking-[0.14em] tabular-nums opacity-75">
+                      {job.start} – {job.end}
+                    </p>
+                    <p className="display-serif mt-3 text-[clamp(1.6rem,2.2vw,2rem)] leading-none">{short}</p>
+                    <p className="mt-2 text-[0.9375rem] font-medium leading-snug opacity-90">{job.role}</p>
+                    {qualifier && <p className="mt-0.5 text-sm leading-snug opacity-70">{qualifier}</p>}
+                    {line && (
+                      <p className="mt-5 line-clamp-5 text-[0.9375rem] leading-relaxed">
+                        <HighlightNumbers text={line} />
+                      </p>
                     )}
-                  </div>
-                  <div className="relative group/co pb-4">
-                    <span
-                      tabIndex={0}
-                      aria-label={`${c.short}: ${c.role}, ${c.start} – ${c.end}`}
-                      className={`text-xs rounded-chip outline-offset-2 cursor-help ${i === 0 ? "text-fg font-medium" : "text-fg-subtle"}`}>
-                      {c.short}
-                    </span>
-                    <div className="absolute left-0 top-full mt-1 z-10 hidden group-hover/co:block group-focus-within/co:block bg-surface border border-border rounded-chip px-3 py-2 shadow-md whitespace-nowrap pointer-events-none">
-                      <p className="text-[11px] font-semibold text-fg">{c.role}</p>
-                      <p className="text-[10px] text-fg-subtle">{c.company}</p>
-                      <p className="text-[10px] text-fg-faint font-mono tabular-nums">{c.start} – {c.end}</p>
+                    <span className="flex-1" />
+                    {job.location && (
+                      <p className="mt-5 inline-flex items-center gap-1.5 border-t border-current/15 pt-4 font-mono text-[0.6875rem] uppercase tracking-[0.14em] opacity-80">
+                        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                          <path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z" /><circle cx="12" cy="10" r="2.5" />
+                        </svg>
+                        {job.location}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ol>
+          </div>
+        )}
+
+        {homeProjects.length > 0 && (
+          <div className="mt-12">
+            <div className="mb-5 flex items-center justify-between gap-4">
+              <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-fg-faint">Builds</h3>
+              <Link href="/projects" className="text-xs font-medium text-fg-muted transition-colors hover:text-fg">
+                All projects →
+              </Link>
+            </div>
+            <div className="card-row">
+              {homeProjects.map((p, i) => (
+                <ScrollReveal key={p.title} delay={i * 80} className="flex" direction="scale">
+                  {p.title.startsWith("jayaremala") ? (
+                    <RagPipelineCard
+                      title={p.title}
+                      description={p.description}
+                      tags={p.tags}
+                      award={p.award}
+                      sourceLinks={p.sourceLinks}
+                    />
+                  ) : (
+                    <div className="group relative min-w-0 flex-1 overflow-hidden rounded-card border border-border bg-surface p-5 card-lift hover:border-border-strong sm:p-6">
+                      <div className={`absolute inset-x-0 top-0 h-px ${p.award ? "bg-accent" : "bg-fg/20"} origin-left scale-x-0 transition-transform duration-300 group-hover:scale-x-100`} />
+                      {p.award && (
+                        <p className="mb-2 inline-flex items-center gap-1 text-[11px] font-semibold text-fg">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden><path d="M8 21h8M12 17v4M6 4h12v5a6 6 0 0 1-12 0zM6 6H3v2a3 3 0 0 0 3 3M18 6h3v2a3 3 0 0 0-3 3" /></svg>
+                          {p.award}
+                        </p>
+                      )}
+                      <h4 className="text-[0.9375rem] font-semibold leading-snug text-fg">{p.title}</h4>
+                      <p className="mt-2 line-clamp-4 text-sm leading-relaxed text-fg-subtle">{p.description}</p>
+                      <p className="mt-4 font-mono text-[11px] text-fg-faint">{p.tags.slice(0, 4).join(" · ")}</p>
+                      {p.sourceLinks && p.sourceLinks.length > 0 && (
+                        <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1">
+                          {p.sourceLinks.map((link) => (
+                            <a key={link.url} href={link.url} target="_blank" rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 text-xs font-medium text-fg-muted transition-colors hover:text-accent">
+                              {link.label} ↗
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                </div>
+                  )}
+                </ScrollReveal>
               ))}
             </div>
           </div>
-        </div>
-
-        {/* Interactive skills ↔ projects constellation. No longer desktop-only:
-            the component now scrolls horizontally below lg instead of being
-            withheld from every phone and tablet visitor. */}
-        <div className="mt-12 pt-10 border-t border-border">
-          <div className="flex items-center gap-4 mb-6">
-            <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-fg-faint shrink-0">Skills in Action</h3>
-            <div className="flex-1 h-px bg-border" aria-hidden />
-            <span className="shrink-0 text-[10px] text-fg-faint lg:hidden">scroll →</span>
-          </div>
-          <SkillsConstellation />
-        </div>
+        )}
       </Chapter>
 
-      {/* ── 08 · Kind words ───────────────────────────────────────── */}
-      {/* rail={false}: the carousel is already a full-width composition and
-          reads badly squeezed into the body column beside a rail. */}
+      {/* ── 03 · Kind words ───────────────────────────────────────────
+          Third-party proof sits right after the claims it backs, not at the
+          bottom of the page where only the most patient reader found it. */}
       <Chapter
-        n="08"
+        n="03"
         label="Kind words"
-        deck="What the people I actually worked with said, unprompted."
+        deck="From people I shipped with at Shell, Wipro and Amazon. Unedited, from LinkedIn."
         id="testimonials"
         rail={false}
-        nextHref="#contact"
-        nextLabel="Let's connect"
+        nextHref="#why"
+        nextLabel="Who I am"
       >
-        <TestimonialsCarousel />
+        <TestimonialDeck />
       </Chapter>
 
-      {/* ── 09 · Connect ──────────────────────────────────────────── */}
+      {/* ── 04 · Why I build ──────────────────────────────────────────
+          The person. The origin story, then the ledger that proves it was
+          not a one-off, then the value frame that ties the two together.
+          This replaces three chapters (Kavali, Vellore, Dallas) and the
+          separate "Still running" chapter that each retold part of it. */}
+      {profile.why && (
+        <Chapter
+          n="04"
+          label={profile.why.label}
+          place="Kavali, Nellore"
+          year="2020"
+          deck="Where this started, and what is still running because of it."
+          id="why"
+          nextHref="#how"
+          nextLabel="How I work"
+        >
+          <OriginStory why={profile.why} />
+
+          {shipped.length > 0 && (
+            <div className="mt-14">
+              <div className="mb-6 flex items-center gap-5">
+                <SeedRing text="On call since 2020 · still running · " size={116} />
+                <h3 className="display-serif display-md text-fg">
+                  {profile.shippedLabel ?? "Still running"}
+                </h3>
+              </div>
+              <StillRunning items={shipped} note={profile.shippedNote} />
+              <div className="mt-8">
+                <SiteVitals />
+              </div>
+            </div>
+          )}
+
+          {hope && (
+            <div className="mt-14 border-t border-border pt-10">
+              <HopeMolecules data={hope} variant="chapter" />
+            </div>
+          )}
+        </Chapter>
+      )}
+
+      {/* ── 05 · How I work ───────────────────────────────────────────
+          Stances first (how I'll behave on your team), toolkit second. The
+          skills-to-projects map is for the reader who wants to check, so it
+          opens on request instead of costing everyone a screen. */}
       <Chapter
-        n="09"
-        label="Connect"
-        deck="Open to full-time roles, remote or hybrid. This is the fastest way to reach me."
+        n="05"
+        label={profile.opinions?.label ?? "How I work"}
+        deck={profile.opinions?.deck}
+        id="how"
+        nextHref="#writing"
+        nextLabel="What I write"
+      >
+        {profile.opinions && <Opinions data={profile.opinions} />}
+
+        <div className={profile.opinions ? "mt-14" : ""}>
+          <SkillsSection skills={skills} featuredProjects={featured} />
+        </div>
+
+        <details className="group/map mt-10 border-t border-border pt-6">
+          <summary className="flex cursor-pointer list-none items-center gap-2 text-sm font-medium text-fg-muted transition-colors hover:text-fg [&::-webkit-details-marker]:hidden">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden
+              className="shrink-0 transition-transform duration-200 group-open/map:rotate-90">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+            See where each skill was used
+          </summary>
+          <div className="mt-6">
+            <SkillsConstellation />
+          </div>
+        </details>
+      </Chapter>
+
+      {/* ── 06 · Writing ─────────────────────────────────────────────
+          The posts and lab logs as a pile of notes you flip through by
+          hand. Newest blog posts first, then the lab build logs. */}
+      {notes.length > 0 && (
+        <Chapter
+          n="06"
+          label="Writing"
+          deck="Notes on building AI systems, and on the life around them. Flip through the pile."
+          id="writing"
+          rail={false}
+          nextHref="#contact"
+          nextLabel="Let's talk"
+        >
+          <NoteStack notes={notes} />
+        </Chapter>
+      )}
+
+      {/* ── 07 · Explore the rest ─────────────────────────────────────
+          The rest of the site as bubbles around the seed — one look shared
+          with the phone menu. Placed last before contact: a visitor who has
+          read this far is the one who wants to wander, and the seed in the
+          middle gives anyone unsure a question to ask instead. */}
+      {/* Hidden below md: on phones the same map is one tap away behind the
+          seed in the nav, so a full-screen bubble field here only lengthened
+          the scroll. */}
+      <Chapter
+        className="hidden md:block"
+        n="07"
+        label="Explore the rest"
+        deck="Every other page, coloured by kind. Not sure where to go? The seed in the middle answers questions."
+        id="explore"
+        rail={false}
+        nextHref="#contact"
+        nextLabel="Let's talk"
+      >
+        <SiteBubbles />
+      </Chapter>
+
+      {/* ── 08 · Connect ──────────────────────────────────────────── */}
+      <Chapter
+        n="08"
+        label="Let's talk"
+        deck="Open to full-time roles, remote or hybrid. A call is the fastest way to reach me."
         id="contact"
         rail={false}
-        className="pb-16 sm:pb-24"
       >
         <ContactForm />
 
-        {/* Site index — the real navigation, demoted but never removed. It sits
-            under a column rule rather than its own header so it reads as the
-            page's colophon, not a third decision competing with the two rails. */}
-        <div className="mt-16 md:mt-20">
-          <div className="chapter-rule mb-8" aria-hidden />
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-8">
-            {EXPLORE_PAGES.map(({ href, label, desc, icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className="group relative flex min-h-[104px] flex-col gap-2.5 p-4 rounded-card border border-border bg-surface hover:bg-surface-raised hover:border-border-strong transition-all overflow-hidden"
-              >
-                <div className="absolute inset-x-0 top-0 h-px bg-accent origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300" />
-                <span className="text-fg-faint group-hover:text-accent transition-colors">{icon}</span>
-                <div className="flex-1">
-                  <p className="text-xs font-semibold text-fg leading-tight">{label}</p>
-                  <p className="text-[10px] text-fg-faint leading-tight mt-0.5">{desc}</p>
-                </div>
-                <svg className="self-end text-fg-faint/40 group-hover:text-accent transition-colors" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M5 12h14M12 5l7 7-7 7"/>
-                </svg>
-              </Link>
-            ))}
-          </div>
-
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <span className="inline-flex"><InstallPWA variant="chip" /></span>
-            <a href="/llms.txt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-1.5 text-fg-faint hover:text-accent transition-colors px-1">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 animate-pulse group-hover:animate-none text-accent">
-                <path d="M4 17l6-6-6-6"/><path d="M12 19h8"/>
-              </svg>
-              <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">Want your LLM to read my work?</span>
-            </a>
-          </div>
+        {/* The eight-tile site index that lived here duplicated the footer
+            directly beneath it, so it went. The two machine-facing doors
+            stay. */}
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <span className="inline-flex"><InstallPWA variant="chip" /></span>
+          <a href="/llms.txt" target="_blank" rel="noopener noreferrer" className="group inline-flex items-center gap-1.5 px-1 text-fg-faint transition-colors hover:text-accent">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden className="shrink-0 text-accent">
+              <path d="M4 17l6-6-6-6"/><path d="M12 19h8"/>
+            </svg>
+            <span className="text-[10px] font-semibold uppercase tracking-[0.14em]">Want your LLM to read my work?</span>
+          </a>
         </div>
       </Chapter>
     </div>

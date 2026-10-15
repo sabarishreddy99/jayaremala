@@ -82,7 +82,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
             onClick={() => setActiveTag(null)}
             className={`inline-flex items-center gap-1.5 text-xs font-medium rounded-full px-3.5 py-1.5 border transition-all duration-150 ${
               !activeTag
-                ? "bg-fg text-bg border-fg"
+                ? "bg-accent text-accent-fg border-accent"
                 : "bg-surface border-border text-fg-faint hover:text-fg hover:border-border-strong"
             }`}
           >
@@ -145,7 +145,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                   style={{ transition: "transform 0.2s cubic-bezier(0.16,1,0.3,1), border-color 0.2s, box-shadow 0.2s", willChange: "transform" }}
                 >
                   {/* Hover sweep */}
-                  <div className={`absolute inset-x-0 top-0 h-px ${isAward ? "bg-gradient-to-r from-amber-500 to-orange-400" : "bg-fg/20"} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
+                  <div className={`absolute inset-x-0 top-0 h-px ${isAward ? "bg-fg" : "bg-fg/20"} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-300`} />
                   {/* Corner bracket accents — ridealso-style geometric marks */}
                   <svg className="absolute top-2.5 left-2.5 text-border/50 group-hover:text-accent/40 transition-colors duration-200 pointer-events-none" width="10" height="10" viewBox="0 0 10 10" fill="none" aria-hidden>
                     <path d="M9 1 L1 1 L1 9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -161,7 +161,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                     </h2>
                     <div className="flex flex-col items-end gap-1 flex-shrink-0">
                       {isAward && (
-                        <span className="text-[10px] font-semibold rounded-sm bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-400 px-2 py-0.5 whitespace-nowrap">
+                        <span className="text-[10px] font-semibold rounded-sm bg-surface-raised border border-border-strong text-fg px-2 py-0.5 whitespace-nowrap">
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" className="inline-block align-[-1px] mr-1" aria-hidden><path d="M8 21h8M12 17v4M6 4h12v5a6 6 0 0 1-12 0zM6 6H3v2a3 3 0 0 0 3 3M18 6h3v2a3 3 0 0 0-3 3" /></svg>Winner
                         </span>
                       )}
@@ -193,7 +193,7 @@ export default function ProjectsGrid({ projects }: { projects: Project[] }) {
                   </div>
 
                   {p.note && (
-                    <p className="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 border border-amber-100 dark:border-amber-900 rounded-sm px-3 py-2 mb-3 leading-relaxed">
+                    <p className="text-[11px] text-fg-muted bg-surface-raised border border-border rounded-sm px-3 py-2 mb-3 leading-relaxed">
                       {p.note}
                     </p>
                   )}

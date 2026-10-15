@@ -261,7 +261,7 @@ export default function InstallPWA({
                 <div className="px-5 pb-5">
                   <button
                     onClick={nativeInstall}
-                    className="flex w-full items-center justify-center gap-2 rounded-full bg-fg px-5 py-3 text-sm font-semibold text-bg transition-opacity hover:opacity-80 active:scale-[0.98]"
+                    className="btn-avo flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 text-sm font-semibold active:scale-[0.98]"
                   >
                     <DownloadIcon />
                     Install now

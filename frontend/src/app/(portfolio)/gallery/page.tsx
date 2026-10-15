@@ -21,7 +21,7 @@ export default function GalleryPage() {
       <header className="mb-10 sm:mb-12 relative">
         <div
           className="absolute -top-8 -right-8 w-72 h-72 rounded-full blur-3xl pointer-events-none -z-10"
-          style={{ background: "radial-gradient(circle, rgba(139,92,246,0.12) 0%, rgba(99,102,241,0.06) 60%, transparent 100%)" }}
+          style={{ background: "radial-gradient(circle, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 70%)" }}
           aria-hidden
         />
         <p className="text-[11px] font-medium tracking-wide text-fg-subtle mb-3">Moments · Milestones</p>

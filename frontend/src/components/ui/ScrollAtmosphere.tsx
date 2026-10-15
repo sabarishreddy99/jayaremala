@@ -8,14 +8,13 @@ import { useEffect, useRef } from "react";
 // previous chapter's tint.)
 const SECTIONS = [
   "hero",
-  "why",
-  "gradevitian",
+  "impact",
   "projects",
-  "creed",
-  "still-running",
-  "opinions",
-  "skills",
   "testimonials",
+  "why",
+  "how",
+  "writing",
+  "explore",
   "contact",
 ];
 
@@ -30,13 +29,10 @@ const wash = (shape: string, strength: number) =>
 
 const GRADIENTS: Record<string, string> = {
   hero:           wash("ellipse 80% 55% at 60% 0%", 9),
-  creed:          wash("ellipse 70% 55% at 25% 20%", 8),
   why:            wash("ellipse 70% 55% at 20% 35%", 7),
-  "still-running": wash("ellipse 72% 50% at 70% 30%", 7),
-  gradevitian:    wash("ellipse 75% 55% at 80% 40%", 8),
-  opinions:       wash("ellipse 68% 50% at 40% 45%", 7),
+  impact:         wash("ellipse 72% 50% at 70% 30%", 7),
+  how:            wash("ellipse 68% 50% at 40% 45%", 7),
   projects:       wash("ellipse 75% 55% at 80% 40%", 8),
-  skills:         wash("ellipse 70% 50% at 50% 55%", 7),
   testimonials:   wash("ellipse 65% 50% at 30% 50%", 8),
   contact:        wash("ellipse 70% 60% at 50% 80%", 7),
 };
@@ -75,7 +71,7 @@ export default function ScrollAtmosphere() {
     <div
       ref={divRef}
       aria-hidden
-      className="pointer-events-none fixed inset-0 -z-10"
+      className="scroll-atmosphere pointer-events-none fixed inset-0 -z-10"
       style={{
         background: GRADIENTS.hero,
         transition: "background 1.4s cubic-bezier(0.16,1,0.3,1)",

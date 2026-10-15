@@ -56,14 +56,16 @@ export const STAGE_LABEL: Record<string, string> = {
   llm: "LLM generation",
 };
 
-// Distinct hue per stage so the trace waterfall reads as a stacked timeline.
+// One step per stage along the avocado ramp (rind → flesh → stone), so the
+// trace waterfall still reads as a stacked timeline without leaving the
+// palette. Mid-tones are chosen to show on both the light and dark sheet.
 export const STAGE_COLOR: Record<string, string> = {
-  retrieve: "bg-sky-400",
-  rrf: "bg-indigo-400",
-  rerank: "bg-violet-400",
-  graph: "bg-fuchsia-400",
-  ttft: "bg-amber-400",
-  llm: "bg-emerald-400",
+  retrieve: "bg-[#7d8a3e]",
+  rrf: "bg-[#a3ad5c]",
+  rerank: "bg-[#c4cb7a]",
+  graph: "bg-[#d8de8a]",
+  ttft: "bg-[#a46a3f]",
+  llm: "bg-[#5c6630]",
 };
 
 export function fmtDuration(ms: number): string {

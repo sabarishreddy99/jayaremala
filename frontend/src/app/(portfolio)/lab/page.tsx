@@ -52,8 +52,8 @@ export default function LabPage() {
               </span>
             )}
             {shippedCount > 0 && (
-              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-indigo-700 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-sm px-3 py-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-fg bg-surface border border-border-strong rounded-sm px-3 py-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-fg-faint" />
                 {shippedCount} shipped
               </span>
             )}
